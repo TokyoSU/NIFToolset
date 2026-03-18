@@ -1,6 +1,5 @@
 <Solution>
   <Configurations>
-    <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
   <Project Path="NifTools/NifTools.vcxproj" Id="90791b0f-d96d-4e53-813b-99480e575990" />

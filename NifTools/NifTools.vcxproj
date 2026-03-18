@@ -9,14 +9,6 @@
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NiAnimation\NiActorManager.cpp" />
@@ -1961,19 +1953,6 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -1985,26 +1964,12 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)Build\bin\$(Plaftform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Build\obj\$(Plaftform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)Build\bin\$(Plaftform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Build\obj\$(Plaftform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)Build\bin\$(Plaftform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Build\obj\$(Plaftform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)Build\bin\$(Plaftform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Build\obj\$(Plaftform)\$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -2034,46 +1999,6 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NIPORTAL_EXPORT;NIPARTICLE_EXPORT;NIMESH_EXPORT;NIFLOODGATE_EXPORT;NICOLLISION_EXPORT;NIAUDIO_EXPORT;NIANIMATION_EXPORT;NIMAIN_EXPORT;NISYSTEM_EXPORT;NI_USE_PCH;WIN32;NIRELEASE;WIN32;NDEBUG;NIFTOOLS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)NiAnimation;$(ProjectDir)NiAudio;$(ProjectDir)NiAudio\Miles;$(ProjectDir)NiCollision;$(ProjectDir)NiD3D10Renderer;$(ProjectDir)NiDX9Renderer;$(ProjectDir)NiFloodgate;$(ProjectDir)NiFloodgate\Kernels\NiNopKernel;$(ProjectDir)NiMain;$(ProjectDir)NiMain\DirectionalShadowWriteMaterialNodeLibrary;$(ProjectDir)NiMain\PointShadowWriteMaterialNodeLibrary;$(ProjectDir)NiMain\SpotShadowWriteMaterialNodeLibrary;$(ProjectDir)NiMain\StandardMaterialNodeLibrary;$(ProjectDir)NiMain\VSMBlurMaterialNodeLibrary;$(ProjectDir)NiMesh;$(ProjectDir)NiMesh\Kernels;$(ProjectDir)NiMesh\Kernels\NiCalculateBoneMatricesKernel;$(ProjectDir)NiMesh\Kernels\NiInstanceCullingKernel;$(ProjectDir)NiMesh\Kernels\NiMorphingKernel;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelP;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPN16;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPN32;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPNBT16;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPNBT32;$(ProjectDir)NiParticle;$(ProjectDir)NiParticle\_Deprecated;$(ProjectDir)NiParticle\Kernels\NiPSFacingQuadGeneratorKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorCollidersKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorFinalKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorForcesKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorGeneralKernel;$(ProjectDir)NiPortal;$(ProjectDir)NiSystem;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableUAC>false</EnableUAC>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NIPORTAL_EXPORT;NIPARTICLE_EXPORT;NIMESH_EXPORT;NIFLOODGATE_EXPORT;NICOLLISION_EXPORT;NIAUDIO_EXPORT;NIANIMATION_EXPORT;NIMAIN_EXPORT;NISYSTEM_EXPORT;NI_USE_PCH;WIN32;NIDEBUG;_DEBUG;NIFTOOLS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)NiAnimation;$(ProjectDir)NiAudio;$(ProjectDir)NiAudio\Miles;$(ProjectDir)NiCollision;$(ProjectDir)NiD3D10Renderer;$(ProjectDir)NiDX9Renderer;$(ProjectDir)NiFloodgate;$(ProjectDir)NiFloodgate\Kernels\NiNopKernel;$(ProjectDir)NiMain;$(ProjectDir)NiMain\DirectionalShadowWriteMaterialNodeLibrary;$(ProjectDir)NiMain\PointShadowWriteMaterialNodeLibrary;$(ProjectDir)NiMain\SpotShadowWriteMaterialNodeLibrary;$(ProjectDir)NiMain\StandardMaterialNodeLibrary;$(ProjectDir)NiMain\VSMBlurMaterialNodeLibrary;$(ProjectDir)NiMesh;$(ProjectDir)NiMesh\Kernels;$(ProjectDir)NiMesh\Kernels\NiCalculateBoneMatricesKernel;$(ProjectDir)NiMesh\Kernels\NiInstanceCullingKernel;$(ProjectDir)NiMesh\Kernels\NiMorphingKernel;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelP;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPN16;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPN32;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPNBT16;$(ProjectDir)NiMesh\Kernels\NiSkinningKernelPNBT32;$(ProjectDir)NiParticle;$(ProjectDir)NiParticle\_Deprecated;$(ProjectDir)NiParticle\Kernels\NiPSFacingQuadGeneratorKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorCollidersKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorFinalKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorForcesKernel;$(ProjectDir)NiParticle\Kernels\NiPSSimulatorGeneralKernel;$(ProjectDir)NiPortal;$(ProjectDir)NiSystem;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableUAC>false</EnableUAC>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NIPORTAL_EXPORT;NIPARTICLE_EXPORT;NIMESH_EXPORT;NIFLOODGATE_EXPORT;NICOLLISION_EXPORT;NIAUDIO_EXPORT;NIANIMATION_EXPORT;NIMAIN_EXPORT;NISYSTEM_EXPORT;NI_USE_PCH;WIN32;NIRELEASE;NDEBUG;NIFTOOLS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
