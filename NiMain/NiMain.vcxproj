@@ -1,0 +1,804 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.cpp" />
+    <ClCompile Include="Ni2DBuffer.cpp" />
+    <ClCompile Include="Ni2DRenderView.cpp" />
+    <ClCompile Include="Ni3DRenderView.cpp" />
+    <ClCompile Include="NiAccumulator.cpp" />
+    <ClCompile Include="NiAccumulatorProcessor.cpp" />
+    <ClCompile Include="NiAdditionalGeometryData.cpp" />
+    <ClCompile Include="NiAlphaAccumulator.cpp" />
+    <ClCompile Include="NiAlphaProperty.cpp" />
+    <ClCompile Include="NiAlphaSortProcessor.cpp" />
+    <ClCompile Include="NiAmbientLight.cpp" />
+    <ClCompile Include="NiAVObject.cpp" />
+    <ClCompile Include="NiAVObjectPalette.cpp" />
+    <ClCompile Include="NiAVObject_Win32.cpp" />
+    <ClCompile Include="NiBackToFrontAccumulator.cpp" />
+    <ClCompile Include="NiBackToFrontSortProcessor.cpp" />
+    <ClCompile Include="NiBillboardNode.cpp" />
+    <ClCompile Include="NiBinaryExtraData.cpp" />
+    <ClCompile Include="NiBMPReader.cpp" />
+    <ClCompile Include="NiBooleanExtraData.cpp" />
+    <ClCompile Include="NiBound.cpp" />
+    <ClCompile Include="NiBSPNode.cpp" />
+    <ClCompile Include="NiCamera.cpp" />
+    <ClCompile Include="NiClickRenderStep.cpp" />
+    <ClCompile Include="NiCodeBlock.cpp" />
+    <ClCompile Include="NiCollisionObject.cpp" />
+    <ClCompile Include="NiColor.cpp" />
+    <ClCompile Include="NiColorExtraData.cpp" />
+    <ClCompile Include="NiCommonSemantics.cpp" />
+    <ClCompile Include="NiCompositeValidator.cpp" />
+    <ClCompile Include="NiCompUtility.cpp" />
+    <ClCompile Include="NiCulledObjectValidator.cpp" />
+    <ClCompile Include="NiCullingProcess.cpp" />
+    <ClCompile Include="NiDDSReader.cpp" />
+    <ClCompile Include="NiDefaultAVObjectPalette.cpp" />
+    <ClCompile Include="NiDefaultClickRenderStep.cpp" />
+    <ClCompile Include="NiDefaultShadowClickGenerator.cpp" />
+    <ClCompile Include="NiDepthStencilBuffer.cpp" />
+    <ClCompile Include="NiDevImageConverter.cpp" />
+    <ClCompile Include="NiDirectionalLight.cpp" />
+    <ClCompile Include="NiDirectionalShadowWriteMaterial.cpp" />
+    <ClCompile Include="NiDitherProperty.cpp" />
+    <ClCompile Include="NiDrawSceneUtility.cpp" />
+    <ClCompile Include="NiDynamicEffect.cpp" />
+    <ClCompile Include="NiDynamicEffectState.cpp" />
+    <ClCompile Include="NiDynamicTexture.cpp" />
+    <ClCompile Include="NiExtraData.cpp" />
+    <ClCompile Include="NiFloatExtraData.cpp" />
+    <ClCompile Include="NiFloatsExtraData.cpp" />
+    <ClCompile Include="NiFogProperty.cpp" />
+    <ClCompile Include="NiFragmentMaterial.cpp" />
+    <ClCompile Include="NiFragmentShaderInstanceDescriptor.cpp" />
+    <ClCompile Include="NiFrustum.cpp" />
+    <ClCompile Include="NiFrustumPlanes.cpp" />
+    <ClCompile Include="NiGeometry.cpp" />
+    <ClCompile Include="NiGeometryData.cpp" />
+    <ClCompile Include="NiGlobalConstantEntry.cpp" />
+    <ClCompile Include="NiGlobalStringTable.cpp" />
+    <ClCompile Include="NiGPUProgram.cpp" />
+    <ClCompile Include="NiGPUProgramCache.cpp" />
+    <ClCompile Include="NiGPUProgramDescriptor.cpp" />
+    <ClCompile Include="NiImageConverter.cpp" />
+    <ClCompile Include="NiIntegerExtraData.cpp" />
+    <ClCompile Include="NiIntegersExtraData.cpp" />
+    <ClCompile Include="NiLight.cpp" />
+    <ClCompile Include="NiLines.cpp" />
+    <ClCompile Include="NiLinesData.cpp" />
+    <ClCompile Include="NiLODData.cpp" />
+    <ClCompile Include="NiLODNode.cpp" />
+    <ClCompile Include="NiLogicalANDCompositeValidator.cpp" />
+    <ClCompile Include="NiMainMetrics.cpp" />
+    <ClCompile Include="NiMainPCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NiMainSDM.cpp" />
+    <ClCompile Include="NiMaterial.cpp" />
+    <ClCompile Include="NiMaterialConfigurator.cpp" />
+    <ClCompile Include="NiMaterialDescriptor.cpp" />
+    <ClCompile Include="NiMaterialFragmentNode.cpp" />
+    <ClCompile Include="NiMaterialInstance.cpp" />
+    <ClCompile Include="NiMaterialLibrary.cpp" />
+    <ClCompile Include="NiMaterialLibrary_Win32.cpp" />
+    <ClCompile Include="NiMaterialNode.cpp" />
+    <ClCompile Include="NiMaterialNodeLibrary.cpp" />
+    <ClCompile Include="NiMaterialProperty.cpp" />
+    <ClCompile Include="NiMaterialResource.cpp" />
+    <ClCompile Include="NiMaterialResourceBinding.cpp" />
+    <ClCompile Include="NiMaterialResourceConsumerNode.cpp" />
+    <ClCompile Include="NiMaterialResourceProducerNode.cpp" />
+    <ClCompile Include="NiMaterialSwapProcessor.cpp" />
+    <ClCompile Include="NiMath.cpp" />
+    <ClCompile Include="NiMatrix3.cpp" />
+    <ClCompile Include="NiMetricsLayer.cpp" />
+    <ClCompile Include="NiNIFImageReader.cpp" />
+    <ClCompile Include="NiNode.cpp" />
+    <ClCompile Include="NiObject.cpp" />
+    <ClCompile Include="NiObjectGroup.cpp" />
+    <ClCompile Include="NiObjectNET.cpp" />
+    <ClCompile Include="NiOldScreenSpace.cpp" />
+    <ClCompile Include="NiOutputStreamDescriptor.cpp" />
+    <ClCompile Include="NiPalette.cpp" />
+    <ClCompile Include="NiParallelUpdateTaskManager.cpp" />
+    <ClCompile Include="NiParticles.cpp" />
+    <ClCompile Include="NiParticlesData.cpp" />
+    <ClCompile Include="NiPersistentSrcTextureRendererData.cpp" />
+    <ClCompile Include="NiPixelData.cpp" />
+    <ClCompile Include="NiPixelData_Win32.cpp" />
+    <ClCompile Include="NiPixelFormat.cpp" />
+    <ClCompile Include="NiPlane.cpp" />
+    <ClCompile Include="NiPoint2.cpp" />
+    <ClCompile Include="NiPoint3.cpp" />
+    <ClCompile Include="NiPoint3_Win32.cpp" />
+    <ClCompile Include="NiPoint4_Win32.cpp" />
+    <ClCompile Include="NiPointLight.cpp" />
+    <ClCompile Include="NiPointShadowWriteMaterial.cpp" />
+    <ClCompile Include="NiPrimitiveType.cpp" />
+    <ClCompile Include="NiProcessor.cpp" />
+    <ClCompile Include="NiProperty.cpp" />
+    <ClCompile Include="NiPropertyState.cpp" />
+    <ClCompile Include="NiQuaternion.cpp" />
+    <ClCompile Include="NiQuaternion_Win32.cpp" />
+    <ClCompile Include="NiRangeLODData.cpp" />
+    <ClCompile Include="NiRefObject.cpp" />
+    <ClCompile Include="NiRenderClick.cpp" />
+    <ClCompile Include="NiRenderClickValidator.cpp" />
+    <ClCompile Include="NiRenderedCubeMap.cpp" />
+    <ClCompile Include="NiRenderedTexture.cpp" />
+    <ClCompile Include="NiRenderer.cpp" />
+    <ClCompile Include="NiRendererSpecificProperty.cpp" />
+    <ClCompile Include="NiRenderFrame.cpp" />
+    <ClCompile Include="NiRenderListProcessor.cpp" />
+    <ClCompile Include="NiRenderObject.cpp" />
+    <ClCompile Include="NiRenderObjectMaterialOption.cpp" />
+    <ClCompile Include="NiRenderStep.cpp" />
+    <ClCompile Include="NiRenderTargetGroup.cpp" />
+    <ClCompile Include="NiRenderView.cpp" />
+    <ClCompile Include="NiRTTI.cpp" />
+    <ClCompile Include="NiSCMExtraData.cpp" />
+    <ClCompile Include="NiScreenElements.cpp" />
+    <ClCompile Include="NiScreenElementsData.cpp" />
+    <ClCompile Include="NiScreenFillingRenderView.cpp" />
+    <ClCompile Include="NiScreenLODData.cpp" />
+    <ClCompile Include="NiScreenTexture.cpp" />
+    <ClCompile Include="NiSemanticAdapterTable.cpp" />
+    <ClCompile Include="NiSemanticAdapterTableParser.cpp" />
+    <ClCompile Include="NiSGIReader.cpp" />
+    <ClCompile Include="NiShadeProperty.cpp" />
+    <ClCompile Include="NiShader.cpp" />
+    <ClCompile Include="NiShaderAttributeDesc.cpp" />
+    <ClCompile Include="NiShaderConstantMap.cpp" />
+    <ClCompile Include="NiShaderConstantMapEntry.cpp" />
+    <ClCompile Include="NiShaderDeclaration.cpp" />
+    <ClCompile Include="NiShaderDesc.cpp" />
+    <ClCompile Include="NiShaderDescBase.cpp" />
+    <ClCompile Include="NiShaderError.cpp" />
+    <ClCompile Include="NiShaderFactory.cpp" />
+    <ClCompile Include="NiShaderLibrary.cpp" />
+    <ClCompile Include="NiShaderLibraryDesc.cpp" />
+    <ClCompile Include="NiShaderRequirementDesc.cpp" />
+    <ClCompile Include="NiShaderTimeController.cpp" />
+    <ClCompile Include="NiShadowClickGenerator.cpp" />
+    <ClCompile Include="NiShadowClickValidator.cpp" />
+    <ClCompile Include="NiShadowCubeMap.cpp" />
+    <ClCompile Include="NiShadowGenerator.cpp" />
+    <ClCompile Include="NiShadowManager.cpp" />
+    <ClCompile Include="NiShadowMap.cpp" />
+    <ClCompile Include="NiShadowRenderClick.cpp" />
+    <ClCompile Include="NiShadowTechnique.cpp" />
+    <ClCompile Include="NiSingleShaderMaterial.cpp" />
+    <ClCompile Include="NiSingleShaderMaterialLibrary.cpp" />
+    <ClCompile Include="NiSkinData.cpp" />
+    <ClCompile Include="NiSkinInstance.cpp" />
+    <ClCompile Include="NiSkinPartition.cpp" />
+    <ClCompile Include="NiSortAdjustNode.cpp" />
+    <ClCompile Include="NiSourceCubeMap.cpp" />
+    <ClCompile Include="NiSourceTexture.cpp" />
+    <ClCompile Include="NiSpecularProperty.cpp" />
+    <ClCompile Include="NiSpotLight.cpp" />
+    <ClCompile Include="NiSpotShadowWriteMaterial.cpp" />
+    <ClCompile Include="NiStandardMaterial.cpp" />
+    <ClCompile Include="NiStandardMaterialDescriptor.cpp" />
+    <ClCompile Include="NiStandardPixelProgramDescriptor.cpp" />
+    <ClCompile Include="NiStandardVertexProgramDescriptor.cpp" />
+    <ClCompile Include="NiStencilProperty.cpp" />
+    <ClCompile Include="NiStream.cpp" />
+    <ClCompile Include="NiStreamOutSettings.cpp" />
+    <ClCompile Include="NiString.cpp" />
+    <ClCompile Include="NiStringExtraData.cpp" />
+    <ClCompile Include="NiStringsExtraData.cpp" />
+    <ClCompile Include="NiSwitchNode.cpp" />
+    <ClCompile Include="NiSwitchStringExtraData.cpp" />
+    <ClCompile Include="NiSyncArgs.cpp" />
+    <ClCompile Include="NiTask.cpp" />
+    <ClCompile Include="NiTaskManager.cpp" />
+    <ClCompile Include="NiTexture.cpp" />
+    <ClCompile Include="NiTextureAddressSwizzler.cpp" />
+    <ClCompile Include="NiTextureCodec.cpp" />
+    <ClCompile Include="NiTextureEffect.cpp" />
+    <ClCompile Include="NiTextureStage.cpp" />
+    <ClCompile Include="NiTextureTransform.cpp" />
+    <ClCompile Include="NiTexturingProperty.cpp" />
+    <ClCompile Include="NiTGAReader.cpp" />
+    <ClCompile Include="NiTimeController.cpp" />
+    <ClCompile Include="NiTimeSyncController.cpp" />
+    <ClCompile Include="NiTPointerAllocator.cpp" />
+    <ClCompile Include="NiTransform.cpp" />
+    <ClCompile Include="NiTriBasedGeom.cpp" />
+    <ClCompile Include="NiTriBasedGeomData.cpp" />
+    <ClCompile Include="NiTriShape.cpp" />
+    <ClCompile Include="NiTriShapeData.cpp" />
+    <ClCompile Include="NiTriShapeDynamicData.cpp" />
+    <ClCompile Include="NiTriStrips.cpp" />
+    <ClCompile Include="NiTriStripsData.cpp" />
+    <ClCompile Include="NiUpdateProcess.cpp" />
+    <ClCompile Include="NiVectorExtraData.cpp" />
+    <ClCompile Include="NiVertexColorProperty.cpp" />
+    <ClCompile Include="NiVertWeightsExtraData.cpp" />
+    <ClCompile Include="NiViewerStrings.cpp" />
+    <ClCompile Include="NiViewRenderClick.cpp" />
+    <ClCompile Include="NiVisibleArray.cpp" />
+    <ClCompile Include="NiVSMBlurMaterial.cpp" />
+    <ClCompile Include="NiVSMBlurMaterialDescriptor.cpp" />
+    <ClCompile Include="NiVSMBlurPixelProgramDescriptor.cpp" />
+    <ClCompile Include="NiVSMBlurVertexProgramDescriptor.cpp" />
+    <ClCompile Include="NiVSMShadowTechnique.cpp" />
+    <ClCompile Include="NiWireframeProperty.cpp" />
+    <ClCompile Include="NiZBufferProperty.cpp" />
+    <ClCompile Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.cpp" />
+    <ClCompile Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.cpp" />
+    <ClCompile Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.cpp" />
+    <ClCompile Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.h" />
+    <ClInclude Include="Ni2DBuffer.h" />
+    <ClInclude Include="Ni2DRenderView.h" />
+    <ClInclude Include="Ni3DRenderView.h" />
+    <ClInclude Include="NiAccumulator.h" />
+    <ClInclude Include="NiAccumulatorProcessor.h" />
+    <ClInclude Include="NiAdditionalGeometryData.h" />
+    <ClInclude Include="NiAlphaAccumulator.h" />
+    <ClInclude Include="NiAlphaProperty.h" />
+    <ClInclude Include="NiAlphaSortProcessor.h" />
+    <ClInclude Include="NiAmbientLight.h" />
+    <ClInclude Include="NiAVObject.h" />
+    <ClInclude Include="NiAVObjectPalette.h" />
+    <ClInclude Include="NiBackToFrontAccumulator.h" />
+    <ClInclude Include="NiBackToFrontSortProcessor.h" />
+    <ClInclude Include="NiBillboardNode.h" />
+    <ClInclude Include="NiBinaryExtraData.h" />
+    <ClInclude Include="NiBitfield.h" />
+    <ClInclude Include="NiBMPReader.h" />
+    <ClInclude Include="NiBool.h" />
+    <ClInclude Include="NiBooleanExtraData.h" />
+    <ClInclude Include="NiBound.h" />
+    <ClInclude Include="NiBSPNode.h" />
+    <ClInclude Include="NiCamera.h" />
+    <ClInclude Include="NiClickRenderStep.h" />
+    <ClInclude Include="NiClone.h" />
+    <ClInclude Include="NiCloningProcess.h" />
+    <ClInclude Include="NiCodeBlock.h" />
+    <ClInclude Include="NiCollisionObject.h" />
+    <ClInclude Include="NiColor.h" />
+    <ClInclude Include="NiColorExtraData.h" />
+    <ClInclude Include="NiCommonSemantics.h" />
+    <ClInclude Include="NiCompositeValidator.h" />
+    <ClInclude Include="NiCompUtility.h" />
+    <ClInclude Include="NiCulledObjectValidator.h" />
+    <ClInclude Include="NiCullingProcess.h" />
+    <ClInclude Include="NiDDSReader.h" />
+    <ClInclude Include="NiDefaultAVObjectPalette.h" />
+    <ClInclude Include="NiDefaultClickRenderStep.h" />
+    <ClInclude Include="NiDefaultShadowClickGenerator.h" />
+    <ClInclude Include="NiDepthStencilBuffer.h" />
+    <ClInclude Include="NiDevImageConverter.h" />
+    <ClInclude Include="NiDirectionalLight.h" />
+    <ClInclude Include="NiDirectionalShadowWriteMaterial.h" />
+    <ClInclude Include="NiDitherProperty.h" />
+    <ClInclude Include="NiDrawSceneUtility.h" />
+    <ClInclude Include="NiDynamicEffect.h" />
+    <ClInclude Include="NiDynamicEffectState.h" />
+    <ClInclude Include="NiDynamicTexture.h" />
+    <ClInclude Include="NiExtraData.h" />
+    <ClInclude Include="NiFixedString.h" />
+    <ClInclude Include="NiFlags.h" />
+    <ClInclude Include="NiFloatExtraData.h" />
+    <ClInclude Include="NiFloatsExtraData.h" />
+    <ClInclude Include="NiFogProperty.h" />
+    <ClInclude Include="NiFragmentMaterial.h" />
+    <ClInclude Include="NiFragmentShaderInstanceDescriptor.h" />
+    <ClInclude Include="NiFrustum.h" />
+    <ClInclude Include="NiFrustumPlanes.h" />
+    <ClInclude Include="NiGeometricUtils.h" />
+    <ClInclude Include="NiGeometry.h" />
+    <ClInclude Include="NiGeometryData.h" />
+    <ClInclude Include="NiGlobalConstantEntry.h" />
+    <ClInclude Include="NiGlobalStringTable.h" />
+    <ClInclude Include="NiGPUProgram.h" />
+    <ClInclude Include="NiGPUProgramCache.h" />
+    <ClInclude Include="NiGPUProgramDescriptor.h" />
+    <ClInclude Include="NiImageConverter.h" />
+    <ClInclude Include="NiImageReader.h" />
+    <ClInclude Include="NiIntegerExtraData.h" />
+    <ClInclude Include="NiIntegersExtraData.h" />
+    <ClInclude Include="NiLicense.h" />
+    <ClInclude Include="NiLight.h" />
+    <ClInclude Include="NiLines.h" />
+    <ClInclude Include="NiLinesData.h" />
+    <ClInclude Include="NiLODData.h" />
+    <ClInclude Include="NiLODNode.h" />
+    <ClInclude Include="NiLogicalANDCompositeValidator.h" />
+    <ClInclude Include="NiMain.h" />
+    <ClInclude Include="NiMainLibType.h" />
+    <ClInclude Include="NiMainMetrics.h" />
+    <ClInclude Include="NiMainPCH.h" />
+    <ClInclude Include="NiMainSDM.h" />
+    <ClInclude Include="NiMaterial.h" />
+    <ClInclude Include="NiMaterialConfigurator.h" />
+    <ClInclude Include="NiMaterialDescriptor.h" />
+    <ClInclude Include="NiMaterialFragmentNode.h" />
+    <ClInclude Include="NiMaterialInstance.h" />
+    <ClInclude Include="NiMaterialLibrary.h" />
+    <ClInclude Include="NiMaterialLibraryInterface.h" />
+    <ClInclude Include="NiMaterialNode.h" />
+    <ClInclude Include="NiMaterialNodeLibrary.h" />
+    <ClInclude Include="NiMaterialNodeLibraryReader.h" />
+    <ClInclude Include="NiMaterialProperty.h" />
+    <ClInclude Include="NiMaterialResource.h" />
+    <ClInclude Include="NiMaterialResourceBinding.h" />
+    <ClInclude Include="NiMaterialResourceConsumerNode.h" />
+    <ClInclude Include="NiMaterialResourceProducerNode.h" />
+    <ClInclude Include="NiMaterialSwapProcessor.h" />
+    <ClInclude Include="NiMath.h" />
+    <ClInclude Include="NiMatrix3.h" />
+    <ClInclude Include="NiMetricsLayer.h" />
+    <ClInclude Include="NiMetricsOutputModule.h" />
+    <ClInclude Include="NiMetricsScopeTimer.h" />
+    <ClInclude Include="NiMetricsTimer.h" />
+    <ClInclude Include="NiNIFImageReader.h" />
+    <ClInclude Include="NiNode.h" />
+    <ClInclude Include="NiObject.h" />
+    <ClInclude Include="NiObjectGroup.h" />
+    <ClInclude Include="NiObjectNET.h" />
+    <ClInclude Include="NiOldScreenSpace.h" />
+    <ClInclude Include="NiOutputStreamDescriptor.h" />
+    <ClInclude Include="NiPalette.h" />
+    <ClInclude Include="NiParallelUpdateTaskManager.h" />
+    <ClInclude Include="NiParticles.h" />
+    <ClInclude Include="NiParticlesData.h" />
+    <ClInclude Include="NiPersistentSrcTextureRendererData.h" />
+    <ClInclude Include="NiPixelData.h" />
+    <ClInclude Include="NiPixelFormat.h" />
+    <ClInclude Include="NiPlane.h" />
+    <ClInclude Include="NiPoint2.h" />
+    <ClInclude Include="NiPoint3.h" />
+    <ClInclude Include="NiPoint4.h" />
+    <ClInclude Include="NiPointLight.h" />
+    <ClInclude Include="NiPointShadowWriteMaterial.h" />
+    <ClInclude Include="NiPrimitiveType.h" />
+    <ClInclude Include="NiProcessor.h" />
+    <ClInclude Include="NiProperty.h" />
+    <ClInclude Include="NiPropertyState.h" />
+    <ClInclude Include="NiQuaternion.h" />
+    <ClInclude Include="NiRangeLODData.h" />
+    <ClInclude Include="NiRect.h" />
+    <ClInclude Include="NiRefObject.h" />
+    <ClInclude Include="NiRenderCallContext.h" />
+    <ClInclude Include="NiRenderClick.h" />
+    <ClInclude Include="NiRenderClickValidator.h" />
+    <ClInclude Include="NiRenderedCubeMap.h" />
+    <ClInclude Include="NiRenderedTexture.h" />
+    <ClInclude Include="NiRenderer.h" />
+    <ClInclude Include="NiRendererSpecificProperty.h" />
+    <ClInclude Include="NiRenderFrame.h" />
+    <ClInclude Include="NiRenderListProcessor.h" />
+    <ClInclude Include="NiRenderObject.h" />
+    <ClInclude Include="NiRenderObjectMaterialOption.h" />
+    <ClInclude Include="NiRenderStep.h" />
+    <ClInclude Include="NiRenderTargetGroup.h" />
+    <ClInclude Include="NiRenderView.h" />
+    <ClInclude Include="NiRTTI.h" />
+    <ClInclude Include="NiSCMExtraData.h" />
+    <ClInclude Include="NiScreenElements.h" />
+    <ClInclude Include="NiScreenElementsData.h" />
+    <ClInclude Include="NiScreenFillingRenderView.h" />
+    <ClInclude Include="NiScreenLODData.h" />
+    <ClInclude Include="NiScreenTexture.h" />
+    <ClInclude Include="NiSemanticAdapterTable.h" />
+    <ClInclude Include="NiSemanticAdapterTableParser.h" />
+    <ClInclude Include="NiSGIReader.h" />
+    <ClInclude Include="NiShadeProperty.h" />
+    <ClInclude Include="NiShader.h" />
+    <ClInclude Include="NiShaderAttributeDesc.h" />
+    <ClInclude Include="NiShaderConstantMap.h" />
+    <ClInclude Include="NiShaderConstantMapEntry.h" />
+    <ClInclude Include="NiShaderDeclaration.h" />
+    <ClInclude Include="NiShaderDesc.h" />
+    <ClInclude Include="NiShaderDescBase.h" />
+    <ClInclude Include="NiShaderError.h" />
+    <ClInclude Include="NiShaderFactory.h" />
+    <ClInclude Include="NiShaderLibrary.h" />
+    <ClInclude Include="NiShaderLibraryDesc.h" />
+    <ClInclude Include="NiShaderRequirementDesc.h" />
+    <ClInclude Include="NiShaderTimeController.h" />
+    <ClInclude Include="NiShadowClickGenerator.h" />
+    <ClInclude Include="NiShadowClickValidator.h" />
+    <ClInclude Include="NiShadowCubeMap.h" />
+    <ClInclude Include="NiShadowGenerator.h" />
+    <ClInclude Include="NiShadowManager.h" />
+    <ClInclude Include="NiShadowMap.h" />
+    <ClInclude Include="NiShadowRenderClick.h" />
+    <ClInclude Include="NiShadowTechnique.h" />
+    <ClInclude Include="NiSingleShaderMaterial.h" />
+    <ClInclude Include="NiSingleShaderMaterialLibrary.h" />
+    <ClInclude Include="NiSkinData.h" />
+    <ClInclude Include="NiSkinInstance.h" />
+    <ClInclude Include="NiSkinPartition.h" />
+    <ClInclude Include="NiSmartPointer.h" />
+    <ClInclude Include="NiSortAdjustNode.h" />
+    <ClInclude Include="NiSourceCubeMap.h" />
+    <ClInclude Include="NiSourceTexture.h" />
+    <ClInclude Include="NiSpecularProperty.h" />
+    <ClInclude Include="NiSpotLight.h" />
+    <ClInclude Include="NiSpotShadowWriteMaterial.h" />
+    <ClInclude Include="NiStandardMaterial.h" />
+    <ClInclude Include="NiStandardMaterialDescriptor.h" />
+    <ClInclude Include="NiStandardPixelProgramDescriptor.h" />
+    <ClInclude Include="NiStandardVertexProgramDescriptor.h" />
+    <ClInclude Include="NiStencilProperty.h" />
+    <ClInclude Include="NiStopWatch.h" />
+    <ClInclude Include="NiStream.h" />
+    <ClInclude Include="NiStreamMacros.h" />
+    <ClInclude Include="NiStreamOutSettings.h" />
+    <ClInclude Include="NiString.h" />
+    <ClInclude Include="NiStringExtraData.h" />
+    <ClInclude Include="NiStringsExtraData.h" />
+    <ClInclude Include="NiSwitchNode.h" />
+    <ClInclude Include="NiSwitchStringExtraData.h" />
+    <ClInclude Include="NiSyncArgs.h" />
+    <ClInclude Include="NiTAbstractPoolAllocator.h" />
+    <ClInclude Include="NiTArray.h" />
+    <ClInclude Include="NiTask.h" />
+    <ClInclude Include="NiTaskManager.h" />
+    <ClInclude Include="NiTCollection.h" />
+    <ClInclude Include="NiTDefaultAllocator.h" />
+    <ClInclude Include="NiTexture.h" />
+    <ClInclude Include="NiTextureAddressSwizzler.h" />
+    <ClInclude Include="NiTextureCodec.h" />
+    <ClInclude Include="NiTextureEffect.h" />
+    <ClInclude Include="NiTexturePalette.h" />
+    <ClInclude Include="NiTextureStage.h" />
+    <ClInclude Include="NiTextureTransform.h" />
+    <ClInclude Include="NiTexturingProperty.h" />
+    <ClInclude Include="NiTFixedStringMap.h" />
+    <ClInclude Include="NiTGAReader.h" />
+    <ClInclude Include="NiTimeController.h" />
+    <ClInclude Include="NiTimeSyncController.h" />
+    <ClInclude Include="NiTLargeArray.h" />
+    <ClInclude Include="NiTList.h" />
+    <ClInclude Include="NiTListBase.h" />
+    <ClInclude Include="NiTMap.h" />
+    <ClInclude Include="NiTMapBase.h" />
+    <ClInclude Include="NiTNodeTraversal.h" />
+    <ClInclude Include="NiTObjectAllocator.h" />
+    <ClInclude Include="NiTObjectList.h" />
+    <ClInclude Include="NiTPointerAllocator.h" />
+    <ClInclude Include="NiTPointerList.h" />
+    <ClInclude Include="NiTPointerListBase.h" />
+    <ClInclude Include="NiTPointerMap.h" />
+    <ClInclude Include="NiTPool.h" />
+    <ClInclude Include="NiTPtrSet.h" />
+    <ClInclude Include="NiTQueue.h" />
+    <ClInclude Include="NiTransform.h" />
+    <ClInclude Include="NiTriBasedGeom.h" />
+    <ClInclude Include="NiTriBasedGeomData.h" />
+    <ClInclude Include="NiTriShape.h" />
+    <ClInclude Include="NiTriShapeData.h" />
+    <ClInclude Include="NiTriShapeDynamicData.h" />
+    <ClInclude Include="NiTriStrips.h" />
+    <ClInclude Include="NiTriStripsData.h" />
+    <ClInclude Include="NiTSet.h" />
+    <ClInclude Include="NiTStringMap.h" />
+    <ClInclude Include="NiUpdateProcess.h" />
+    <ClInclude Include="NiVectorExtraData.h" />
+    <ClInclude Include="NiVertexColorProperty.h" />
+    <ClInclude Include="NiVertWeightsExtraData.h" />
+    <ClInclude Include="NiViewerStrings.h" />
+    <ClInclude Include="NiViewRenderClick.h" />
+    <ClInclude Include="NiVisibleArray.h" />
+    <ClInclude Include="NiVSMBlurMaterial.h" />
+    <ClInclude Include="NiVSMBlurMaterialDescriptor.h" />
+    <ClInclude Include="NiVSMBlurPixelProgramDescriptor.h" />
+    <ClInclude Include="NiVSMBlurVertexProgramDescriptor.h" />
+    <ClInclude Include="NiVSMShadowTechnique.h" />
+    <ClInclude Include="NiWireframeProperty.h" />
+    <ClInclude Include="NiZBufferProperty.h" />
+    <ClInclude Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.h" />
+    <ClInclude Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.h" />
+    <ClInclude Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.h" />
+    <ClInclude Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Ni2DBuffer.inl" />
+    <None Include="Ni2DRenderView.inl" />
+    <None Include="Ni3DRenderView.inl" />
+    <None Include="NiAccumulatorProcessor.inl" />
+    <None Include="NiAdditionalGeometryData.inl" />
+    <None Include="NiAlphaAccumulator.inl" />
+    <None Include="NiAlphaProperty.inl" />
+    <None Include="NiAlphaSortProcessor.inl" />
+    <None Include="NiAmbientLight.inl" />
+    <None Include="NiAVObject.inl" />
+    <None Include="NiBackToFrontSortProcessor.inl" />
+    <None Include="NiBillboardNode.inl" />
+    <None Include="NiBinaryExtraData.inl" />
+    <None Include="NiBooleanExtraData.inl" />
+    <None Include="NiBound.inl" />
+    <None Include="NiBSPNode.inl" />
+    <None Include="NiCamera.inl" />
+    <None Include="NiColor.inl" />
+    <None Include="NiColorExtraData.inl" />
+    <None Include="NiCommonSemantics.inl" />
+    <None Include="NiCompositeValidator.inl" />
+    <None Include="NiCulledObjectValidator.inl" />
+    <None Include="NiCullingProcess.inl" />
+    <None Include="NiDefaultAVObjectPalette.inl" />
+    <None Include="NiDefaultClickRenderStep.inl" />
+    <None Include="NiDevImageConverter.inl" />
+    <None Include="NiDirectionalLight.inl" />
+    <None Include="NiDitherProperty.inl" />
+    <None Include="NiDynamicEffect.inl" />
+    <None Include="NiDynamicEffectState.inl" />
+    <None Include="NiDynamicTexture.inl" />
+    <None Include="NiFixedString.inl" />
+    <None Include="NiFloatExtraData.inl" />
+    <None Include="NiFloatsExtraData.inl" />
+    <None Include="NiFogProperty.inl" />
+    <None Include="NiFrustumPlanes.inl" />
+    <None Include="NiGeometricUtils.inl" />
+    <None Include="NiGeometry.inl" />
+    <None Include="NiGeometryData.inl" />
+    <None Include="NiGlobalConstantEntry.inl" />
+    <None Include="NiGlobalStringTable.inl" />
+    <None Include="NiGPUProgram.inl" />
+    <None Include="NiIntegerExtraData.inl" />
+    <None Include="NiIntegersExtraData.inl" />
+    <None Include="NiLight.inl" />
+    <None Include="NiLines.inl" />
+    <None Include="NiLinesData.inl" />
+    <None Include="NiLODNode.inl" />
+    <None Include="NiMainMetrics.inl" />
+    <None Include="NiMaterial.inl" />
+    <None Include="NiMaterialInstance.inl" />
+    <None Include="NiMaterialProperty.inl" />
+    <None Include="NiMaterialSwapProcessor.inl" />
+    <None Include="NiMath.inl" />
+    <None Include="NiMatrix3.inl" />
+    <None Include="NiMetricsLayer.inl" />
+    <None Include="NiMetricsScopeTimer.inl" />
+    <None Include="NiMetricsTimer.inl" />
+    <None Include="NiNode.inl" />
+    <None Include="NiObjectGroup.inl" />
+    <None Include="NiObjectNET.inl" />
+    <None Include="NiOutputStreamDescriptor.inl" />
+    <None Include="NiPalette.inl" />
+    <None Include="NiParallelUpdateTaskManager.inl" />
+    <None Include="NiParticles.inl" />
+    <None Include="NiParticlesData.inl" />
+    <None Include="NiPersistentSrcTextureRendererData.inl" />
+    <None Include="NiPixelData.inl" />
+    <None Include="NiPixelFormat.inl" />
+    <None Include="NiPlane.inl" />
+    <None Include="NiPoint2.inl" />
+    <None Include="NiPoint3.inl" />
+    <None Include="NiPoint4.inl" />
+    <None Include="NiPoint4_Platform.inl" />
+    <None Include="NiPointLight.inl" />
+    <None Include="NiProperty.inl" />
+    <None Include="NiPropertyState.inl" />
+    <None Include="NiQuaternion.inl" />
+    <None Include="NiRangeLODData.inl" />
+    <None Include="NiRect.inl" />
+    <None Include="NiRefObject.inl" />
+    <None Include="NiRenderClick.inl" />
+    <None Include="NiRenderedCubeMap.inl" />
+    <None Include="NiRenderedTexture.inl" />
+    <None Include="NiRenderer.inl" />
+    <None Include="NiRendererSpecificProperty.inl" />
+    <None Include="NiRenderFrame.inl" />
+    <None Include="NiRenderObject.inl" />
+    <None Include="NiRenderObjectMaterialOption.inl" />
+    <None Include="NiRenderStep.inl" />
+    <None Include="NiRenderView.inl" />
+    <None Include="NiSCMExtraData.inl" />
+    <None Include="NiScreenElements.inl" />
+    <None Include="NiScreenElementsData.inl" />
+    <None Include="NiScreenFillingRenderView.inl" />
+    <None Include="NiScreenLODData.inl" />
+    <None Include="NiSemanticAdapterTable.inl" />
+    <None Include="NiShadeProperty.inl" />
+    <None Include="NiShader.inl" />
+    <None Include="NiShaderConstantMap.inl" />
+    <None Include="NiShaderConstantMapEntry.inl" />
+    <None Include="NiShaderDeclaration.inl" />
+    <None Include="NiShadowClickGenerator.inl" />
+    <None Include="NiShadowClickValidator.inl" />
+    <None Include="NiShadowCubeMap.inl" />
+    <None Include="NiShadowGenerator.inl" />
+    <None Include="NiShadowManager.inl" />
+    <None Include="NiShadowMap.inl" />
+    <None Include="NiShadowRenderClick.inl" />
+    <None Include="NiShadowTechnique.inl" />
+    <None Include="NiSkinData.inl" />
+    <None Include="NiSkinPartition.inl" />
+    <None Include="NiSortAdjustNode.inl" />
+    <None Include="NiSourceCubeMap.inl" />
+    <None Include="NiSourceTexture.inl" />
+    <None Include="NiSpecularProperty.inl" />
+    <None Include="NiSpotLight.inl" />
+    <None Include="NiStencilProperty.inl" />
+    <None Include="NiStopWatch.inl" />
+    <None Include="NiStream.inl" />
+    <None Include="NiStreamOutSettings.inl" />
+    <None Include="NiStringExtraData.inl" />
+    <None Include="NiStringsExtraData.inl" />
+    <None Include="NiSwitchNode.inl" />
+    <None Include="NiSwitchStringExtraData.inl" />
+    <None Include="NiSyncArgs.inl" />
+    <None Include="NiTAbstractPoolAllocator.inl" />
+    <None Include="NiTArray.inl" />
+    <None Include="NiTask.inl" />
+    <None Include="NiTaskManager.inl" />
+    <None Include="NiTexture.inl" />
+    <None Include="NiTextureAddressSwizzler.inl" />
+    <None Include="NiTextureEffect.inl" />
+    <None Include="NiTexturePalette.inl" />
+    <None Include="NiTextureStage.inl" />
+    <None Include="NiTextureTransform.inl" />
+    <None Include="NiTexturingProperty.inl" />
+    <None Include="NiTFixedStringMap.inl" />
+    <None Include="NiTimeController.inl" />
+    <None Include="NiTimeSyncController.inl" />
+    <None Include="NiTLargeArray.inl" />
+    <None Include="NiTListBase.inl" />
+    <None Include="NiTMap.inl" />
+    <None Include="NiTMapBase.inl" />
+    <None Include="NiTNodeTraversal.inl" />
+    <None Include="NiTObjectAllocator.inl" />
+    <None Include="NiTObjectList.inl" />
+    <None Include="NiTPointerAllocator.inl" />
+    <None Include="NiTPointerListBase.inl" />
+    <None Include="NiTPointerMap.inl" />
+    <None Include="NiTPool.inl" />
+    <None Include="NiTQueue.inl" />
+    <None Include="NiTransform.inl" />
+    <None Include="NiTriBasedGeom.inl" />
+    <None Include="NiTriBasedGeomData.inl" />
+    <None Include="NiTriShape.inl" />
+    <None Include="NiTriShapeData.inl" />
+    <None Include="NiTriShapeDynamicData.inl" />
+    <None Include="NiTriStripsData.inl" />
+    <None Include="NiTSet.inl" />
+    <None Include="NiTStringMap.inl" />
+    <None Include="NiUpdateProcess.inl" />
+    <None Include="NiVectorExtraData.inl" />
+    <None Include="NiVertexColorProperty.inl" />
+    <None Include="NiVertWeightsExtraData.inl" />
+    <None Include="NiViewRenderClick.inl" />
+    <None Include="NiVisibleArray.inl" />
+    <None Include="NiWireframeProperty.inl" />
+    <None Include="NiZBufferProperty.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NiSystem\NiSystem.vcxproj">
+      <Project>{5358ade4-6c2f-43b1-a4ef-899f4c2fa7f7}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{ed638d56-93d9-409f-ac86-1622f3361640}</ProjectGuid>
+    <RootNamespace>NiMain</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIMAIN_EXPORT;NISYSTEM_IMPORT;NI_USE_PCH;NIDEBUG;WIN32;_DEBUG;NIMAIN_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiMainPCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiSystem;$(ProjectDir);$(ProjectDir)DirectionalShadowWriteMaterialNodeLibrary;$(ProjectDir)PointShadowWriteMaterialNodeLibrary;$(ProjectDir)SpotShadowWriteMaterialNodeLibrary;$(ProjectDir)SPU;$(ProjectDir)StandardMaterialNodeLibrary;$(ProjectDir)VSMBlurMaterialNodeLibrary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>NiSystem.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\bin\NiSystem\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIMAIN_EXPORT;NISYSTEM_IMPORT;NI_USE_PCH;NIRELEASE;WIN32;NDEBUG;NIMAIN_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiMainPCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiSystem;$(ProjectDir);$(ProjectDir)DirectionalShadowWriteMaterialNodeLibrary;$(ProjectDir)PointShadowWriteMaterialNodeLibrary;$(ProjectDir)SpotShadowWriteMaterialNodeLibrary;$(ProjectDir)SPU;$(ProjectDir)StandardMaterialNodeLibrary;$(ProjectDir)VSMBlurMaterialNodeLibrary;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>NiSystem.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\bin\NiSystem\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

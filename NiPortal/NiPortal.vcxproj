@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="NiFixtureCuller.cpp" />
+    <ClCompile Include="NiPortal.cpp" />
+    <ClCompile Include="NiPortalMetrics.cpp" />
+    <ClCompile Include="NiPortalPCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NiPortalSDM.cpp" />
+    <ClCompile Include="NiRoom.cpp" />
+    <ClCompile Include="NiRoomGroup.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NiFixtureCuller.h" />
+    <ClInclude Include="NiPortal.h" />
+    <ClInclude Include="NiPortalLibType.h" />
+    <ClInclude Include="NiPortalMetrics.h" />
+    <ClInclude Include="NiPortalPCH.h" />
+    <ClInclude Include="NiPortalSDM.h" />
+    <ClInclude Include="NiRoom.h" />
+    <ClInclude Include="NiRoomGroup.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NiPortal.inl" />
+    <None Include="NiRoom.inl" />
+    <None Include="NiRoomGroup.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NiMain\NiMain.vcxproj">
+      <Project>{ed638d56-93d9-409f-ac86-1622f3361640}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiMesh\NiMesh.vcxproj">
+      <Project>{7b19e8e7-4bd4-4a5a-9dc7-10f3886a7cfd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiSystem\NiSystem.vcxproj">
+      <Project>{5358ade4-6c2f-43b1-a4ef-899f4c2fa7f7}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{ea714416-b278-4528-ae85-7f59e9a0fec3}</ProjectGuid>
+    <RootNamespace>NiPortal</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIPORTAL_EXPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NIMESH_IMPORT;NI_USE_PCH;NIDEBUG;WIN32;_DEBUG;NIPORTAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiPortalPCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(SolutionDir)NiMesh;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\bin\NiMain\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiSystem\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiMesh\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>NiMain.lib;NiSystem.lib;NiMesh.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIPORTAL_EXPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NIMESH_IMPORT;NI_USE_PCH;NIRELEASE;WIN32;NDEBUG;NIPORTAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiPortalPCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(SolutionDir)NiMesh;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\bin\NiMain\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiSystem\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiMesh\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>NiMain.lib;NiSystem.lib;NiMesh.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;NIPORTAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;NIPORTAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

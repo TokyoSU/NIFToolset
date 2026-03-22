@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Kernels\NiPSFacingQuadGeneratorKernel\NiPSFacingQuadGeneratorKernel.h" />
+    <ClInclude Include="Kernels\NiPSSimulatorCollidersKernel\NiPSSimulatorCollidersKernel.h" />
+    <ClInclude Include="Kernels\NiPSSimulatorFinalKernel\NiPSSimulatorFinalKernel.h" />
+    <ClInclude Include="Kernels\NiPSSimulatorForcesKernel\NiPSSimulatorForcesKernel.h" />
+    <ClInclude Include="Kernels\NiPSSimulatorGeneralKernel\NiPSSimulatorGeneralKernel.h" />
+    <ClInclude Include="NiParticle.h" />
+    <ClInclude Include="NiParticleLibType.h" />
+    <ClInclude Include="NiParticlePCH.h" />
+    <ClInclude Include="NiParticleSDM.h" />
+    <ClInclude Include="NiPSAirFieldAirFrictionCtlr.h" />
+    <ClInclude Include="NiPSAirFieldForce.h" />
+    <ClInclude Include="NiPSAirFieldInheritedVelocityCtlr.h" />
+    <ClInclude Include="NiPSAirFieldSpreadCtlr.h" />
+    <ClInclude Include="NiPSBombForce.h" />
+    <ClInclude Include="NiPSBoundUpdater.h" />
+    <ClInclude Include="NiPSBoxEmitter.h" />
+    <ClInclude Include="NiPSCollider.h" />
+    <ClInclude Include="NiPSColliderDefinitions.h" />
+    <ClInclude Include="NiPSColliderHelpers.h" />
+    <ClInclude Include="NiPSCommonSemantics.h" />
+    <ClInclude Include="NiPSConverter.h" />
+    <ClInclude Include="NiPSCylinderEmitter.h" />
+    <ClInclude Include="NiPSDragFieldForce.h" />
+    <ClInclude Include="NiPSDragForce.h" />
+    <ClInclude Include="NiPSEmitParticlesCtlr.h" />
+    <ClInclude Include="NiPSEmitter.h" />
+    <ClInclude Include="NiPSEmitterCtlr.h" />
+    <ClInclude Include="NiPSEmitterDeclinationCtlr.h" />
+    <ClInclude Include="NiPSEmitterDeclinationVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterFloatCtlr.h" />
+    <ClInclude Include="NiPSEmitterLifeSpanCtlr.h" />
+    <ClInclude Include="NiPSEmitterPlanarAngleCtlr.h" />
+    <ClInclude Include="NiPSEmitterPlanarAngleVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterRadiusCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotAngleCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotAngleVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotSpeedCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotSpeedVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterSpeedCtlr.h" />
+    <ClInclude Include="NiPSFacingQuadGenerator.h" />
+    <ClInclude Include="NiPSFieldAttenuationCtlr.h" />
+    <ClInclude Include="NiPSFieldForce.h" />
+    <ClInclude Include="NiPSFieldMagnitudeCtlr.h" />
+    <ClInclude Include="NiPSFieldMaxDistanceCtlr.h" />
+    <ClInclude Include="NiPSFlagsHelpers.h" />
+    <ClInclude Include="NiPSForce.h" />
+    <ClInclude Include="NiPSForceActiveCtlr.h" />
+    <ClInclude Include="NiPSForceBoolCtlr.h" />
+    <ClInclude Include="NiPSForceCtlr.h" />
+    <ClInclude Include="NiPSForceDefinitions.h" />
+    <ClInclude Include="NiPSForceFloatCtlr.h" />
+    <ClInclude Include="NiPSForceHelpers.h" />
+    <ClInclude Include="NiPSGravityFieldForce.h" />
+    <ClInclude Include="NiPSGravityForce.h" />
+    <ClInclude Include="NiPSGravityStrengthCtlr.h" />
+    <ClInclude Include="NiPSKernelDefinitions.h" />
+    <ClInclude Include="NiPSMeshEmitter.h" />
+    <ClInclude Include="NiPSMeshParticleSystem.h" />
+    <ClInclude Include="NiPSMetrics.h" />
+    <ClInclude Include="NiPSParticleSystem.h" />
+    <ClInclude Include="NiPSPlanarCollider.h" />
+    <ClInclude Include="NiPSRadialFieldForce.h" />
+    <ClInclude Include="NiPSResetOnLoopCtlr.h" />
+    <ClInclude Include="NiPSSimulator.h" />
+    <ClInclude Include="NiPSSimulatorCollidersStep.h" />
+    <ClInclude Include="NiPSSimulatorFinalStep.h" />
+    <ClInclude Include="NiPSSimulatorForcesStep.h" />
+    <ClInclude Include="NiPSSimulatorGeneralStep.h" />
+    <ClInclude Include="NiPSSimulatorKernelHelpers.h" />
+    <ClInclude Include="NiPSSimulatorStep.h" />
+    <ClInclude Include="NiPSSpawner.h" />
+    <ClInclude Include="NiPSSphereEmitter.h" />
+    <ClInclude Include="NiPSSphericalCollider.h" />
+    <ClInclude Include="NiPSTurbulenceFieldForce.h" />
+    <ClInclude Include="NiPSVolumeEmitter.h" />
+    <ClInclude Include="NiPSVortexFieldForce.h" />
+    <ClInclude Include="_Deprecated\NiMeshParticleSystem.h" />
+    <ClInclude Include="_Deprecated\NiMeshPSysData.h" />
+    <ClInclude Include="_Deprecated\NiParticleInfo.h" />
+    <ClInclude Include="_Deprecated\NiParticleSystem.h" />
+    <ClInclude Include="_Deprecated\NiPSysAgeDeathModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysAirFieldAirFrictionCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysAirFieldInheritVelocityCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysAirFieldModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysAirFieldSpreadCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysBombModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysBoundUpdateModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysBoxEmitter.h" />
+    <ClInclude Include="_Deprecated\NiPSysCollider.h" />
+    <ClInclude Include="_Deprecated\NiPSysColliderManager.h" />
+    <ClInclude Include="_Deprecated\NiPSysColorModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysCylinderEmitter.h" />
+    <ClInclude Include="_Deprecated\NiPSysData.h" />
+    <ClInclude Include="_Deprecated\NiPSysDragFieldModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysDragModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitter.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterCtlrData.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterDeclinationCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterDeclinationVarCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterInitialRadiusCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterLifeSpanCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterPlanarAngleCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterPlanarAngleVarCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysEmitterSpeedCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysFieldAttenuationCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysFieldMagnitudeCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysFieldMaxDistanceCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysFieldModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysGravityFieldModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysGravityModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysGravityStrengthCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysGrowFadeModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysInitialRotAngleCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysInitialRotAngleVarCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysInitialRotSpeedCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysInitialRotSpeedVarCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysMeshEmitter.h" />
+    <ClInclude Include="_Deprecated\NiPSysMeshUpdateModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysModifierActiveCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysModifierBoolCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysModifierCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysModifierFloatCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysPlanarCollider.h" />
+    <ClInclude Include="_Deprecated\NiPSysPositionModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysRadialFieldModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysResetOnLoopCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysRotationModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysSpawnModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysSphereEmitter.h" />
+    <ClInclude Include="_Deprecated\NiPSysSphericalCollider.h" />
+    <ClInclude Include="_Deprecated\NiPSysTurbulenceFieldModifier.h" />
+    <ClInclude Include="_Deprecated\NiPSysUpdateCtlr.h" />
+    <ClInclude Include="_Deprecated\NiPSysVolumeEmitter.h" />
+    <ClInclude Include="_Deprecated\NiPSysVortexFieldModifier.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Kernels\NiPSFacingQuadGeneratorKernel\NiPSFacingQuadGeneratorKernel.cpp" />
+    <ClCompile Include="Kernels\NiPSSimulatorCollidersKernel\NiPSSimulatorCollidersKernel.cpp" />
+    <ClCompile Include="Kernels\NiPSSimulatorFinalKernel\NiPSSimulatorFinalKernel.cpp" />
+    <ClCompile Include="Kernels\NiPSSimulatorForcesKernel\NiPSSimulatorForcesKernel.cpp" />
+    <ClCompile Include="Kernels\NiPSSimulatorGeneralKernel\NiPSSimulatorGeneralKernel.cpp" />
+    <ClCompile Include="NiParticlePCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NiParticleSDM.cpp" />
+    <ClCompile Include="NiPSAirFieldAirFrictionCtlr.cpp" />
+    <ClCompile Include="NiPSAirFieldForce.cpp" />
+    <ClCompile Include="NiPSAirFieldInheritedVelocityCtlr.cpp" />
+    <ClCompile Include="NiPSAirFieldSpreadCtlr.cpp" />
+    <ClCompile Include="NiPSBombForce.cpp" />
+    <ClCompile Include="NiPSBoundUpdater.cpp" />
+    <ClCompile Include="NiPSBoxEmitter.cpp" />
+    <ClCompile Include="NiPSCollider.cpp" />
+    <ClCompile Include="NiPSCommonSemantics.cpp" />
+    <ClCompile Include="NiPSConverter.cpp" />
+    <ClCompile Include="NiPSCylinderEmitter.cpp" />
+    <ClCompile Include="NiPSDragFieldForce.cpp" />
+    <ClCompile Include="NiPSDragForce.cpp" />
+    <ClCompile Include="NiPSEmitParticlesCtlr.cpp" />
+    <ClCompile Include="NiPSEmitter.cpp" />
+    <ClCompile Include="NiPSEmitterCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterDeclinationCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterDeclinationVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterFloatCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterLifeSpanCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterPlanarAngleCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterPlanarAngleVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRadiusCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotAngleCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotAngleVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotSpeedCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotSpeedVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterSpeedCtlr.cpp" />
+    <ClCompile Include="NiPSFacingQuadGenerator.cpp" />
+    <ClCompile Include="NiPSFieldAttenuationCtlr.cpp" />
+    <ClCompile Include="NiPSFieldForce.cpp" />
+    <ClCompile Include="NiPSFieldMagnitudeCtlr.cpp" />
+    <ClCompile Include="NiPSFieldMaxDistanceCtlr.cpp" />
+    <ClCompile Include="NiPSForce.cpp" />
+    <ClCompile Include="NiPSForceActiveCtlr.cpp" />
+    <ClCompile Include="NiPSForceBoolCtlr.cpp" />
+    <ClCompile Include="NiPSForceCtlr.cpp" />
+    <ClCompile Include="NiPSForceFloatCtlr.cpp" />
+    <ClCompile Include="NiPSGravityFieldForce.cpp" />
+    <ClCompile Include="NiPSGravityForce.cpp" />
+    <ClCompile Include="NiPSGravityStrengthCtlr.cpp" />
+    <ClCompile Include="NiPSMeshEmitter.cpp" />
+    <ClCompile Include="NiPSMeshParticleSystem.cpp" />
+    <ClCompile Include="NiPSMetrics.cpp" />
+    <ClCompile Include="NiPSParticleSystem.cpp" />
+    <ClCompile Include="NiPSPlanarCollider.cpp" />
+    <ClCompile Include="NiPSRadialFieldForce.cpp" />
+    <ClCompile Include="NiPSResetOnLoopCtlr.cpp" />
+    <ClCompile Include="NiPSSimulator.cpp" />
+    <ClCompile Include="NiPSSimulatorCollidersStep.cpp" />
+    <ClCompile Include="NiPSSimulatorFinalStep.cpp" />
+    <ClCompile Include="NiPSSimulatorForcesStep.cpp" />
+    <ClCompile Include="NiPSSimulatorGeneralStep.cpp" />
+    <ClCompile Include="NiPSSimulatorStep.cpp" />
+    <ClCompile Include="NiPSSpawner.cpp" />
+    <ClCompile Include="NiPSSphereEmitter.cpp" />
+    <ClCompile Include="NiPSSphericalCollider.cpp" />
+    <ClCompile Include="NiPSTurbulenceFieldForce.cpp" />
+    <ClCompile Include="NiPSVolumeEmitter.cpp" />
+    <ClCompile Include="NiPSVortexFieldForce.cpp" />
+    <ClCompile Include="_Deprecated\NiMeshParticleSystem.cpp" />
+    <ClCompile Include="_Deprecated\NiMeshPSysData.cpp" />
+    <ClCompile Include="_Deprecated\NiParticleInfo.cpp" />
+    <ClCompile Include="_Deprecated\NiParticleSystem.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysAgeDeathModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysAirFieldAirFrictionCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysAirFieldInheritVelocityCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysAirFieldModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysAirFieldSpreadCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysBombModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysBoundUpdateModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysBoxEmitter.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysCollider.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysColliderManager.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysColorModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysCylinderEmitter.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysData.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysDragFieldModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysDragModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitter.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterCtlrData.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterDeclinationCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterDeclinationVarCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterInitialRadiusCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterLifeSpanCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterPlanarAngleCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterPlanarAngleVarCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysEmitterSpeedCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysFieldAttenuationCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysFieldMagnitudeCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysFieldMaxDistanceCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysFieldModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysGravityFieldModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysGravityModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysGravityStrengthCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysGrowFadeModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysInitialRotAngleCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysInitialRotAngleVarCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysInitialRotSpeedCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysInitialRotSpeedVarCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysMeshEmitter.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysMeshUpdateModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysModifierActiveCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysModifierBoolCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysModifierCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysModifierFloatCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysPlanarCollider.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysPositionModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysRadialFieldModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysResetOnLoopCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysRotationModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysSpawnModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysSphereEmitter.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysSphericalCollider.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysTurbulenceFieldModifier.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysUpdateCtlr.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysVolumeEmitter.cpp" />
+    <ClCompile Include="_Deprecated\NiPSysVortexFieldModifier.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NiPSAirFieldForce.inl" />
+    <None Include="NiPSBombForce.inl" />
+    <None Include="NiPSBoundUpdater.inl" />
+    <None Include="NiPSBoxEmitter.inl" />
+    <None Include="NiPSCollider.inl" />
+    <None Include="NiPSColliderHelpers.inl" />
+    <None Include="NiPSCommonSemantics.inl" />
+    <None Include="NiPSConverter.inl" />
+    <None Include="NiPSCylinderEmitter.inl" />
+    <None Include="NiPSDragFieldForce.inl" />
+    <None Include="NiPSDragForce.inl" />
+    <None Include="NiPSEmitter.inl" />
+    <None Include="NiPSEmitterCtlr.inl" />
+    <None Include="NiPSFieldForce.inl" />
+    <None Include="NiPSFlagsHelpers.inl" />
+    <None Include="NiPSForce.inl" />
+    <None Include="NiPSForceCtlr.inl" />
+    <None Include="NiPSForceHelpers.inl" />
+    <None Include="NiPSGravityFieldForce.inl" />
+    <None Include="NiPSGravityForce.inl" />
+    <None Include="NiPSMeshEmitter.inl" />
+    <None Include="NiPSMeshParticleSystem.inl" />
+    <None Include="NiPSParticleSystem.inl" />
+    <None Include="NiPSPlanarCollider.inl" />
+    <None Include="NiPSRadialFieldForce.inl" />
+    <None Include="NiPSSimulator.inl" />
+    <None Include="NiPSSimulatorCollidersStep.inl" />
+    <None Include="NiPSSimulatorForcesStep.inl" />
+    <None Include="NiPSSimulatorGeneralStep.inl" />
+    <None Include="NiPSSimulatorKernelHelpers.inl" />
+    <None Include="NiPSSimulatorStep.inl" />
+    <None Include="NiPSSpawner.inl" />
+    <None Include="NiPSSphereEmitter.inl" />
+    <None Include="NiPSSphericalCollider.inl" />
+    <None Include="NiPSTurbulenceFieldForce.inl" />
+    <None Include="NiPSVolumeEmitter.inl" />
+    <None Include="NiPSVortexFieldForce.inl" />
+    <None Include="_Deprecated\NiMeshPSysData.inl" />
+    <None Include="_Deprecated\NiParticleSystem.inl" />
+    <None Include="_Deprecated\NiPSysAgeDeathModifier.inl" />
+    <None Include="_Deprecated\NiPSysAirFieldModifier.inl" />
+    <None Include="_Deprecated\NiPSysBombModifier.inl" />
+    <None Include="_Deprecated\NiPSysBoundUpdateModifier.inl" />
+    <None Include="_Deprecated\NiPSysBoxEmitter.inl" />
+    <None Include="_Deprecated\NiPSysCollider.inl" />
+    <None Include="_Deprecated\NiPSysColliderManager.inl" />
+    <None Include="_Deprecated\NiPSysColorModifier.inl" />
+    <None Include="_Deprecated\NiPSysCylinderEmitter.inl" />
+    <None Include="_Deprecated\NiPSysData.inl" />
+    <None Include="_Deprecated\NiPSysDragFieldModifier.inl" />
+    <None Include="_Deprecated\NiPSysDragModifier.inl" />
+    <None Include="_Deprecated\NiPSysEmitter.inl" />
+    <None Include="_Deprecated\NiPSysEmitterCtlrData.inl" />
+    <None Include="_Deprecated\NiPSysFieldModifier.inl" />
+    <None Include="_Deprecated\NiPSysGravityFieldModifier.inl" />
+    <None Include="_Deprecated\NiPSysGravityModifier.inl" />
+    <None Include="_Deprecated\NiPSysGrowFadeModifier.inl" />
+    <None Include="_Deprecated\NiPSysMeshEmitter.inl" />
+    <None Include="_Deprecated\NiPSysMeshUpdateModifier.inl" />
+    <None Include="_Deprecated\NiPSysModifier.inl" />
+    <None Include="_Deprecated\NiPSysModifierCtlr.inl" />
+    <None Include="_Deprecated\NiPSysPlanarCollider.inl" />
+    <None Include="_Deprecated\NiPSysRadialFieldModifier.inl" />
+    <None Include="_Deprecated\NiPSysRotationModifier.inl" />
+    <None Include="_Deprecated\NiPSysSpawnModifier.inl" />
+    <None Include="_Deprecated\NiPSysSphereEmitter.inl" />
+    <None Include="_Deprecated\NiPSysSphericalCollider.inl" />
+    <None Include="_Deprecated\NiPSysTurbulenceFieldModifier.inl" />
+    <None Include="_Deprecated\NiPSysVolumeEmitter.inl" />
+    <None Include="_Deprecated\NiPSysVortexFieldModifier.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NiAnimation\NiAnimation.vcxproj">
+      <Project>{d5edd46b-186c-4d10-9616-758ee76559a3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiFloodgate\NiFloodgate.vcxproj">
+      <Project>{c19a9a92-ed03-4835-8885-966cd3cfe0e7}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiMain\NiMain.vcxproj">
+      <Project>{ed638d56-93d9-409f-ac86-1622f3361640}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiMesh\NiMesh.vcxproj">
+      <Project>{7b19e8e7-4bd4-4a5a-9dc7-10f3886a7cfd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiSystem\NiSystem.vcxproj">
+      <Project>{5358ade4-6c2f-43b1-a4ef-899f4c2fa7f7}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{833d13d0-e286-42e7-9a7d-b5bd5396f480}</ProjectGuid>
+    <RootNamespace>NiParticle</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIPARTICLE_EXPORT;NIANIMATION_IMPORT;NISYSTEM_IMPORT;NIMAIN_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NI_USE_PCH;NIDEBUG;WIN32;_DEBUG;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiParticlePCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMain;$(SolutionDir)NiMesh;$(SolutionDir)NiSystem;$(SolutionDir)NiFloodgate;$(ProjectDir);$(ProjectDir)_Deprecated;$(ProjectDir)Kernels\NiPSFacingQuadGeneratorKernel;$(ProjectDir)Kernels\NiPSSimulatorCollidersKernel;$(ProjectDir)Kernels\NiPSSimulatorFinalKernel;$(ProjectDir)Kernels\NiPSSimulatorForcesKernel;$(ProjectDir)Kernels\NiPSSimulatorGeneralKernel;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>NiAnimation.lib;NiMain.lib;NiSystem.lib;NiMesh.lib;NiFloodgate.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\bin\NiAnimation\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiSystem\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiMain\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiMesh\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiFloodgate\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIPARTICLE_EXPORT;NIANIMATION_IMPORT;NISYSTEM_IMPORT;NIMAIN_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NI_USE_PCH;NIRELEASE;WIN32;NDEBUG;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiParticlePCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMain;$(SolutionDir)NiMesh;$(SolutionDir)NiSystem;$(SolutionDir)NiFloodgate;$(ProjectDir);$(ProjectDir)_Deprecated;$(ProjectDir)Kernels\NiPSFacingQuadGeneratorKernel;$(ProjectDir)Kernels\NiPSSimulatorCollidersKernel;$(ProjectDir)Kernels\NiPSSimulatorFinalKernel;$(ProjectDir)Kernels\NiPSSimulatorForcesKernel;$(ProjectDir)Kernels\NiPSSimulatorGeneralKernel;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>NiAnimation.lib;NiMain.lib;NiSystem.lib;NiMesh.lib;NiFloodgate.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\bin\NiAnimation\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiSystem\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiMain\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiMesh\$(Platform)\$(Configuration);$(SolutionDir)Build\bin\NiFloodgate\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

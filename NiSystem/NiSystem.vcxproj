@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NiAllocator.h" />
+    <ClInclude Include="NiBinaryLoadSave.h" />
+    <ClInclude Include="NiBinaryStream.h" />
+    <ClInclude Include="NiBinaryStreamMacro.h" />
+    <ClInclude Include="NiBuildConfiguration.h" />
+    <ClInclude Include="NiCriticalSection.h" />
+    <ClInclude Include="NiDebug.h" />
+    <ClInclude Include="NiDebugDefines.h" />
+    <ClInclude Include="NiEndian.h" />
+    <ClInclude Include="NiEnumerationStrings.h" />
+    <ClInclude Include="NiExternalMemAllocator.h" />
+    <ClInclude Include="NiFile.h" />
+    <ClInclude Include="NiFilename.h" />
+    <ClInclude Include="NiFixedAllocator.h" />
+    <ClInclude Include="NiFloat16.h" />
+    <ClInclude Include="NiInitOptions.h" />
+    <ClInclude Include="NiLog.h" />
+    <ClInclude Include="NiLogBehavior.h" />
+    <ClInclude Include="NiLoopedThread.h" />
+    <ClInclude Include="NiLoopedThreadProcedure.h" />
+    <ClInclude Include="NiMemHint.h" />
+    <ClInclude Include="NiMemManager.h" />
+    <ClInclude Include="NiMemObject.h" />
+    <ClInclude Include="NiMemoryDefines.h" />
+    <ClInclude Include="NiMemStream.h" />
+    <ClInclude Include="NiMemTracker.h" />
+    <ClInclude Include="NiMessageBox.h" />
+    <ClInclude Include="NiOS.h" />
+    <ClInclude Include="NiPath.h" />
+    <ClInclude Include="NiProcessorAffinity.h" />
+    <ClInclude Include="NiRTLib.h" />
+    <ClInclude Include="NiRWLock.h" />
+    <ClInclude Include="NiSDMMacros.h" />
+    <ClInclude Include="NiSearchPath.h" />
+    <ClInclude Include="NiSemaphore.h" />
+    <ClInclude Include="NiStandardAllocator.h" />
+    <ClInclude Include="NiStaticDataManager.h" />
+    <ClInclude Include="NiSystem.h" />
+    <ClInclude Include="NiSystemDesc.h" />
+    <ClInclude Include="NiSystemLibType.h" />
+    <ClInclude Include="NiSystemPCH.h" />
+    <ClInclude Include="NiSystemSDM.h" />
+    <ClInclude Include="NiTCreate.h" />
+    <ClInclude Include="NiThread.h" />
+    <ClInclude Include="NiThreadProcedure.h" />
+    <ClInclude Include="NiTSmallAllocStrategy.h" />
+    <ClInclude Include="NiTThreadLocal.h" />
+    <ClInclude Include="NiUniversalTypes.h" />
+    <ClInclude Include="NiVersion.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="NiBinaryStream.cpp" />
+    <ClCompile Include="NiDebug.cpp" />
+    <ClCompile Include="NiFile.cpp" />
+    <ClCompile Include="NiFilename.cpp" />
+    <ClCompile Include="NiFixedAllocator.cpp" />
+    <ClCompile Include="NiInitOptions.cpp" />
+    <ClCompile Include="NiLog.cpp" />
+    <ClCompile Include="NiLogBehavior.cpp" />
+    <ClCompile Include="NiLoopedThread.cpp" />
+    <ClCompile Include="NiLoopedThreadProcedure.cpp" />
+    <ClCompile Include="NiMemManager.cpp" />
+    <ClCompile Include="NiMemObject.cpp" />
+    <ClCompile Include="NiMemoryDefines.cpp" />
+    <ClCompile Include="NiMemStream.cpp" />
+    <ClCompile Include="NiMemTracker.cpp" />
+    <ClCompile Include="NiMessageBox.cpp" />
+    <ClCompile Include="NiPath.cpp" />
+    <ClCompile Include="NiSearchPath.cpp" />
+    <ClCompile Include="NiStaticDataManager.cpp" />
+    <ClCompile Include="NiSystem.cpp" />
+    <ClCompile Include="NiSystemDesc.cpp" />
+    <ClCompile Include="NiSystemDesc_CPUID.cpp" />
+    <ClCompile Include="NiSystemPCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NiSystemSDM.cpp" />
+    <ClCompile Include="NiThread.cpp" />
+    <ClCompile Include="NiThreadProcedure.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NiCriticalSection.inl" />
+    <None Include="NiEndian.inl" />
+    <None Include="NiExternalMemAllocator.inl" />
+    <None Include="NiFloat16.inl" />
+    <None Include="NiLog.inl" />
+    <None Include="NiLoopedThread.inl" />
+    <None Include="NiMemHint.inl" />
+    <None Include="NiMemManager.inl" />
+    <None Include="NiMemTracker.inl" />
+    <None Include="NiMessageBox.inl" />
+    <None Include="NiProcessorAffinity.inl" />
+    <None Include="NiRWLock.inl" />
+    <None Include="NiSearchPath.inl" />
+    <None Include="NiStaticDataManager.inl" />
+    <None Include="NiSystem.inl" />
+    <None Include="NiSystemDesc.inl" />
+    <None Include="NiThread.inl" />
+    <None Include="NiTSmallAllocStrategy.inl" />
+    <None Include="NiTThreadLocal.inl" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{5358ade4-6c2f-43b1-a4ef-899f4c2fa7f7}</ProjectGuid>
+    <RootNamespace>NiSystem</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NISYSTEM_EXPORT;NI_USE_PCH;NIDEBUG;WIN32;_DEBUG;NISYSTEM_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiSystemPCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NISYSTEM_EXPORT;NI_USE_PCH;NIRELEASE;WIN32;NDEBUG;NISYSTEM_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiSystemPCH.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NiFloodgateLibType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFloodgatePCH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFloodgateSDM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPAlgorithms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPAnalyzer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPDataStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPJob.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPJobList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPKernelMacros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPStreamPartitioner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPTask.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPTaskImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPThreadPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPWorkflow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPWorkflowImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPWorkflowManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSPWorkload.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStreamProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Kernels\NiNopKernel\NiNopKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="NiFloodgatePCH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFloodgateSDM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPAnalyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPJob.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPJobList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPStreamPartitioner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPTask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPTaskImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPThreadPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPWorkflow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPWorkflowImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSPWorkflowManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStreamProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernels\NiNopKernel\NiNopKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NiSPAlgorithms.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPDataStream.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPJob.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPJobList.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPStream.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPStreamPartitioner.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPTask.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPTaskImpl.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPThreadPool.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPWorkflow.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPWorkflowManager.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSPWorkload.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiStreamProcessor.inl">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

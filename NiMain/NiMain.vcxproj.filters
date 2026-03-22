@@ -1,0 +1,2018 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Ni2DBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ni2DRenderView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ni3DRenderView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAccumulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAccumulatorProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAdditionalGeometryData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAlphaAccumulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAlphaProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAlphaSortProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAmbientLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAVObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAVObject_Win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiAVObjectPalette.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBackToFrontAccumulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBackToFrontSortProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBillboardNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBinaryExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBMPReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBooleanExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBound.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBSPNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiClickRenderStep.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCodeBlock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCollisionObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiColor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiColorExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCommonSemantics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCompositeValidator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCompUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCulledObjectValidator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiCullingProcess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDDSReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDefaultAVObjectPalette.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDefaultClickRenderStep.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDefaultShadowClickGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDepthStencilBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDevImageConverter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDirectionalLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDirectionalShadowWriteMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDitherProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDrawSceneUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDynamicEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDynamicEffectState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiDynamicTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFloatExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFloatsExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFogProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFragmentMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFragmentShaderInstanceDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFrustum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiFrustumPlanes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiGeometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiGeometryData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiGlobalConstantEntry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiGlobalStringTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiGPUProgram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiGPUProgramCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiGPUProgramDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiImageConverter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiIntegerExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiIntegersExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiLines.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiLinesData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiLODData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiLODNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiLogicalANDCompositeValidator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMainMetrics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMainPCH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMainSDM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialConfigurator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialFragmentNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialInstance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialLibrary_Win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialNodeLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialResource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialResourceBinding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialResourceConsumerNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialResourceProducerNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMaterialSwapProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMatrix3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMetricsLayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiNIFImageReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiObjectGroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiObjectNET.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiOldScreenSpace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiOutputStreamDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPalette.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiParallelUpdateTaskManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiParticles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiParticlesData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPersistentSrcTextureRendererData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPixelData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPixelData_Win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPixelFormat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPlane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPoint2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPoint3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPoint3_Win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPoint4_Win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPointLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPointShadowWriteMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPrimitiveType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPropertyState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiQuaternion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiQuaternion_Win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRangeLODData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRefObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderClick.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderClickValidator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderedCubeMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderedTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRendererSpecificProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderListProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderObjectMaterialOption.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderStep.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderTargetGroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRenderView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiRTTI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSCMExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiScreenElements.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiScreenElementsData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiScreenFillingRenderView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiScreenLODData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiScreenTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSemanticAdapterTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSemanticAdapterTableParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSGIReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadeProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderAttributeDesc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderConstantMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderConstantMapEntry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderDeclaration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderDesc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderDescBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderError.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderLibraryDesc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderRequirementDesc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShaderTimeController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowClickGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowClickValidator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowCubeMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowRenderClick.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiShadowTechnique.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSingleShaderMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSingleShaderMaterialLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinInstance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinPartition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSortAdjustNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSourceCubeMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSourceTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSpecularProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSpotLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSpotShadowWriteMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStandardMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStandardMaterialDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStandardPixelProgramDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStandardVertexProgramDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStencilProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStreamOutSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStringExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiStringsExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSwitchNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSwitchStringExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSyncArgs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTaskManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTextureAddressSwizzler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTextureCodec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTextureEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTextureStage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTextureTransform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTexturingProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTGAReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTimeController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTimeSyncController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTPointerAllocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTransform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTriBasedGeom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTriBasedGeomData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTriShape.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTriShapeData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTriShapeDynamicData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTriStrips.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiTriStripsData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiUpdateProcess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVectorExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVertexColorProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVertWeightsExtraData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiViewerStrings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiViewRenderClick.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVisibleArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVSMBlurMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVSMBlurMaterialDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVSMBlurPixelProgramDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVSMBlurVertexProgramDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiVSMShadowTechnique.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiWireframeProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiZBufferProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Ni2DBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ni2DRenderView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ni3DRenderView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAccumulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAccumulatorProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAdditionalGeometryData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAlphaAccumulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAlphaProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAlphaSortProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAmbientLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAVObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiAVObjectPalette.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBackToFrontAccumulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBackToFrontSortProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBillboardNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBinaryExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBitfield.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBMPReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBooleanExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBound.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBSPNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiClickRenderStep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiClone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCloningProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCodeBlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCollisionObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiColor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiColorExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCommonSemantics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCompositeValidator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCompUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCulledObjectValidator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCullingProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDDSReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDefaultAVObjectPalette.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDefaultClickRenderStep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDefaultShadowClickGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDepthStencilBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDevImageConverter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDirectionalLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDirectionalShadowWriteMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDitherProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDrawSceneUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDynamicEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDynamicEffectState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiDynamicTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFixedString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFlags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFloatExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFloatsExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFogProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFragmentMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFragmentShaderInstanceDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFrustum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiFrustumPlanes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGeometricUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGeometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGeometryData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGlobalConstantEntry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGlobalStringTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGPUProgram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGPUProgramCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiGPUProgramDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiImageConverter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiImageReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiIntegerExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiIntegersExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiLicense.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiLines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiLinesData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiLODData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiLODNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiLogicalANDCompositeValidator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMainLibType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMainMetrics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMainPCH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMainSDM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialConfigurator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialFragmentNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialInstance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialLibraryInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialNodeLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialNodeLibraryReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialResource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialResourceBinding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialResourceConsumerNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialResourceProducerNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMaterialSwapProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMatrix3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMetricsLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMetricsOutputModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMetricsScopeTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMetricsTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiNIFImageReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiObjectGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiObjectNET.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiOldScreenSpace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiOutputStreamDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPalette.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiParallelUpdateTaskManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiParticles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiParticlesData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPersistentSrcTextureRendererData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPixelData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPixelFormat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPlane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPoint2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPoint3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPoint4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPointLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPointShadowWriteMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPrimitiveType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPropertyState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiQuaternion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRangeLODData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRefObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderCallContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderClick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderClickValidator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderedCubeMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderedTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRendererSpecificProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderFrame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderListProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderObjectMaterialOption.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderStep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderTargetGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRenderView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiRTTI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSCMExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiScreenElements.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiScreenElementsData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiScreenFillingRenderView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiScreenLODData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiScreenTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSemanticAdapterTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSemanticAdapterTableParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSGIReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadeProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderAttributeDesc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderConstantMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderConstantMapEntry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderDeclaration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderDesc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderDescBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderError.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderLibraryDesc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderRequirementDesc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShaderTimeController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowClickGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowClickValidator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowCubeMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowRenderClick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiShadowTechnique.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSingleShaderMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSingleShaderMaterialLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinInstance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinPartition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSmartPointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSortAdjustNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSourceCubeMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSourceTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSpecularProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSpotLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSpotShadowWriteMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStandardMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStandardMaterialDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStandardPixelProgramDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStandardVertexProgramDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStencilProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStopWatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStreamMacros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStreamOutSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStringExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiStringsExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSwitchNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSwitchStringExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSyncArgs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTAbstractPoolAllocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTask.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTaskManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTCollection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTDefaultAllocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTextureAddressSwizzler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTextureCodec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTextureEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTexturePalette.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTextureStage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTextureTransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTexturingProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTFixedStringMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTGAReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTimeController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTimeSyncController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTLargeArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTListBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTMapBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTNodeTraversal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTObjectAllocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTObjectList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTPointerAllocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTPointerList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTPointerListBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTPointerMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTPtrSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTriBasedGeom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTriBasedGeomData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTriShape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTriShapeData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTriShapeDynamicData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTriStrips.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTriStripsData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTStringMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiUpdateProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVectorExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVertexColorProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVertWeightsExtraData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiViewerStrings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiViewRenderClick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVisibleArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVSMBlurMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVSMBlurMaterialDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVSMBlurPixelProgramDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVSMBlurVertexProgramDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiVSMShadowTechnique.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiWireframeProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiZBufferProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Ni2DBuffer.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Ni2DRenderView.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Ni3DRenderView.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiAccumulatorProcessor.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiAdditionalGeometryData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiAlphaAccumulator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiAlphaProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiAlphaSortProcessor.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiAmbientLight.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiAVObject.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiBackToFrontSortProcessor.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiBillboardNode.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiBinaryExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiBooleanExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiBound.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiBSPNode.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiCamera.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiColor.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiColorExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiCommonSemantics.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiCompositeValidator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiCulledObjectValidator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiCullingProcess.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDefaultAVObjectPalette.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDefaultClickRenderStep.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDevImageConverter.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDirectionalLight.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDitherProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDynamicEffect.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDynamicEffectState.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiDynamicTexture.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiFixedString.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiFloatExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiFloatsExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiFogProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiFrustumPlanes.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiGeometricUtils.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiGeometry.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiGeometryData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiGlobalConstantEntry.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiGlobalStringTable.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiGPUProgram.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiIntegerExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiIntegersExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiLight.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiLines.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiLinesData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiLODNode.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMainMetrics.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMaterial.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMaterialInstance.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMaterialProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMaterialSwapProcessor.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMath.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMatrix3.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMetricsLayer.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMetricsScopeTimer.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMetricsTimer.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiNode.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiObjectGroup.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiObjectNET.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiOutputStreamDescriptor.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPalette.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiParallelUpdateTaskManager.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiParticles.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiParticlesData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPersistentSrcTextureRendererData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPixelData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPixelFormat.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPlane.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPoint2.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPoint3.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPoint4.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPoint4_Platform.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPointLight.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPropertyState.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiQuaternion.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRangeLODData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRect.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRefObject.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderClick.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderedCubeMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderedTexture.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderer.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRendererSpecificProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderFrame.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderObject.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderObjectMaterialOption.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderStep.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiRenderView.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSCMExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiScreenElements.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiScreenElementsData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiScreenFillingRenderView.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiScreenLODData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSemanticAdapterTable.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadeProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShader.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShaderConstantMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShaderConstantMapEntry.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShaderDeclaration.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowClickGenerator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowClickValidator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowCubeMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowGenerator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowManager.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowRenderClick.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiShadowTechnique.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSkinData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSkinPartition.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSortAdjustNode.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSourceCubeMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSourceTexture.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSpecularProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSpotLight.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiStencilProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiStopWatch.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiStream.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiStreamOutSettings.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiStringExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiStringsExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSwitchNode.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSwitchStringExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiSyncArgs.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTAbstractPoolAllocator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTArray.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTask.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTaskManager.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTexture.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTextureAddressSwizzler.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTextureEffect.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTexturePalette.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTextureStage.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTextureTransform.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTexturingProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTFixedStringMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTimeController.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTimeSyncController.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTLargeArray.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTListBase.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTMapBase.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTNodeTraversal.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTObjectAllocator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTObjectList.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTPointerAllocator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTPointerListBase.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTPointerMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTPool.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTQueue.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTransform.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTriBasedGeom.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTriBasedGeomData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTriShape.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTriShapeData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTriShapeDynamicData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTriStripsData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTSet.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiTStringMap.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiUpdateProcess.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiVectorExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiVertexColorProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiVertWeightsExtraData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiViewRenderClick.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiVisibleArray.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiWireframeProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiZBufferProperty.inl">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>
