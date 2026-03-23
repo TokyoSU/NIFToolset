@@ -21,19 +21,15 @@
 #include "NiRenderedCubeMap.h"
 #include "NiTAbstractPoolAllocator.h"
 #include "NiDefaultShadowClickGenerator.h"
-
 #if defined(_WII)
 #include "NiWiiShadowWriteMaterial.h"
 #else
 #include "NiDirectionalShadowWriteMaterial.h"
 #include "NiPointShadowWriteMaterial.h"
 #include "NiSpotShadowWriteMaterial.h"
-#include "DirectionalShadowWriteMaterialNodeLibrary/\
-NiDirectionalShadowWriteMaterialNodeLibrary.h"
-#include "SpotShadowWriteMaterialNodeLibrary/\
-NiSpotShadowWriteMaterialNodeLibrary.h"
-#include "PointShadowWriteMaterialNodeLibrary/\
-NiPointShadowWriteMaterialNodeLibrary.h"
+#include "NiDirectionalShadowWriteMaterialNodeLibrary.h"
+#include "NiSpotShadowWriteMaterialNodeLibrary.h"
+#include "NiPointShadowWriteMaterialNodeLibrary.h"
 #endif
 
 NiAllocatorDeclareStatics(NiShadowMap, sizeof(NiShadowMap) * 16);

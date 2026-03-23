@@ -11,15 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Kernels\NiCalculateBoneMatricesKernel\NiCalculateBoneMatricesKernel.cpp" />
-    <ClCompile Include="Kernels\NiInstanceCullingKernel\NiInstanceCullingKernel.cpp" />
-    <ClCompile Include="Kernels\NiMorphingKernel\NiMorphingKernel.cpp" />
-    <ClCompile Include="Kernels\NiSkinningKernelPN16\NiSkinningKernelPN16.cpp" />
-    <ClCompile Include="Kernels\NiSkinningKernelPN32\NiSkinningKernelPN32.cpp" />
-    <ClCompile Include="Kernels\NiSkinningKernelPNBT16\NiSkinningKernelPNBT16.cpp" />
-    <ClCompile Include="Kernels\NiSkinningKernelPNBT32\NiSkinningKernelPNBT32.cpp" />
-    <ClCompile Include="Kernels\NiSkinningKernelP\NiSkinningKernelP.cpp" />
     <ClCompile Include="NiBatchedUpdateProcess.cpp" />
+    <ClCompile Include="NiCalculateBoneMatricesKernel.cpp" />
     <ClCompile Include="NiDataStream.cpp" />
     <ClCompile Include="NiDataStreamElement.cpp" />
     <ClCompile Include="NiDataStreamElementLock.cpp" />
@@ -29,6 +22,7 @@
     <ClCompile Include="NiGeometryConverter.cpp" />
     <ClCompile Include="NiImmediateModeAdapter.cpp" />
     <ClCompile Include="NiImmediateModeMacro.cpp" />
+    <ClCompile Include="NiInstanceCullingKernel.cpp" />
     <ClCompile Include="NiInstancingMeshModifier.cpp" />
     <ClCompile Include="NiInstancingUtilities.cpp" />
     <ClCompile Include="NiMesh.cpp" />
@@ -47,21 +41,20 @@
     <ClCompile Include="NiMeshUpdateProcess.cpp" />
     <ClCompile Include="NiMeshUtilities.cpp" />
     <ClCompile Include="NiMeshVertexOperators.cpp" />
+    <ClCompile Include="NiMorphingKernel.cpp" />
     <ClCompile Include="NiMorphMeshModifier.cpp" />
     <ClCompile Include="NiScreenFillingRenderViewImpl.cpp" />
+    <ClCompile Include="NiSkinningKernelP.cpp" />
+    <ClCompile Include="NiSkinningKernelPN16.cpp" />
+    <ClCompile Include="NiSkinningKernelPN32.cpp" />
+    <ClCompile Include="NiSkinningKernelPNBT16.cpp" />
+    <ClCompile Include="NiSkinningKernelPNBT32.cpp" />
     <ClCompile Include="NiSkinningMeshModifier.cpp" />
     <ClCompile Include="NiToolDataStream.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Kernels\NiCalculateBoneMatricesKernel\NiCalculateBoneMatricesKernel.h" />
-    <ClInclude Include="Kernels\NiInstanceCullingKernel\NiInstanceCullingKernel.h" />
-    <ClInclude Include="Kernels\NiMorphingKernel\NiMorphingKernel.h" />
-    <ClInclude Include="Kernels\NiSkinningKernelPN16\NiSkinningKernelPN16.h" />
-    <ClInclude Include="Kernels\NiSkinningKernelPN32\NiSkinningKernelPN32.h" />
-    <ClInclude Include="Kernels\NiSkinningKernelPNBT16\NiSkinningKernelPNBT16.h" />
-    <ClInclude Include="Kernels\NiSkinningKernelPNBT32\NiSkinningKernelPNBT32.h" />
-    <ClInclude Include="Kernels\NiSkinningKernelP\NiSkinningKernelP.h" />
     <ClInclude Include="NiBatchedUpdateProcess.h" />
+    <ClInclude Include="NiCalculateBoneMatricesKernel.h" />
     <ClInclude Include="NiDataStream.h" />
     <ClInclude Include="NiDataStreamElement.h" />
     <ClInclude Include="NiDataStreamElementLock.h" />
@@ -73,6 +66,7 @@
     <ClInclude Include="NiGeometryConverter.h" />
     <ClInclude Include="NiImmediateModeAdapter.h" />
     <ClInclude Include="NiImmediateModeMacro.h" />
+    <ClInclude Include="NiInstanceCullingKernel.h" />
     <ClInclude Include="NiInstancingMeshModifier.h" />
     <ClInclude Include="NiInstancingUtilities.h" />
     <ClInclude Include="NiMatrix3x4.h" />
@@ -93,11 +87,17 @@
     <ClInclude Include="NiMeshUpdateProcess.h" />
     <ClInclude Include="NiMeshUtilities.h" />
     <ClInclude Include="NiMeshVertexOperators.h" />
+    <ClInclude Include="NiMorphingKernel.h" />
     <ClInclude Include="NiMorphingKernelData.h" />
     <ClInclude Include="NiMorphMeshModifier.h" />
     <ClInclude Include="NiScreenFillingRenderViewImpl.h" />
     <ClInclude Include="NiSkinningKernel.h" />
     <ClInclude Include="NiSkinningKernelData.h" />
+    <ClInclude Include="NiSkinningKernelP.h" />
+    <ClInclude Include="NiSkinningKernelPN16.h" />
+    <ClInclude Include="NiSkinningKernelPN32.h" />
+    <ClInclude Include="NiSkinningKernelPNBT16.h" />
+    <ClInclude Include="NiSkinningKernelPNBT32.h" />
     <ClInclude Include="NiSkinningMeshModifier.h" />
     <ClInclude Include="NiTIndexGenerationIterator.h" />
     <ClInclude Include="NiToolDataStream.h" />

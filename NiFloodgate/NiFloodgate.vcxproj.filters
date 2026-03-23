@@ -78,6 +78,9 @@
     <ClInclude Include="Kernels\NiNopKernel\NiNopKernel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NiNopKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NiFloodgatePCH.cpp">
@@ -123,6 +126,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Kernels\NiNopKernel\NiNopKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiNopKernel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

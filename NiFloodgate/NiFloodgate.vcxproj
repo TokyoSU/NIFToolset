@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Kernels\NiNopKernel\NiNopKernel.h" />
     <ClInclude Include="NiFloodgateLibType.h" />
     <ClInclude Include="NiFloodgatePCH.h" />
     <ClInclude Include="NiFloodgateSDM.h" />
+    <ClInclude Include="NiNopKernel.h" />
     <ClInclude Include="NiSPAlgorithms.h" />
     <ClInclude Include="NiSPAnalyzer.h" />
     <ClInclude Include="NiSPDataStream.h" />
@@ -34,12 +34,12 @@
     <ClInclude Include="NiStreamProcessor.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Kernels\NiNopKernel\NiNopKernel.cpp" />
     <ClCompile Include="NiFloodgatePCH.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NiFloodgateSDM.cpp" />
+    <ClCompile Include="NiNopKernel.cpp" />
     <ClCompile Include="NiSPAnalyzer.cpp" />
     <ClCompile Include="NiSPJob.cpp" />
     <ClCompile Include="NiSPJobList.cpp" />

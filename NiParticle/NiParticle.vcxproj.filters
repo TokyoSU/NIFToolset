@@ -423,6 +423,201 @@
     <ClInclude Include="Kernels\NiPSSimulatorGeneralKernel\NiPSSimulatorGeneralKernel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NiMeshParticleSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMeshPSysData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiParticleInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiParticleSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSFacingQuadGeneratorKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSSimulatorCollidersKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSSimulatorFinalKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSSimulatorForcesKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSSimulatorGeneralKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysAgeDeathModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysAirFieldAirFrictionCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysAirFieldInheritVelocityCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysAirFieldModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysAirFieldSpreadCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysBombModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysBoundUpdateModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysBoxEmitter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysCollider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysColliderManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysColorModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysCylinderEmitter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysDragFieldModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysDragModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterCtlrData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterDeclinationCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterDeclinationVarCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterInitialRadiusCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterLifeSpanCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterPlanarAngleCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterPlanarAngleVarCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysEmitterSpeedCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysFieldAttenuationCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysFieldMagnitudeCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysFieldMaxDistanceCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysFieldModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysGravityFieldModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysGravityModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysGravityStrengthCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysGrowFadeModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysInitialRotAngleCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysInitialRotAngleVarCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysInitialRotSpeedCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysInitialRotSpeedVarCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysMeshEmitter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysMeshUpdateModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysModifierActiveCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysModifierBoolCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysModifierCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysModifierFloatCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysPlanarCollider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysPositionModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysRadialFieldModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysResetOnLoopCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysRotationModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysSpawnModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysSphereEmitter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysSphericalCollider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysTurbulenceFieldModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysUpdateCtlr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysVolumeEmitter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiPSysVortexFieldModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NiParticlePCH.cpp">
@@ -806,6 +1001,201 @@
     <ClCompile Include="Kernels\NiPSSimulatorGeneralKernel\NiPSSimulatorGeneralKernel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NiMeshParticleSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMeshPSysData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiParticleInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiParticleSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSFacingQuadGeneratorKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSSimulatorCollidersKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSSimulatorFinalKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSSimulatorForcesKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSSimulatorGeneralKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysAgeDeathModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysAirFieldAirFrictionCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysAirFieldInheritVelocityCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysAirFieldModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysAirFieldSpreadCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysBombModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysBoundUpdateModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysBoxEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysColliderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysColorModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysCylinderEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysDragFieldModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysDragModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterCtlrData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterDeclinationCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterDeclinationVarCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterInitialRadiusCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterLifeSpanCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterPlanarAngleCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterPlanarAngleVarCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysEmitterSpeedCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysFieldAttenuationCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysFieldMagnitudeCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysFieldMaxDistanceCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysFieldModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysGravityFieldModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysGravityModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysGravityStrengthCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysGrowFadeModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysInitialRotAngleCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysInitialRotAngleVarCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysInitialRotSpeedCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysInitialRotSpeedVarCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysMeshEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysMeshUpdateModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysModifierActiveCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysModifierBoolCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysModifierCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysModifierFloatCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysPlanarCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysPositionModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysRadialFieldModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysResetOnLoopCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysRotationModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysSpawnModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysSphereEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysSphericalCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysTurbulenceFieldModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysUpdateCtlr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysVolumeEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiPSysVortexFieldModifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="NiPSAirFieldForce.inl">
@@ -1016,6 +1406,105 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="_Deprecated\NiPSysVortexFieldModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiMeshPSysData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiParticleSystem.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysAgeDeathModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysAirFieldModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysBombModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysBoundUpdateModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysBoxEmitter.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysCollider.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysColliderManager.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysColorModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysCylinderEmitter.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysDragFieldModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysDragModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysEmitter.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysEmitterCtlrData.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysFieldModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysGravityFieldModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysGravityModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysGrowFadeModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysMeshEmitter.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysMeshUpdateModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysModifierCtlr.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysPlanarCollider.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysRadialFieldModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysRotationModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysSpawnModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysSphereEmitter.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysSphericalCollider.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysTurbulenceFieldModifier.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysVolumeEmitter.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="NiPSysVortexFieldModifier.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>

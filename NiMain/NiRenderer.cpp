@@ -23,7 +23,7 @@
 #include "NiMaterialProperty.h"
 #include "NiRenderTargetGroup.h"
 #include "NiStandardMaterial.h"
-#include "StandardMaterialNodeLibrary/NiStandardMaterialNodeLibrary.h"
+#include "NiStandardMaterialNodeLibrary.h"
 #include "NiShadowTechnique.h"
 
 NiImplementRTTI(NiRenderer, NiObject);

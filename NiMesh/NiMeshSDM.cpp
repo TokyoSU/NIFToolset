@@ -55,8 +55,7 @@ void NiMeshSDM::Init()
     NiRegisterStream(NiMeshHWInstance);
     NiRegisterStream(NiDataStream);
 
-    NiStream::RegisterPostProcessFunction(
-        NiGeometryConverter::ConvertToNiMesh);
+    NiStream::RegisterPostProcessFunction(NiGeometryConverter::ConvertToNiMesh);
     NiScreenFillingRenderViewImpl::RegisterFactoryMethod();
 
     // Give NiAVObject a default update process to use for the legacy

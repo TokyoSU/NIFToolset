@@ -13,9 +13,8 @@
 
 // Precompiled Header
 #include "NiMainPCH.h"
-
 #include "NiMainLibType.h"
-#include "StandardMaterialNodeLibrary/NiStandardMaterialNodeLibrary.h"
+#include "NiStandardMaterialNodeLibrary.h"
 #include "NiCommonSemantics.h"
 #include "NiShadowGenerator.h"
 #include "NiSpotShadowWriteMaterial.h"

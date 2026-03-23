@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mss.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="NiAudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -36,22 +33,25 @@
     <ClInclude Include="NiAudioSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Miles\NiMilesAudio.h">
+    <ClInclude Include="NiMilesAudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Miles\NiMilesAudioPCH.h">
+    <ClInclude Include="NiMilesAudioPCH.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Miles\NiMilesAudioSDM.h">
+    <ClInclude Include="NiMilesAudioSDM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Miles\NiMilesAudioSystem.h">
+    <ClInclude Include="NiMilesAudioSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Miles\NiMilesListener.h">
+    <ClInclude Include="NiMilesListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Miles\NiMilesSource.h">
+    <ClInclude Include="NiMilesSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mss.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,19 +68,19 @@
     <ClCompile Include="NiAudioSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Miles\NiMilesAudioPCH.cpp">
+    <ClCompile Include="NiMilesAudioPCH.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Miles\NiMilesAudioSDM.cpp">
+    <ClCompile Include="NiMilesAudioSDM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Miles\NiMilesAudioSystem.cpp">
+    <ClCompile Include="NiMilesAudioSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Miles\NiMilesListener.cpp">
+    <ClCompile Include="NiMilesListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Miles\NiMilesSource.cpp">
+    <ClCompile Include="NiMilesSource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

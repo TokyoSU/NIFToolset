@@ -11,7 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.cpp" />
     <ClCompile Include="Ni2DBuffer.cpp" />
     <ClCompile Include="Ni2DRenderView.cpp" />
     <ClCompile Include="Ni3DRenderView.cpp" />
@@ -52,6 +51,7 @@
     <ClCompile Include="NiDevImageConverter.cpp" />
     <ClCompile Include="NiDirectionalLight.cpp" />
     <ClCompile Include="NiDirectionalShadowWriteMaterial.cpp" />
+    <ClCompile Include="NiDirectionalShadowWriteMaterialNodeLibrary.cpp" />
     <ClCompile Include="NiDitherProperty.cpp" />
     <ClCompile Include="NiDrawSceneUtility.cpp" />
     <ClCompile Include="NiDynamicEffect.cpp" />
@@ -127,6 +127,7 @@
     <ClCompile Include="NiPoint4_Win32.cpp" />
     <ClCompile Include="NiPointLight.cpp" />
     <ClCompile Include="NiPointShadowWriteMaterial.cpp" />
+    <ClCompile Include="NiPointShadowWriteMaterialNodeLibrary.cpp" />
     <ClCompile Include="NiPrimitiveType.cpp" />
     <ClCompile Include="NiProcessor.cpp" />
     <ClCompile Include="NiProperty.cpp" />
@@ -191,8 +192,10 @@
     <ClCompile Include="NiSpecularProperty.cpp" />
     <ClCompile Include="NiSpotLight.cpp" />
     <ClCompile Include="NiSpotShadowWriteMaterial.cpp" />
+    <ClCompile Include="NiSpotShadowWriteMaterialNodeLibrary.cpp" />
     <ClCompile Include="NiStandardMaterial.cpp" />
     <ClCompile Include="NiStandardMaterialDescriptor.cpp" />
+    <ClCompile Include="NiStandardMaterialNodeLibrary.cpp" />
     <ClCompile Include="NiStandardPixelProgramDescriptor.cpp" />
     <ClCompile Include="NiStandardVertexProgramDescriptor.cpp" />
     <ClCompile Include="NiStencilProperty.cpp" />
@@ -234,18 +237,14 @@
     <ClCompile Include="NiVisibleArray.cpp" />
     <ClCompile Include="NiVSMBlurMaterial.cpp" />
     <ClCompile Include="NiVSMBlurMaterialDescriptor.cpp" />
+    <ClCompile Include="NiVSMBlurMaterialNodeLibrary.cpp" />
     <ClCompile Include="NiVSMBlurPixelProgramDescriptor.cpp" />
     <ClCompile Include="NiVSMBlurVertexProgramDescriptor.cpp" />
     <ClCompile Include="NiVSMShadowTechnique.cpp" />
     <ClCompile Include="NiWireframeProperty.cpp" />
     <ClCompile Include="NiZBufferProperty.cpp" />
-    <ClCompile Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.cpp" />
-    <ClCompile Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.cpp" />
-    <ClCompile Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.cpp" />
-    <ClCompile Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.h" />
     <ClInclude Include="Ni2DBuffer.h" />
     <ClInclude Include="Ni2DRenderView.h" />
     <ClInclude Include="Ni3DRenderView.h" />
@@ -289,6 +288,7 @@
     <ClInclude Include="NiDevImageConverter.h" />
     <ClInclude Include="NiDirectionalLight.h" />
     <ClInclude Include="NiDirectionalShadowWriteMaterial.h" />
+    <ClInclude Include="NiDirectionalShadowWriteMaterialNodeLibrary.h" />
     <ClInclude Include="NiDitherProperty.h" />
     <ClInclude Include="NiDrawSceneUtility.h" />
     <ClInclude Include="NiDynamicEffect.h" />
@@ -370,6 +370,7 @@
     <ClInclude Include="NiPoint4.h" />
     <ClInclude Include="NiPointLight.h" />
     <ClInclude Include="NiPointShadowWriteMaterial.h" />
+    <ClInclude Include="NiPointShadowWriteMaterialNodeLibrary.h" />
     <ClInclude Include="NiPrimitiveType.h" />
     <ClInclude Include="NiProcessor.h" />
     <ClInclude Include="NiProperty.h" />
@@ -436,8 +437,10 @@
     <ClInclude Include="NiSpecularProperty.h" />
     <ClInclude Include="NiSpotLight.h" />
     <ClInclude Include="NiSpotShadowWriteMaterial.h" />
+    <ClInclude Include="NiSpotShadowWriteMaterialNodeLibrary.h" />
     <ClInclude Include="NiStandardMaterial.h" />
     <ClInclude Include="NiStandardMaterialDescriptor.h" />
+    <ClInclude Include="NiStandardMaterialNodeLibrary.h" />
     <ClInclude Include="NiStandardPixelProgramDescriptor.h" />
     <ClInclude Include="NiStandardVertexProgramDescriptor.h" />
     <ClInclude Include="NiStencilProperty.h" />
@@ -503,15 +506,12 @@
     <ClInclude Include="NiVisibleArray.h" />
     <ClInclude Include="NiVSMBlurMaterial.h" />
     <ClInclude Include="NiVSMBlurMaterialDescriptor.h" />
+    <ClInclude Include="NiVSMBlurMaterialNodeLibrary.h" />
     <ClInclude Include="NiVSMBlurPixelProgramDescriptor.h" />
     <ClInclude Include="NiVSMBlurVertexProgramDescriptor.h" />
     <ClInclude Include="NiVSMShadowTechnique.h" />
     <ClInclude Include="NiWireframeProperty.h" />
     <ClInclude Include="NiZBufferProperty.h" />
-    <ClInclude Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.h" />
-    <ClInclude Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.h" />
-    <ClInclude Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.h" />
-    <ClInclude Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Ni2DBuffer.inl" />

@@ -23,8 +23,7 @@
 #include "NiScreenFillingRenderView.h"
 #include "NiShaderFactory.h"
 #include "NiSingleShaderMaterial.h"
-#include "NiShaderFactory.h"
-#include "VSMBlurMaterialNodeLibrary/NiVSMBlurMaterialNodeLibrary.h"
+#include "NiVSMBlurMaterialNodeLibrary.h"
 
 NiImplementRTTI(NiVSMShadowTechnique, NiShadowTechnique);
 

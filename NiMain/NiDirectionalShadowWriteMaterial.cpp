@@ -15,7 +15,7 @@
 #include "NiMainPCH.h"
 
 #include "NiMainLibType.h"
-#include "StandardMaterialNodeLibrary/NiStandardMaterialNodeLibrary.h"
+#include "NiStandardMaterialNodeLibrary.h"
 #include "NiCommonSemantics.h"
 #include "NiDirectionalShadowWriteMaterial.h"
 #include "NiShadowGenerator.h"

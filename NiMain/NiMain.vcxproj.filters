@@ -687,19 +687,19 @@
     <ClCompile Include="NiZBufferProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.cpp">
+    <ClCompile Include="NiDirectionalShadowWriteMaterialNodeLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.cpp">
+    <ClCompile Include="NiPointShadowWriteMaterialNodeLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.cpp">
+    <ClCompile Include="NiSpotShadowWriteMaterialNodeLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.cpp">
+    <ClCompile Include="NiStandardMaterialNodeLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.cpp">
+    <ClCompile Include="NiVSMBlurMaterialNodeLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1490,19 +1490,19 @@
     <ClInclude Include="NiZBufferProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DirectionalShadowWriteMaterialNodeLibrary\NiDirectionalShadowWriteMaterialNodeLibrary.h">
+    <ClInclude Include="NiDirectionalShadowWriteMaterialNodeLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PointShadowWriteMaterialNodeLibrary\NiPointShadowWriteMaterialNodeLibrary.h">
+    <ClInclude Include="NiPointShadowWriteMaterialNodeLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="StandardMaterialNodeLibrary\NiStandardMaterialNodeLibrary.h">
+    <ClInclude Include="NiSpotShadowWriteMaterialNodeLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VSMBlurMaterialNodeLibrary\NiVSMBlurMaterialNodeLibrary.h">
+    <ClInclude Include="NiStandardMaterialNodeLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SpotShadowWriteMaterialNodeLibrary\NiSpotShadowWriteMaterialNodeLibrary.h">
+    <ClInclude Include="NiVSMBlurMaterialNodeLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

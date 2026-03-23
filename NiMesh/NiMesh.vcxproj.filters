@@ -126,6 +126,30 @@
     <ClCompile Include="Kernels\NiSkinningKernelPNBT32\NiSkinningKernelPNBT32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NiCalculateBoneMatricesKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiInstanceCullingKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiMorphingKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinningKernelP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinningKernelPN16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinningKernelPN32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinningKernelPNBT16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiSkinningKernelPNBT32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NiBatchedUpdateProcess.h">
@@ -279,6 +303,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Kernels\NiSkinningKernelPNBT32\NiSkinningKernelPNBT32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiCalculateBoneMatricesKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiInstanceCullingKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiMorphingKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinningKernelP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinningKernelPN16.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinningKernelPN32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinningKernelPNBT16.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiSkinningKernelPNBT32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

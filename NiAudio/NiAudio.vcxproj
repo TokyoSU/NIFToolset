@@ -11,12 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Miles\NiMilesAudio.h" />
-    <ClInclude Include="Miles\NiMilesAudioPCH.h" />
-    <ClInclude Include="Miles\NiMilesAudioSDM.h" />
-    <ClInclude Include="Miles\NiMilesAudioSystem.h" />
-    <ClInclude Include="Miles\NiMilesListener.h" />
-    <ClInclude Include="Miles\NiMilesSource.h" />
     <ClInclude Include="mss.h" />
     <ClInclude Include="NiAudio.h" />
     <ClInclude Include="NiAudioLibType.h" />
@@ -24,20 +18,26 @@
     <ClInclude Include="NiAudioMetrics.h" />
     <ClInclude Include="NiAudioSource.h" />
     <ClInclude Include="NiAudioSystem.h" />
+    <ClInclude Include="NiMilesAudio.h" />
+    <ClInclude Include="NiMilesAudioPCH.h" />
+    <ClInclude Include="NiMilesAudioSDM.h" />
+    <ClInclude Include="NiMilesAudioSystem.h" />
+    <ClInclude Include="NiMilesListener.h" />
+    <ClInclude Include="NiMilesSource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Miles\NiMilesAudioPCH.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="Miles\NiMilesAudioSDM.cpp" />
-    <ClCompile Include="Miles\NiMilesAudioSystem.cpp" />
-    <ClCompile Include="Miles\NiMilesListener.cpp" />
-    <ClCompile Include="Miles\NiMilesSource.cpp" />
     <ClCompile Include="NiAudioListener.cpp" />
     <ClCompile Include="NiAudioMetrics.cpp" />
     <ClCompile Include="NiAudioSource.cpp" />
     <ClCompile Include="NiAudioSystem.cpp" />
+    <ClCompile Include="NiMilesAudioPCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NiMilesAudioSDM.cpp" />
+    <ClCompile Include="NiMilesAudioSystem.cpp" />
+    <ClCompile Include="NiMilesListener.cpp" />
+    <ClCompile Include="NiMilesSource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="NiAudioMetrics.inl" />
