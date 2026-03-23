@@ -69,8 +69,7 @@ void NiAnimationSDM::Init()
 
     // In Gamebryo 2.6, NiSequenceData replaced NiControllerSequence
     // as the streamable sequence entity.
-    NiStream::RegisterLoader("NiControllerSequence",
-        NiSequenceData::CreateObject);
+    NiStream::RegisterLoader("NiControllerSequence", NiSequenceData::CreateObject);
 
     NiRegisterStream(NiFlipController);
     NiRegisterStream(NiFloatData);
@@ -82,13 +81,9 @@ void NiAnimationSDM::Init()
     NiRegisterStream(NiGeomMorpherController);
 
     // In Gamebryo 1.2, NiKeyframeController was deprecated.
-    // NiTransformController took its place.
-    NiStream::RegisterLoader("NiKeyframeController", 
-        NiTransformController::CreateObject);
-
-    // In Gamebryo 1.2, NiKeyframeData was renamed NiTransformData.
-    NiStream::RegisterLoader("NiKeyframeData",
-        NiTransformData::CreateObject);
+    // NiTransformController took its place, NiKeyframeData was renamed NiTransformData.
+    NiStream::RegisterLoader("NiKeyframeController", NiTransformController::CreateObject);
+    NiStream::RegisterLoader("NiKeyframeData", NiTransformData::CreateObject);
 
     NiRegisterStream(NiLightColorController);
     NiRegisterStream(NiLightDimmerController);
@@ -117,11 +112,7 @@ void NiAnimationSDM::Init()
     NiRegisterStream(NiTransformEvaluator);
     NiRegisterStream(NiTransformInterpolator);
     NiRegisterStream(NiVisController);
-
-    // In Gamebryo 1.2, NiVisData was deprecated.
-    // NiBoolData took its place.
-    NiStream::RegisterLoader("NiVisData", 
-        NiBoolData::CreateObject);
+    NiStream::RegisterLoader("NiVisData", NiBoolData::CreateObject); // In Gamebryo 1.2, NiVisData was deprecated, NiBoolData took its place.
 
     NiStream::RegisterPostProcessFunction(NiOldAnimationConverter::Convert);
     NiStream::RegisterPostProcessFunction(NiGeomMorpherConverter::Convert);
