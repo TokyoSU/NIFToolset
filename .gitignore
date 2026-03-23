@@ -1,38 +1,72 @@
-# Prerequisites
-*.d
+# ----------------------
+# CMake build files
+# ----------------------
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+build/
+Build/
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
+*.dir/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
+# ----------------------
+# Visual Studio
+# ----------------------
+.vs/
+*.vcxproj.user
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.VC.opendb
+ipch/
+*.pdb
+*.ilk
+*.idb
+*.suo
+*.ncb
+
+# ----------------------
+# Compiled objects and libraries
+# ----------------------
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
+*.o
 *.a
 *.lib
-
-# Executables
-*.exe
-*.out
+*.dll
+*.so
+*.dylib
+*.exp
 *.app
 
-# Other
-.[vV]s/*
-[gG]ame/*
-[bB]uild/*
-[iI]nstall/*
+# ----------------------
+# Precompiled headers
+# ----------------------
+*.pch
+*.gch
+
+# ----------------------
+# Logs and temporary files
+# ----------------------
+*.log
+*.tmp
+*.temp
+
+# ----------------------
+# OS generated files
+# ----------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ----------------------
+# vcpkg / package managers
+# ----------------------
+vcpkg_installed/
+packages/
