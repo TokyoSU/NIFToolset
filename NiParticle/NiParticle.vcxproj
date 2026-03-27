@@ -452,7 +452,7 @@ xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NIPARTICLE_EXPORT;NIANIMATION_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NI_USE_PCH;WIN32;NRELEASE;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NIPARTICLE_EXPORT;NIANIMATION_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NI_USE_PCH;WIN32;NIRELEASE;NRELEASE;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>

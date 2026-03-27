@@ -295,6 +295,7 @@
     <ClInclude Include="NiDirectionalLight.h" />
     <ClInclude Include="NiDirectionalShadowWriteMaterial.h" />
     <ClInclude Include="NiDirectionalShadowWriteMaterialNodeLibrary.h" />
+    <ClInclude Include="NiDirectXVersion.h" />
     <ClInclude Include="NiDitherProperty.h" />
     <ClInclude Include="NiDrawSceneUtility.h" />
     <ClInclude Include="NiDynamicEffect.h" />

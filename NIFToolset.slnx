@@ -15,4 +15,11 @@
     <Project Path="NiPortal/NiPortal.vcxproj" Id="87a3f0df-ef8b-4cb7-b728-f14a7b9c77a1" />
     <Project Path="NiSystem/NiSystem.vcxproj" Id="466ce845-0420-4ccc-b4f7-1530a3096a56" />
   </Folder>
+  <Folder Name="/UtilityLibs/">
+    <Project Path="NiCursor/NiCursor.vcxproj" Id="caed175e-569c-4240-bd8f-ea4c1f9a71fd" />
+    <Project Path="NiEntity/NiEntity.vcxproj" Id="d926f4d6-65af-4c4b-810d-4c1cfa142ebb" />
+    <Project Path="NiFont/NiFont.vcxproj" Id="ae4eff8f-97d4-4022-989d-b87184ed0b05" />
+    <Project Path="NiInput/NiInput.vcxproj" Id="27864cfd-607d-4f42-90d2-0c039d5fbf32" />
+    <Project Path="NiTerrain/NiTerrain.vcxproj" Id="c6a1d7d9-bcde-4f23-a50d-89d454606329" />
+  </Folder>
 </Solution>
