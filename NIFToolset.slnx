@@ -15,6 +15,9 @@
     <Project Path="NiPortal/NiPortal.vcxproj" Id="87a3f0df-ef8b-4cb7-b728-f14a7b9c77a1" />
     <Project Path="NiSystem/NiSystem.vcxproj" Id="466ce845-0420-4ccc-b4f7-1530a3096a56" />
   </Folder>
+  <Folder Name="/ToolLibs/">
+    <Project Path="NiMaterialToolkit/NiMaterialToolkit.vcxproj" Id="991691bd-1446-4a63-81c7-0ee868f6e9a1" />
+  </Folder>
   <Folder Name="/UtilityLibs/">
     <Project Path="NiCursor/NiCursor.vcxproj" Id="caed175e-569c-4240-bd8f-ea4c1f9a71fd" />
     <Project Path="NiEntity/NiEntity.vcxproj" Id="d926f4d6-65af-4c4b-810d-4c1cfa142ebb" />
