@@ -233,12 +233,13 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>NiTerrainPCH.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(SolutionDir)NiMesh;$(SolutionDir)NiEntity;$(SolutionDir)NiFloodgate;$(SolutionDir)NiCollision;$(SolutionDir)NiDX9Renderer;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(SolutionDir)NiMesh;$(SolutionDir)NiEntity;$(SolutionDir)NiFloodgate;$(SolutionDir)NiCollision;$(SolutionDir)NiDX9Renderer;$(ProjectDir);C:\Users\TokyoSU\Downloads\dxsdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>C:\Users\TokyoSU\Downloads\dxsdk\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>set INSTALL_DIR=$(SolutionDir)Install\
@@ -266,12 +267,13 @@ xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>NiTerrainPCH.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(SolutionDir)NiMesh;$(SolutionDir)NiEntity;$(SolutionDir)NiFloodgate;$(SolutionDir)NiCollision;$(SolutionDir)NiDX9Renderer;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(SolutionDir)NiMesh;$(SolutionDir)NiEntity;$(SolutionDir)NiFloodgate;$(SolutionDir)NiCollision;$(SolutionDir)NiDX9Renderer;$(ProjectDir);C:\Users\TokyoSU\Downloads\dxsdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>C:\Users\TokyoSU\Downloads\dxsdk\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>set INSTALL_DIR=$(SolutionDir)Install\

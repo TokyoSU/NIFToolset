@@ -34,7 +34,7 @@ public:
     ~NiD3DUtility();
 
     // Log
-    static void Log(char* pcFmt, ...);
+    static void Log(const char* pcFmt, ...);
     static bool GetLogEnabled();
     static void SetLogEnabled(bool bEnabled);
 

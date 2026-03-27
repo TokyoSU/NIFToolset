@@ -35,7 +35,7 @@ NiD3DUtility::~NiD3DUtility()
 {
 }
 //---------------------------------------------------------------------------
-void NiD3DUtility::Log(char* pcFmt, ...)
+void NiD3DUtility::Log(const char* pcFmt, ...)
 {
     if (!ms_bLogEnabled)
         return;

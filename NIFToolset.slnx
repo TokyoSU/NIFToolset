@@ -15,7 +15,11 @@
     <Project Path="NiSystem/NiSystem.vcxproj" Id="466ce845-0420-4ccc-b4f7-1530a3096a56" />
   </Folder>
   <Folder Name="/ShaderLibs/">
+    <Project Path="NiBinaryShaderLib/NiBinaryShaderLib.vcxproj" Id="8e0f73c2-67f6-4214-8b9f-ed295beaab89" />
     <Project Path="NiCgShaderLib/NiCgShaderLib.vcxproj" Id="20e74a86-8763-4279-9809-f397cc113a33" />
+    <Project Path="NiCommonMaterialLibrary/NiCommonMaterialLibrary.vcxproj" Id="50509232-3701-40a6-8861-20827d282183" />
+    <Project Path="NiD3DXEffectShaderLib/NiD3DXEffectShaderLib.vcxproj" Id="015c688f-e568-4e31-80f7-cbb3c58312f9" />
+    <Project Path="NSBShaderLib/NSBShaderLib.vcxproj" Id="caf2dc42-d0ac-40a5-aeb7-8755b86ede90" />
   </Folder>
   <Folder Name="/ToolLibs/">
     <Project Path="NiMaterialToolkit/NiMaterialToolkit.vcxproj" Id="991691bd-1446-4a63-81c7-0ee868f6e9a1" />
