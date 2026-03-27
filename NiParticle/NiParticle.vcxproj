@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NiAnimation\NiAnimation.vcxproj">
+      <Project>{9cb0aba3-4e66-45a2-b6df-9ddc52d144e6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiFloodgate\NiFloodgate.vcxproj">
+      <Project>{ac324066-d240-4563-b5d8-4738e8cfad34}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiMain\NiMain.vcxproj">
+      <Project>{fe35fbb5-1a64-4c9c-ae6f-c1f93cf6785c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiMesh\NiMesh.vcxproj">
+      <Project>{687cd830-e0e9-4cb2-aedc-0298ac8de69b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NiSystem\NiSystem.vcxproj">
+      <Project>{466ce845-0420-4ccc-b4f7-1530a3096a56}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="NiMeshParticleSystem.cpp" />
+    <ClCompile Include="NiMeshPSysData.cpp" />
+    <ClCompile Include="NiParticleInfo.cpp" />
+    <ClCompile Include="NiParticlePCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NiParticleSDM.cpp" />
+    <ClCompile Include="NiParticleSystem.cpp" />
+    <ClCompile Include="NiPSAirFieldAirFrictionCtlr.cpp" />
+    <ClCompile Include="NiPSAirFieldForce.cpp" />
+    <ClCompile Include="NiPSAirFieldInheritedVelocityCtlr.cpp" />
+    <ClCompile Include="NiPSAirFieldSpreadCtlr.cpp" />
+    <ClCompile Include="NiPSBombForce.cpp" />
+    <ClCompile Include="NiPSBoundUpdater.cpp" />
+    <ClCompile Include="NiPSBoxEmitter.cpp" />
+    <ClCompile Include="NiPSCollider.cpp" />
+    <ClCompile Include="NiPSCommonSemantics.cpp" />
+    <ClCompile Include="NiPSConverter.cpp" />
+    <ClCompile Include="NiPSCylinderEmitter.cpp" />
+    <ClCompile Include="NiPSDragFieldForce.cpp" />
+    <ClCompile Include="NiPSDragForce.cpp" />
+    <ClCompile Include="NiPSEmitParticlesCtlr.cpp" />
+    <ClCompile Include="NiPSEmitter.cpp" />
+    <ClCompile Include="NiPSEmitterCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterDeclinationCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterDeclinationVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterFloatCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterLifeSpanCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterPlanarAngleCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterPlanarAngleVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRadiusCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotAngleCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotAngleVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotSpeedCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterRotSpeedVarCtlr.cpp" />
+    <ClCompile Include="NiPSEmitterSpeedCtlr.cpp" />
+    <ClCompile Include="NiPSFacingQuadGenerator.cpp" />
+    <ClCompile Include="NiPSFacingQuadGeneratorKernel.cpp" />
+    <ClCompile Include="NiPSFieldAttenuationCtlr.cpp" />
+    <ClCompile Include="NiPSFieldForce.cpp" />
+    <ClCompile Include="NiPSFieldMagnitudeCtlr.cpp" />
+    <ClCompile Include="NiPSFieldMaxDistanceCtlr.cpp" />
+    <ClCompile Include="NiPSForce.cpp" />
+    <ClCompile Include="NiPSForceActiveCtlr.cpp" />
+    <ClCompile Include="NiPSForceBoolCtlr.cpp" />
+    <ClCompile Include="NiPSForceCtlr.cpp" />
+    <ClCompile Include="NiPSForceFloatCtlr.cpp" />
+    <ClCompile Include="NiPSGravityFieldForce.cpp" />
+    <ClCompile Include="NiPSGravityForce.cpp" />
+    <ClCompile Include="NiPSGravityStrengthCtlr.cpp" />
+    <ClCompile Include="NiPSMeshEmitter.cpp" />
+    <ClCompile Include="NiPSMeshParticleSystem.cpp" />
+    <ClCompile Include="NiPSMetrics.cpp" />
+    <ClCompile Include="NiPSParticleSystem.cpp" />
+    <ClCompile Include="NiPSPlanarCollider.cpp" />
+    <ClCompile Include="NiPSRadialFieldForce.cpp" />
+    <ClCompile Include="NiPSResetOnLoopCtlr.cpp" />
+    <ClCompile Include="NiPSSimulator.cpp" />
+    <ClCompile Include="NiPSSimulatorCollidersKernel.cpp" />
+    <ClCompile Include="NiPSSimulatorCollidersStep.cpp" />
+    <ClCompile Include="NiPSSimulatorFinalKernel.cpp" />
+    <ClCompile Include="NiPSSimulatorFinalStep.cpp" />
+    <ClCompile Include="NiPSSimulatorForcesKernel.cpp" />
+    <ClCompile Include="NiPSSimulatorForcesStep.cpp" />
+    <ClCompile Include="NiPSSimulatorGeneralKernel.cpp" />
+    <ClCompile Include="NiPSSimulatorGeneralStep.cpp" />
+    <ClCompile Include="NiPSSimulatorStep.cpp" />
+    <ClCompile Include="NiPSSpawner.cpp" />
+    <ClCompile Include="NiPSSphereEmitter.cpp" />
+    <ClCompile Include="NiPSSphericalCollider.cpp" />
+    <ClCompile Include="NiPSTurbulenceFieldForce.cpp" />
+    <ClCompile Include="NiPSVolumeEmitter.cpp" />
+    <ClCompile Include="NiPSVortexFieldForce.cpp" />
+    <ClCompile Include="NiPSysAgeDeathModifier.cpp" />
+    <ClCompile Include="NiPSysAirFieldAirFrictionCtlr.cpp" />
+    <ClCompile Include="NiPSysAirFieldInheritVelocityCtlr.cpp" />
+    <ClCompile Include="NiPSysAirFieldModifier.cpp" />
+    <ClCompile Include="NiPSysAirFieldSpreadCtlr.cpp" />
+    <ClCompile Include="NiPSysBombModifier.cpp" />
+    <ClCompile Include="NiPSysBoundUpdateModifier.cpp" />
+    <ClCompile Include="NiPSysBoxEmitter.cpp" />
+    <ClCompile Include="NiPSysCollider.cpp" />
+    <ClCompile Include="NiPSysColliderManager.cpp" />
+    <ClCompile Include="NiPSysColorModifier.cpp" />
+    <ClCompile Include="NiPSysCylinderEmitter.cpp" />
+    <ClCompile Include="NiPSysData.cpp" />
+    <ClCompile Include="NiPSysDragFieldModifier.cpp" />
+    <ClCompile Include="NiPSysDragModifier.cpp" />
+    <ClCompile Include="NiPSysEmitter.cpp" />
+    <ClCompile Include="NiPSysEmitterCtlr.cpp" />
+    <ClCompile Include="NiPSysEmitterCtlrData.cpp" />
+    <ClCompile Include="NiPSysEmitterDeclinationCtlr.cpp" />
+    <ClCompile Include="NiPSysEmitterDeclinationVarCtlr.cpp" />
+    <ClCompile Include="NiPSysEmitterInitialRadiusCtlr.cpp" />
+    <ClCompile Include="NiPSysEmitterLifeSpanCtlr.cpp" />
+    <ClCompile Include="NiPSysEmitterPlanarAngleCtlr.cpp" />
+    <ClCompile Include="NiPSysEmitterPlanarAngleVarCtlr.cpp" />
+    <ClCompile Include="NiPSysEmitterSpeedCtlr.cpp" />
+    <ClCompile Include="NiPSysFieldAttenuationCtlr.cpp" />
+    <ClCompile Include="NiPSysFieldMagnitudeCtlr.cpp" />
+    <ClCompile Include="NiPSysFieldMaxDistanceCtlr.cpp" />
+    <ClCompile Include="NiPSysFieldModifier.cpp" />
+    <ClCompile Include="NiPSysGravityFieldModifier.cpp" />
+    <ClCompile Include="NiPSysGravityModifier.cpp" />
+    <ClCompile Include="NiPSysGravityStrengthCtlr.cpp" />
+    <ClCompile Include="NiPSysGrowFadeModifier.cpp" />
+    <ClCompile Include="NiPSysInitialRotAngleCtlr.cpp" />
+    <ClCompile Include="NiPSysInitialRotAngleVarCtlr.cpp" />
+    <ClCompile Include="NiPSysInitialRotSpeedCtlr.cpp" />
+    <ClCompile Include="NiPSysInitialRotSpeedVarCtlr.cpp" />
+    <ClCompile Include="NiPSysMeshEmitter.cpp" />
+    <ClCompile Include="NiPSysMeshUpdateModifier.cpp" />
+    <ClCompile Include="NiPSysModifier.cpp" />
+    <ClCompile Include="NiPSysModifierActiveCtlr.cpp" />
+    <ClCompile Include="NiPSysModifierBoolCtlr.cpp" />
+    <ClCompile Include="NiPSysModifierCtlr.cpp" />
+    <ClCompile Include="NiPSysModifierFloatCtlr.cpp" />
+    <ClCompile Include="NiPSysPlanarCollider.cpp" />
+    <ClCompile Include="NiPSysPositionModifier.cpp" />
+    <ClCompile Include="NiPSysRadialFieldModifier.cpp" />
+    <ClCompile Include="NiPSysResetOnLoopCtlr.cpp" />
+    <ClCompile Include="NiPSysRotationModifier.cpp" />
+    <ClCompile Include="NiPSysSpawnModifier.cpp" />
+    <ClCompile Include="NiPSysSphereEmitter.cpp" />
+    <ClCompile Include="NiPSysSphericalCollider.cpp" />
+    <ClCompile Include="NiPSysTurbulenceFieldModifier.cpp" />
+    <ClCompile Include="NiPSysUpdateCtlr.cpp" />
+    <ClCompile Include="NiPSysVolumeEmitter.cpp" />
+    <ClCompile Include="NiPSysVortexFieldModifier.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NiMeshParticleSystem.h" />
+    <ClInclude Include="NiMeshPSysData.h" />
+    <ClInclude Include="NiParticle.h" />
+    <ClInclude Include="NiParticleInfo.h" />
+    <ClInclude Include="NiParticleLibType.h" />
+    <ClInclude Include="NiParticlePCH.h" />
+    <ClInclude Include="NiParticleSDM.h" />
+    <ClInclude Include="NiParticleSystem.h" />
+    <ClInclude Include="NiPSAirFieldAirFrictionCtlr.h" />
+    <ClInclude Include="NiPSAirFieldForce.h" />
+    <ClInclude Include="NiPSAirFieldInheritedVelocityCtlr.h" />
+    <ClInclude Include="NiPSAirFieldSpreadCtlr.h" />
+    <ClInclude Include="NiPSBombForce.h" />
+    <ClInclude Include="NiPSBoundUpdater.h" />
+    <ClInclude Include="NiPSBoxEmitter.h" />
+    <ClInclude Include="NiPSCollider.h" />
+    <ClInclude Include="NiPSColliderDefinitions.h" />
+    <ClInclude Include="NiPSColliderHelpers.h" />
+    <ClInclude Include="NiPSCommonSemantics.h" />
+    <ClInclude Include="NiPSConverter.h" />
+    <ClInclude Include="NiPSCylinderEmitter.h" />
+    <ClInclude Include="NiPSDragFieldForce.h" />
+    <ClInclude Include="NiPSDragForce.h" />
+    <ClInclude Include="NiPSEmitParticlesCtlr.h" />
+    <ClInclude Include="NiPSEmitter.h" />
+    <ClInclude Include="NiPSEmitterCtlr.h" />
+    <ClInclude Include="NiPSEmitterDeclinationCtlr.h" />
+    <ClInclude Include="NiPSEmitterDeclinationVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterFloatCtlr.h" />
+    <ClInclude Include="NiPSEmitterLifeSpanCtlr.h" />
+    <ClInclude Include="NiPSEmitterPlanarAngleCtlr.h" />
+    <ClInclude Include="NiPSEmitterPlanarAngleVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterRadiusCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotAngleCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotAngleVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotSpeedCtlr.h" />
+    <ClInclude Include="NiPSEmitterRotSpeedVarCtlr.h" />
+    <ClInclude Include="NiPSEmitterSpeedCtlr.h" />
+    <ClInclude Include="NiPSFacingQuadGenerator.h" />
+    <ClInclude Include="NiPSFacingQuadGeneratorKernel.h" />
+    <ClInclude Include="NiPSFieldAttenuationCtlr.h" />
+    <ClInclude Include="NiPSFieldForce.h" />
+    <ClInclude Include="NiPSFieldMagnitudeCtlr.h" />
+    <ClInclude Include="NiPSFieldMaxDistanceCtlr.h" />
+    <ClInclude Include="NiPSFlagsHelpers.h" />
+    <ClInclude Include="NiPSForce.h" />
+    <ClInclude Include="NiPSForceActiveCtlr.h" />
+    <ClInclude Include="NiPSForceBoolCtlr.h" />
+    <ClInclude Include="NiPSForceCtlr.h" />
+    <ClInclude Include="NiPSForceDefinitions.h" />
+    <ClInclude Include="NiPSForceFloatCtlr.h" />
+    <ClInclude Include="NiPSForceHelpers.h" />
+    <ClInclude Include="NiPSGravityFieldForce.h" />
+    <ClInclude Include="NiPSGravityForce.h" />
+    <ClInclude Include="NiPSGravityStrengthCtlr.h" />
+    <ClInclude Include="NiPSKernelDefinitions.h" />
+    <ClInclude Include="NiPSMeshEmitter.h" />
+    <ClInclude Include="NiPSMeshParticleSystem.h" />
+    <ClInclude Include="NiPSMetrics.h" />
+    <ClInclude Include="NiPSParticleSystem.h" />
+    <ClInclude Include="NiPSPlanarCollider.h" />
+    <ClInclude Include="NiPSRadialFieldForce.h" />
+    <ClInclude Include="NiPSResetOnLoopCtlr.h" />
+    <ClInclude Include="NiPSSimulator.h" />
+    <ClInclude Include="NiPSSimulatorCollidersKernel.h" />
+    <ClInclude Include="NiPSSimulatorCollidersStep.h" />
+    <ClInclude Include="NiPSSimulatorFinalKernel.h" />
+    <ClInclude Include="NiPSSimulatorFinalStep.h" />
+    <ClInclude Include="NiPSSimulatorForcesKernel.h" />
+    <ClInclude Include="NiPSSimulatorForcesStep.h" />
+    <ClInclude Include="NiPSSimulatorGeneralKernel.h" />
+    <ClInclude Include="NiPSSimulatorGeneralStep.h" />
+    <ClInclude Include="NiPSSimulatorKernelHelpers.h" />
+    <ClInclude Include="NiPSSimulatorStep.h" />
+    <ClInclude Include="NiPSSpawner.h" />
+    <ClInclude Include="NiPSSphereEmitter.h" />
+    <ClInclude Include="NiPSSphericalCollider.h" />
+    <ClInclude Include="NiPSTurbulenceFieldForce.h" />
+    <ClInclude Include="NiPSVolumeEmitter.h" />
+    <ClInclude Include="NiPSVortexFieldForce.h" />
+    <ClInclude Include="NiPSysAgeDeathModifier.h" />
+    <ClInclude Include="NiPSysAirFieldAirFrictionCtlr.h" />
+    <ClInclude Include="NiPSysAirFieldInheritVelocityCtlr.h" />
+    <ClInclude Include="NiPSysAirFieldModifier.h" />
+    <ClInclude Include="NiPSysAirFieldSpreadCtlr.h" />
+    <ClInclude Include="NiPSysBombModifier.h" />
+    <ClInclude Include="NiPSysBoundUpdateModifier.h" />
+    <ClInclude Include="NiPSysBoxEmitter.h" />
+    <ClInclude Include="NiPSysCollider.h" />
+    <ClInclude Include="NiPSysColliderManager.h" />
+    <ClInclude Include="NiPSysColorModifier.h" />
+    <ClInclude Include="NiPSysCylinderEmitter.h" />
+    <ClInclude Include="NiPSysData.h" />
+    <ClInclude Include="NiPSysDragFieldModifier.h" />
+    <ClInclude Include="NiPSysDragModifier.h" />
+    <ClInclude Include="NiPSysEmitter.h" />
+    <ClInclude Include="NiPSysEmitterCtlr.h" />
+    <ClInclude Include="NiPSysEmitterCtlrData.h" />
+    <ClInclude Include="NiPSysEmitterDeclinationCtlr.h" />
+    <ClInclude Include="NiPSysEmitterDeclinationVarCtlr.h" />
+    <ClInclude Include="NiPSysEmitterInitialRadiusCtlr.h" />
+    <ClInclude Include="NiPSysEmitterLifeSpanCtlr.h" />
+    <ClInclude Include="NiPSysEmitterPlanarAngleCtlr.h" />
+    <ClInclude Include="NiPSysEmitterPlanarAngleVarCtlr.h" />
+    <ClInclude Include="NiPSysEmitterSpeedCtlr.h" />
+    <ClInclude Include="NiPSysFieldAttenuationCtlr.h" />
+    <ClInclude Include="NiPSysFieldMagnitudeCtlr.h" />
+    <ClInclude Include="NiPSysFieldMaxDistanceCtlr.h" />
+    <ClInclude Include="NiPSysFieldModifier.h" />
+    <ClInclude Include="NiPSysGravityFieldModifier.h" />
+    <ClInclude Include="NiPSysGravityModifier.h" />
+    <ClInclude Include="NiPSysGravityStrengthCtlr.h" />
+    <ClInclude Include="NiPSysGrowFadeModifier.h" />
+    <ClInclude Include="NiPSysInitialRotAngleCtlr.h" />
+    <ClInclude Include="NiPSysInitialRotAngleVarCtlr.h" />
+    <ClInclude Include="NiPSysInitialRotSpeedCtlr.h" />
+    <ClInclude Include="NiPSysInitialRotSpeedVarCtlr.h" />
+    <ClInclude Include="NiPSysMeshEmitter.h" />
+    <ClInclude Include="NiPSysMeshUpdateModifier.h" />
+    <ClInclude Include="NiPSysModifier.h" />
+    <ClInclude Include="NiPSysModifierActiveCtlr.h" />
+    <ClInclude Include="NiPSysModifierBoolCtlr.h" />
+    <ClInclude Include="NiPSysModifierCtlr.h" />
+    <ClInclude Include="NiPSysModifierFloatCtlr.h" />
+    <ClInclude Include="NiPSysPlanarCollider.h" />
+    <ClInclude Include="NiPSysPositionModifier.h" />
+    <ClInclude Include="NiPSysRadialFieldModifier.h" />
+    <ClInclude Include="NiPSysResetOnLoopCtlr.h" />
+    <ClInclude Include="NiPSysRotationModifier.h" />
+    <ClInclude Include="NiPSysSpawnModifier.h" />
+    <ClInclude Include="NiPSysSphereEmitter.h" />
+    <ClInclude Include="NiPSysSphericalCollider.h" />
+    <ClInclude Include="NiPSysTurbulenceFieldModifier.h" />
+    <ClInclude Include="NiPSysUpdateCtlr.h" />
+    <ClInclude Include="NiPSysVolumeEmitter.h" />
+    <ClInclude Include="NiPSysVortexFieldModifier.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NiMeshPSysData.inl" />
+    <None Include="NiParticleSystem.inl" />
+    <None Include="NiPSAirFieldForce.inl" />
+    <None Include="NiPSBombForce.inl" />
+    <None Include="NiPSBoundUpdater.inl" />
+    <None Include="NiPSBoxEmitter.inl" />
+    <None Include="NiPSCollider.inl" />
+    <None Include="NiPSColliderHelpers.inl" />
+    <None Include="NiPSCommonSemantics.inl" />
+    <None Include="NiPSConverter.inl" />
+    <None Include="NiPSCylinderEmitter.inl" />
+    <None Include="NiPSDragFieldForce.inl" />
+    <None Include="NiPSDragForce.inl" />
+    <None Include="NiPSEmitter.inl" />
+    <None Include="NiPSEmitterCtlr.inl" />
+    <None Include="NiPSFieldForce.inl" />
+    <None Include="NiPSFlagsHelpers.inl" />
+    <None Include="NiPSForce.inl" />
+    <None Include="NiPSForceCtlr.inl" />
+    <None Include="NiPSForceHelpers.inl" />
+    <None Include="NiPSGravityFieldForce.inl" />
+    <None Include="NiPSGravityForce.inl" />
+    <None Include="NiPSMeshEmitter.inl" />
+    <None Include="NiPSMeshParticleSystem.inl" />
+    <None Include="NiPSParticleSystem.inl" />
+    <None Include="NiPSPlanarCollider.inl" />
+    <None Include="NiPSRadialFieldForce.inl" />
+    <None Include="NiPSSimulator.inl" />
+    <None Include="NiPSSimulatorCollidersStep.inl" />
+    <None Include="NiPSSimulatorForcesStep.inl" />
+    <None Include="NiPSSimulatorGeneralStep.inl" />
+    <None Include="NiPSSimulatorKernelHelpers.inl" />
+    <None Include="NiPSSimulatorStep.inl" />
+    <None Include="NiPSSpawner.inl" />
+    <None Include="NiPSSphereEmitter.inl" />
+    <None Include="NiPSSphericalCollider.inl" />
+    <None Include="NiPSTurbulenceFieldForce.inl" />
+    <None Include="NiPSVolumeEmitter.inl" />
+    <None Include="NiPSVortexFieldForce.inl" />
+    <None Include="NiPSysAgeDeathModifier.inl" />
+    <None Include="NiPSysAirFieldModifier.inl" />
+    <None Include="NiPSysBombModifier.inl" />
+    <None Include="NiPSysBoundUpdateModifier.inl" />
+    <None Include="NiPSysBoxEmitter.inl" />
+    <None Include="NiPSysCollider.inl" />
+    <None Include="NiPSysColliderManager.inl" />
+    <None Include="NiPSysColorModifier.inl" />
+    <None Include="NiPSysCylinderEmitter.inl" />
+    <None Include="NiPSysData.inl" />
+    <None Include="NiPSysDragFieldModifier.inl" />
+    <None Include="NiPSysDragModifier.inl" />
+    <None Include="NiPSysEmitter.inl" />
+    <None Include="NiPSysEmitterCtlrData.inl" />
+    <None Include="NiPSysFieldModifier.inl" />
+    <None Include="NiPSysGravityFieldModifier.inl" />
+    <None Include="NiPSysGravityModifier.inl" />
+    <None Include="NiPSysGrowFadeModifier.inl" />
+    <None Include="NiPSysMeshEmitter.inl" />
+    <None Include="NiPSysMeshUpdateModifier.inl" />
+    <None Include="NiPSysModifier.inl" />
+    <None Include="NiPSysModifierCtlr.inl" />
+    <None Include="NiPSysPlanarCollider.inl" />
+    <None Include="NiPSysRadialFieldModifier.inl" />
+    <None Include="NiPSysRotationModifier.inl" />
+    <None Include="NiPSysSpawnModifier.inl" />
+    <None Include="NiPSysSphereEmitter.inl" />
+    <None Include="NiPSysSphericalCollider.inl" />
+    <None Include="NiPSysTurbulenceFieldModifier.inl" />
+    <None Include="NiPSysVolumeEmitter.inl" />
+    <None Include="NiPSysVortexFieldModifier.inl" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{0f3a87b0-7c9f-4c21-aee6-9ce371968fab}</ProjectGuid>
+    <RootNamespace>NiParticle</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Build\bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIPARTICLE_EXPORT;NIANIMATION_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NI_USE_PCH;WIN32;NIDEBUG;_DEBUG;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiParticlePCH.h</PrecompiledHeaderFile>
+      <AdditionalUsingDirectories>
+      </AdditionalUsingDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMesh;$(SolutionDir)NiFloodgate;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NIPARTICLE_EXPORT;NIANIMATION_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NI_USE_PCH;WIN32;NRELEASE;NIPARTICLE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>NiParticlePCH.h</PrecompiledHeaderFile>
+      <AdditionalUsingDirectories>
+      </AdditionalUsingDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(SolutionDir)NiAnimation;$(SolutionDir)NiMesh;$(SolutionDir)NiFloodgate;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

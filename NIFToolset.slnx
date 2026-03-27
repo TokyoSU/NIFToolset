@@ -1,0 +1,18 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/CoreLibs/">
+    <Project Path="NiAnimation/NiAnimation.vcxproj" Id="9cb0aba3-4e66-45a2-b6df-9ddc52d144e6" />
+    <Project Path="NiAudio/NiAudio.vcxproj" Id="f21422e5-c90c-40d4-928d-9e0ca0418a34" />
+    <Project Path="NiCollision/NiCollision.vcxproj" Id="9eadc17c-c763-449b-b636-d01d6dbeabfe" />
+    <Project Path="NiDX10Renderer/NiDX10Renderer.vcxproj" Id="be3e0cf3-7c02-4b47-b102-0af7e93f2e1f" />
+    <Project Path="NiDX9Renderer/NiDX9Renderer.vcxproj" Id="5faa8c72-2770-4a08-9ce2-105fc97e9abd" />
+    <Project Path="NiFloodgate/NiFloodgate.vcxproj" Id="ac324066-d240-4563-b5d8-4738e8cfad34" />
+    <Project Path="NiMain/NiMain.vcxproj" Id="fe35fbb5-1a64-4c9c-ae6f-c1f93cf6785c" />
+    <Project Path="NiMesh/NiMesh.vcxproj" Id="687cd830-e0e9-4cb2-aedc-0298ac8de69b" />
+    <Project Path="NiParticle/NiParticle.vcxproj" Id="0f3a87b0-7c9f-4c21-aee6-9ce371968fab" />
+    <Project Path="NiPortal/NiPortal.vcxproj" Id="87a3f0df-ef8b-4cb7-b728-f14a7b9c77a1" />
+    <Project Path="NiSystem/NiSystem.vcxproj" Id="466ce845-0420-4ccc-b4f7-1530a3096a56" />
+  </Folder>
+</Solution>

@@ -1,18 +1,18 @@
 # ----------------------
 # CMake build files
 # ----------------------
-CMakeFiles/
+CMakeFiles/*
 CMakeCache.txt
 cmake_install.cmake
 Makefile
 *.cmake
-build/
-Build/
-Debug/
-Release/
-RelWithDebInfo/
-MinSizeRel/
-*.dir/
+[bB]uild/*
+[iI]nstall/*
+Debug/*
+Release/*
+RelWithDebInfo/*
+MinSizeRel/*
+*.dir/*
 
 # ----------------------
 # Visual Studio
