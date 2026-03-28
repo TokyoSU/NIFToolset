@@ -2,6 +2,9 @@
   <Configurations>
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/AppLibs/">
+    <Project Path="NiApplication/NiApplication.vcxproj" Id="c9affbd9-bd95-416d-8000-86ff39bd90ee" />
+  </Folder>
   <Folder Name="/CoreLibs/">
     <Project Path="NiAnimation/NiAnimation.vcxproj" Id="9cb0aba3-4e66-45a2-b6df-9ddc52d144e6" />
     <Project Path="NiAudio/NiAudio.vcxproj" Id="f21422e5-c90c-40d4-928d-9e0ca0418a34" />
