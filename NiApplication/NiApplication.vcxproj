@@ -144,6 +144,19 @@
       <AdditionalLibraryDirectories>C:\Users\TokyoSU\Downloads\dxsdk\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>dxguid.lib;d3d9.lib;d3dx9d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -166,6 +179,19 @@
       <AdditionalLibraryDirectories>C:\Users\TokyoSU\Downloads\dxsdk\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>dxguid.lib;d3d9.lib;d3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>set INSTALL_DIR=$(SolutionDir)Install\
+
+if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Configuration)"
+if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
+if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
+
+copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
+copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
+xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.hpp" "%INSTALL_DIR%include\"
+xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
