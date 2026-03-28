@@ -1,0 +1,2 @@
+vcpkg install dxsdk-d3dx:x86-windows
+vcpkg install tinyxml:x86-windows
