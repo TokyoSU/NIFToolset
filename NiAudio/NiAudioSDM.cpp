@@ -16,7 +16,7 @@
 #include "NiAudio.h"
 #include "NiAudioSDM.h"
 
-NiImplementSDMConstructor(NiAudio, "NiMain NiSystem");
+NiImplementSDMConstructor(NiAudio, "NiMain");
 
 #ifdef NIAUDIO_EXPORT
 NiImplementDllMain(NiAudio);

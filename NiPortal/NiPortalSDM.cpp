@@ -19,7 +19,7 @@
 #include "NiRoom.h"
 #include "NiRoomGroup.h"
 
-NiImplementSDMConstructor(NiPortal, "NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiPortal, "NiMesh NiFloodgate NiMain");
 
 #ifdef NIPORTAL_EXPORT
 NiImplementDllMain(NiPortal);

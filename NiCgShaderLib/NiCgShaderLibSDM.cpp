@@ -23,7 +23,7 @@
 #include "NiD3DShaderProgramCreatorCg.h"
 #include "NiD3DShaderProgramCreatorCgObj.h"
 
-NiImplementSDMConstructor(NiCgShaderLib, "NiDX9Renderer NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiCgShaderLib, "NiDX9Renderer NiMesh NiFloodgate NiMain");
 
 #ifdef NICGSHADERLIB_ENTRY
 NiImplementDllMain(NiCgShaderLib);

@@ -33,7 +33,7 @@
 #endif
 
 //---------------------------------------------------------------------------
-NiImplementSDMConstructor(NiMesh, "NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiMesh, "NiFloodgate NiMain");
 //---------------------------------------------------------------------------
 #ifdef NIMESH_EXPORT
 NiImplementDllMain(NiMesh);

@@ -17,7 +17,7 @@
 #include "NiCommonMaterialLibrary.h"
 #include "NiCommonMaterialSDM.h"
 
-NiImplementSDMConstructor(NiCommonMaterial, "NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiCommonMaterial, "NiMesh NiFloodgate NiMain");
 
 //---------------------------------------------------------------------------
 void NiCommonMaterialSDM::Init()

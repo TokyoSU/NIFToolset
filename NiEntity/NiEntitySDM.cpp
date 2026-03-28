@@ -17,7 +17,7 @@
 #include "NiEntitySDM.h"
 #include "NiEntity.h"
 
-NiImplementSDMConstructor(NiEntity, "NiAnimation NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiEntity, "NiAnimation NiMesh NiFloodgate NiMain");
 
 #ifdef NIENTITY_EXPORT
 NiImplementDllMain(NiEntity);

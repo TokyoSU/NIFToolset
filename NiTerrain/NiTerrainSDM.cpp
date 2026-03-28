@@ -23,7 +23,7 @@
 
 #include <NiFactories.h>
 
-NiImplementSDMConstructor(NiTerrain, "NiAnimation NiDX9Renderer NiMesh NiCollision NiFloodgate NiMain NiEntity NiSystem");
+NiImplementSDMConstructor(NiTerrain, "NiAnimation NiDX9Renderer NiMesh NiCollision NiFloodgate NiMain NiEntity");
 
 #ifdef NITERRAIN_EXPORT
 NiImplementDllMain(NiTerrain);

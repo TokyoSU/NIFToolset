@@ -78,7 +78,7 @@
 #include <NiPSysVolumeEmitter.h>
 #include <NiPSysVortexFieldModifier.h>
 
-NiImplementSDMConstructor(NiParticle, "NiAnimation NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiParticle, "NiAnimation NiMesh NiFloodgate NiMain");
 
 #ifdef NIPARTICLE_EXPORT
 NiImplementDllMain(NiParticle);

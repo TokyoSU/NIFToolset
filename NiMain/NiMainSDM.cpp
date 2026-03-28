@@ -27,7 +27,7 @@
 #include "NiTriStrips.h"
 #include "NiTriStripsData.h"
 
-NiImplementSDMConstructor(NiMain, "NiSystem"); // All libs depend on NiSystem
+NiImplementSDMConstructor(NiMain, ""); // All libs depend on NiSystem
 
 //---------------------------------------------------------------------------
 #ifdef NIMAIN_EXPORT

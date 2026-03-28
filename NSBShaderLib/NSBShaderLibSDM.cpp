@@ -26,14 +26,14 @@
 //---------------------------------------------------------------------------
 #if defined(WIN32)
 #if defined(WIN32) && defined(_D3D10)
-NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiDX9Renderer NiD3D10Renderer NiSystem");
+NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiDX9Renderer NiD3D10Renderer");
 #else
-NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiDX9Renderer NiSystem");
+NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiDX9Renderer");
 #endif
 #elif defined(_PS3)
-NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiPS3Renderer NiSystem");
+NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiPS3Renderer");
 #elif defined(_XENON)
-NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiXenonRenderer NiSystem");
+NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiXenonRenderer");
 #endif
 
 //---------------------------------------------------------------------------

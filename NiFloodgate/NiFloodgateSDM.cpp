@@ -17,7 +17,7 @@
 #include "NiSPWorkflowManager.h"
 
 //---------------------------------------------------------------------------
-NiImplementSDMConstructor(NiFloodgate, "NiMain NiSystem");
+NiImplementSDMConstructor(NiFloodgate, "NiMain");
 //---------------------------------------------------------------------------
 #ifdef NIFLOODGATE_EXPORT
 NiImplementDllMain(NiFloodgate);

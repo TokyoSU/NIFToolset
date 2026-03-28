@@ -24,7 +24,7 @@
 NiImplementSDMConstructor(NiD3DXEffectShader,
     "NiXenonRenderer NiMesh NiFloodgate NiMain");
 #elif defined(WIN32)
-NiImplementSDMConstructor(NiD3DXEffectShader, "NiDX9Renderer NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiD3DXEffectShader, "NiDX9Renderer NiMesh NiFloodgate NiMain");
 #else
 #error Invalid platform specification.
 #endif

@@ -17,7 +17,7 @@
 #include "NiAnimation.h"
 #include "NiAnimationSDM.h"
 
-NiImplementSDMConstructor(NiAnimation, "NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiAnimation, "NiMesh NiFloodgate NiMain");
 
 #ifdef NIANIMATION_EXPORT
 NiImplementDllMain(NiAnimation);

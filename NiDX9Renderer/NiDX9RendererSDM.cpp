@@ -24,7 +24,7 @@
 #include "NiD3DShaderProgramCreatorObj.h"
 #include "NiD3DShaderProgramCreatorHLSL.h"
 
-NiImplementSDMConstructor(NiDX9Renderer, "NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiDX9Renderer, "NiMesh NiFloodgate NiMain");
 
 #ifdef NIDX9RENDERER_EXPORT
 NiImplementDllMain(NiDX9Renderer);

@@ -15,7 +15,7 @@
 #include "NiCollisionPCH.h"
 
 #include "NiCollision.h"
-NiImplementSDMConstructor(NiCollision, "NiMesh NiFloodgate NiMain NiSystem");
+NiImplementSDMConstructor(NiCollision, "NiMesh NiFloodgate NiMain");
 
 #ifdef NICOLLISION_EXPORT
 NiImplementDllMain(NiCollision);
