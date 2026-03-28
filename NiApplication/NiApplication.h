@@ -102,6 +102,8 @@ public:
     };
 #endif
 
+    static NiApplication* Create(const char* pcWindowCaption);
+
     // command line parsing
     static void SetCommandLine(char* pcCommandLine);
     static void SetCommandLine(int iArgc, char** ppcArgv);

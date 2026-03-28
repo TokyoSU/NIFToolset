@@ -20,11 +20,13 @@
 #include <NiTNodeTraversal.h>
 
 NiApplication* NiApplication::ms_pkApplication = 0;
-
 NiInstanceRef NiApplication::ms_pInstance = 0;
 NiAcceleratorRef NiApplication::ms_pAccel = 0;
 NiCommand* NiApplication::ms_pkCommand = 0;
 
+NiApplication* NiApplication::Create(const char* pcWindowCaption) {
+    return NiNew NiApplication(pcWindowCaption);
+}
 //---------------------------------------------------------------------------
 void NiApplication::SetCommandLine(char* pcCommandLine)
 {
