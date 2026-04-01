@@ -91,7 +91,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NICOMMONMATERIAL_EXPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NI_USE_PCH;WIN32;NIDEBUG;_DEBUG;NICOMMONMATERIALLIBRARY_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;NICOMMONMATERIAL_EXPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NI_USE_PCH;WIN32;NIDEBUG;_DEBUG;NICOMMONMATERIALLIBRARY_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -124,7 +124,7 @@ xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NICOMMONMATERIAL_EXPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NI_USE_PCH;WIN32;NIRELEASE;NDEBUG;NICOMMONMATERIALLIBRARY_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;NICOMMONMATERIAL_EXPORT;NIMAIN_IMPORT;NISYSTEM_IMPORT;NIMESH_IMPORT;NIFLOODGATE_IMPORT;NI_USE_PCH;WIN32;NIRELEASE;NDEBUG;NICOMMONMATERIALLIBRARY_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>

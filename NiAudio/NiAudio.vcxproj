@@ -19,6 +19,9 @@
     <ClInclude Include="NiAudioSDM.h" />
     <ClInclude Include="NiAudioSource.h" />
     <ClInclude Include="NiAudioSystem.h" />
+    <ClInclude Include="NiBASSAudioListener.h" />
+    <ClInclude Include="NiBASSAudioSource.h" />
+    <ClInclude Include="NiBASSAudioSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NiAudioListener.cpp" />
@@ -30,6 +33,9 @@
     <ClCompile Include="NiAudioSDM.cpp" />
     <ClCompile Include="NiAudioSource.cpp" />
     <ClCompile Include="NiAudioSystem.cpp" />
+    <ClCompile Include="NiBASSAudioListener.cpp" />
+    <ClCompile Include="NiBASSAudioSource.cpp" />
+    <ClCompile Include="NiBASSAudioSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="NiAudioMetrics.inl" />
@@ -92,16 +98,15 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>NiAudioPCH.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Extern\bass\include;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Extern\bass\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>bass.lib;bassmix.lib;bass_fx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>set INSTALL_DIR=$(SolutionDir)Install\
@@ -110,6 +115,7 @@ if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Confi
 if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
 if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
 
+copy /Y "$(SolutionDir)Extern\bass\bin\*.dll" "%INSTALL_DIR%bin\$(Configuration)"
 copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
 copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
 xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"
@@ -128,16 +134,15 @@ xcopy /Y /S /I "$(ProjectDir)*.inl" "%INSTALL_DIR%include\"</Command>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>NiAudioPCH.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Extern\bass\include;$(SolutionDir)NiMain;$(SolutionDir)NiSystem;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Extern\bass\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>bass.lib;bassmix.lib;bass_fx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>set INSTALL_DIR=$(SolutionDir)Install\
@@ -146,6 +151,7 @@ if not exist "%INSTALL_DIR%bin\$(Configuration)" mkdir "%INSTALL_DIR%bin\$(Confi
 if not exist "%INSTALL_DIR%lib\$(Configuration)" mkdir "%INSTALL_DIR%lib\$(Configuration)"
 if not exist "%INSTALL_DIR%include" mkdir "%INSTALL_DIR%include"
 
+copy /Y "$(SolutionDir)Extern\bass\bin\*.dll" "%INSTALL_DIR%bin\$(Configuration)"
 copy /Y "$(TargetPath)" "%INSTALL_DIR%bin\$(Configuration)"
 copy /Y "$(TargetDir)$(TargetName).lib" "%INSTALL_DIR%lib\$(Configuration)"
 xcopy /Y /S /I "$(ProjectDir)*.h"   "%INSTALL_DIR%include\"

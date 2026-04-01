@@ -145,6 +145,7 @@ bool NSBShaderLib_LoadShaderLibrary(NiRenderer* pkRenderer,
         *ppkLibrary = pkLibrary;
         return (*ppkLibrary != NULL);
     }
+#if defined(_D3D10)
     else if (NiIsKindOf(NiD3D10Renderer, pkRenderer))
     {
         NSBD3D10ShaderLibrary* pkLibrary = NSBD3D10ShaderLibrary::Create(
@@ -153,6 +154,7 @@ bool NSBShaderLib_LoadShaderLibrary(NiRenderer* pkRenderer,
         *ppkLibrary = pkLibrary;
         return (*ppkLibrary != NULL);
     }
+#endif
     else
     {
         ppkLibrary = NiAlloc(NiShaderLibrary*, 2);
@@ -163,9 +165,11 @@ bool NSBShaderLib_LoadShaderLibrary(NiRenderer* pkRenderer,
             pkLibrary->SetRenderer((NiD3DRenderer*)pkRenderer);
         ppkLibrary[0] = pkLibrary;
 
+#if defined(_D3D10)
         NSBD3D10ShaderLibrary* pkD3D10Library = NSBD3D10ShaderLibrary::Create(
             iDirectoryCount, pszDirectories, bRecurseSubFolders);
         ppkLibrary[1] = pkD3D10Library;
+#endif
 
         return ((ppkLibrary[0] != NULL) || (ppkLibrary[1] != NULL));
     }

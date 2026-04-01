@@ -15,6 +15,7 @@
 #include "NiAudioPCH.h"
 #include "NiAudio.h"
 #include "NiAudioSDM.h"
+#include "NiBASSAudioSystem.h"
 
 NiImplementSDMConstructor(NiAudio, "NiMain");
 
@@ -31,19 +32,18 @@ void NiAudioSDM::Init()
     NiRegisterStream(NiAudioSource);
     NiRegisterStream(NiAudioSystem);
 
-    //NiAudioSystem::ms_pAudioSystem = (NiAudioSystem*)NiNew NiAudioSystem;
-    //NIASSERT(NiAudioSystem::ms_pAudioSystem);
+    // NiBASSAudioSystem::Create() must be called manually after this
+    // with the application HWND, then Startup() to initialize BASS.
 }
 //---------------------------------------------------------------------------
 void NiAudioSDM::Shutdown()
 {
     NiImplementSDMShutdownCheck();
 
+    NiBASSAudioSystem::Destroy();
+
     NiUnregisterStream(NiAudioListener);
     NiUnregisterStream(NiAudioSource);
     NiUnregisterStream(NiAudioSystem);
-
-    //NiDelete NiAudioSystem::ms_pAudioSystem;
-    //NiAudioSystem::ms_pAudioSystem = NULL;
 }
 //---------------------------------------------------------------------------

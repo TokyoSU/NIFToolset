@@ -39,6 +39,15 @@
     <ClInclude Include="NiAudioSDM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NiBASSAudioListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBASSAudioSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiBASSAudioSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NiAudioListener.cpp">
@@ -57,6 +66,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NiAudioSDM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBASSAudioListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBASSAudioSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NiBASSAudioSource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
