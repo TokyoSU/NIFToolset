@@ -190,8 +190,7 @@ void NiSourceCubeMap::LoadFromFiles(const char* pcPosXFilename,
 
         NiPath::Standardize(pcName);
 
-        char* pcPlaformName = 
-            NiImageConverter::ConvertFilenameToPlatformSpecific(pcName);
+        char* pcPlaformName = NiImageConverter::ConvertFilenameToPlatformSpecific(pcName);
 
         kPath.SetFilePath(pcPlaformName);
         kPath.Reset();
@@ -199,8 +198,7 @@ void NiSourceCubeMap::LoadFromFiles(const char* pcPosXFilename,
         {
             if (NiFile::Access(acFile, NiFile::READ_ONLY))
             {
-                aspFaceSrcPixelDatas[i] = 
-                    pkConverter->ReadImageFile(acFile, NULL);
+                aspFaceSrcPixelDatas[i] = pkConverter->ReadImageFile(acFile, NULL);
                 NIASSERT(aspFaceSrcPixelDatas[i] != NULL);
                 NiFree(pcPlaformName);
                 NiFree(pcName);

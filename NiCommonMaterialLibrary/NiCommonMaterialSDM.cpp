@@ -25,6 +25,8 @@ void NiCommonMaterialSDM::Init()
     NiImplementSDMInitCheck();
 
     NiCommonMaterialLibrary::_SDMInit();
+
+    NiOutputDebugString("NiCommonMaterial Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiCommonMaterialSDM::Shutdown()

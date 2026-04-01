@@ -132,6 +132,8 @@ void NiAnimationSDM::Init()
     NiStream::RegisterPostProcessFunction(NiBoneLODController::Convert);
 
     NiAnimationConstants::_SDMInit();
+
+    NiOutputDebugString("NiAnimation Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiAnimationSDM::Shutdown()

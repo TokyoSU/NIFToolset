@@ -34,6 +34,8 @@ void NiAudioSDM::Init()
 
     // NiBASSAudioSystem::Create() must be called manually after this
     // with the application HWND, then Startup() to initialize BASS.
+
+    NiOutputDebugString("NiAudio Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiAudioSDM::Shutdown()

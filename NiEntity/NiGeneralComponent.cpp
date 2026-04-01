@@ -13,7 +13,6 @@
 
 // Precompiled Header
 #include "NiEntityPCH.h"
-
 #include "NiGeneralComponent.h"
 #include "NiEntityErrorInterface.h"
 

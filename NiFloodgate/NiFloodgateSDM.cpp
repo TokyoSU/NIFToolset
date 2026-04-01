@@ -54,6 +54,8 @@ void NiFloodgateSDM::Init()
 
     // Initialize the Stream Processor
     NiStreamProcessor::Initialize();
+
+    NiOutputDebugString("NiFloodgate Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiFloodgateSDM::Shutdown()

@@ -173,6 +173,8 @@ void NiCollisionSDM::Init()
         NiCollisionConvert::ConvertToBoxBV;
 
     NiPick::_SDMInit();
+
+    NiOutputDebugString("NiCollision Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiCollisionSDM::Shutdown()

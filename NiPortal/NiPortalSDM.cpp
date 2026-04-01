@@ -36,6 +36,8 @@ void NiPortalSDM::Init()
 
     // NiWall has been deprecated.  NiRoom took its place.
     NiStream::RegisterLoader("NiWall", NiRoom::CreateOldWallObject);
+
+    NiOutputDebugString("NiPortal Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiPortalSDM::Shutdown()

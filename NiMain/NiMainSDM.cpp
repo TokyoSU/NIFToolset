@@ -186,6 +186,8 @@ void NiMainSDM::Init()
 
     NiShadowMap::_SDMInit();
     NiShadowCubeMap::_SDMInit();
+
+    NiOutputDebugString("NiMain Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiMainSDM::Shutdown()

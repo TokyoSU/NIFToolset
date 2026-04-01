@@ -252,6 +252,9 @@
     <ClCompile Include="NiUniqueID_Win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NiEntitySyncComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NiActorComponent.h">
@@ -513,6 +516,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NiUniqueID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiEntitySyncComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

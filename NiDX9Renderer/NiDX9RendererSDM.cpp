@@ -57,6 +57,8 @@ void NiDX9RendererSDM::Init()
     NiD3DShaderProgramCreatorHLSL::_SDMInit();
 
     NiD3DShader::_SDMInit();
+
+    NiOutputDebugString("NiDX9Renderer Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiDX9RendererSDM::Shutdown()

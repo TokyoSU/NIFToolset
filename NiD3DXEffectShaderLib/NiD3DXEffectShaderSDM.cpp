@@ -34,6 +34,8 @@ NiImplementSDMConstructor(NiD3DXEffectShader,
 void NiD3DXEffectShaderSDM::Init()
 {
     NiImplementSDMInitCheck();
+
+    NiOutputDebugString("NiD3DXEffectShader Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiD3DXEffectShaderSDM::Shutdown()

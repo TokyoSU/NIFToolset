@@ -40,6 +40,8 @@ NiImplementSDMConstructor(NSBShaderLib, "NiMain NiMesh NiFloodgate NiXenonRender
 void NSBShaderLibSDM::Init()
 {
     NiImplementSDMInitCheck();
+
+    NiOutputDebugString("NSBShaderLib Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NSBShaderLibSDM::Shutdown()

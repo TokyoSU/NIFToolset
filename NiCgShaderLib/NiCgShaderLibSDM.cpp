@@ -38,6 +38,8 @@ void NiCgShaderLibSDM::Init()
 
     NiD3DShaderProgramCreatorCg::_SDMInit();
     NiD3DShaderProgramCreatorCgObj::_SDMInit();
+
+    NiOutputDebugString("NiCgShaderLib Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiCgShaderLibSDM::Shutdown()

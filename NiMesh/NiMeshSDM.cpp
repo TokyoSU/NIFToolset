@@ -64,6 +64,8 @@ void NiMeshSDM::Init()
     // Give NiAVObject a default update process to use for the legacy
     // Update(float) calls
     NiAVObject::RegisterDefaultUpdateProcess(NiNew NiMeshUpdateProcess());
+    
+    NiOutputDebugString("NiMesh Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiMeshSDM::Shutdown()

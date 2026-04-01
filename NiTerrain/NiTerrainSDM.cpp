@@ -51,6 +51,8 @@ void NiTerrainSDM::Init()
     NiTerrainSectorComponent::_SDMInit();
     NiWaterComponent::_SDMInit();   
     NiSurface::_SDMInit();
+
+    NiOutputDebugString("NiTerrain Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiTerrainSDM::Shutdown()

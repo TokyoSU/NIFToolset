@@ -17,7 +17,7 @@
 #include "NiEntitySDM.h"
 #include "NiEntity.h"
 
-NiImplementSDMConstructor(NiEntity, "NiAnimation NiMesh NiFloodgate NiMain");
+NiImplementSDMConstructor(NiEntity, "NiDX9Renderer NiAnimation NiMesh NiFloodgate NiMain");
 
 #ifdef NIENTITY_EXPORT
 NiImplementDllMain(NiEntity);
@@ -46,6 +46,7 @@ void NiEntitySDM::Init()
     NiShadowGeneratorComponent::_SDMInit();
     NiTransformationComponent::_SDMInit();
     NiGeneralComponent::_SDMInit();
+	NiEntitySyncComponent::_SDMInit();
 
     // Interfaces
     NiEntityPropertyInterface::_SDMInit();
@@ -61,6 +62,8 @@ void NiEntitySDM::Init()
     NiEntityStreamingAscii::_SDMInit();
 
     NiFactories::_SDMRegister();
+
+    NiOutputDebugString("NiEntity Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiEntitySDM::Shutdown()
@@ -68,9 +71,6 @@ void NiEntitySDM::Shutdown()
     NiImplementSDMShutdownCheck();
 
     NiGeneralEntity::_SDMShutdown();
-
-    // Provided Factories
-    NiFactories::_SDMShutdown();
 
     // General
     NiEntityCommandManager::_SDMShutdown();
@@ -85,18 +85,22 @@ void NiEntitySDM::Shutdown()
     NiShadowGeneratorComponent::_SDMShutdown();
     NiTransformationComponent::_SDMShutdown();
     NiGeneralComponent::_SDMShutdown();
+    NiEntitySyncComponent::_SDMShutdown();
 
     // Interfaces
     NiEntityPropertyInterface::_SDMShutdown();
     NiEntityInterface::_SDMShutdown();
     NiEntityComponentInterface::_SDMShutdown();
 
-    // Handlers
+    // Handlers (must come before factory destruction)
     NiExternalAssetNIFHandler::_SDMShutdown();
     NiExternalAssetKFMHandler::_SDMShutdown();
     NiExternalAssetKFHandler::_SDMShutdown();
 
     // Streaming
     NiEntityStreamingAscii::_SDMShutdown();
+
+    // Factories last — after ALL consumers have shut down
+    NiFactories::_SDMShutdown();
 }
 //---------------------------------------------------------------------------

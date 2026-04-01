@@ -39,6 +39,7 @@
 #include "NiSceneGraphComponent.h"
 #include "NiShadowGeneratorComponent.h"
 #include "NiTransformationComponent.h"
+#include "NiEntitySyncComponent.h"
 
 // Interfaces
 #include "NiEntityCommandInterface.h"

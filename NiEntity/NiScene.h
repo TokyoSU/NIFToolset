@@ -72,9 +72,15 @@ public:
     // Computes the world-space bound of the scene.
     inline void GetBound(NiBound& kBound);
 
-    // Updates all entites.
+    // Updates all entities.
     inline void Update(float fTime, NiEntityErrorInterface* pkErrors,
         NiExternalAssetManager* pkAssetManager);
+
+    // Calls UpdateEffects() on all entity scene roots.
+    inline void UpdateEffects();
+
+    // Calls UpdateProperties() on all entity scene roots.
+    inline void UpdateProperties();
 
     // BuildVisibleSet for all entities.
     inline void BuildVisibleSet(NiEntityRenderingContext* pkRenderingContext,

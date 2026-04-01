@@ -322,3 +322,41 @@ inline void NiScene::SetSourceFilename(
     }
 }
 //---------------------------------------------------------------------------
+inline void NiScene::UpdateEffects()
+{
+    const unsigned int uiSize = m_kEntities.GetSize();
+    for (unsigned int ui = 0; ui < uiSize; ui++)
+    {
+        NiEntityInterface* pkEntity = m_kEntities.GetAt(ui);
+        if (!pkEntity)
+            continue;
+
+        NiObject* pkObject = NULL;
+        if (pkEntity->GetPropertyData(ms_kSceneRootName, pkObject, 0))
+        {
+            NiAVObject* pkRoot = NiDynamicCast(NiAVObject, pkObject);
+            if (pkRoot)
+                pkRoot->UpdateEffects();
+        }
+    }
+}
+//---------------------------------------------------------------------------
+inline void NiScene::UpdateProperties()
+{
+    const unsigned int uiSize = m_kEntities.GetSize();
+    for (unsigned int ui = 0; ui < uiSize; ui++)
+    {
+        NiEntityInterface* pkEntity = m_kEntities.GetAt(ui);
+        if (!pkEntity)
+            continue;
+
+        NiObject* pkObject = NULL;
+        if (pkEntity->GetPropertyData(ms_kSceneRootName, pkObject, 0))
+        {
+            NiAVObject* pkRoot = NiDynamicCast(NiAVObject, pkObject);
+            if (pkRoot)
+                pkRoot->UpdateProperties();
+        }
+    }
+}
+//---------------------------------------------------------------------------

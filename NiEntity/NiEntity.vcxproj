@@ -51,6 +51,7 @@
     <ClCompile Include="NiEntitySDM.cpp" />
     <ClCompile Include="NiEntityStreaming.cpp" />
     <ClCompile Include="NiEntityStreamingAscii.cpp" />
+    <ClCompile Include="NiEntitySyncComponent.cpp" />
     <ClCompile Include="NiExternalAssetHandler.cpp" />
     <ClCompile Include="NiExternalAssetKFHandler.cpp" />
     <ClCompile Include="NiExternalAssetKFMHandler.cpp" />
@@ -138,6 +139,7 @@
     <ClInclude Include="NiEntitySelectionSet.h" />
     <ClInclude Include="NiEntityStreaming.h" />
     <ClInclude Include="NiEntityStreamingAscii.h" />
+    <ClInclude Include="NiEntitySyncComponent.h" />
     <ClInclude Include="NiExternalAssetHandler.h" />
     <ClInclude Include="NiExternalAssetKFHandler.h" />
     <ClInclude Include="NiExternalAssetKFMHandler.h" />

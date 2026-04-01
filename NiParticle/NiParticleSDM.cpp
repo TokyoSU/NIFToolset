@@ -204,6 +204,8 @@ void NiParticleSDM::Init()
     NiPSCommonSemantics::_SDMInit();
 
     NiStream::RegisterPostProcessFunction(NiPSConverter::Convert);
+
+    NiOutputDebugString("NiParticle Initialized\n");
 }
 //---------------------------------------------------------------------------
 void NiParticleSDM::Shutdown()
