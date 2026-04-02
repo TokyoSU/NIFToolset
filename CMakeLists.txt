@@ -3,14 +3,6 @@
 #
 cmake_minimum_required (VERSION 3.16)
 
-# Enable multi-threaded compilation for MSVC (/MP) and
-# explicit parallel job count for Ninja.
-if(MSVC)
-    # /MP: compile multiple source files in parallel within a single target.
-    # Omit the number to let MSVC use all logical cores automatically.
-    add_compile_options(/MP)
-endif()
-
 # Auto-detect vcpkg toolchain BEFORE project() — required for CMake GUI and
 # command-line builds that do not pass -DCMAKE_TOOLCHAIN_FILE explicitly.
 # Priority:
@@ -44,16 +36,39 @@ endif()
 # Set ON for DLL (.dll), OFF for static (.lib) — default to shared
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
+# Use native MSVC STL instead of stlport
+add_compile_definitions(EE_USE_NATIVE_STL) # stlport is no longer supported, but this definition is still used in some places to conditionally compile code that depends on the STL.
+
+# DirectX renderer backend
+set(NI_RENDERER "DX9" CACHE STRING "DirectX renderer backend (DX9, DX10, DX11)")
+set_property(CACHE NI_RENDERER PROPERTY STRINGS "DX9" "DX10" "DX11")
+message(STATUS "[NIFToolset] Renderer: ${NI_RENDERER}")
+add_compile_definitions(NI_RENDERER_${NI_RENDERER})
+add_compile_definitions(EE_GAMEBRYO_VERSION="4.0.12") # Gamebryo version used for conditional compilation (e.g. to exclude code for older versions)
+
+# Enable multi-threaded compilation for MSVC (/MP) and
+# explicit parallel job count for Ninja.
+if(MSVC)
+    # /MP: compile multiple source files in parallel within a single target.
+    # Omit the number to let MSVC use all logical cores automatically.
+    add_compile_options(/MP)
+endif()
+
 # Define global preprocessor definitions for all targets based on build configuration
 add_compile_definitions(
     $<$<CONFIG:Debug>:NIDEBUG>
+    $<$<CONFIG:Debug>:EE_EFD_CONFIG_DEBUG>
     $<$<CONFIG:Debug>:_LIB>
     $<$<CONFIG:Release>:NIRELEASE>
+    $<$<CONFIG:Release>:EE_EFD_CONFIG_RELEASE>
     $<$<CONFIG:Release>:_LIB>
     $<$<CONFIG:RelWithDebInfo>:NIRELEASE>
     $<$<CONFIG:RelWithDebInfo>:NIDEBUG>
+    $<$<CONFIG:RelWithDebInfo>:EE_EFD_CONFIG_RELEASE>
+    $<$<CONFIG:RelWithDebInfo>:EE_EFD_CONFIG_DEBUG>
     $<$<CONFIG:RelWithDebInfo>:_LIB>
     $<$<CONFIG:MinSizeRel>:NIRELEASE>
+    $<$<CONFIG:MinSizeRel>:EE_EFD_CONFIG_RELEASE>
     $<$<CONFIG:MinSizeRel>:_LIB>
 )
 
@@ -65,20 +80,6 @@ endif()
 # Include install helper function (ni_install_target)
 include("${CMAKE_SOURCE_DIR}/cmake/NiInstall.cmake")
 
-# Include sub-projects.
-add_subdirectory ("NiAnimation")
-add_subdirectory ("NiAudio")
-add_subdirectory ("NiCollision")
-add_subdirectory ("NiCursor")
-add_subdirectory ("NiDX9Renderer")
-add_subdirectory ("NiD3DXEffectShaderLib")
-add_subdirectory ("NiEntity")
-add_subdirectory ("NiFloodgate")
-add_subdirectory ("NiFont")
-add_subdirectory ("NiInput")
-add_subdirectory ("NiMain")
-add_subdirectory ("NiMesh")
-add_subdirectory ("NiParticle")
-add_subdirectory ("NiPortal")
-add_subdirectory ("NiSystem")
-add_subdirectory ("NiTerrain")
+# Include sub-projects
+add_subdirectory("Foundation")
+add_subdirectory("CoreRuntime")
