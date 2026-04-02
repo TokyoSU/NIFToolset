@@ -705,6 +705,9 @@
     <ClCompile Include="NiZBufferProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NiTextureBlendUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ni2DBuffer.h">
@@ -1509,6 +1512,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NiDirectXVersion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NiTextureBlendUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -217,6 +217,7 @@
     <ClCompile Include="NiTaskManager.cpp" />
     <ClCompile Include="NiTexture.cpp" />
     <ClCompile Include="NiTextureAddressSwizzler.cpp" />
+    <ClCompile Include="NiTextureBlendUtils.cpp" />
     <ClCompile Include="NiTextureCodec.cpp" />
     <ClCompile Include="NiTextureEffect.cpp" />
     <ClCompile Include="NiTextureStage.cpp" />
@@ -469,6 +470,7 @@
     <ClInclude Include="NiTDefaultAllocator.h" />
     <ClInclude Include="NiTexture.h" />
     <ClInclude Include="NiTextureAddressSwizzler.h" />
+    <ClInclude Include="NiTextureBlendUtils.h" />
     <ClInclude Include="NiTextureCodec.h" />
     <ClInclude Include="NiTextureEffect.h" />
     <ClInclude Include="NiTexturePalette.h" />
