@@ -55,9 +55,6 @@
 .DS_Store
 Thumbs.db
 
-# CMake user presets
-CMakeUserPresets.json
-
 # Optional: ignore everything in libs EXCEPT dll/lib
 # (use this if you store third-party libs in a folder like /libs)
 /libs/*

@@ -1,0 +1,45 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "x64-debug (local)",
+      "inherits": "x64-debug",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "environment": {
+        "VCPKG_ROOT": "C:/Users/TokyoSU/Documents/GitHub/vcpkg"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      }
+    },
+    {
+      "name": "x64-release (local)",
+      "inherits": "x64-debug (local)",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "x86-debug (local)",
+      "inherits": "x86-debug",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "environment": {
+        "VCPKG_ROOT": "C:/Users/TokyoSU/Documents/GitHub/vcpkg"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x86-windows"
+      }
+    },
+    {
+      "name": "x86-release (local)",
+      "inherits": "x86-debug (local)",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    }
+  ]
+}
