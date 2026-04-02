@@ -314,48 +314,56 @@ inline int NiVsnprintf(char* pcDest, size_t stDestSize, size_t stCount,
 
 inline void NiMemcpyFloatArraySSE(float* pDst, const float* pSrc, int SizeInFloats)
 {
-    int iCount = SizeInFloats >> 2;          
+#if defined(_M_IX86)
+    int iCount = SizeInFloats >> 2;
 
     __asm {
-        mov     ecx,    iCount       
-        mov     edi,    pDst         
-        mov     esi,    pSrc         
+        mov     ecx,    iCount
+        mov     edi,    pDst
+        mov     esi,    pSrc
 
     loop1:
-        movaps  xmm0,   [esi]       
-        movaps  [edi],  xmm0        
+        movaps  xmm0,   [esi]
+        movaps  [edi],  xmm0
 
         add     esi,    16
         add     edi,    16
 
-        dec     ecx                 
+        dec     ecx
         jnz     loop1
     }
-}                                                                 
+#else // _M_X64
+    memcpy(pDst, pSrc, SizeInFloats * sizeof(float));
+#endif
+}
 //-------------------------------------------------------------------------
 // Use 32 bit aligned arrays with size multiples of 4 bytes.
 // Use on __declspec(align(4)) float or DWORD arrays
 
 inline void NiMemcpyFloatArray(float* pDst, const float* pSrc, int SizeInFloats)
 {
+#if defined(_M_IX86)
     int iBytes = sizeof(float) * SizeInFloats;
 
     __asm {
-        mov     ecx,    iBytes       
-        shr     ecx,    2           
+        mov     ecx,    iBytes
+        shr     ecx,    2
 
         cld                         // clear direction flag
-        mov     esi,    pSrc         
-        mov     edi,    pDst         
+        mov     esi,    pSrc
+        mov     edi,    pDst
         rep     movsd               // copy dword at a time
     }
+#else // _M_X64
+    memcpy(pDst, pSrc, SizeInFloats * sizeof(float));
+#endif
 }
 
 //-------------------------------------------------------------------------
 
 inline int NiMemcpyBytes(long* pDst,const long* pSrc, unsigned long SizeInBytes)
 {
-
+#if defined(_M_IX86)
     _asm
     {
         pusha;
@@ -363,12 +371,12 @@ inline int NiMemcpyBytes(long* pDst,const long* pSrc, unsigned long SizeInBytes)
         mov  ebx,SizeInBytes;
         mov  edi,pDst;
         mov  esi,pSrc;
-                    
+
 looping:
         // read to register
-        mov ecx, [esi]; 
+        mov ecx, [esi];
         // write from register
-        mov [edi], ecx; 
+        mov [edi], ecx;
 
         add esi, 1;
         add edi, 1;
@@ -378,8 +386,11 @@ looping:
 
         popa;
     }
+#else // _M_X64
+    memcpy(pDst, pSrc, SizeInBytes);
+#endif
     return 0;
-}      
+}
 
 //---------------------------------------------------------------------------
 inline int NiMemcpy(void* pvDest, size_t stDestSize, const void* pvSrc, 

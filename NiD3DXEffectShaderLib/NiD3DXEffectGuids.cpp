@@ -3,4 +3,4 @@
 // instead of just a declaration, satisfying the linker for IID_ID3DXEffect
 // and IID_ID3DXEffectStateManager.
 #define INITGUID
-#include <dxsdk-d3dx/d3dx9.h>
+#include <d3dx9.h>

@@ -18,7 +18,7 @@
     #define D3D_DEBUG_INFO
 #endif //#if defined(NIDEBUG)
 
-#include <dxsdk-d3dx/d3dx9.h>
+#include <d3dx9.h>
 
 #include "NiD3DMacros.h"
 

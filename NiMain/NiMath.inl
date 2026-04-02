@@ -99,6 +99,7 @@ inline float NiSin (float fRadians)
 //---------------------------------------------------------------------------
 inline void NiSinCos (float fRadians, float& fSin, float& fCos)
 {
+#if defined(_M_IX86)
     float s, c;
     __asm fld fRadians
     __asm fsincos
@@ -107,6 +108,10 @@ inline void NiSinCos (float fRadians, float& fSin, float& fCos)
 
     fSin = s;
     fCos = c;
+#else
+    fSin = float(sin(fRadians));
+    fCos = float(cos(fRadians));
+#endif
 }
 //---------------------------------------------------------------------------
 inline float NiSqr (float fValue)

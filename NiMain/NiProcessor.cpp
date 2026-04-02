@@ -44,6 +44,7 @@ void NiTransformVectorsPentium (NiUInt32 uiVerts, const float* pModel,
     // change to the data representation in NiMatrix3 could invalidate this
     // code.
 
+#if defined(_M_IX86)
 __asm
 {
     mov edx, uiVerts;
@@ -97,6 +98,15 @@ NIASMVECLOOPTOP:
     jnz NIASMVECLOOPTOP;
 NIASMVECEND:
 }
+#else
+    const float* pMat = (const float*)pMatrix;
+    for (NiUInt32 i = 0; i < uiVerts; i++, pModel += 3, pWorld += 3)
+    {
+        pWorld[0] = pMat[0]*pModel[0] + pMat[1]*pModel[1] + pMat[2]*pModel[2];
+        pWorld[1] = pMat[3]*pModel[0] + pMat[4]*pModel[1] + pMat[5]*pModel[2];
+        pWorld[2] = pMat[6]*pModel[0] + pMat[7]*pModel[1] + pMat[8]*pModel[2];
+    }
+#endif
 }
 //---------------------------------------------------------------------------
 void NiTransformPointsPentium (NiUInt32 uiVerts, const float* pModel,
@@ -125,6 +135,7 @@ void NiTransformPointsPentium (NiUInt32 uiVerts, const float* pModel,
     pScaledMat[7] = fWS * pFMatrix[7];
     pScaledMat[8] = fWS * pFMatrix[8];
 
+#if defined(_M_IX86)
 __asm
 {
     mov edx, uiVerts;
@@ -188,6 +199,14 @@ NIASMPTLOOPTOP:
     jnz NIASMPTLOOPTOP;
 NIASMPTEND:
 }
+#else
+    for (NiUInt32 i = 0; i < uiVerts; i++, pModel += 3, pWorld += 3)
+    {
+        pWorld[0] = pScaledMat[0]*pModel[0] + pScaledMat[1]*pModel[1] + pScaledMat[2]*pModel[2] + fTX;
+        pWorld[1] = pScaledMat[3]*pModel[0] + pScaledMat[4]*pModel[1] + pScaledMat[5]*pModel[2] + fTY;
+        pWorld[2] = pScaledMat[6]*pModel[0] + pScaledMat[7]*pModel[1] + pScaledMat[8]*pModel[2] + fTZ;
+    }
+#endif
 }
 //#pragma optimize("",off)
 
