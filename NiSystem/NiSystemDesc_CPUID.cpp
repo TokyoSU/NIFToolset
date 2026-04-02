@@ -13,8 +13,9 @@
 // All Rights Reserved
 
 #include "NiSystemPCH.h"
+#include <intrin.h>
 
-// Detects three forms of hardware multi-threading support across IA-32 
+// Detects three forms
 // platform The three forms of HW multithreading are: Multi-processor, 
 // Multi-core, and  HyperThreading Technology.
 //
@@ -172,14 +173,20 @@ NiUInt32 NiSystemDesc::CPUID_CpuIDSupported(void)
     // Gamebryo requires a Pentium processor or better and does not use
     // exception handling.
     MaxInputValue = 0;
-    
+
     // call cpuid with eax = 0
+#if defined(_M_IX86)
     __asm
     {
         xor eax, eax
         cpuid
         mov MaxInputValue, eax
     }
+#else // _M_X64
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 0);
+    MaxInputValue = static_cast<NiUInt32>(cpuInfo[0]);
+#endif
 
     return MaxInputValue;
 }
@@ -193,7 +200,8 @@ NiUInt32 NiSystemDesc::CPUID_GenuineIntel(void)
     NiUInt32 VendorID[3] = {0, 0, 0};
         
     // Get vendor id string
-    __asm        
+#if defined(_M_IX86)
+    __asm
     {
         xor eax, eax            // call cpuid with eax = 0
            cpuid                    // Get vendor id string
@@ -201,6 +209,13 @@ NiUInt32 NiSystemDesc::CPUID_GenuineIntel(void)
         mov VendorID + 4, edx
         mov VendorID + 8, ecx
     }
+#else // _M_X64
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 0);
+    VendorID[0] = static_cast<NiUInt32>(cpuInfo[1]); // EBX
+    VendorID[1] = static_cast<NiUInt32>(cpuInfo[3]); // EDX
+    VendorID[2] = static_cast<NiUInt32>(cpuInfo[2]); // ECX
+#endif
 
     return ( (VendorID[0] == 'uneG') &&
              (VendorID[1] == 'Ieni') &&
@@ -220,14 +235,20 @@ NiUInt32 NiSystemDesc::CPUID_CheckCPU_ExtendedFamilyModel(void)
     NiUInt32 Regeax      = 0;
     unsigned char ExtFam=0, ExtModel=0, Fam= 0, Model = 0;
     
+    #if defined(_M_IX86)
     __asm
     {
             mov eax, 1
             cpuid
             mov Regeax, eax
     };
+#else // _M_X64
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    Regeax = static_cast<NiUInt32>(cpuInfo[0]);
+#endif
 
-    ExtFam = static_cast<unsigned char>((Regeax >> 20) & 0xff);
+    ExtFam   = static_cast<unsigned char>((Regeax >> 20) & 0xff);
     ExtModel = static_cast<unsigned char>((Regeax >> 16) & 0x0f);
     Fam = static_cast<unsigned char>((Regeax >>8) & 0x0f);
     Model = static_cast<unsigned char>((Regeax >>4) & 0x0f);
@@ -261,13 +282,14 @@ NiUInt32 NiSystemDesc::CPUID_MaxCorePerPhysicalProc(void)
     if (!CPUID_HWD_MTSupported()) 
         return (NiUInt32) 1;  
 
+    #if defined(_M_IX86)
     __asm
     {
         xor eax, eax
         cpuid
         cmp eax, 4            // check if cpuid supports leaf 4
         jl single_core1        // Single core
-        mov eax, 4            
+        mov eax, 4
         mov ecx, 0            // start with index = 0; Leaf 4 reports
         cpuid                // at least one valid cache level
         mov Regeax, eax
@@ -278,7 +300,20 @@ NiUInt32 NiSystemDesc::CPUID_MaxCorePerPhysicalProc(void)
 
         multi_core:
     }
-    
+#else // _M_X64
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 0);
+    if (cpuInfo[0] >= 4)
+    {
+        __cpuidex(cpuInfo, 4, 0);
+        Regeax = static_cast<NiUInt32>(cpuInfo[0]);
+    }
+    else
+    {
+        Regeax = 1;
+    }
+#endif
+
     return (NiUInt32)((Regeax & NUM_CORE_BITS) >> 26)+1;
 }
 
@@ -295,21 +330,31 @@ NiUInt32 NiSystemDesc::CPUID_QueryCacheType(NiUInt32 Index)
     if (!CPUID_HWD_MTSupported()) 
         return (NiUInt32) 1;  // Single core
 
+    #if defined(_M_IX86)
     __asm
     {
         xor eax, eax
         cpuid
         cmp eax, 4            // check if cpuid supports leaf 4
         jl single_core2        // Single core
-        mov eax, 4            
-        mov ecx, lv             
+        mov eax, 4
+        mov ecx, lv
         cpuid                // at least one valid cache level
         mov Regeax, eax
-    
+
         single_core2:
     }
+#else // _M_X64
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 0);
+    if (cpuInfo[0] >= 4)
+    {
+        __cpuidex(cpuInfo, 4, static_cast<int>(lv));
+        Regeax = static_cast<NiUInt32>(cpuInfo[0]);
+    }
+#endif
 
-    return (NiUInt32)(Regeax ) ;
+    return (NiUInt32)(Regeax);
 }
 
 
@@ -323,14 +368,20 @@ NiUInt32 NiSystemDesc::CPUID_HWD_MTSupported(void)
 
     if ((CPUID_CpuIDSupported() >= 1) && CPUID_GenuineIntel())
     {
+#if defined(_M_IX86)
         __asm
         {
             mov eax, 1
             cpuid
             mov Regedx, edx
         }
+#else // _M_X64
+        int cpuInfo[4];
+        __cpuid(cpuInfo, 1);
+        Regedx = static_cast<NiUInt32>(cpuInfo[3]);
+#endif
     }
-    return (Regedx & HWD_MT_BIT);  
+    return (Regedx & HWD_MT_BIT);
 }
                
 //
@@ -338,57 +389,75 @@ NiUInt32 NiSystemDesc::CPUID_HWD_MTSupported(void)
 //
 NiUInt32 NiSystemDesc::CPUID_MMX_Supported(void)
 {
-   
+
     NiUInt32 Regedx = 0;
 
     if ((CPUID_CpuIDSupported() >= 1))
     {
+#if defined(_M_IX86)
         __asm
         {
             mov eax, 1
             cpuid
             mov Regedx, edx
         }
+#else // _M_X64
+        int cpuInfo[4];
+        __cpuid(cpuInfo, 1);
+        Regedx = static_cast<NiUInt32>(cpuInfo[3]);
+#endif
     }
-    return ((Regedx >> 23) & 0x1);  
+    return ((Regedx >> 23) & 0x1);
 }
 //
 // The function returns 0 when the SSE bit is not set.
 //
 NiUInt32 NiSystemDesc::CPUID_SSE_Supported(void)
 {
-   
+
     NiUInt32 Regedx = 0;
 
     if ((CPUID_CpuIDSupported() >= 1))
     {
+#if defined(_M_IX86)
         __asm
         {
             mov eax, 1
             cpuid
             mov Regedx, edx
         }
+#else // _M_X64
+        int cpuInfo[4];
+        __cpuid(cpuInfo, 1);
+        Regedx = static_cast<NiUInt32>(cpuInfo[3]);
+#endif
     }
-    return ((Regedx >> 25) & 0x1);  
+    return ((Regedx >> 25) & 0x1);
 }
 //
 // The function returns 0 when the SSE2 bit is not set.
 //
 NiUInt32 NiSystemDesc::CPUID_SSE2_Supported(void)
 {
-   
+
     NiUInt32 Regedx = 0;
 
     if ((CPUID_CpuIDSupported() >= 1))
     {
+#if defined(_M_IX86)
         __asm
         {
             mov eax, 1
             cpuid
             mov Regedx, edx
         }
+#else // _M_X64
+        int cpuInfo[4];
+        __cpuid(cpuInfo, 1);
+        Regedx = static_cast<NiUInt32>(cpuInfo[3]);
+#endif
     }
-    return ((Regedx >> 26) & 0x1);  
+    return ((Regedx >> 26) & 0x1);
 }
 //
 // Function returns the maximum logical processors per physical package. 
@@ -403,12 +472,18 @@ NiUInt32 NiSystemDesc::CPUID_MaxLogicalProcPerPhysicalProc(void)
     NiUInt32 Regebx = 0;
 
     if (!CPUID_HWD_MTSupported()) return (NiUInt32) 1;
+#if defined(_M_IX86)
     __asm
     {
         mov eax, 1
         cpuid
         mov Regebx, ebx
     }
+#else // _M_X64
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    Regebx = static_cast<NiUInt32>(cpuInfo[1]);
+#endif
     return (NiUInt32) ((Regebx & NUM_LOGICAL_BITS) >> 16);
 }
 
@@ -420,13 +495,19 @@ unsigned char NiSystemDesc::CPUID_GetAPIC_ID(void)
 {    
 
     NiUInt32 Regebx = 0;
+#if defined(_M_IX86)
     __asm
     {
         mov eax, 1
         cpuid
         mov Regebx, ebx
     }
-    
+#else // _M_X64
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    Regebx = static_cast<NiUInt32>(cpuInfo[1]);
+#endif
+
     return (unsigned char) ((Regebx & INITIAL_APIC_ID_BITS) >> 24);
 }
 
@@ -437,7 +518,8 @@ unsigned char NiSystemDesc::CPUID_GetAPIC_ID(void)
 //
 NiUInt32 NiSystemDesc::CPUID_Find_Maskwidth(NiUInt32 CountItem)
 {
-    NiUInt32 MaskWidth = 0xffffffff, count = CountItem;
+    NiUInt32 MaskWidth = 0, count = CountItem;
+#if defined(_M_IX86)
     __asm
     {
         mov eax, count
@@ -450,9 +532,16 @@ NiUInt32 NiSystemDesc::CPUID_Find_Maskwidth(NiUInt32 CountItem)
         mov MaskWidth, ecx
 
         next:
-        
     }
-    
+#else // _M_X64
+    if (count > 1)
+    {
+        unsigned long index;
+        _BitScanReverse(&index, static_cast<unsigned long>(count - 1));
+        MaskWidth = index + 1;
+    }
+#endif
+
     return MaskWidth;
 }
 
@@ -497,7 +586,7 @@ unsigned char NiSystemDesc::CPUID_CPUCount(NiUInt32 *TotAvailLogical,
     *PhysicalNum  = 1;
     *CacheNum  = 1;
 
-    DWORD dwProcessAffinity, dwSystemAffinity;
+    DWORD_PTR dwProcessAffinity, dwSystemAffinity;
     GetProcessAffinityMask(GetCurrentProcess(), 
                            &dwProcessAffinity,
                            &dwSystemAffinity);
@@ -511,8 +600,7 @@ unsigned char NiSystemDesc::CPUID_CPUCount(NiUInt32 *TotAvailLogical,
     // MaxLogicalProcPerPhysicalProc and MaxCorePerPhysicalProc do not have
     // to be power of 2.
 
-    MaxLPPerCore = CPUID_MaxLogicalProcPerPhysicalProc() / 
-        CPUID_MaxCorePerPhysicalProc();
+    MaxLPPerCore = CPUID_MaxLogicalProcPerPhysicalProc() / CPUID_MaxCorePerPhysicalProc();
     dwAffinityMask = 1;
 
     while (dwAffinityMask && dwAffinityMask <= dwProcessAffinity)

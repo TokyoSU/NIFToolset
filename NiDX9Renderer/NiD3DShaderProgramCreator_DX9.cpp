@@ -17,7 +17,7 @@
 #include "NiD3DShaderProgramCreator.h"
 #include "NiD3DShaderFactory.h"
 
-#include <dxsdk-d3dx/d3dx9.h>
+#include <d3dx9.h>
 
 #if defined(NIDEBUG)
     // In February 2005 SDK update, D3DX9dt.lib no longer exists

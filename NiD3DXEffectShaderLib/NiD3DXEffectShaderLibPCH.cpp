@@ -16,4 +16,4 @@
 #include "NiDebugDefines.h"
 
 #define INITGUID
-#include <dxsdk-d3dx/d3dx9effect.h>
+#include <d3dx9.h>

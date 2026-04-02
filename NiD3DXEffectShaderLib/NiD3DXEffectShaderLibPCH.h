@@ -17,7 +17,7 @@
 #if defined(NI_USE_PCH)
 
 #include <NiMainPCH.h>
-#include <dxsdk-d3dx/d3dx9effect.h>
+#include <d3dx9.h>
 
 // Manually include DX-agnostic D3D headers
 #include "NiD3DDefines.h"

@@ -25,10 +25,14 @@ static inline int FastFloatToInt(float fValue)
     // There is not currently a fast path implemented for Xenon.
     return (int)fValue;
 #else   //#if defined(_XENON)
+#if defined(_M_IX86)
     int iValue;
     _asm fld fValue
     _asm fistp iValue
     return iValue;
+#else
+    return static_cast<int>(fValue);
+#endif
 #endif  //#if defined(_XENON)
 }
 //---------------------------------------------------------------------------

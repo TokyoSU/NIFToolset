@@ -59,7 +59,7 @@ bool NiGeometryConverter::ms_bAutoGeometryConversion = true;
 //---------------------------------------------------------------------------
 static inline int FastFloatToInt(float fValue)
 {
-#if defined(WIN32)
+#if defined(_M_IX86)
     int iValue;
     _asm fld fValue
     _asm fistp iValue
