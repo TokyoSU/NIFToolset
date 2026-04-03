@@ -1749,10 +1749,13 @@ NiShaderError D3D11ShaderConstantMap::UpdateDefinedConstantValue(
                 NiDataStream::LOCK_READ);
             EE_ASSERT(pBonePalette != NULL);
 
-            // Use lesser of encoded bone count and actual bone count
+            // Use lesser of encoded bone count, submesh bone count, and available data
             efd::UInt32 encodedBoneCount = (pEntry->GetExtra() & 0xffff0000) >> 16;
             EE_ASSERT(encodedBoneCount < EE_SINT32_MAX && submeshBoneCount < EE_SINT32_MAX);
-            arrayLength = efd::Min((efd::SInt32)encodedBoneCount, (efd::SInt32)submeshBoneCount);
+            efd::UInt32 availableBoneCount = dataSize / dataStride;
+            arrayLength = efd::Min(
+                efd::Min((efd::SInt32)encodedBoneCount, (efd::SInt32)submeshBoneCount),
+                (efd::SInt32)availableBoneCount);
 
             // Force register count to 3
             registerCount = 3 * arrayLength;
@@ -2168,11 +2171,13 @@ NiShaderError D3D11ShaderConstantMap::UpdateObjectConstantValue(
     // Stack allocate enough aligned memory to write constants into.
     // Note: EE_STACK_ALLOC does not (apparently) always return 16-byte
     // aligned addresses in the same way that malloc does.
+    // The +16 in bufferSize provides headroom so we can round UP to the
+    // next 16-byte boundary without overflowing the allocation.
     efd::UInt32 matrixRegisters = (registerCount + 3) & ~0x3;
     efd::UInt32 bufferSize = matrixRegisters * 4 * sizeof(efd::Float32) + 16;
     efd::UInt8* pInitialData = EE_STACK_ALLOC(efd::UInt8, bufferSize);
     size_t pointerAsInt = (size_t)pInitialData;
-    XMMATRIX* pResult = (XMMATRIX*)(pointerAsInt & ~0xF);
+    XMMATRIX* pResult = (XMMATRIX*)((pointerAsInt + 15) & ~0xF);
     
     efd::UInt32 dataSize = 0;
     efd::UInt32 dataStride = 0;
@@ -3347,7 +3352,7 @@ const void* D3D11ShaderConstantMap::ObtainDefinedConstantValue(
             EE_ASSERT(!"Time set --> Invalid case!");
         }
 
-        dataSize = 1 * 43 * sizeof(efd::Float32);
+        dataSize = 1 * 4 * sizeof(efd::Float32);
         dataStride = 1 * 4 * sizeof(efd::Float32);
 
         return &tempMatrix;

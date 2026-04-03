@@ -43,10 +43,13 @@ target_link_libraries(NiEntity
 if(NI_BUILD_RENDERER)
     if(NI_RENDERER STREQUAL "DX9")
         target_link_libraries(NiEntity PUBLIC NiDX9Renderer)
+        target_compile_definitions(NiEntity PRIVATE NI_RENDERER_DX9)
     elseif(NI_RENDERER STREQUAL "DX10")
         target_link_libraries(NiEntity PUBLIC NiD3D10Renderer)
+        target_compile_definitions(NiEntity PRIVATE NI_RENDERER_DX10)
     elseif(NI_RENDERER STREQUAL "DX11")
         target_link_libraries(NiEntity PUBLIC ecrD3D11Renderer)
+        target_compile_definitions(NiEntity PRIVATE NI_RENDERER_DX11)
     endif()
 endif()
 

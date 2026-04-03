@@ -24,6 +24,12 @@
 #if defined(_XENON)
 NiImplementSDMConstructor(NiD3DXEffectShader,
     "NiXenonRenderer NiMesh NiFloodgate NiMain");
+#elif defined(NI_RENDERER_DX10)
+NiImplementSDMConstructor(NiD3DXEffectShader,
+    "NiD3D10Renderer NiMesh NiFloodgate NiMain");
+#elif defined(NI_RENDERER_DX11)
+NiImplementSDMConstructor(NiD3DXEffectShader,
+    "ecrD3D11Renderer NiMesh NiFloodgate NiMain");
 #elif defined(WIN32)
 NiImplementSDMConstructor(NiD3DXEffectShader,
     "NiDX9Renderer NiMesh NiFloodgate NiMain");

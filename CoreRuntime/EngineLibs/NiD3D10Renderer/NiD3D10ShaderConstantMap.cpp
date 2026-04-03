@@ -1991,11 +1991,13 @@ NiShaderError NiD3D10ShaderConstantMap::UpdateObjectConstantValue(
     // Stack allocate enough aligned memory to write constants into.
     // Note: NiStackAlloc does not (apparently) always return 16-byte
     // aligned addresses in the same way that malloc does.
+    // The +16 in uiSize provides headroom so we can round the pointer UP
+    // to the next 16-byte boundary without going outside the allocation.
     unsigned int uiMatrixRegisters = (uiRegisterCount + 3) & ~0x3;
     unsigned int uiSize = uiMatrixRegisters * 4 * sizeof(float) + 16;
     unsigned char* pvInitialData = NiStackAlloc(unsigned char, uiSize);
     size_t stPtr = (size_t)pvInitialData;
-    D3DXMATRIXA16* pkResult = (D3DXMATRIXA16*)(stPtr & ~0xF);
+    D3DXMATRIXA16* pkResult = (D3DXMATRIXA16*)((stPtr + 15) & ~0xF);
 
     const void* pvDataSource = ObtainObjectConstantValue(pkEntry, kRCC,
         pkResult);
