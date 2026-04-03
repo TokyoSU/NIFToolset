@@ -716,16 +716,14 @@ void ServiceManager::TickServices()
     default:
     case kSysServState_Invalid:
     case kSysServState_Initializing:
-    case kSysServState_WaitingToRun:
     case kSysServState_WaitingForThreadShutdown:
         // These states are not used for thread state, only for service states.
         EE_FAIL("Invalid thread state");
         break;
 
     case kSysServState_PreInit:
-        ConfigureFramerate();
-        RunPreInitServices();
-        m_threadState = kSysServState_Running;
+        RunPreInitServices();           // Only OnPreInit() called — no OnInit() yet
+        m_threadState = kSysServState_Running;  // Manager immediately jumps to Running!
         break;
 
     case kSysServState_Running:

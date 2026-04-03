@@ -1170,13 +1170,21 @@ void D3D11Renderer::StoreDeviceSettings()
             continue;
         }
 
+        *pIterator = 0;
         HRESULT hr = m_pD3D11Device->CheckFormatSupport(format, pIterator);
         if (FAILED(hr))
         {
-            D3D11Error::ReportWarning(
-                "ID3D11Device::CheckFormatSupport failed on format %s; error HRESULT = 0x%08X.",
-                D3D11PixelFormat::GetFormatName(format, false),
-                (efd::UInt32)hr);
+            // E_FAIL is the D3D11-specified return code when a format has no
+            // hardware support at all (e.g. R1_UNORM).  It is not an error;
+            // leave pIterator at 0 (no support flags) and move on silently.
+            *pIterator = 0;
+            if (hr != E_FAIL)
+            {
+                D3D11Error::ReportWarning(
+                    "ID3D11Device::CheckFormatSupport failed on format %s; error HRESULT = 0x%08X.",
+                    D3D11PixelFormat::GetFormatName(format, false),
+                    (efd::UInt32)hr);
+            }
         }
         pIterator++;
     }
@@ -1449,14 +1457,18 @@ IDXGISwapChain* D3D11Renderer::CreateSwapChain(
         if (outputID >= pAdapterDesc->GetOutputCount())
             outputID = 0;
         const D3D11OutputDesc* pOutputDesc = pAdapterDesc->GetOutputDesc(outputID);
-        EE_ASSERT(pOutputDesc);
-        IDXGIOutput* pOutput = pOutputDesc->GetOutput();
-        EE_ASSERT(pOutput);
-
-        pOutput->FindClosestMatchingMode(
-            &(swapChainDesc.BufferDesc),
-            &(actualSwapChainDesc.BufferDesc),
-            m_pD3D11Device);
+        if (pOutputDesc)
+        {
+            // FindClosestMatchingMode refines the buffer desc for the target
+            // output; skip it gracefully when no outputs are available
+            // (headless / Optimus adapter — windowed path already skips this).
+            IDXGIOutput* pOutput = pOutputDesc->GetOutput();
+            EE_ASSERT(pOutput);
+            pOutput->FindClosestMatchingMode(
+                &(swapChainDesc.BufferDesc),
+                &(actualSwapChainDesc.BufferDesc),
+                m_pD3D11Device);
+        }
     }
 
     IDXGIFactory* pFactory = m_spSystemDesc->GetFactory();

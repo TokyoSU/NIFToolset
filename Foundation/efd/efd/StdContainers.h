@@ -418,6 +418,9 @@ namespace efd
         stack() : BaseClass() {}
         explicit stack(const _container& _Right) : BaseClass(_Right) {}
         //@}
+
+        /// Returns the underlying container (replaces the removed MSVC-internal _Get_s()).
+        const _container& container() const { return this->c; }
     };
 
     /// An STL queue that defaults the container to an efd::deque (and thus uses our allocator).

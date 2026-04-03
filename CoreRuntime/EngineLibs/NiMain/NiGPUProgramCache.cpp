@@ -480,8 +480,8 @@ bool NiGPUProgramCache::Load()
     NiDelete pkFile;
 
     NiOutputDebugString("NiGPUProgramCache Warning >");
-    NiOutputDebugString("efd::File creation failed. Cache file does not exist "
-        "and therefore cannot be loaded: \"");
+    NiOutputDebugString("Cache file not found; shaders will be compiled and "
+        "cached on first use: \"");
     NiOutputDebugString((const char*)m_kPathAndFilename);
     NiOutputDebugString("\"\n");
     return false;

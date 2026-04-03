@@ -283,6 +283,8 @@ efd::Bool D3D11SystemDesc::EnumerateAdapters()
 
         if (pAdapterDesc->EnumerateOutputs(m_pFactory) == false)
         {
+            // EnumerateOutputs only fails on a NULL factory or a real API error;
+            // a zero-output (headless) adapter returns true and is kept.
             D3D11Error::ReportWarning(
                 "D3D11AdapterDesc::EnumerateOutputs failed; deleting adapter descriptor.");
             EE_DELETE pAdapterDesc;
@@ -508,6 +510,7 @@ efd::Bool D3D11AdapterDesc::EnumerateOutputs(IDXGIFactory* pFactory)
         HRESULT hr = pFactory->EnumAdapters(m_index, &pAdapter);
         EE_ASSERT(SUCCEEDED(hr) && pAdapter);
         hr = pAdapter->EnumOutputs(uiOutputIndex, &pOutput);
+        pAdapter->Release();
         if (FAILED(hr))
         {
             if (hr != DXGI_ERROR_NOT_FOUND)
@@ -518,7 +521,6 @@ efd::Bool D3D11AdapterDesc::EnumerateOutputs(IDXGIFactory* pFactory)
             }
             break;
         }
-        pAdapter->Release();
 
         D3D11OutputDesc* pOutputDesc = EE_NEW D3D11OutputDesc;
         pOutputDesc->m_index = uiOutputIndex;
@@ -551,7 +553,11 @@ efd::Bool D3D11AdapterDesc::EnumerateOutputs(IDXGIFactory* pFactory)
         }
     }
 
-    return (m_outputs.GetSize() > 0);
+    // Zero outputs is not an error — the adapter may be a render-only GPU that
+    // drives no display directly (e.g. Optimus / hybrid-graphics dGPU, headless
+    // compute card).  Windowed-mode presentation works fine without outputs.
+    // Fullscreen presentation checks GetOutputCount() before accessing outputs.
+    return true;
 }
 
 //------------------------------------------------------------------------------------------------

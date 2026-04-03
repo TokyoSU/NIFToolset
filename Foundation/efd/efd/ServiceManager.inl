@@ -39,6 +39,12 @@ inline bool ServiceManager::IsInitialized() const
 }
 
 //------------------------------------------------------------------------------------------------
+inline bool ServiceManager::AreAllServicesRunning() const
+{
+    return m_threadState == kSysServState_Running && m_initList.empty();
+}
+
+//------------------------------------------------------------------------------------------------
 inline ServiceManager::ServiceState ServiceManager::GetCurrentState() const
 {
     return m_threadState;

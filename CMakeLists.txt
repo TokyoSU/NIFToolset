@@ -88,3 +88,4 @@ include("${CMAKE_SOURCE_DIR}/cmake/NiInstall.cmake")
 # Include sub-projects
 add_subdirectory("Foundation")
 add_subdirectory("CoreRuntime")
+add_subdirectory("GameFramework")

@@ -51,6 +51,7 @@ namespace efd
     static const ClassID kCLASSID_RemoteAssetServerRescan     =  117440547u; // 0x07000023
     static const ClassID kCLASSID_NetService                  =  117440548u; // 0x07000024
     static const ClassID kCLASSID_ToolServiceManager          =  117440549u; // 0x07000025
+	static const ClassID kCLASSID_SDL3PlatformService          = 117440550u; // 0x07000026
 
 } // end namespace efd
 

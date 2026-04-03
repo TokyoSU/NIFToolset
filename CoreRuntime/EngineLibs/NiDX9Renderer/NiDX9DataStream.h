@@ -12,8 +12,6 @@
 // http://www.emergent.net
 
 #pragma once
-#ifndef NIDX9DATASTREAM_H
-#define NIDX9DATASTREAM_H
 
 #include <NiDataStream.h>
 #include <NiDataStreamLockPolicy.h>
@@ -41,11 +39,11 @@ public:
 
         inline void IncRefCount();
         inline void DecRefCount();
-        inline unsigned int GetRefCount() const;
+        [[nodiscard]] inline unsigned int GetRefCount() const;
 
         inline void IncLockCount();
         inline void DecLockCount();
-        inline unsigned int GetLockCount() const;
+        [[nodiscard]] inline unsigned int GetLockCount() const;
 
         // Used to keep track of locking on shared DX9 buffers.
         void* m_pvLockedData;
@@ -77,10 +75,10 @@ public:
         Usage eUsage);
 
     // Destructor
-    virtual ~NiDX9DataStream();
+    ~NiDX9DataStream() override;
 
     // Resizes the data stream
-    virtual void Resize(NiUInt32 uiSize);
+    void Resize(NiUInt32 uiSize) override;
 
     void SetAccessMask(NiUInt8 uiAccessMask);
 
@@ -92,9 +90,9 @@ public:
     //
     // DX9 Specific
     //
-    NiUInt32 GetDX9UsageFlags() const;
-    LPDIRECT3DVERTEXBUFFER9 GetVertexBuffer() const;
-    LPDIRECT3DINDEXBUFFER9 GetIndexBuffer() const;
+    [[nodiscard]] NiUInt32 GetDX9UsageFlags() const;
+    [[nodiscard]] LPDIRECT3DVERTEXBUFFER9 GetVertexBuffer() const;
+    [[nodiscard]] LPDIRECT3DINDEXBUFFER9 GetIndexBuffer() const;
 
     // *** begin Emergent internal use only ***
     void LostDevice();
@@ -103,12 +101,12 @@ public:
     void UpdateD3DBuffers(bool bReleaseSystemMemory = false);
 
     /// Offset into the DirectX buffer where this logical NiDataStream starts.
-    NiUInt32 GetD3DOffset();
+    [[nodiscard]] NiUInt32 GetD3DOffset();
     // *** end Emergent internal use only ***
 
 protected:
     // Allocates the data for a data stream.
-    virtual void Allocate();
+    void Allocate() override;
 
     // Deallocates data
     void Deallocate();
@@ -152,22 +150,20 @@ public:
         Usage eUsage);
 
     // Constructor
-    NiDX9LockableDataStream (
+    NiDX9LockableDataStream(
         NiUInt8 uiAccessMask,
         Usage eUsage);
 
     // Destructor
-    virtual ~NiDX9LockableDataStream ();
+    ~NiDX9LockableDataStream() override;
 
 protected:
     // Locks the underlying buffer with the specified constraints
-    virtual void* LockImpl(NiUInt8 uiLockMask);
+    void* LockImpl(NiUInt8 uiLockMask) override;
 
     // Platform specific unlocking mechanism
-    virtual void UnlockImpl(NiUInt8 uiLockMask);
+    void UnlockImpl(NiUInt8 uiLockMask) override;
 
     // The LockPolicy implements Locking and Unlocking
     LockPolicy m_kLockPolicy;
 };
-
-#endif

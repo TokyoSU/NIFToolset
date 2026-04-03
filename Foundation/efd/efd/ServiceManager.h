@@ -297,6 +297,16 @@ public:
     inline bool IsInitialized() const;
 
     /**
+        Determine if all registered services have completed their OnInit phase and the manager
+        is in the Running state. Use this instead of GetCurrentState() == kSysServState_Running
+        to gate "fully initialized" callbacks, because the manager transitions its own state to
+        Running immediately after PreInit — before any OnInit has been called.
+
+        @return True once the manager is Running and no services remain in the init queue.
+    */
+    inline bool AreAllServicesRunning() const;
+
+    /**
        Gets a value indicating if the service manager is currently performing a tick. In other
        words this determines whether the RunOnce method is currently executing.
     */
