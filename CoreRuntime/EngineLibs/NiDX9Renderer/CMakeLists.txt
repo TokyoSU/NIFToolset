@@ -11,6 +11,12 @@ file(GLOB_RECURSE FILE_HEADERS
 
 find_package(dxsdk-d3dx CONFIG REQUIRED)
 
+# Microsoft::D3DX9 exposes `include/dxsdk-d3dx/` as its include dir.
+# We need the parent `include/` so that #include <dxsdk-d3dx/D3DX9Math.h>
+# resolves correctly both here and in non-CMake consumers (e.g. GFToolset).
+get_target_property(_d3dx9_inc Microsoft::D3DX9 INTERFACE_INCLUDE_DIRECTORIES)
+get_filename_component(_d3dx9_parent_inc "${_d3dx9_inc}" DIRECTORY)
+
 # Add library — type is controlled by BUILD_SHARED_LIBS (ON = DLL, OFF = static)
 add_library(NiDX9Renderer ${FILE_SOURCES} ${FILE_HEADERS})
 
@@ -18,6 +24,7 @@ add_library(NiDX9Renderer ${FILE_SOURCES} ${FILE_HEADERS})
 target_include_directories(NiDX9Renderer
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${_d3dx9_parent_inc}>
         $<INSTALL_INTERFACE:include>
 )
 

@@ -14,6 +14,13 @@ if(NI_BUILD_FONT)
     add_subdirectory("NiFont")
 endif()
 
+# NiInput is only required for the DX9 renderer,
+# so only force disable it if that renderer is selected.
+# Otherwise, disable it to avoid unnecessary compilation and dependencies.
 if(NI_BUILD_INPUT)
-    add_subdirectory("NiInput")
+    if(NI_RENDERER STREQUAL "DX9")
+        add_subdirectory("NiInput")
+    else()
+        message(WARNING "[NIFToolset] NiInput is only required for the DX9 renderer and will be skipped for renderer '${NI_RENDERER}'.")
+    endif()
 endif()

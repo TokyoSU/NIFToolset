@@ -163,6 +163,8 @@ NiInputErr NiInputDI8Mouse::UpdateDevice()
                 UpdateImmediateData(kDIDOD.dwData, uiBtnOffset);
             }
             break;
+#pragma warning(push)
+#pragma warning(disable: 4644) // "Warning 4644: 'DIMOFS_X/Y/Z': usage of macro based offsetof"
             // For position changes, we will accumulate all of the ones
             // contained in the buffer, and set them once we are done
             // processing it.
@@ -175,6 +177,7 @@ NiInputErr NiInputDI8Mouse::UpdateDevice()
         case DIMOFS_Z:
             iZ += (int)(kDIDOD.dwData);
             break;
+#pragma warning(pop)
         }
     }
 

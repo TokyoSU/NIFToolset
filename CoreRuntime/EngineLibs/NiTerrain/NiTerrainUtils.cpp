@@ -19,7 +19,7 @@
 #include <NiFilename.h>
 #include <NiSourceTexture.h>
 
-#ifdef WIN32
+#if defined(WIN32) && defined(NI_RENDERER_DX9)
 #include <NiDX9Renderer.h>
 #include <NiDX9Defines.h>
 #include <NiDX9SourceTextureData.h>
@@ -1048,7 +1048,7 @@ void UpdateTextureRegion(NiSourceTexture* pkDstTexture, NiRect<efd::SInt32> kReg
     {
     case efd::SystemDesc::RENDERER_DX9:
         {
-#ifdef WIN32
+#if defined(WIN32) && defined(NI_RENDERER_DX9)
             NiDX9SourceTextureData* pkTextureData = 
                 (NiDX9SourceTextureData*)pkDstTexture->GetRendererData();
             EE_ASSERT(pkTextureData);

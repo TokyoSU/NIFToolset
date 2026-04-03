@@ -37,9 +37,18 @@ target_link_libraries(NiEntity
         NiFloodgate
         NiMesh
         NiAnimation
-        NiDX9Renderer
         unofficial-tinyxml::unofficial-tinyxml
 )
+
+if(NI_BUILD_RENDERER)
+    if(NI_RENDERER STREQUAL "DX9")
+        target_link_libraries(NiEntity PUBLIC NiDX9Renderer)
+    elseif(NI_RENDERER STREQUAL "DX10")
+        target_link_libraries(NiEntity PUBLIC NiD3D10Renderer)
+    elseif(NI_RENDERER STREQUAL "DX11")
+        target_link_libraries(NiEntity PUBLIC ecrD3D11Renderer)
+    endif()
+endif()
 
 # Set C++ standard (inherit from root or override here)
 set_target_properties(NiEntity PROPERTIES

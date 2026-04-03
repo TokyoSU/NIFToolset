@@ -40,11 +40,11 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 add_compile_definitions(EE_USE_NATIVE_STL) # stlport is no longer supported, but this definition is still used in some places to conditionally compile code that depends on the STL.
 
 # DirectX renderer backend
-set(NI_RENDERER "DX9" CACHE STRING "DirectX renderer backend (DX9, DX10, DX11)")
+set(NI_RENDERER "DX9" CACHE STRING "DirectX renderer backend (DX9, DX10, DX11)") # Use DX9 as default for compatibility with older hardware and Windows versions, but allow overriding via CMake GUI or command line
 set_property(CACHE NI_RENDERER PROPERTY STRINGS "DX9" "DX10" "DX11")
 message(STATUS "[NIFToolset] Renderer: ${NI_RENDERER}")
 add_compile_definitions(NI_RENDERER_${NI_RENDERER})
-add_compile_definitions(EE_GAMEBRYO_VERSION="4.0.12") # Gamebryo version used for conditional compilation (e.g. to exclude code for older versions)
+add_compile_definitions(EE_GAMEBRYO_VERSION="4.0.0.57") # Gamebryo version used for conditional compilation (e.g. to exclude code for older versions)
 
 # Enable multi-threaded compilation for MSVC (/MP) and
 # explicit parallel job count for Ninja.
@@ -58,17 +58,22 @@ endif()
 add_compile_definitions(
     $<$<CONFIG:Debug>:NIDEBUG>
     $<$<CONFIG:Debug>:EE_EFD_CONFIG_DEBUG>
+    $<$<CONFIG:Debug>:EE_CONFIG_DEBUG>
     $<$<CONFIG:Debug>:_LIB>
     $<$<CONFIG:Release>:NIRELEASE>
     $<$<CONFIG:Release>:EE_EFD_CONFIG_RELEASE>
+    $<$<CONFIG:Release>:EE_CONFIG_RELEASE>
     $<$<CONFIG:Release>:_LIB>
     $<$<CONFIG:RelWithDebInfo>:NIRELEASE>
     $<$<CONFIG:RelWithDebInfo>:NIDEBUG>
     $<$<CONFIG:RelWithDebInfo>:EE_EFD_CONFIG_RELEASE>
     $<$<CONFIG:RelWithDebInfo>:EE_EFD_CONFIG_DEBUG>
+    $<$<CONFIG:RelWithDebInfo>:EE_CONFIG_DEBUG>
+    $<$<CONFIG:RelWithDebInfo>:EE_CONFIG_RELEASE>
     $<$<CONFIG:RelWithDebInfo>:_LIB>
     $<$<CONFIG:MinSizeRel>:NIRELEASE>
     $<$<CONFIG:MinSizeRel>:EE_EFD_CONFIG_RELEASE>
+    $<$<CONFIG:MinSizeRel>:EE_CONFIG_RELEASE>
     $<$<CONFIG:MinSizeRel>:_LIB>
 )
 

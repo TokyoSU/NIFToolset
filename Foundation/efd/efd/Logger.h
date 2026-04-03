@@ -164,7 +164,7 @@ public:
     virtual void GetModules(efd::map<efd::UInt16, efd::utf8string >& names) const;
 
     // Overridden virtual functions inherit base documentation and thus are not documented here.
-    virtual efd::utf8string GetModuleName(efd::UInt16 module);
+    virtual efd::utf8string GetModuleName(efd::UInt16 moduleName);
 
     // Overridden virtual functions inherit base documentation and thus are not documented here.
     virtual const char* GetLevelName(efd::UInt8 level);

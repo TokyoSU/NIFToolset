@@ -33,11 +33,9 @@ target_link_libraries(NiTerrain
     PUBLIC
         NiMain
         NiEntity
-        NiMain
         NiFloodgate
         NiCollision
         NiMesh
-        NiDX9Renderer
         NiAnimation
 )
 

@@ -24,7 +24,7 @@
 #endif  //#if defined(_XENON)
 
 #include "NiDX9Headers.h"
-#include <D3DX9Math.h>
+#include <dxsdk-d3dx/D3DX9Math.h>
 
 #include <NiOS.h>
 #include <NiRTLib.h>

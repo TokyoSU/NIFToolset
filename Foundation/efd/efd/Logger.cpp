@@ -485,24 +485,24 @@ void Logger::GetModules(efd::map<efd::UInt16, efd::utf8string >& names) const
 }
 
 //------------------------------------------------------------------------------------------------
-efd::utf8string Logger::GetModuleName(UInt16 module)
+efd::utf8string Logger::GetModuleName(UInt16 moduleName)
 {
     // First lookup the value in the enumeration
     efd::utf8string name;
-    if (m_spModuleEnum && m_spModuleEnum->FindEnumName(module, name))
+    if (m_spModuleEnum && m_spModuleEnum->FindEnumName(moduleName, name))
     {
         return name;
     }
 
     // Next look in the dynamically added module names
-    ModuleNameMap::iterator iter = m_moduleNames.find(module);
+    ModuleNameMap::iterator iter = m_moduleNames.find(moduleName);
     if (iter != m_moduleNames.end())
     {
         return (*iter).second;
     }
 
     // final fallback is to use the integer value
-    name.sprintf("%d", module);
+    name.sprintf("%d", moduleName);
     return name;
 }
 

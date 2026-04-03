@@ -47,7 +47,7 @@
 #include <NiFixedString.h>
 
 // Include DX9 Renderer for device reset callbacks
-#ifdef WIN32 
+#if defined(WIN32) && defined(NI_RENDERER_DX9)
 #include <NiDX9Renderer.h>
 #endif
 
@@ -72,8 +72,7 @@ NiTerrain::NiTerrain() :
     m_fMinHeight(0.0f),
     m_fMaxHeight(100.0f),
     m_fVertexSpacing(1.0f),
-    m_uiLODMode(NiTerrainSectorData::LOD_MODE_2D |
-        NiTerrainSectorData::LOD_MORPH_ENABLE),
+    m_uiLODMode(NiTerrainSectorData::LOD_MODE_2D | NiTerrainSectorData::LOD_MORPH_ENABLE),
     m_kSectors(31),
     m_pkPaintingData(NULL)
 {
@@ -727,7 +726,7 @@ void NiTerrain::SubscribeToDXDeviceResetNotification()
     m_uiDXDeviceResetCallbackIndex = 0;
     m_bRegisteredDXDeviceResetCallback = false;
 
-#ifdef WIN32
+#if defined(WIN32) && defined(NI_RENDERER_DX9)
     NiDX9Renderer* pkRenderer = 
         NiDynamicCast(NiDX9Renderer, NiRenderer::GetRenderer());
     if (pkRenderer)
@@ -742,7 +741,7 @@ void NiTerrain::SubscribeToDXDeviceResetNotification()
 //--------------------------------------------------------------------------------------------------
 void NiTerrain::UnsubscribeToDXDeviceResetNotification()
 {
-#ifdef WIN32
+#if defined(WIN32) && defined(NI_RENDERER_DX9)
     NiDX9Renderer* pkRenderer = 
         NiDynamicCast(NiDX9Renderer, NiRenderer::GetRenderer());
     if (pkRenderer && m_bRegisteredDXDeviceResetCallback)
