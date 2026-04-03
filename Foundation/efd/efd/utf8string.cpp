@@ -791,12 +791,17 @@ int utf8string::sprintf_append(utf8string format_str, ...)
 int utf8string::vsprintf(const char* format_sz, va_list args)
 {
     int bytesNeeded = efd::Vscprintf(format_sz, args);
+    if (bytesNeeded < 0)
+    {
+        m_string.clear();
+        return bytesNeeded;
+    }
     internal_string temp;
-    temp.reserve(bytesNeeded + 1);
+    temp.resize(bytesNeeded + 1);
     int bytesUsed = ::vsprintf(&temp[0], format_sz, args);
     EE_ASSERT(bytesUsed == bytesNeeded);
     EE_ASSERT((size_type)bytesUsed < temp.capacity());
-    temp[bytesUsed] = 0;
+    temp[bytesUsed] = '\0';
 
     // This has to build the string into a temporary and then allocate and copy to the final
     // simply so that m_string will update its notion of how long it is (as it's impossible to
@@ -810,12 +815,14 @@ int utf8string::vsprintf(const char* format_sz, va_list args)
 int utf8string::vsprintf_append(const char* format_sz, va_list args)
 {
     int bytesNeeded = efd::Vscprintf(format_sz, args);
+    if (bytesNeeded < 0)
+        return bytesNeeded;
     internal_string temp;
-    temp.reserve(bytesNeeded + 1);
+    temp.resize(bytesNeeded + 1);
     int bytesUsed = ::vsprintf(&temp[0], format_sz, args);
     EE_ASSERT(bytesUsed == bytesNeeded);
     EE_ASSERT((size_type)bytesUsed < temp.capacity());
-    temp[bytesUsed] = 0;
+    temp[bytesUsed] = '\0';
 
     // This has to build the string into a temporary and then allocate and copy to the final
     // simply so that m_string will update its notion of how long it is (as it's impossible to

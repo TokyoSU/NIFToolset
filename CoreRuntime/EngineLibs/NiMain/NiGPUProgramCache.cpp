@@ -340,7 +340,7 @@ bool NiGPUProgramCache::Load()
     if (m_bLoaded)
         return true;
 
-    efd::File* pkFile = efd::File::GetFile(m_kPathAndFilename, efd::File::READ_ONLY);
+    efd::File* pkFile = efd::File::GetFile((const char*)m_kPathAndFilename, efd::File::READ_ONLY);
     if (pkFile && true == *(pkFile))
     {
         // Write header
@@ -353,7 +353,7 @@ bool NiGPUProgramCache::Load()
             NiOutputDebugString("NiGPUProgramCache Warning >");
             NiOutputDebugString("Cache is not the correct file type and will "
                 "not be loaded: \"");
-            NiOutputDebugString(m_kPathAndFilename);
+            NiOutputDebugString((const char*)m_kPathAndFilename);
             NiOutputDebugString("\"\n");
             NiDelete pkFile;
             return false;
@@ -374,7 +374,7 @@ bool NiGPUProgramCache::Load()
             NiOutputDebugString("NiGPUProgramCache Warning >");
             NiOutputDebugString("Cache file is older version and will not"
                 " be loaded: \"");
-            NiOutputDebugString(m_kPathAndFilename);
+            NiOutputDebugString((const char*)m_kPathAndFilename);
             NiOutputDebugString("\"\n");
             NiDelete pkFile;
 
@@ -396,7 +396,7 @@ bool NiGPUProgramCache::Load()
             NiOutputDebugString("NiGPUProgramCache Warning >");
             NiOutputDebugString("Cache is not the correct platform and will "
                 "not be loaded: \"");
-            NiOutputDebugString(m_kPathAndFilename);
+            NiOutputDebugString((const char*)m_kPathAndFilename);
             NiOutputDebugString("\"\n");
             NiDelete pkFile;
             return false;
@@ -409,7 +409,7 @@ bool NiGPUProgramCache::Load()
             NiOutputDebugString("NiGPUProgramCache Warning >");
             NiOutputDebugString("Cache is not the correct code id and will "
                 "not be loaded: \"");
-            NiOutputDebugString(m_kPathAndFilename);
+            NiOutputDebugString((const char*)m_kPathAndFilename);
             NiOutputDebugString("\"\n");
 
             NiDelete pkFile;
@@ -424,7 +424,7 @@ bool NiGPUProgramCache::Load()
             NiOutputDebugString("NiGPUProgramCache Warning >");
             NiOutputDebugString("Cache is not the correct shader profile and "
                 "will not be loaded: \"");
-            NiOutputDebugString(m_kPathAndFilename);
+            NiOutputDebugString((const char*)m_kPathAndFilename);
             NiOutputDebugString("\"\n");
 
             NiDelete pkFile;
@@ -445,7 +445,7 @@ bool NiGPUProgramCache::Load()
                 NiOutputDebugString("NiGPUProgramCache Warning >");
                 NiOutputDebugString("Load Entry failed. Cache file will "
                     "not be loaded: \"");
-                NiOutputDebugString(m_kPathAndFilename);
+                NiOutputDebugString((const char*)m_kPathAndFilename);
                 NiOutputDebugString("\"\n");
 
                 NiDelete pkFile;
@@ -460,7 +460,7 @@ bool NiGPUProgramCache::Load()
         unsigned int uiNumProgramsAdded = m_kCachedPrograms.GetCount() -
             uiNumPrograms;
         NILOG("NiGPUProgramCache> %d programs were loaded"
-            " from file: \"%s\"\n", uiNumProgramsAdded, m_kPathAndFilename);
+            " from file: \"%s\"\n", uiNumProgramsAdded, (const char*)m_kPathAndFilename);
 #endif
 
         NiDelete pkFile;
@@ -482,7 +482,7 @@ bool NiGPUProgramCache::Load()
     NiOutputDebugString("NiGPUProgramCache Warning >");
     NiOutputDebugString("efd::File creation failed. Cache file does not exist "
         "and therefore cannot be loaded: \"");
-    NiOutputDebugString(m_kPathAndFilename);
+    NiOutputDebugString((const char*)m_kPathAndFilename);
     NiOutputDebugString("\"\n");
     return false;
 }
@@ -858,8 +858,9 @@ bool NiGPUProgramCache::LoadString(efd::BinaryStream& kStream,
     }
     else
     {
+        // stLength = strlen(s) + 1 (includes null terminator, see SaveString).
+        // The binary read already writes the null at pcBuffer[stLength - 1].
         NiStreamLoadBinary(kStream, pcBuffer, stLength);
-        pcBuffer[stLength + 1] = '\0';
         return true;
     }
 }
