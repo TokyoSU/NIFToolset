@@ -25,7 +25,7 @@
 #include <initguid.h>
 
 #include <D3D11.h>
-#include <D3DX11.h>
+#include <dxsdk-d3dx/D3DX11.h>
 #include <D3DCompiler.h>
 #include <DXGI.h>
 #include <DirectXMath.h>

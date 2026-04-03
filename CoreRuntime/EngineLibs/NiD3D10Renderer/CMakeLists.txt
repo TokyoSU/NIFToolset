@@ -11,6 +11,11 @@ file(GLOB_RECURSE FILE_HEADERS
 
 find_package(dxsdk-d3dx CONFIG REQUIRED)
 
+# Expose the parent of dxsdk-d3dx's include directory so that consumers
+# using <dxsdk-d3dx/D3DX10.h> can resolve it without the CMake target.
+get_target_property(_d3dx10_inc Microsoft::D3DX10 INTERFACE_INCLUDE_DIRECTORIES)
+get_filename_component(_d3dx10_parent_inc "${_d3dx10_inc}" DIRECTORY)
+
 # Add library — type is controlled by BUILD_SHARED_LIBS (ON = DLL, OFF = static)
 add_library(NiD3D10Renderer ${FILE_SOURCES} ${FILE_HEADERS})
 
@@ -19,6 +24,7 @@ target_include_directories(NiD3D10Renderer
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        $<BUILD_INTERFACE:${_d3dx10_parent_inc}>
         $<INSTALL_INTERFACE:include>
 )
 

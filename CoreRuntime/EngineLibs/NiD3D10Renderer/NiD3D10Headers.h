@@ -18,7 +18,7 @@
 #include <D3D10_1.h>
 #include <D3D10.h>
 #include <DXGI.h>
-#include <D3DX10.h>
+#include <dxsdk-d3dx/D3DX10.h>
 
 // Rather than using NiGPUProgram::PROGRAM_MAX, which extends beyond the shaders supported
 // by D3D10, define a max shader program count here.
