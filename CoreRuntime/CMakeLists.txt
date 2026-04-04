@@ -1,4 +1,6 @@
 # ── Library build options ────────────────────────────────────────────────────
+# External libs configuration
+option(NI_BUILD_SDL3 "Build with SDL3 support" ON) # Used for NiApplication, if not found, dont enable NiApplication !
 # Engine libs
 option(NI_BUILD_SYSTEM    "Build NiSystem"    ON)
 option(NI_BUILD_MAIN      "Build NiMain"      ON)

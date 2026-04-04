@@ -19,9 +19,20 @@ file(GLOB_RECURSE ECR_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/ecr/*.inl"
 )
 
+# --- egf (core) ---
+file(GLOB_RECURSE EGF_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/egf/*.cpp"
+)
+file(GLOB_RECURSE EGF_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/egf/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/egf/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/egf/*.inl"
+)
+
 # Add library — type is controlled by BUILD_SHARED_LIBS (ON = DLL, OFF = static)
 add_library(ecr
     ${ECR_SOURCES}          ${ECR_HEADERS}
+    ${EGF_SOURCES}          ${EGF_HEADERS}
 )
 
 # Set include directories
@@ -30,6 +41,7 @@ target_include_directories(ecr
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/CoreRuntime/EngineLibs/NiD3D10Renderer>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/CoreRuntime/EngineLibs/ecrD3D11Renderer>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/install/include>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -37,6 +49,7 @@ target_include_directories(ecr
 target_compile_definitions(ecr
     PRIVATE
         $<$<BOOL:${BUILD_SHARED_LIBS}>:EE_ECR_EXPORT>
+        $<$<BOOL:${BUILD_SHARED_LIBS}>:EE_EGF_EXPORT>
         EE_USE_PCH
     PUBLIC
         NOMINMAX
@@ -53,6 +66,7 @@ target_link_libraries(ecr
         NiAnimation
         NiParticle
         NiCollision
+        NiSettingsDialog
 )
 
 # Link SDL3 only when it is the selected platform service
@@ -82,5 +96,5 @@ set_target_properties(ecr PROPERTIES
 )
 
 ni_install_target(ecr
-    HEADER_DIRS ecr
+    HEADER_DIRS ecr egf
 )
