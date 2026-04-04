@@ -58,6 +58,8 @@ const float NI_E = efd::EE_E;
 // utility functions
 #define NiIsPowerOf2(uiI) efd::IsPowerOf2(uiI)
 #define NiLerp(T, START, FINISH) ((START) + ((T) * ((FINISH) - (START))))
+#define NiDegToRad(fDegrees) ((fDegrees) * (NI_PI / 180.0f))
+#define NiRadToDeg(fRadians) ((fRadians) * (180.0f / NI_PI))
 
 // random number generation
 #define NiSrand(uiSeed) efd::Srand(uiSeed)

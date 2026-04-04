@@ -40,7 +40,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 add_compile_definitions(EE_USE_NATIVE_STL) # stlport is no longer supported, but this definition is still used in some places to conditionally compile code that depends on the STL.
 
 # DirectX renderer backend
-set(NI_RENDERER "DX9" CACHE STRING "DirectX renderer backend (DX9, DX10, DX11)") # Use DX9 as default for compatibility with older hardware and Windows versions, but allow overriding via CMake GUI or command line
+set(NI_RENDERER "DX11" CACHE STRING "DirectX renderer backend (DX9, DX10, DX11)") # Use DX9 as default for compatibility with older hardware and Windows versions, but allow overriding via CMake GUI or command line
 set_property(CACHE NI_RENDERER PROPERTY STRINGS "DX9" "DX10" "DX11")
 message(STATUS "[NIFToolset] Renderer: ${NI_RENDERER}")
 add_compile_definitions(NI_RENDERER_${NI_RENDERER})

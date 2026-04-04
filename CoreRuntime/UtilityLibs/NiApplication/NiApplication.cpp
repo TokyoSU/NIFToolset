@@ -5,14 +5,49 @@
 #include <NiMeshCullingProcess.h>
 #include <NiDrawSceneUtility.h>
 #include <NiRenderClick.h>
+#include <NiMaterial.h>
+#include <NiFragmentMaterial.h>
+#include <NiDevImageConverter.h>
+#include <NiParticleSDM.h>
+#include <NiMath.h>
 
-NiApplication::NiApplication() = default;
+NiApplication::NiApplication() : m_kVisibleSet(1024, 1024) {
+
+}
 
 NiApplication::~NiApplication()
 {
     DestroyAll();
 }
 
+//--------------------------------------------------------------------------------------------------
+void NiApplication::ApplyShaderDefaults(const Settings& kSettings)
+{
+    // Set the shader cache working directory (where compiled .fxl / cache
+    // files are read from and written to). Must be called after NiInit()
+    // so NiMaterial's SDM has already zeroed ms_acDefaultWorkingDirectory.
+    if (kSettings.m_pszShaderCacheFolder)
+        NiMaterial::SetDefaultWorkingDirectory(kSettings.m_pszShaderCacheFolder);
+	NiImageConverter::SetImageConverter(NiNew NiDevImageConverter); // Allow loading more image formats.
+
+    // NiFragmentMaterial statics — these are read inside the
+    // NiFragmentMaterial constructor and by NiRenderer::SetDefaultProgramCache,
+    // so they must be set before any material or renderer is created.
+    NiFragmentMaterial::SetDefaultAutoSaveProgramCache(
+        kSettings.m_bShaderCacheAutoSave);
+    NiFragmentMaterial::SetDefaultWriteDebugProgramData(
+        kSettings.m_bShaderCacheWriteDebugData);
+    NiFragmentMaterial::SetDefaultLoadProgramCacheOnCreation(
+        kSettings.m_bShaderCacheLoadOnCreation);
+    NiFragmentMaterial::SetDefaultLockProgramCache(
+        kSettings.m_bShaderCacheLocked);
+    NiFragmentMaterial::SetDefaultAutoCreateProgramCache(
+        kSettings.m_bShaderCacheAutoCreate);
+    NiFragmentMaterial::SetDefaultCreateReplacementShaders(
+        kSettings.m_bShaderCacheReplacementShaders);
+}
+
+//--------------------------------------------------------------------------------------------------
 bool NiApplication::Initialize(const Settings& kSettings)
 {
     if (m_bInitialized)
@@ -25,6 +60,7 @@ bool NiApplication::Initialize(const Settings& kSettings)
     }
 
     NiInit(nullptr, true);
+    ApplyShaderDefaults(kSettings);
 
     if (!CreateSDLWindow(kSettings))
     {
@@ -32,6 +68,10 @@ bool NiApplication::Initialize(const Settings& kSettings)
         SDL_Quit();
         return false;
     }
+
+    m_uiWidth     = kSettings.m_uiWidth;
+    m_uiHeight    = kSettings.m_uiHeight;
+    m_kClearColor = kSettings.m_kClearColor;
 
     if (!CreateRenderer(kSettings))
     {
@@ -42,22 +82,29 @@ bool NiApplication::Initialize(const Settings& kSettings)
         return false;
     }
 
-    m_uiWidth     = kSettings.m_uiWidth;
-    m_uiHeight    = kSettings.m_uiHeight;
-    m_kClearColor = kSettings.m_kClearColor;
-
     m_spCamera = NiNew NiCamera();
-    NiFrustum kFrustum(
-        kSettings.m_fFrustumLeft,  kSettings.m_fFrustumRight,
-        kSettings.m_fFrustumTop,   kSettings.m_fFrustumBottom,
-        kSettings.m_fNearPlane,    kSettings.m_fFarPlane, false);
+    const float fAspect = static_cast<float>(kSettings.m_uiWidth) /
+                          static_cast<float>(kSettings.m_uiHeight);
+    const float fSlope  = std::tan(NiDegToRad(kSettings.m_fFov) * 0.5f);
+
+    // NiCamera::SetViewFrustum silently clamps m_fNear to
+    // max(m_fFar / m_fMaxFarNearRatio, m_fMinNearPlaneDist).
+    // Probe the camera with the requested near/far so it resolves
+    // the actual near plane, then recompute half-extents from that value.
+    NiFrustum kProbe(0.0f, 0.0f, 0.0f, 0.0f,
+                     kSettings.m_fNear, kSettings.m_fFar, false);
+    m_spCamera->SetViewFrustum(kProbe);
+    const float fActualNear = m_spCamera->GetViewFrustum().m_fNear;
+
+    const float fTop   = fActualNear * fSlope;
+    const float fRight = fTop * fAspect;
+    NiFrustum kFrustum(-fRight, fRight, fTop, -fTop,
+                       fActualNear, kSettings.m_fFar, false);
     NiRect<float> kViewport(0.0f, 1.0f, 1.0f, 0.0f);
     m_spCamera->SetViewFrustum(kFrustum);
     m_spCamera->SetViewPort(kViewport);
-
-    m_spScene = NiNew NiNode();
-
-    m_spCuller = NiNew NiMeshCullingProcess(nullptr, nullptr);
+	m_spCloner = NiNew NiCloningProcess();
+    m_spCuller = NiNew NiMeshCullingProcess(&m_kVisibleSet, nullptr);
 
     if (kSettings.m_bAlphaSorting)
     {
@@ -83,6 +130,8 @@ bool NiApplication::Initialize(const Settings& kSettings)
         DestroyAll();
         return false;
     }
+
+    NiParticleSDM::Init(); // Not init like other SDMs.
 
     m_bInitialized = true;
     return true;
@@ -117,11 +166,10 @@ int NiApplication::Run()
 
         if (m_spRenderer && m_spRenderer->BeginFrame())
         {
-            if (m_bShadowsEnabled && m_spScene && m_spCuller)
+            if (m_bShadowsEnabled && m_spCuller)
             {
                 NiShadowManager::SetSceneCamera(m_spCamera);
-                const NiTPointerList<NiRenderClick*>& kClicks =
-                    NiShadowManager::GenerateRenderClicks();
+                const NiTPointerList<NiRenderClick*>& kClicks = NiShadowManager::GenerateRenderClicks();
                 const unsigned int uiFrameID = m_spRenderer->GetFrameID();
                 NiTListIterator kIter = kClicks.GetHeadPos();
                 while (kIter)
@@ -170,12 +218,12 @@ void NiApplication::SetEventCallback(EventCallback pfn, void* pUserData)
 SDL_Window*  NiApplication::GetWindow()        const { return m_pWindow; }
 NiRenderer*  NiApplication::GetRenderer()      const { return m_spRenderer; }
 NiCamera*    NiApplication::GetCamera()        const { return m_spCamera; }
-NiNode*      NiApplication::GetScene()         const { return m_spScene; }
 unsigned int NiApplication::GetWidth()         const { return m_uiWidth; }
 unsigned int NiApplication::GetHeight()        const { return m_uiHeight; }
 float        NiApplication::GetLastDeltaTime()    const { return m_fLastDelta; }
 NiAlphaAccumulator*   NiApplication::GetAlphaAccumulator() const { return m_spAlphaAccum; }
 NiMeshCullingProcess* NiApplication::GetCullingProcess()   const { return m_spCuller; }
+NiCloningProcess* NiApplication::GetCloningProcess() const { return m_spCloner; }
 bool         NiApplication::GetShadowsEnabled()   const { return m_bShadowsEnabled; }
 
 void NiApplication::RenderScene()
@@ -266,17 +314,27 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
     }
 
     m_spRenderer = pRenderer;
+    if (!m_spRenderer) {
+        SDL_Log("Failed to assign renderer to m_spRenderer.");
+        return false;
+    }
+
     m_spRenderer->SetBackgroundColor(m_kClearColor);
     return true;
 
 #elif defined(NI_RENDERER_DX10)
     NiD3D10Renderer::CreationParameters kParams(hWnd);
-    kParams.m_eDriverType               = kSettings.m_eDriverType;
-    kParams.m_uiCreateFlags             = kSettings.m_uiDX10CreateFlags;
-    kParams.m_bCreateDepthStencilBuffer = kSettings.m_bCreateDepthBuffer;
-    kParams.m_eDepthStencilFormat       = kSettings.m_eDepthFormat;
-    kParams.m_kSwapChain.BufferDesc.Width  = kSettings.m_uiWidth;
-    kParams.m_kSwapChain.BufferDesc.Height = kSettings.m_uiHeight;
+    kParams.m_eDriverType                   = kSettings.m_eDriverType;
+    kParams.m_uiCreateFlags                 = kSettings.m_uiDX10CreateFlags;
+    kParams.m_bCreateDepthStencilBuffer     = kSettings.m_bCreateDepthBuffer;
+    kParams.m_eDepthStencilFormat           = kSettings.m_eDepthFormat;
+    kParams.m_kSwapChain.Windowed           = !kSettings.m_bFullscreen;
+    kParams.m_kSwapChain.BufferCount        = kSettings.m_uiBackBufferCount;
+    kParams.m_kSwapChain.SampleDesc.Count   = kSettings.m_uiSampleCount;
+    kParams.m_kSwapChain.SampleDesc.Quality = kSettings.m_uiSampleQuality;
+    kParams.m_kSwapChain.BufferDesc.Width   = kSettings.m_uiWidth;
+    kParams.m_kSwapChain.BufferDesc.Height  = kSettings.m_uiHeight;
+    kParams.m_kSwapChain.BufferDesc.Format  = kSettings.m_eSwapChainBuffer;
 
     NiPointer<NiD3D10Renderer> spD3D10;
     if (!NiD3D10Renderer::Create(kParams, spD3D10) || !spD3D10)
@@ -286,17 +344,27 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
     }
 
     m_spRenderer = spD3D10;
+    if (!m_spRenderer) {
+        SDL_Log("Failed to assign renderer to m_spRenderer.");
+        return false;
+    }
+
     m_spRenderer->SetBackgroundColor(m_kClearColor);
     return true;
 
 #elif defined(NI_RENDERER_DX11)
     ecr::D3D11Renderer::CreationParameters kParams(hWnd);
-    kParams.m_driverType               = kSettings.m_eDriverType;
-    kParams.m_createFlags              = kSettings.m_uiDX11CreateFlags;
-    kParams.m_createDepthStencilBuffer = kSettings.m_bCreateDepthBuffer;
-    kParams.m_depthStencilFormat       = kSettings.m_eDepthFormat;
-    kParams.m_swapChain.BufferDesc.Width  = kSettings.m_uiWidth;
-    kParams.m_swapChain.BufferDesc.Height = kSettings.m_uiHeight;
+    kParams.m_driverType                    = kSettings.m_eDriverType;
+    kParams.m_createFlags                   = kSettings.m_uiDX11CreateFlags;
+    kParams.m_createDepthStencilBuffer      = kSettings.m_bCreateDepthBuffer;
+    kParams.m_depthStencilFormat            = kSettings.m_eDepthFormat;
+	kParams.m_swapChain.Windowed            = !kSettings.m_bFullscreen;
+	kParams.m_swapChain.SampleDesc.Count    = kSettings.m_uiSampleCount;
+	kParams.m_swapChain.SampleDesc.Quality  = kSettings.m_uiSampleQuality;
+	kParams.m_swapChain.BufferCount         = kSettings.m_uiBackBufferCount;
+    kParams.m_swapChain.BufferDesc.Width    = kSettings.m_uiWidth;
+    kParams.m_swapChain.BufferDesc.Height   = kSettings.m_uiHeight;
+	kParams.m_swapChain.BufferDesc.Format   = kSettings.m_eSwapChainBuffer;
 
     ecr::D3D11RendererPtr spD3D11;
     if (!ecr::D3D11Renderer::Create(kParams, spD3D11) || !spD3D11)
@@ -306,6 +374,11 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
     }
 
     m_spRenderer = spD3D11;
+    if (!m_spRenderer) {
+        SDL_Log("Failed to assign renderer to m_spRenderer.");
+		return false;
+    }
+
     m_spRenderer->SetBackgroundColor(m_kClearColor);
     return true;
 
@@ -344,6 +417,7 @@ void NiApplication::DestroyAll()
         m_pWindow = nullptr;
     }
 
+    NiParticleSDM::Shutdown();
     NiShutdown(true);
     SDL_Quit();
     m_bInitialized = false;
@@ -389,3 +463,4 @@ float NiApplication::ComputeDeltaTime()
     m_fLastDelta = fDelta;
     return fDelta;
 }
+

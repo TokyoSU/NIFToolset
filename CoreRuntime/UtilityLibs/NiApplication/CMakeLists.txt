@@ -32,6 +32,7 @@ target_link_libraries(NiApplication
         NiMesh
         NiSystem
         NiAnimation
+        NiParticle
         SDL3::SDL3
 )
 

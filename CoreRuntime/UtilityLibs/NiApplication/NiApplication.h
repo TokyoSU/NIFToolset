@@ -12,6 +12,8 @@
 #include <NiFrustum.h>
 #include <NiAlphaAccumulator.h>
 #include <NiMeshCullingProcess.h>
+#include <NiCullingProcess.h>
+#include <NiCloningProcess.h>
 
 #if defined(NI_RENDERER_DX9)
     #include <NiDX9Renderer.h>
@@ -32,22 +34,59 @@ public:
 
     struct Settings
     {
+        // ---------------------------------------------------------------
+        // Window / viewport
+        // ---------------------------------------------------------------
         unsigned int m_uiWidth     = 1280;
         unsigned int m_uiHeight    = 720;
+        unsigned int m_uiBackBufferCount = 1;
+        unsigned int m_uiSampleCount = 1;
+		unsigned int m_uiSampleQuality = 0;
         const char*  m_pszTitle    = "NiApplication";
         bool         m_bFullscreen = false;
         bool         m_bResizable  = false;
-        NiColorA m_kClearColor = NiColorA(0.0f, 0.0f, 0.0f, 1.0f);
-        float m_fFrustumLeft   = -0.5625f;
-        float m_fFrustumRight  =  0.5625f;
-        float m_fFrustumTop    =  0.5f;
-        float m_fFrustumBottom = -0.5f;
-        float m_fNearPlane     =  1.0f;
-        float m_fFarPlane      =  10000.0f;
-        bool  m_bAlphaSorting      = true;
-        bool  m_bObserveNoSortHint = true;
-        bool  m_bSortByClosestPoint = false;
-        bool  m_bShadows           = false;
+
+        NiColorA m_kClearColor     = NiColorA(0.0f, 0.0f, 0.0f, 1.0f);
+
+        // Vertical field of view in radians, near and far clip planes.
+        // The frustum half-extents are derived at initialisation from
+        // these values and the window aspect ratio (m_uiWidth / m_uiHeight).
+        float m_fFov  = 45.0f;
+        float m_fNear = 0.01f;
+        float m_fFar  = 1000.0f;
+
+        // ---------------------------------------------------------------
+        // Rendering features
+        // ---------------------------------------------------------------
+        bool m_bAlphaSorting       = true;
+        bool m_bObserveNoSortHint  = true;
+        bool m_bSortByClosestPoint = false;
+        bool m_bShadows            = false;
+
+        // ---------------------------------------------------------------
+        // Shader / material cache
+        //
+        // These are applied to NiMaterial / NiFragmentMaterial statics
+        // after NiInit() but before the renderer is created, so that any
+        // NiFragmentMaterial constructed during renderer initialisation
+        // picks up the correct values.
+        //
+        // m_pszShaderCacheFolder — directory where compiled shader
+        //   programs (.fxl / cache files) are read from and written to.
+        //   Relative paths are resolved from the working directory.
+        //   Pass nullptr to leave the engine default ("") unchanged.
+        // ---------------------------------------------------------------
+        const char* m_pszShaderCacheFolder          = "ShaderCache";
+        bool        m_bShaderCacheAutoSave           = true;
+        bool        m_bShaderCacheWriteDebugData     = false;
+        bool        m_bShaderCacheLoadOnCreation     = true;
+        bool        m_bShaderCacheLocked             = false;
+        bool        m_bShaderCacheAutoCreate         = true;
+        bool        m_bShaderCacheReplacementShaders = true;
+
+        // ---------------------------------------------------------------
+        // Renderer-specific
+        // ---------------------------------------------------------------
 #if defined(NI_RENDERER_DX9)
         NiDX9Renderer::DeviceDesc           m_eDeviceDesc       = NiDX9Renderer::DEVDESC_PURE;
         NiDX9Renderer::FrameBufferFormat    m_eFBFormat         = NiDX9Renderer::FBFMT_UNKNOWN;
@@ -56,17 +95,18 @@ public:
         NiDX9Renderer::SwapEffect           m_eSwapEffect       = NiDX9Renderer::SWAPEFFECT_DEFAULT;
         unsigned int                        m_uiDX9Flags        = NiDX9Renderer::USE_NOFLAGS;
         unsigned int                        m_uiAdapter         = D3DADAPTER_DEFAULT;
-        unsigned int                        m_uiBackBufferCount = 1;
 #elif defined(NI_RENDERER_DX10)
-        NiD3D10Renderer::DriverType m_eDriverType        = NiD3D10Renderer::DRIVER_HARDWARE;
-        unsigned int                m_uiDX10CreateFlags  = 0;
-        bool                        m_bCreateDepthBuffer = true;
-        DXGI_FORMAT                 m_eDepthFormat       = DXGI_FORMAT_UNKNOWN;
+        NiD3D10Renderer::DriverType m_eDriverType           = NiD3D10Renderer::DRIVER_HARDWARE;
+        unsigned int                m_uiDX10CreateFlags     = 0;
+        bool                        m_bCreateDepthBuffer    = true;
+        DXGI_FORMAT                 m_eDepthFormat          = DXGI_FORMAT_UNKNOWN;
+        DXGI_FORMAT                 m_eSwapChainBuffer      = DXGI_FORMAT_R8G8B8A8_UNORM;
 #elif defined(NI_RENDERER_DX11)
         ecr::D3D11Renderer::DriverType m_eDriverType        = ecr::D3D11Renderer::DRIVER_TYPE_HARDWARE;
         unsigned int                   m_uiDX11CreateFlags  = 0;
         bool                           m_bCreateDepthBuffer = true;
-        DXGI_FORMAT                    m_eDepthFormat       = DXGI_FORMAT_UNKNOWN;
+        DXGI_FORMAT                    m_eDepthFormat       = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		DXGI_FORMAT                    m_eSwapChainBuffer   = DXGI_FORMAT_R8G8B8A8_UNORM;
 #endif
     };
 
@@ -85,16 +125,16 @@ public:
     void SetRenderCallback  (RenderCallback   pfn, void* pUserData = nullptr);
     void SetEventCallback   (EventCallback    pfn, void* pUserData = nullptr);
 
-    SDL_Window*            GetWindow()            const;
-    NiRenderer*            GetRenderer()          const;
-    NiCamera*              GetCamera()            const;
-    NiNode*                GetScene()             const;
-    unsigned int           GetWidth()             const;
-    unsigned int           GetHeight()            const;
-    float                  GetLastDeltaTime()     const;
-    NiAlphaAccumulator*    GetAlphaAccumulator()  const;
-    NiMeshCullingProcess*  GetCullingProcess()    const;
-    bool                   GetShadowsEnabled()    const;
+    SDL_Window*            GetWindow()           const;
+    NiRenderer*            GetRenderer()         const;
+    NiCamera*              GetCamera()           const;
+    unsigned int           GetWidth()            const;
+    unsigned int           GetHeight()           const;
+    float                  GetLastDeltaTime()    const;
+    NiAlphaAccumulator*    GetAlphaAccumulator() const;
+    NiMeshCullingProcess*  GetCullingProcess()   const;
+	NiCloningProcess*      GetCloningProcess()   const;
+    bool                   GetShadowsEnabled()   const;
 
     void RenderScene();
     void SetShadowsActive(bool bActive);
@@ -102,16 +142,19 @@ public:
 private:
     bool  CreateSDLWindow(const Settings& kSettings);
     bool  CreateRenderer (const Settings& kSettings);
+    void  ApplyShaderDefaults(const Settings& kSettings);
     void  DestroyAll();
     bool  DispatchEvent  (const SDL_Event& kEvent);
     float ComputeDeltaTime();
 
     SDL_Window* m_pWindow = nullptr;
-    NiPointer<NiRenderer>          m_spRenderer;
-    NiPointer<NiCamera>            m_spCamera;
-    NiPointer<NiNode>              m_spScene;
-    NiPointer<NiAlphaAccumulator>  m_spAlphaAccum;
+    NiPointer<NiRenderer>           m_spRenderer;
+    NiPointer<NiCamera>             m_spCamera;
+    NiPointer<NiNode>               m_spScene;
+    NiPointer<NiAlphaAccumulator>   m_spAlphaAccum;
     NiPointer<NiMeshCullingProcess> m_spCuller;
+    NiPointer<NiCloningProcess>     m_spCloner;
+	NiVisibleArray m_kVisibleSet;
 
     unsigned int m_uiWidth     = 0;
     unsigned int m_uiHeight    = 0;
@@ -128,13 +171,14 @@ private:
     EventCallback    m_pfnEvent          = nullptr;
     void*            m_pEventUserData    = nullptr;
 
+    bool m_bInitialized  = false;
+    bool m_bQuit         = false;
+    bool m_bShadowsEnabled = false;
+
     Uint64 m_uiPerfFreq = 0;
     Uint64 m_uiLastTick = 0;
     float  m_fLastDelta = 0.0f;
-
-    bool m_bQuit           = false;
-    bool m_bInitialized    = false;
-    bool m_bShadowsEnabled = false;
 };
 
 #endif // NIAPPLICATION_H
+
