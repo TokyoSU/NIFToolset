@@ -24,11 +24,21 @@
 #define EE_SOCKET_LINGER(expression) static_cast<u_short>(expression)
 
 typedef int socklen_t;
+#ifndef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
+#endif
+#ifndef EINPROGRESS
 #define EINPROGRESS WSAEWOULDBLOCK
+#endif
+#ifndef EALREADY
 #define EALREADY WSAEALREADY
+#endif
+#ifndef EISCONN
 #define EISCONN WSAEISCONN
+#endif
+#ifndef ECONNRESET
 #define ECONNRESET WSAECONNRESET
+#endif
 
 #include <efd/Metrics.h>
 #include <efdNetwork/Win32/Socket_Win32.inl>

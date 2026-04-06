@@ -141,8 +141,8 @@ bool RenderService::CreateRenderer()
         {
             0,
             0,
-            settings.m_uiScreenWidth,
-            settings.m_uiScreenHeight
+            static_cast<LONG>(settings.m_uiScreenWidth),
+            static_cast<LONG>(settings.m_uiScreenHeight)
         };
 
         // Read the style from the window handle

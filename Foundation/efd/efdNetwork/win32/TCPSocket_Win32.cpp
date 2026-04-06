@@ -23,11 +23,21 @@ using namespace efd;
 const int MSG_HEADER_LEN = 6;
 
 typedef int socklen_t;
+#ifndef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
+#endif
+#ifndef EINPROGRESS
 #define EINPROGRESS WSAEWOULDBLOCK
+#endif
+#ifndef EALREADY
 #define EALREADY WSAEALREADY
+#endif
+#ifndef EISCONN
 #define EISCONN WSAEISCONN
+#endif
+#ifndef ECONNRESET
 #define ECONNRESET WSAECONNRESET
+#endif
 
 //-------------------------------------------------------------------------------------------------
 void Socket::setSocketBlocking(bool blocking)

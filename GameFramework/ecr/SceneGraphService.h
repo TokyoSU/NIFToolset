@@ -348,7 +348,7 @@ public:
     */
     //@{
     /// A functor class for iterating over all scene graphs with entities.
-    EE_ECR_ENTRY class EntitySceneGraphFunctor
+    class EntitySceneGraphFunctor
     {
     public:
         /**
@@ -376,7 +376,7 @@ public:
     efd::Bool ForEachEntitySceneGraph(EntitySceneGraphFunctor& functor);
 
     /// A functor class for iterating over all scene graphs with handles.
-    EE_ECR_ENTRY class HandleSceneGraphFunctor
+    class HandleSceneGraphFunctor
     {
     public:
         /**
@@ -906,7 +906,7 @@ protected:
     typedef efd::SmartPointer<EntityPreloadData> EntityPreloadDataPtr;
 
     /// Structure to hold information about scene graph files and cloning
-    EE_ECR_ENTRY class AssetData : public efd::MemObject
+    class AssetData : public efd::MemObject
     {
         EE_DECLARE_CONCRETE_REFCOUNT;
     public:
@@ -965,7 +965,7 @@ protected:
     typedef efd::SmartPointer<AssetData> AssetDataPtr;
 
     /// Structure to hold attached scene graph information
-    EE_ECR_ENTRY class AttachedSceneGraphData : public efd::MemObject
+    class AttachedSceneGraphData : public efd::MemObject
     {
         EE_DECLARE_CONCRETE_REFCOUNT;
     public:
@@ -1007,7 +1007,7 @@ protected:
     };
 
     /// Structure to hold entity scene graph information
-    EE_ECR_ENTRY class SceneGraphData : public efd::MemObject
+    class SceneGraphData : public efd::MemObject
     {
         EE_DECLARE_CONCRETE_REFCOUNT;
     public:

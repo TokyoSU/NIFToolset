@@ -1334,7 +1334,7 @@ float LightService::GetLightPriorityForReceiver(LightData* pLightData, ReceiverD
     // the priority to range from -4.0f to 4.0f.  This approach enables a light with zero
     // influence, but a priority of MAX_LIGHT_PRIORITY, to be chosen over a light with full
     // influence but default priority.
-    fPriority /= MAX_LIGHT_PRIORITY;
+    fPriority /= static_cast<float>(MAX_LIGHT_PRIORITY);
     fPriority = (fPriority * 8.0f) - 4.0f;
 
     // Compute the light's influence on the receiver and add it to the priority.
@@ -1676,9 +1676,9 @@ void LightService::SetAffectedNodeLists(bool sortAxisChanged)
             continue;
 
         // Clear the light priority queues.
-        m_PointPriorityQueue.empty();
-        m_SpotPriorityQueue.empty();
-        m_DirPriorityQueue.empty();
+        m_PointPriorityQueue = {};
+        m_SpotPriorityQueue = {};
+        m_DirPriorityQueue = {};
 
         NiNode* pNode = pReceiverData->m_spNode;
 
@@ -1696,7 +1696,7 @@ void LightService::SetAffectedNodeLists(bool sortAxisChanged)
                 pLightData->m_entityPriorityOverride.find(pReceiverData->m_entityID);
 
             if (itReciever != pLightData->m_entityPriorityOverride.end() &&
-                itReciever->second == MAX_LIGHT_PRIORITY)
+                itReciever->second == static_cast<float>(MAX_LIGHT_PRIORITY))
             {
                 bUpdateNeeded |= AddReceiverToLightQueue(pLightData, pReceiverData);
             }
@@ -1718,7 +1718,7 @@ void LightService::SetAffectedNodeLists(bool sortAxisChanged)
                 pLightData->m_entityPriorityOverride.find(pReceiverData->m_entityID);
 
             if (itReciever != pLightData->m_entityPriorityOverride.end() &&
-                itReciever->second == MAX_LIGHT_PRIORITY)
+                itReciever->second == static_cast<float>(MAX_LIGHT_PRIORITY))
             {
                 bUpdateNeeded |= AddReceiverToLightQueue(pLightData, pReceiverData);
             }
@@ -1748,7 +1748,7 @@ void LightService::SetAffectedNodeLists(bool sortAxisChanged)
             // Check if receiver should receive light.  If so, add to affected node list;
             // otherwise, remove.
             if ((itReciever != pLightData->m_entityPriorityOverride.end() &&
-                itReciever->second == MAX_LIGHT_PRIORITY) ||
+                itReciever->second == static_cast<float>(MAX_LIGHT_PRIORITY)) ||
                 LightAffectsReceiver(m_lightList[uiLightToConsider], pReceiverData))
             {
                 bUpdateNeeded |= AddReceiverToLightQueue(pLightData, pReceiverData);
@@ -1770,7 +1770,7 @@ void LightService::SetAffectedNodeLists(bool sortAxisChanged)
                 pLightData->m_entityPriorityOverride.find(pReceiverData->m_entityID);
 
             if (itReciever != pLightData->m_entityPriorityOverride.end() &&
-                itReciever->second == MAX_LIGHT_PRIORITY)
+                itReciever->second == static_cast<float>(MAX_LIGHT_PRIORITY))
             {
                 bUpdateNeeded |= AddReceiverToLightQueue(pLightData, pReceiverData);
             }
