@@ -8,6 +8,7 @@
 #include <NiActorManager.h>
 #include <NiTexturingProperty.h>
 #include <NiSourceTexture.h>
+#include <NiCloningProcess.h>
 
 // ---------------------------------------------------------------------------
 // NiModelHelper
@@ -646,6 +647,112 @@ namespace NiModelHelper
         NiTListIterator kIter = kObjects.GetHeadPos();
         while (kIter)
             kObjects.GetNext(kIter)->SetAppCulled(false);
+    }
+
+    // -----------------------------------------------------------------------
+    // Instancing — cheap scene-graph copies sharing geometry/texture data
+    // -----------------------------------------------------------------------
+
+    // Clones a previously loaded NIF root using NiObject::Clone().
+    // The clone shares all geometry and texture data with the source
+    // (COPY_EXACT semantics) — no re-streaming, no GPU resource duplication.
+    //
+    // Typical usage:
+    //   auto spMaster   = NiModelHelper::LoadStatic("Data\\Rock.nif");
+    //   auto spInst1    = NiModelHelper::CloneStatic(spMaster, NiPoint3(10, 0, 0));
+    //   auto spInst2    = NiModelHelper::CloneStatic(spMaster, NiPoint3(20, 0, 0));
+    //   pkScene->AttachChild(spInst1); pkScene->AttachChild(spInst2);
+    //
+    // Pass COPY_UNIQUE as eCopyType to give each clone unique node names
+    // (needed when you search by name inside the cloned hierarchy).
+    inline NiPointer<NiAVObject> CloneStatic(
+        NiAVObject* pkSource,
+        const NiPoint3& kTranslate = NiPoint3::ZERO,
+		const NiPoint3& kRotate = NiPoint3::ZERO,
+        float fScale = 1.0f,
+        NiObjectNET::CopyType eCopyType = NiObjectNET::COPY_EXACT)
+    {
+        if (!pkSource)
+            return nullptr;
+
+        NiCloningProcess kCloning;
+        kCloning.m_eCopyType = eCopyType;
+
+        NiPointer<NiAVObject> spClone = NiDynamicCast(NiAVObject, pkSource->Clone(kCloning));
+        if (!spClone)
+            return nullptr;
+
+		NiTransform kTransform;
+        kTransform.MakeIdentity();
+        NiMatrix3 kRot;
+        kRot.FromEulerAnglesXYZ(kRotate.x, kRotate.y, kRotate.z);
+		kTransform.m_Translate = kTranslate;
+		kTransform.m_Rotate = kRot;
+		kTransform.m_fScale = fScale;
+        spClone->SetLocalTransform(kTransform);
+
+        return spClone;
+    }
+
+    // Clones a previously loaded NIF root using NiObject::Clone().
+    // The clone shares all geometry and texture data with the source
+    // (COPY_EXACT semantics) — no re-streaming, no GPU resource duplication.
+    //
+    // Typical usage:
+    //   auto spMaster   = NiModelHelper::LoadStatic("Data\\Rock.nif");
+    //   auto spInst1    = NiModelHelper::CloneStatic(spMaster, NiPoint3(10, 0, 0));
+    //   auto spInst2    = NiModelHelper::CloneStatic(spMaster, NiPoint3(20, 0, 0));
+    //   pkScene->AttachChild(spInst1); pkScene->AttachChild(spInst2);
+    //
+    // Pass COPY_UNIQUE as eCopyType to give each clone unique node names
+    // (needed when you search by name inside the cloned hierarchy).
+    inline NiPointer<NiAVObject> CloneStatic(
+        NiAVObject* pkSource,
+		const NiTransform& kTransform,
+        NiObjectNET::CopyType eCopyType = NiObjectNET::COPY_EXACT)
+    {
+        if (!pkSource)
+            return nullptr;
+
+        NiCloningProcess kCloning;
+        kCloning.m_eCopyType = eCopyType;
+
+        NiPointer<NiAVObject> spClone = NiDynamicCast(NiAVObject, pkSource->Clone(kCloning));
+        if (!spClone)
+            return nullptr;
+
+        spClone->SetLocalTransform(kTransform);
+        return spClone;
+    }
+
+    // Shorthand for animated actors — clones the NIF hierarchy inside the actor.
+    // Note: the returned clone is a raw NIF scene-graph node, not a full actor.
+    // Use LoadAnimated() + CloneStatic(spActor->GetNIFRoot()) for animated instances.
+    inline NiPointer<NiAVObject> CloneAnimated(
+        NiActorManager* pkActor,
+        const NiPoint3& kTranslate = NiPoint3::ZERO,
+        const NiPoint3& kRotate = NiPoint3::ZERO,
+        float fScale = 1.0f,
+        NiObjectNET::CopyType eCopyType = NiObjectNET::COPY_EXACT)
+    {
+        if (!pkActor)
+            return nullptr;
+
+        return CloneStatic(pkActor->GetNIFRoot(), kTranslate, kRotate, fScale, eCopyType);
+    }
+
+    // Shorthand for animated actors — clones the NIF hierarchy inside the actor.
+    // Note: the returned clone is a raw NIF scene-graph node, not a full actor.
+    // Use LoadAnimated() + CloneStatic(spActor->GetNIFRoot()) for animated instances.
+    inline NiPointer<NiAVObject> CloneAnimated(
+        NiActorManager* pkActor,
+		const NiTransform& kTransform,
+        NiObjectNET::CopyType eCopyType = NiObjectNET::COPY_EXACT)
+    {
+        if (!pkActor)
+            return nullptr;
+
+        return CloneStatic(pkActor->GetNIFRoot(), kTransform, eCopyType);
     }
 }
 
