@@ -9,6 +9,12 @@
 #include <NiTexturingProperty.h>
 #include <NiSourceTexture.h>
 #include <NiCloningProcess.h>
+#include <NiLODNode.h>
+#include <NiStringExtraData.h>
+
+#include <cfloat>
+#include <cstdlib>
+#include <cstring>
 
 // ---------------------------------------------------------------------------
 // NiModelHelper
@@ -76,6 +82,162 @@ namespace NiModelHelper
         Parallax,
     };
 
+    namespace Detail
+    {
+        inline bool TryParseKeepLODDistance(const NiAVObject* pkObject, float& fDistanceOut)
+        {
+            if (!pkObject)
+                return false;
+
+            const char* pcPrefix = "NiOptimizeKeepLODDistance = ";
+            const size_t stPrefixLen = std::strlen(pcPrefix);
+
+            const unsigned short usCount = pkObject->GetExtraDataSize();
+            for (unsigned short us = 0; us < usCount; ++us)
+            {
+                NiStringExtraData* pkStringData =
+                    NiDynamicCast(NiStringExtraData, pkObject->GetExtraDataAt(us));
+                if (!pkStringData)
+                    continue;
+
+                const char* pcValue = pkStringData->GetValue();
+                if (!pcValue)
+                    continue;
+
+                if (std::strncmp(pcValue, pcPrefix, stPrefixLen) != 0)
+                    continue;
+
+                char* pcEnd = nullptr;
+                const float fParsed = std::strtof(pcValue + stPrefixLen, &pcEnd);
+                if (pcEnd == pcValue + stPrefixLen)
+                    continue;
+
+                fDistanceOut = fParsed;
+                return true;
+            }
+
+            return false;
+        }
+
+        inline int FindHighestDetailLODChildIndex(NiLODNode* pkLODRoot)
+        {
+            if (!pkLODRoot)
+                return -1;
+
+            int iBestIndex = -1;
+            float fBestDistance = FLT_MAX;
+
+            for (unsigned int ui = 0; ui < pkLODRoot->GetChildCount(); ++ui)
+            {
+                NiAVObject* pkChild = pkLODRoot->GetAt(ui);
+                if (!pkChild)
+                    continue;
+
+                float fKeepDistance = 0.0f;
+                if (TryParseKeepLODDistance(pkChild, fKeepDistance))
+                {
+                    if (iBestIndex < 0 || fKeepDistance < fBestDistance)
+                    {
+                        iBestIndex = static_cast<int>(ui);
+                        fBestDistance = fKeepDistance;
+                    }
+                }
+            }
+
+            if (iBestIndex >= 0)
+                return iBestIndex;
+
+            for (unsigned int ui = 0; ui < pkLODRoot->GetChildCount(); ++ui)
+            {
+                NiAVObject* pkChild = pkLODRoot->GetAt(ui);
+                if (pkChild && pkChild->GetName() == "lodobj0")
+                    return static_cast<int>(ui);
+            }
+
+            return -1;
+        }
+
+        inline NiPointer<NiAVObject> ExtractHighestDetailLODChild(NiLODNode* pkLODNode)
+        {
+            if (!pkLODNode)
+                return nullptr;
+
+            const int iLODChild = FindHighestDetailLODChildIndex(pkLODNode);
+            if (iLODChild < 0)
+                return pkLODNode;
+
+            NiAVObjectPtr spLODChild = pkLODNode->DetachChildAt(iLODChild);
+            if (!spLODChild)
+                return pkLODNode;
+
+            const NiTransform kMerged =
+                pkLODNode->GetLocalTransform() * spLODChild->GetLocalTransform();
+            spLODChild->SetLocalTransform(kMerged);
+
+            if (!spLODChild->GetName() && pkLODNode->GetName())
+                spLODChild->SetName(pkLODNode->GetName());
+
+            return spLODChild;
+        }
+
+        inline NiPointer<NiAVObject> ExtractHighestDetailLODRoot(NiAVObject* pkRoot)
+        {
+            if (!pkRoot)
+                return nullptr;
+
+            if (NiLODNode* pkLODRoot = NiDynamicCast(NiLODNode, pkRoot))
+                return ExtractHighestDetailLODChild(pkLODRoot);
+
+            NiNode* pkNode = NiDynamicCast(NiNode, pkRoot);
+            if (!pkNode)
+                return nullptr;
+
+            for (unsigned int ui = 0; ui < pkNode->GetChildCount(); ++ui)
+            {
+                NiLODNode* pkLODRoot = NiDynamicCast(NiLODNode, pkNode->GetAt(ui));
+                if (pkLODRoot)
+                    return ExtractHighestDetailLODChild(pkLODRoot);
+            }
+
+            return nullptr;
+        }
+
+        inline NiPointer<NiAVObject> StripLODRecursive(NiAVObject* pkObject)
+        {
+            if (!pkObject)
+                return nullptr;
+
+            if (NiLODNode* pkLODNode = NiDynamicCast(NiLODNode, pkObject))
+            {
+                NiPointer<NiAVObject> spExtracted =
+                    ExtractHighestDetailLODChild(pkLODNode);
+                NiAVObject* pkExtracted = spExtracted;
+                if (!pkExtracted || pkExtracted == pkLODNode)
+                    return pkLODNode;
+
+                return StripLODRecursive(pkExtracted);
+            }
+
+            NiNode* pkNode = NiDynamicCast(NiNode, pkObject);
+            if (!pkNode)
+                return pkObject;
+
+            for (unsigned int ui = 0; ui < pkNode->GetArrayCount(); ++ui)
+            {
+                NiAVObject* pkChild = pkNode->GetAt(ui);
+                if (!pkChild)
+                    continue;
+
+                NiPointer<NiAVObject> spNormalizedChild = StripLODRecursive(pkChild);
+                NiAVObject* pkNormalizedChild = spNormalizedChild;
+                if (pkNormalizedChild && pkNormalizedChild != pkChild)
+                    pkNode->SetAt(ui, pkNormalizedChild);
+            }
+
+            return pkNode;
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Loading
     // -----------------------------------------------------------------------
@@ -83,6 +245,8 @@ namespace NiModelHelper
     // Loads a static .nif file.
     // Returns nullptr when the file is missing, empty, or the root is not
     // an NiAVObject.
+    // If the root is an NiLODNode, the highest-detail child is extracted and
+    // returned directly so runtime LOD switching is removed.
     inline NiPointer<NiAVObject> LoadStatic(const char* pcNIFPath)
     {
         if (!pcNIFPath)
@@ -95,7 +259,16 @@ namespace NiModelHelper
         if (kStream.GetObjectCount() == 0)
             return nullptr;
 
-        return NiDynamicCast(NiAVObject, kStream.GetObjectAt(0));
+        NiPointer<NiAVObject> spRoot =
+            NiDynamicCast(NiAVObject, kStream.GetObjectAt(0));
+        if (!spRoot)
+            return nullptr;
+
+        NiPointer<NiAVObject> spExtractedRoot = Detail::ExtractHighestDetailLODRoot(spRoot);
+        if (spExtractedRoot)
+            return Detail::StripLODRecursive(spExtractedRoot);
+
+        return Detail::StripLODRecursive(spRoot);
     }
 
     // Loads an animated .kfm file (which internally loads the .nif and all

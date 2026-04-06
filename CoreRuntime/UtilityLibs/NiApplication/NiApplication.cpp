@@ -10,6 +10,12 @@
 #include <NiDevImageConverter.h>
 #include <NiParticleSDM.h>
 #include <NiMath.h>
+#include <NiBillboardNode.h>
+#include <NiParticleSystem.h>
+#include <NiPSParticleSystem.h>
+#include <NiMeshHWInstance.h>
+#include <NiShadowGenerator.h>
+#include <NiNode.h>
 
 NiApplication::NiApplication() : m_kVisibleSet(1024, 1024) {
 }
@@ -118,6 +124,7 @@ bool NiApplication::Initialize(const Settings& kSettings)
         NiShadowManager::Initialize();
         NiShadowManager::SetActive(true);
         NiShadowManager::SetCullingProcess(m_spCuller);
+        NiShadowManager::SetActiveShadowClickGenerator("NiDefaultShadowClickGenerator");
         m_bShadowsEnabled = true;
     }
 
@@ -460,5 +467,58 @@ float NiApplication::ComputeDeltaTime()
     m_uiLastTick = uiNow;
     m_fLastDelta = fDelta;
     return fDelta;
+}
+
+namespace
+{
+    bool IsUnsupportedShadowCasterType(NiAVObject* pkObject)
+    {
+        return pkObject &&
+            (NiDynamicCast(NiBillboardNode, pkObject) ||
+             NiDynamicCast(NiParticleSystem, pkObject) ||
+             NiDynamicCast(NiPSParticleSystem, pkObject) ||
+             NiDynamicCast(NiMeshHWInstance, pkObject));
+    }
+
+    void ExcludeUnsupportedShadowCastersRecursive(
+        NiAVObject* pkObject,
+        NiShadowGenerator* pkShadowGen)
+    {
+        if (!pkObject || !pkShadowGen)
+            return;
+
+        if (IsUnsupportedShadowCasterType(pkObject))
+        {
+            NiNode* pkExclude = NiDynamicCast(NiNode, pkObject);
+            if (!pkExclude)
+                pkExclude = pkObject->GetParent();
+
+            if (pkExclude)
+                pkShadowGen->AttachUnaffectedCasterNode(pkExclude);
+            return;
+        }
+
+        NiNode* pkNode = NiDynamicCast(NiNode, pkObject);
+        if (!pkNode)
+            return;
+
+        for (unsigned int ui = 0; ui < pkNode->GetArrayCount(); ++ui)
+        {
+            NiAVObject* pkChild = pkNode->GetAt(ui);
+            if (pkChild)
+                ExcludeUnsupportedShadowCastersRecursive(pkChild, pkShadowGen);
+        }
+    }
+
+    void ExcludeUnsupportedShadowCasters(
+        NiNode* pkScene,
+        NiShadowGenerator* pkShadowGen)
+    {
+        if (!pkScene || !pkShadowGen)
+            return;
+
+        ExcludeUnsupportedShadowCastersRecursive(pkScene, pkShadowGen);
+        pkShadowGen->SetRenderViewsDirty(true);
+    }
 }
 
