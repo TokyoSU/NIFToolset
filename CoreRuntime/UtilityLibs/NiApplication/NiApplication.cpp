@@ -12,7 +12,6 @@
 #include <NiMath.h>
 
 NiApplication::NiApplication() : m_kVisibleSet(1024, 1024) {
-
 }
 
 NiApplication::~NiApplication()
@@ -103,7 +102,7 @@ bool NiApplication::Initialize(const Settings& kSettings)
     NiRect<float> kViewport(0.0f, 1.0f, 1.0f, 0.0f);
     m_spCamera->SetViewFrustum(kFrustum);
     m_spCamera->SetViewPort(kViewport);
-	m_spCloner = NiNew NiCloningProcess();
+
     m_spCuller = NiNew NiMeshCullingProcess(&m_kVisibleSet, nullptr);
 
     if (kSettings.m_bAlphaSorting)
@@ -215,16 +214,15 @@ void NiApplication::SetRenderCallback(RenderCallback pfn, void* pUserData)
 void NiApplication::SetEventCallback(EventCallback pfn, void* pUserData)
 { m_pfnEvent = pfn; m_pEventUserData = pUserData; }
 
-SDL_Window*  NiApplication::GetWindow()        const { return m_pWindow; }
-NiRenderer*  NiApplication::GetRenderer()      const { return m_spRenderer; }
-NiCamera*    NiApplication::GetCamera()        const { return m_spCamera; }
-unsigned int NiApplication::GetWidth()         const { return m_uiWidth; }
-unsigned int NiApplication::GetHeight()        const { return m_uiHeight; }
-float        NiApplication::GetLastDeltaTime()    const { return m_fLastDelta; }
-NiAlphaAccumulator*   NiApplication::GetAlphaAccumulator() const { return m_spAlphaAccum; }
-NiMeshCullingProcess* NiApplication::GetCullingProcess()   const { return m_spCuller; }
-NiCloningProcess* NiApplication::GetCloningProcess() const { return m_spCloner; }
-bool         NiApplication::GetShadowsEnabled()   const { return m_bShadowsEnabled; }
+SDL_Window*             NiApplication::GetWindow()              const { return m_pWindow; }
+NiRenderer*             NiApplication::GetRenderer()            const { return m_spRenderer; }
+NiCamera*               NiApplication::GetCamera()              const { return m_spCamera; }
+unsigned int            NiApplication::GetWidth()               const { return m_uiWidth; }
+unsigned int            NiApplication::GetHeight()              const { return m_uiHeight; }
+float                   NiApplication::GetLastDeltaTime()       const { return m_fLastDelta; }
+NiAlphaAccumulator*     NiApplication::GetAlphaAccumulator()    const { return m_spAlphaAccum; }
+NiMeshCullingProcess*   NiApplication::GetCullingProcess()      const { return m_spCuller; }
+bool                    NiApplication::GetShadowsEnabled()      const { return m_bShadowsEnabled; }
 
 void NiApplication::RenderScene()
 {

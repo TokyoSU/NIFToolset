@@ -133,7 +133,6 @@ public:
     float                  GetLastDeltaTime()    const;
     NiAlphaAccumulator*    GetAlphaAccumulator() const;
     NiMeshCullingProcess*  GetCullingProcess()   const;
-	NiCloningProcess*      GetCloningProcess()   const;
     bool                   GetShadowsEnabled()   const;
 
     void RenderScene();
@@ -153,7 +152,6 @@ private:
     NiPointer<NiNode>               m_spScene;
     NiPointer<NiAlphaAccumulator>   m_spAlphaAccum;
     NiPointer<NiMeshCullingProcess> m_spCuller;
-    NiPointer<NiCloningProcess>     m_spCloner;
 	NiVisibleArray m_kVisibleSet;
 
     unsigned int m_uiWidth     = 0;
