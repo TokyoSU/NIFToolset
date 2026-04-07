@@ -1,12 +1,16 @@
 # Build directories
 /[bB]uild/
 /[bB]uild32/
+/[bB]uild86/
 /[bB]uild64/
 /[bB]uildx32/
+/[bB]uildx86/
 /[bB]uildx64/
 /[bB]uild_32/
+/[bB]uild_86/
 /[bB]uild_64/
 /[bB]uild_x32/
+/[bB]uild_x86/
 /[bB]uild_x64/
 /[bB]in/
 /[oO]ut/
