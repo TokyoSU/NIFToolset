@@ -521,4 +521,3 @@ namespace
         pkShadowGen->SetRenderViewsDirty(true);
     }
 }
-

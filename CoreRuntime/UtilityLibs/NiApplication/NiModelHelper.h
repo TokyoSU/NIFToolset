@@ -11,6 +11,7 @@
 #include <NiCloningProcess.h>
 #include <NiLODNode.h>
 #include <NiStringExtraData.h>
+#include <NiBillboardNode.h>
 
 #include <cfloat>
 #include <cstdlib>
@@ -84,6 +85,13 @@ namespace NiModelHelper
 
     namespace Detail
     {
+        inline NiTransform MakeIdentityTransform()
+        {
+            NiTransform kTransform;
+            kTransform.MakeIdentity();
+            return kTransform;
+        }
+
         inline bool TryParseKeepLODDistance(const NiAVObject* pkObject, float& fDistanceOut)
         {
             if (!pkObject)
@@ -180,26 +188,24 @@ namespace NiModelHelper
             return spLODChild;
         }
 
-        inline NiPointer<NiAVObject> ExtractHighestDetailLODRoot(NiAVObject* pkRoot)
+        inline NiPointer<NiAVObject> DetachHighestDetailLODChildPreserveLocal(
+            NiLODNode* pkLODNode)
         {
-            if (!pkRoot)
+            if (!pkLODNode)
                 return nullptr;
 
-            if (NiLODNode* pkLODRoot = NiDynamicCast(NiLODNode, pkRoot))
-                return ExtractHighestDetailLODChild(pkLODRoot);
-
-            NiNode* pkNode = NiDynamicCast(NiNode, pkRoot);
-            if (!pkNode)
+            const int iLODChild = FindHighestDetailLODChildIndex(pkLODNode);
+            if (iLODChild < 0)
                 return nullptr;
 
-            for (unsigned int ui = 0; ui < pkNode->GetChildCount(); ++ui)
-            {
-                NiLODNode* pkLODRoot = NiDynamicCast(NiLODNode, pkNode->GetAt(ui));
-                if (pkLODRoot)
-                    return ExtractHighestDetailLODChild(pkLODRoot);
-            }
+            NiAVObjectPtr spLODChild = pkLODNode->DetachChildAt(iLODChild);
+            if (!spLODChild)
+                return nullptr;
 
-            return nullptr;
+            if (!spLODChild->GetName() && pkLODNode->GetName())
+                spLODChild->SetName(pkLODNode->GetName());
+
+            return spLODChild;
         }
 
         inline NiPointer<NiAVObject> StripLODRecursive(NiAVObject* pkObject)
@@ -209,13 +215,13 @@ namespace NiModelHelper
 
             if (NiLODNode* pkLODNode = NiDynamicCast(NiLODNode, pkObject))
             {
-                NiPointer<NiAVObject> spExtracted =
+                NiPointer<NiAVObject> spSelected =
                     ExtractHighestDetailLODChild(pkLODNode);
-                NiAVObject* pkExtracted = spExtracted;
-                if (!pkExtracted || pkExtracted == pkLODNode)
+                NiAVObject* pkSelected = spSelected;
+                if (!pkSelected || pkSelected == pkLODNode)
                     return pkLODNode;
 
-                return StripLODRecursive(pkExtracted);
+                return StripLODRecursive(pkSelected);
             }
 
             NiNode* pkNode = NiDynamicCast(NiNode, pkObject);
@@ -228,13 +234,34 @@ namespace NiModelHelper
                 if (!pkChild)
                     continue;
 
-                NiPointer<NiAVObject> spNormalizedChild = StripLODRecursive(pkChild);
+                NiPointer<NiAVObject> spNormalizedChild =
+                    StripLODRecursive(pkChild);
                 NiAVObject* pkNormalizedChild = spNormalizedChild;
                 if (pkNormalizedChild && pkNormalizedChild != pkChild)
                     pkNode->SetAt(ui, pkNormalizedChild);
             }
 
             return pkNode;
+        }
+
+        inline NiPointer<NiAVObject> LoadStatic(const char* pcNIFPath)
+        {
+            if (!pcNIFPath)
+                return nullptr;
+
+            NiStream kStream;
+            if (!kStream.Load(pcNIFPath))
+                return nullptr;
+
+            if (kStream.GetObjectCount() == 0)
+                return nullptr;
+
+            NiPointer<NiAVObject> spRoot =
+                NiDynamicCast(NiAVObject, kStream.GetObjectAt(0));
+            if (!spRoot)
+                return nullptr;
+
+            return Detail::StripLODRecursive(spRoot);
         }
     }
 
@@ -245,30 +272,11 @@ namespace NiModelHelper
     // Loads a static .nif file.
     // Returns nullptr when the file is missing, empty, or the root is not
     // an NiAVObject.
-    // If the root is an NiLODNode, the highest-detail child is extracted and
-    // returned directly so runtime LOD switching is removed.
+    // LOD nodes are normalized in-place so only the highest-detail branch
+    // remains while preserving the original transform hierarchy.
     inline NiPointer<NiAVObject> LoadStatic(const char* pcNIFPath)
     {
-        if (!pcNIFPath)
-            return nullptr;
-
-        NiStream kStream;
-        if (!kStream.Load(pcNIFPath))
-            return nullptr;
-
-        if (kStream.GetObjectCount() == 0)
-            return nullptr;
-
-        NiPointer<NiAVObject> spRoot =
-            NiDynamicCast(NiAVObject, kStream.GetObjectAt(0));
-        if (!spRoot)
-            return nullptr;
-
-        NiPointer<NiAVObject> spExtractedRoot = Detail::ExtractHighestDetailLODRoot(spRoot);
-        if (spExtractedRoot)
-            return Detail::StripLODRecursive(spExtractedRoot);
-
-        return Detail::StripLODRecursive(spRoot);
+        return Detail::LoadStatic(pcNIFPath);
     }
 
     // Loads an animated .kfm file (which internally loads the .nif and all
@@ -926,6 +934,33 @@ namespace NiModelHelper
             return nullptr;
 
         return CloneStatic(pkActor->GetNIFRoot(), kTransform, eCopyType);
+    }
+
+    /// <summary>
+    /// Recursively traverses a scene graph and normalizes billboard modes by converting ROTATE_ABOUT_UP to ALWAYS_FACE_CAMERA.
+    /// </summary>
+    /// <param name="pkObject">Pointer to the scene graph object to process. Can be null.</param>
+    inline void NormalizeBillboardModesRecursive(NiAVObject* pkObject)
+    {
+        if (!pkObject)
+            return;
+
+        if (NiBillboardNode* pkBillboard = NiDynamicCast(NiBillboardNode, pkObject))
+        {
+            if (pkBillboard->GetMode() == NiBillboardNode::ROTATE_ABOUT_UP)
+                pkBillboard->SetMode(NiBillboardNode::ALWAYS_FACE_CAMERA);
+        }
+
+        NiNode* pkNode = NiDynamicCast(NiNode, pkObject);
+        if (!pkNode)
+            return;
+
+        for (unsigned int ui = 0; ui < pkNode->GetArrayCount(); ++ui)
+        {
+            NiAVObject* pkChild = pkNode->GetAt(ui);
+            if (pkChild)
+                NormalizeBillboardModesRecursive(pkChild);
+        }
     }
 }
 
