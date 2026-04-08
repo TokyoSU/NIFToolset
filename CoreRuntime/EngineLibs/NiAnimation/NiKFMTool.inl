@@ -26,7 +26,7 @@ inline NiKFMTool::NiKFMTool(const NiFixedString& kBaseKFMPath) :
 //--------------------------------------------------------------------------------------------------
 inline NiKFMTool::~NiKFMTool()
 {
-    unsigned int uiSequenceID;
+    SequenceID uiSequenceID;
     Sequence* pkSequence;
     NiTMapIterator pos = m_mapSequences.GetFirstPos();
     while (pos)
@@ -35,7 +35,7 @@ inline NiKFMTool::~NiKFMTool()
         NiDelete pkSequence;
     }
 
-    unsigned int uiGroupID;
+    GroupID uiGroupID;
     SequenceGroup* pkGroup;
     pos = m_mapSequenceGroups.GetFirstPos();
     while (pos)
@@ -73,13 +73,13 @@ inline NiKFMTool::Sequence::~Sequence()
 }
 
 //--------------------------------------------------------------------------------------------------
-inline unsigned int NiKFMTool::Sequence::GetSequenceID() const
+inline NiKFMTool::SequenceID NiKFMTool::Sequence::GetSequenceID() const
 {
     return m_uiSequenceID;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void NiKFMTool::Sequence::SetSequenceID(unsigned int uiSequenceID)
+inline void NiKFMTool::Sequence::SetSequenceID(SequenceID uiSequenceID)
 {
     m_uiSequenceID = uiSequenceID;
 }
@@ -97,13 +97,13 @@ inline void NiKFMTool::Sequence::SetFilename(const NiFixedString& kFilename)
 }
 
 //--------------------------------------------------------------------------------------------------
-inline int NiKFMTool::Sequence::GetAnimIndex() const
+inline NiKFMTool::AnimIndex NiKFMTool::Sequence::GetAnimIndex() const
 {
     return m_iAnimIndex;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void NiKFMTool::Sequence::SetAnimIndex(int iAnimIndex)
+inline void NiKFMTool::Sequence::SetAnimIndex(AnimIndex iAnimIndex)
 {
     m_iAnimIndex = iAnimIndex;
 }
@@ -122,7 +122,7 @@ inline void NiKFMTool::Sequence::SetSequenceName(
 }
 
 //--------------------------------------------------------------------------------------------------
-inline NiTPointerMap<unsigned int, NiKFMTool::Transition*>&
+inline NiTPointerMap<NiKFMTool::SequenceID, NiKFMTool::Transition*>&
     NiKFMTool::Sequence::GetTransitions()
 {
     return m_mapTransitions;

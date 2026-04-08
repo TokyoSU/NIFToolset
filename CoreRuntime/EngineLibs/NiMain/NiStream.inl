@@ -98,13 +98,13 @@ inline NiObject* NiStream::GetObjectAt(unsigned int i) const
 }
 
 //--------------------------------------------------------------------------------------------------
-inline unsigned int NiStream::GetFileVersion() const
+inline NiStream::FileVersion NiStream::GetFileVersion() const
 {
     return m_uiNifFileVersion;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline unsigned int NiStream::GetFileUserDefinedVersion() const
+inline NiStream::UserVersion NiStream::GetFileUserDefinedVersion() const
 {
     return m_uiNifFileUserDefinedVersion;
 }
@@ -137,7 +137,7 @@ inline const char* NiStream::GetLastLoadedRTTI() const
 //--------------------------------------------------------------------------------------------------
 inline void NiStream::SaveLinkID(const NiObject* pkObject)
 {
-    unsigned int uiLinkID = GetLinkIDFromObject(pkObject);
+    LinkID uiLinkID = GetLinkIDFromObject(pkObject);
     NiStreamSaveBinary(*this, uiLinkID);
 }
 
@@ -204,37 +204,37 @@ inline void NiStream::UnlockCleanupSection()
 //--------------------------------------------------------------------------------------------------
 // Flag Conversion Functions
 //--------------------------------------------------------------------------------------------------
-inline unsigned short NiStream::GetLastNiAVObjectFlags() const
+inline NiStream::LegacyFlags NiStream::GetLastNiAVObjectFlags() const
 {
     return m_usNiAVObjectFlags;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void NiStream::SetLastNiAVObjectFlags(unsigned short usFlags)
+inline void NiStream::SetLastNiAVObjectFlags(LegacyFlags usFlags)
 {
     m_usNiAVObjectFlags = usFlags;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline unsigned short NiStream::GetLastNiTimeControllerFlags() const
+inline NiStream::LegacyFlags NiStream::GetLastNiTimeControllerFlags() const
 {
     return m_usNiTimeControllerFlags;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void NiStream::SetLastNiTimeControllerFlags(unsigned short usFlags)
+inline void NiStream::SetLastNiTimeControllerFlags(LegacyFlags usFlags)
 {
     m_usNiTimeControllerFlags = usFlags;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline unsigned short NiStream::GetLastNiPropertyFlags() const
+inline NiStream::LegacyFlags NiStream::GetLastNiPropertyFlags() const
 {
     return m_usNiPropertyFlags;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void NiStream::SetLastNiPropertyFlags(unsigned short usFlags)
+inline void NiStream::SetLastNiPropertyFlags(LegacyFlags usFlags)
 {
     m_usNiPropertyFlags = usFlags;
 }
@@ -242,8 +242,8 @@ inline void NiStream::SetLastNiPropertyFlags(unsigned short usFlags)
 //--------------------------------------------------------------------------------------------------
 // End flag conversion functions.
 //--------------------------------------------------------------------------------------------------
-inline unsigned int NiStream::GetVersion(unsigned int uiMajor,
-    unsigned int uiMinor, unsigned int uiPatch, unsigned int uiInternal)
+inline NiStream::FileVersion NiStream::GetVersion(FileVersion uiMajor,
+    FileVersion uiMinor, FileVersion uiPatch, FileVersion uiInternal)
 {
     EE_ASSERT(uiMajor < 256);
     EE_ASSERT(uiMinor < 256);
@@ -267,7 +267,7 @@ inline void NiStream::SetPrepareMeshModifiers(bool bEnable)
 
 //--------------------------------------------------------------------------------------------------
 inline NiStream::StreamMetaDataObject::StreamMetaDataObject(
-    unsigned int uiTag, unsigned int uiBufferSize,
+    MetaDataTag uiTag, MetaDataSize uiBufferSize,
     const NiUInt8* pucBuffer)
 {
     m_uiTag = uiTag;

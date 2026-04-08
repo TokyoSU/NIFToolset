@@ -169,33 +169,8 @@ int NiApplication::Run()
 
         if (m_pfnUpdate)
             m_pfnUpdate(this, fDelta, m_pUpdateUserData);
-
-        if (m_spRenderer && m_spRenderer->BeginFrame())
-        {
-            if (m_bShadowsEnabled && m_spCuller)
-            {
-                NiShadowManager::SetSceneCamera(m_spCamera);
-                const NiTPointerList<NiRenderClick*>& kClicks = NiShadowManager::GenerateRenderClicks();
-                const unsigned int uiFrameID = m_spRenderer->GetFrameID();
-                NiTListIterator kIter = kClicks.GetHeadPos();
-                while (kIter)
-                {
-                    NiRenderClick* pkClick = kClicks.GetNext(kIter);
-                    if (pkClick && pkClick->GetActive())
-                        pkClick->Render(uiFrameID);
-                }
-            }
-
-            if (m_spRenderer->BeginUsingDefaultRenderTargetGroup(NiRenderer::CLEAR_ALL))
-            {
-                m_spRenderer->SetCameraData(m_spCamera);
-                if (m_pfnRender)
-                    m_pfnRender(this, m_pRenderUserData);
-                m_spRenderer->EndUsingRenderTargetGroup();
-            }
-            m_spRenderer->EndFrame();
-            m_spRenderer->DisplayFrame();
-        }
+        if (m_pfnRender)
+            m_pfnRender(this, m_pRenderUserData);
     }
 
     return 0;
@@ -226,7 +201,8 @@ NiRenderer*             NiApplication::GetRenderer()            const { return m
 NiCamera*               NiApplication::GetCamera()              const { return m_spCamera; }
 unsigned int            NiApplication::GetWidth()               const { return m_uiWidth; }
 unsigned int            NiApplication::GetHeight()              const { return m_uiHeight; }
-float                   NiApplication::GetLastDeltaTime()       const { return m_fLastDelta; }
+float                   NiApplication::GetDeltaTime()           const { return m_fLastDelta; }
+float                   NiApplication::GetTime()                const { return m_fTime; }
 NiAlphaAccumulator*     NiApplication::GetAlphaAccumulator()    const { return m_spAlphaAccum; }
 NiMeshCullingProcess*   NiApplication::GetCullingProcess()      const { return m_spCuller; }
 bool                    NiApplication::GetShadowsEnabled()      const { return m_bShadowsEnabled; }
@@ -255,6 +231,50 @@ void NiApplication::SetShadowsActive(bool bActive)
         NiShadowManager::Shutdown();
     }
     m_bShadowsEnabled = bActive;
+}
+
+bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRenderer::ClearFlags clearFlags)
+{
+    if (m_spRenderer) {
+        if (pRenderTargetGroup)
+            m_spRenderer->BeginUsingRenderTargetGroup(pRenderTargetGroup, clearFlags);
+        else
+            m_spRenderer->BeginUsingDefaultRenderTargetGroup(clearFlags);
+        m_spRenderer->BeginFrame();
+
+        // Be sure to call for shadow render clicks to be generated.
+        if (m_bShadowsEnabled && m_spCuller)
+        {
+            NiShadowManager::SetSceneCamera(m_spCamera);
+            const NiTPointerList<NiRenderClick*>& kClicks = NiShadowManager::GenerateRenderClicks();
+            const unsigned int uiFrameID = m_spRenderer->GetFrameID();
+            NiTListIterator kIter = kClicks.GetHeadPos();
+            while (kIter)
+            {
+                NiRenderClick* pkClick = kClicks.GetNext(kIter);
+                if (pkClick && pkClick->GetActive())
+                    pkClick->Render(uiFrameID);
+            }
+        }
+
+        return true;
+	}
+    return false;
+}
+
+void NiApplication::EndScene()
+{
+    if (m_spRenderer)
+    {
+        m_spRenderer->EndUsingRenderTargetGroup();
+        m_spRenderer->EndFrame();
+    }
+}
+
+void NiApplication::Present()
+{
+    if (m_spRenderer)
+		m_spRenderer->DisplayFrame();
 }
 
 bool NiApplication::CreateSDLWindow(const Settings& kSettings)
@@ -466,6 +486,7 @@ float NiApplication::ComputeDeltaTime()
         : 0.0f;
     m_uiLastTick = uiNow;
     m_fLastDelta = fDelta;
+	m_fTime += fDelta;
     return fDelta;
 }
 

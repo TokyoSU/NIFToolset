@@ -47,22 +47,31 @@
 
 #include "NiVersion.h"
 
+namespace NiStreamFormatTypes
+{
+    EE_COMPILETIME_ASSERT(sizeof(NiStream::FileVersion) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(NiStream::UserVersion) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(NiStream::LinkID) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(NiStream::LegacyFlags) == 2);
+    EE_COMPILETIME_ASSERT(sizeof(bool) == 1);
+}
+
 #ifdef EE_REMOVE_BACK_COMPAT_STREAMING
-const unsigned int NiStream::ms_uiNifMinVersion =
+const NiStream::FileVersion NiStream::ms_uiNifMinVersion =
     NiStream::GetVersion(NIF_MAJOR_VERSION, NIF_MINOR_VERSION,
     NIF_PATCH_VERSION, NIF_INTERNAL_VERSION);
 #else
-const unsigned int NiStream::ms_uiNifMinVersion =
+const NiStream::FileVersion NiStream::ms_uiNifMinVersion =
     NiStream::GetVersion(10, 1, 0, 114);
 #endif
-const unsigned int NiStream::ms_uiNifMaxVersion =
+const NiStream::FileVersion NiStream::ms_uiNifMaxVersion =
     NiStream::GetVersion(NIF_MAJOR_VERSION, NIF_MINOR_VERSION,
     NIF_PATCH_VERSION, NIF_INTERNAL_VERSION);
-const unsigned int NiStream::ms_uiNifMinUserDefinedVersion =
+const NiStream::UserVersion NiStream::ms_uiNifMinUserDefinedVersion =
     NiStream::GetVersion(0, 0, 0, 0);
-const unsigned int NiStream::ms_uiNifMaxUserDefinedVersion =
+const NiStream::UserVersion NiStream::ms_uiNifMaxUserDefinedVersion =
     NiStream::GetVersion(0, 0, 0, 0);
-const unsigned int NiStream::NULL_LINKID = 0xffffffff;
+const NiStream::LinkID NiStream::NULL_LINKID = 0xffffffff;
 efd::CriticalSection NiStream::ms_kCleanupCriticalSection;
 //--------------------------------------------------------------------------------------------------
 

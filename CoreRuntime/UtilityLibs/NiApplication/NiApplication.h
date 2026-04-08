@@ -130,7 +130,8 @@ public:
     NiCamera*              GetCamera()           const;
     unsigned int           GetWidth()            const;
     unsigned int           GetHeight()           const;
-    float                  GetLastDeltaTime()    const;
+    float                  GetDeltaTime()        const;
+    float 				   GetTime()             const;
     NiAlphaAccumulator*    GetAlphaAccumulator() const;
     NiMeshCullingProcess*  GetCullingProcess()   const;
     bool                   GetShadowsEnabled()   const;
@@ -138,12 +139,18 @@ public:
     void RenderScene();
     void SetShadowsActive(bool bActive);
 
+	// Render the scene to the specified render target group, or to the main back buffer if pRenderTargetGroup is null.
+    bool BeginScene(NiRenderTargetGroup* pRenderTargetGroup = nullptr, NiRenderer::ClearFlags clearFlags = NiRenderer::ClearFlags::CLEAR_ALL);
+	// End the scene. If BeginScene() return true then this must be called before calling Present().
+    void EndScene();
+    void Present();
+
 private:
     bool  CreateSDLWindow(const Settings& kSettings);
     bool  CreateRenderer (const Settings& kSettings);
     void  ApplyShaderDefaults(const Settings& kSettings);
     void  DestroyAll();
-    bool  DispatchEvent  (const SDL_Event& kEvent);
+    bool  DispatchEvent(const SDL_Event& kEvent);
     float ComputeDeltaTime();
 
     SDL_Window* m_pWindow = nullptr;
@@ -176,6 +183,7 @@ private:
     Uint64 m_uiPerfFreq = 0;
     Uint64 m_uiLastTick = 0;
     float  m_fLastDelta = 0.0f;
+	float  m_fTime      = 0.0f;
 };
 
 #endif // NIAPPLICATION_H

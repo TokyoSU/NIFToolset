@@ -24,9 +24,20 @@
 
 #define MAX_NUM_CHAIN_IDS 1000
 
+namespace NiKFMFormatTypes
+{
+    EE_COMPILETIME_ASSERT(sizeof(NiKFMTool::FileVersion) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(NiKFMTool::SequenceID) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(NiKFMTool::GroupID) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(NiKFMTool::AnimIndex) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(NiKFMTool::Priority) == 4);
+    EE_COMPILETIME_ASSERT(sizeof(bool) == 1);
+}
+
 const char* g_pcCurrentKFMVersion = GAMEBRYO_NIF_VERSION_STRING;
 const float NiKFMTool::MAX_DURATION = -1.0f;
-const unsigned int NiKFMTool::SYNC_SEQUENCE_ID_NONE = (unsigned int) -2;
+const NiKFMTool::SequenceID NiKFMTool::SYNC_SEQUENCE_ID_NONE =
+    static_cast<NiKFMTool::SequenceID>(-2);
 
 void CorrectPathSlash(NiFixedString& kFixedString)
 {
