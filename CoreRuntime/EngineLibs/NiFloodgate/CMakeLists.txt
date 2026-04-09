@@ -28,6 +28,12 @@ target_compile_definitions(NiFloodgate
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIFLOODGATE_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiFloodgate
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiFloodgatePCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiFloodgate
     PUBLIC
