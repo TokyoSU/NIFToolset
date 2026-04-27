@@ -18,7 +18,6 @@
 #if defined(NI_USE_PCH)
 
 #if !defined(NIDEBUG)
-#pragma message("using fat pch's")
 // For full builds, it is faster to include all of the current project's headers.
 #include <efd/efdPCH.h>
 #include "NiBinaryLoadSave.h"

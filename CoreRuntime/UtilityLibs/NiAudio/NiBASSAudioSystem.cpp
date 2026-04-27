@@ -54,9 +54,9 @@ bool NiBASSAudioSystem::Startup(const char* /*pcDirectoryname*/)
     BASS_SetConfig(BASS_CONFIG_VISTA_SPEAKERS, TRUE);
 
     // Optional format plugins — silent if DLL is absent
-    m_hBASSFlac = BASS_PluginLoad("bassflac.dll", 0);
-    m_hBASSOpus = BASS_PluginLoad("bassopus.dll", 0);
-    m_hBASSAac  = BASS_PluginLoad("bassaac.dll",  0);
+    m_hBASSFlac = BASS_PluginLoad("bassflac.dll", NULL);
+    m_hBASSOpus = BASS_PluginLoad("bassopus.dll", NULL);
+    m_hBASSAac  = BASS_PluginLoad("bassaac.dll",  NULL);
 
     // BASS_FX — reverb/DSP effects (linked via bass_fx.lib)
     m_bBASSFXLoaded = (BASS_FX_GetVersion() != 0);
@@ -97,10 +97,21 @@ void NiBASSAudioSystem::Shutdown()
     BASS_Free();
 }
 //---------------------------------------------------------------------------
-bool NiBASSAudioSystem::SetMusicVolume(float fVolume)
+bool NiBASSAudioSystem::SetMusicVolume(float fVolume) const
 {
     if (!m_hMusicMixer) return false;
     return BASS_ChannelSetAttribute(m_hMusicMixer, BASS_ATTRIB_VOL, fVolume) != 0;
+}
+//---------------------------------------------------------------------------
+std::string NiBASSAudioSystem::GetLoadedPlugins() const
+{
+    std::string result = "Loaded plugins:\n";
+	result.append(m_hBASSFlac ? " - BASSFLAC\n" : " - BASSFLAC (not loaded)\n");
+	result.append(m_hBASSOpus ? " - BASSOPUS\n" : " - BASSOPUS (not loaded)\n");
+	result.append(m_hBASSAac ? " - BASSAAC\n" : " - BASSAAC (not loaded)\n");
+	result.append(m_bBASSFXLoaded ? " - BASS_FX\n" : " - BASS_FX (not loaded)\n");
+	result.append(m_bMixerLoaded ? " - BASS_MIX\n" : " - BASS_MIX (not loaded)");
+	return result;
 }
 //---------------------------------------------------------------------------
 NiAudioSource* NiBASSAudioSystem::CreateSource(unsigned int uiType)

@@ -15,6 +15,16 @@
 #ifndef NIMAINLIBTYPE_H
 #define NIMAINLIBTYPE_H
 
+// NiMain public headers expose wrapper classes deriving from efd value types.
+// When NiMain is built or consumed as a DLL, the corresponding efd types must
+// also be seen as imported unless the build explicitly overrides that policy.
+#if !defined(__SPU__) && (defined(NIMAIN_EXPORT) || defined(NIMAIN_IMPORT))
+    #if !defined(EE_EFD_EXPORT) && !defined(EE_EFD_IMPORT) && \
+        !defined(EE_EFD_NO_IMPORT)
+        #define EE_EFD_IMPORT
+    #endif
+#endif
+
 #ifndef __SPU__
 #ifdef NIMAIN_EXPORT
     // DLL library project uses this
@@ -45,6 +55,7 @@
 
 #ifdef WIN32
     #pragma warning(disable : 4251)
+    #pragma warning(disable : 4275)
 #endif
 
 #endif

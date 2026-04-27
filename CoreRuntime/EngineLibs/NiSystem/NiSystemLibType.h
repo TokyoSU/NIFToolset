@@ -15,6 +15,16 @@
 #ifndef NISYSTEMLIBTYPE_H
 #define NISYSTEMLIBTYPE_H
 
+// NiSystem public headers expose wrapper classes deriving from efd value types.
+// When NiSystem is built or consumed as a DLL, the corresponding efd types must
+// also be seen as imported unless the build explicitly overrides that policy.
+#if defined(NISYSTEM_EXPORT) || defined(NISYSTEM_IMPORT)
+    #if !defined(EE_EFD_EXPORT) && !defined(EE_EFD_IMPORT) && \
+        !defined(EE_EFD_NO_IMPORT)
+        #define EE_EFD_IMPORT
+    #endif
+#endif
+
 #ifdef NISYSTEM_EXPORT
     // DLL library project uses this
     #define NISYSTEM_ENTRY __declspec(dllexport)
@@ -41,6 +51,7 @@
 
 #ifdef WIN32
     #pragma warning(disable : 4251)
+    #pragma warning(disable : 4275)
 #endif
 
 #endif

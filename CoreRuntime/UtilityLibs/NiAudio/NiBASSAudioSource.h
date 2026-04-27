@@ -11,6 +11,11 @@ public:
 
     virtual bool Load() override;
     virtual bool Unload() override;
+    virtual bool PrepareStreamedAudio(unsigned int uiSampleRate,
+        unsigned int uiChannelCount, bool bFloatSamples = true) override;
+    virtual unsigned int PushAudioData(const void* pvBuffer,
+        unsigned int uiByteCount) override;
+    virtual void EndAudioData() override;
 
     virtual bool  SetConeData(float fAngle1Deg, float fAngle2Deg, float fGain) override;
     virtual void  GetConeData(float& fAngle1Deg, float& fAngle2Deg, float& fGain) override;

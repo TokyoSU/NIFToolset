@@ -31,6 +31,12 @@ namespace efd
 class NIANIMATION_ENTRY NiKFMTool : public NiRefObject
 {
 public:
+    typedef NiUInt32 FileVersion;
+    typedef NiUInt32 SequenceID;
+    typedef NiUInt32 GroupID;
+    typedef NiInt32 AnimIndex;
+    typedef NiInt32 Priority;
+
     // Public constants.
     enum KFM_RC   // Return code.
     {
@@ -65,7 +71,7 @@ public:
         TYPE_DEFAULT_INVALID
     };
     static const float MAX_DURATION;
-    static const unsigned int SYNC_SEQUENCE_ID_NONE;
+    static const SequenceID SYNC_SEQUENCE_ID_NONE;
 
 public:
     // Public internal class declarations. Friend status is given to the
@@ -100,16 +106,16 @@ public:
         {
         public:
             ChainInfo();
-            ChainInfo(unsigned int uiSequenceID, float fDuration);
+            ChainInfo(SequenceID uiSequenceID, float fDuration);
 
-            inline unsigned int GetSequenceID() const;
-            inline void SetSequenceID(unsigned int uiSequenceID);
+            inline SequenceID GetSequenceID() const;
+            inline void SetSequenceID(SequenceID uiSequenceID);
 
             inline float GetDuration() const;
             inline void SetDuration(float fDuration);
 
         protected:
-            unsigned int m_uiSequenceID;
+            SequenceID m_uiSequenceID;
             float m_fDuration;
 
             friend class NiKFMTool;
@@ -157,26 +163,26 @@ public:
         Sequence();
         ~Sequence();
 
-        inline unsigned int GetSequenceID() const;
-        inline void SetSequenceID(unsigned int uiSequenceID);
+        inline SequenceID GetSequenceID() const;
+        inline void SetSequenceID(SequenceID uiSequenceID);
 
         inline const NiFixedString& GetFilename() const;
         inline void SetFilename(const NiFixedString& kFilename);
 
-        inline int GetAnimIndex() const;
-        inline void SetAnimIndex(int iAnimIndex);
+        inline AnimIndex GetAnimIndex() const;
+        inline void SetAnimIndex(AnimIndex iAnimIndex);
 
         inline const NiFixedString& GetSequenceName() const;
         inline void SetSequenceName(const NiFixedString& kSequenceName);
 
-        inline NiTPointerMap<unsigned int, Transition*>& GetTransitions();
+        inline NiTPointerMap<SequenceID, Transition*>& GetTransitions();
 
     protected:
-        unsigned int m_uiSequenceID;
+        SequenceID m_uiSequenceID;
         NiFixedString m_kFilename;
-        int m_iAnimIndex; // deprecated, required only for loading old assets
+        AnimIndex m_iAnimIndex; // deprecated, required only for loading old assets
         NiFixedString m_kSequenceName;
-        NiTPointerMap<unsigned int, Transition*> m_mapTransitions;
+        NiTPointerMap<SequenceID, Transition*> m_mapTransitions;
 
         friend class NiKFMTool;
     };
@@ -188,16 +194,16 @@ public:
         {
         public:
             SequenceInfo();
-            SequenceInfo(unsigned int uiSequenceID, int iPriority,
+            SequenceInfo(SequenceID uiSequenceID, Priority iPriority,
                 float fWeight, float fEaseInTime, float fEaseOutTime,
-                unsigned int uiSynchronizeSequenceID = SYNC_SEQUENCE_ID_NONE,
+                SequenceID uiSynchronizeSequenceID = SYNC_SEQUENCE_ID_NONE,
                 bool bAdditive = false);
 
-            inline unsigned int GetSequenceID() const;
-            inline void SetSequenceID(unsigned int uiSequenceID);
+            inline SequenceID GetSequenceID() const;
+            inline void SetSequenceID(SequenceID uiSequenceID);
 
-            inline int GetPriority() const;
-            inline void SetPriority(int iPriority);
+            inline Priority GetPriority() const;
+            inline void SetPriority(Priority iPriority);
 
             inline float GetWeight() const;
             inline void SetWeight(float fWeight);
@@ -208,31 +214,31 @@ public:
             inline float GetEaseOutTime() const;
             inline void SetEaseOutTime(float fEaseOutTime);
 
-            inline unsigned int GetSynchronizeSequenceID() const;
+            inline SequenceID GetSynchronizeSequenceID() const;
             inline void SetSynchronizeSequenceID(
-                unsigned int uiSynchronizeSequenceID);
+                SequenceID uiSynchronizeSequenceID);
 
             inline bool GetAdditive() const;
             inline void SetAdditive(bool bAdditive);
 
         protected:
-            unsigned int m_uiSequenceID;
-            int m_iPriority;
+            SequenceID m_uiSequenceID;
+            Priority m_iPriority;
             float m_fWeight;
             float m_fEaseInTime;
             float m_fEaseOutTime;
-            unsigned int m_uiSynchronizeSequenceID;
+            SequenceID m_uiSynchronizeSequenceID;
             bool m_bAdditive;
 
             friend class NiKFMTool;
         };
 
         SequenceGroup();
-        SequenceGroup(unsigned int uiGroupID, const NiFixedString& kName);
+        SequenceGroup(GroupID uiGroupID, const NiFixedString& kName);
         ~SequenceGroup();
 
-        inline unsigned int GetGroupID() const;
-        inline void SetGroupID(unsigned int uiGroupID);
+        inline GroupID GetGroupID() const;
+        inline void SetGroupID(GroupID uiGroupID);
 
         inline const NiFixedString& GetName() const;
         inline void SetName(const NiFixedString& kName);
@@ -243,7 +249,7 @@ public:
         SequenceInfoSet& GetSequenceInfo();
 
     protected:
-        unsigned int m_uiGroupID;
+        GroupID m_uiGroupID;
         NiFixedString m_kName;
         SequenceInfoSet m_aSequenceInfo;
 
@@ -255,57 +261,57 @@ public:
     ~NiKFMTool();
 
     // Functions for adding components.
-    KFM_RC AddSequence(unsigned int uiSequenceID,
+    KFM_RC AddSequence(SequenceID uiSequenceID,
         const NiFixedString& kFilename, const NiFixedString& kSequenceName);
-    KFM_RC AddTransition(unsigned int uiSrcID, unsigned int uiDesID,
+    KFM_RC AddTransition(SequenceID uiSrcID, SequenceID uiDesID,
         TransitionType eType, float fDuration);
-    KFM_RC AddBlendPair(unsigned int uiSrcID, unsigned int uiDesID,
+    KFM_RC AddBlendPair(SequenceID uiSrcID, SequenceID uiDesID,
         const NiFixedString& kStartKey, const NiFixedString& kTargetKey);
-    KFM_RC AddSequenceToChain(unsigned int uiSrcID, unsigned int uiDesID,
-        unsigned int uiSequenceID, float fDuration);
-    KFM_RC AddSequenceGroup(unsigned int uiGroupID,
+    KFM_RC AddSequenceToChain(SequenceID uiSrcID, SequenceID uiDesID,
+        SequenceID uiSequenceID, float fDuration);
+    KFM_RC AddSequenceGroup(GroupID uiGroupID,
         const NiFixedString& kName);
-    KFM_RC AddSequenceToGroup(unsigned int uiGroupID,
-        unsigned int uiSequenceID, int iPriority, float fWeight,
+    KFM_RC AddSequenceToGroup(GroupID uiGroupID,
+        SequenceID uiSequenceID, Priority iPriority, float fWeight,
         float fEaseInTime, float fEaseOutTime,
-        unsigned int uiSynchronizeToSequence = SYNC_SEQUENCE_ID_NONE);
+        SequenceID uiSynchronizeToSequence = SYNC_SEQUENCE_ID_NONE);
 
     // Functions for updating components.
-    KFM_RC UpdateSequence(unsigned int uiSequenceID,
+    KFM_RC UpdateSequence(SequenceID uiSequenceID,
         const NiFixedString& kFilename, const NiFixedString& kSequenceName);
-    KFM_RC UpdateTransition(unsigned int uiSrcID, unsigned int uiDesID,
+    KFM_RC UpdateTransition(SequenceID uiSrcID, SequenceID uiDesID,
         TransitionType eType, float fDuration);
-    KFM_RC UpdateSequenceID(unsigned int uiOldID, unsigned int uiNewID);
-    KFM_RC UpdateGroupID(unsigned int uiOldID, unsigned int uiNewID);
+    KFM_RC UpdateSequenceID(SequenceID uiOldID, SequenceID uiNewID);
+    KFM_RC UpdateGroupID(GroupID uiOldID, GroupID uiNewID);
 
     // Functions for removing components.
-    KFM_RC RemoveSequence(unsigned int uiSequenceID);
-    KFM_RC RemoveTransition(unsigned int uiSrcID, unsigned int uiDesID);
-    KFM_RC RemoveBlendPair(unsigned int uiSrcID, unsigned int uiDesID,
+    KFM_RC RemoveSequence(SequenceID uiSequenceID);
+    KFM_RC RemoveTransition(SequenceID uiSrcID, SequenceID uiDesID);
+    KFM_RC RemoveBlendPair(SequenceID uiSrcID, SequenceID uiDesID,
         const NiFixedString& kStartKey, const NiFixedString& kTargetKey);
-    KFM_RC RemoveAllBlendPairs(unsigned int uiSrcID, unsigned int uiDesID);
-    KFM_RC RemoveSequenceFromChain(unsigned int uiSrcID, unsigned int uiDesID,
-        unsigned int uiSequenceID);
-    KFM_RC RemoveAllSequencesFromChain(unsigned int uiSrcID,
-        unsigned int uiDesID);
-    KFM_RC RemoveSequenceGroup(unsigned int uiGroupID);
-    KFM_RC RemoveSequenceFromGroup(unsigned int uiGroupID,
-        unsigned int uiSequenceID);
-    KFM_RC RemoveAllSequencesFromGroup(unsigned int uiGroupID);
+    KFM_RC RemoveAllBlendPairs(SequenceID uiSrcID, SequenceID uiDesID);
+    KFM_RC RemoveSequenceFromChain(SequenceID uiSrcID, SequenceID uiDesID,
+        SequenceID uiSequenceID);
+    KFM_RC RemoveAllSequencesFromChain(SequenceID uiSrcID,
+        SequenceID uiDesID);
+    KFM_RC RemoveSequenceGroup(GroupID uiGroupID);
+    KFM_RC RemoveSequenceFromGroup(GroupID uiGroupID,
+        SequenceID uiSequenceID);
+    KFM_RC RemoveAllSequencesFromGroup(GroupID uiGroupID);
 
     // Functions for retrieving components.
-    Sequence* GetSequence(unsigned int uiSequenceID) const;
-    Transition* GetTransition(unsigned int uiSrcID, unsigned int uiDesID)
+    Sequence* GetSequence(SequenceID uiSequenceID) const;
+    Transition* GetTransition(SequenceID uiSrcID, SequenceID uiDesID)
         const;
-    SequenceGroup* GetSequenceGroup(unsigned int uiGroupID) const;
+    SequenceGroup* GetSequenceGroup(GroupID uiGroupID) const;
 
     // Functions for retrieving identifier codes.
-    void GetSequenceIDs(unsigned int*& puiSequenceIDs,
-        unsigned int& uiNumIDs) const;
-    void GetGroupIDs(unsigned int*& puiGroupIDs, unsigned int& uiNumIDs)
+    void GetSequenceIDs(SequenceID*& puiSequenceIDs,
+        NiUInt32& uiNumIDs) const;
+    void GetGroupIDs(GroupID*& puiGroupIDs, NiUInt32& uiNumIDs)
         const;
-    unsigned int FindUnusedSequenceID() const;
-    unsigned int FindUnusedGroupID() const;
+    SequenceID FindUnusedSequenceID() const;
+    GroupID FindUnusedGroupID() const;
 
     // Functions for accessing model data.
     inline const NiFixedString& GetModelPath() const;
@@ -324,17 +330,17 @@ public:
     inline void SetDefaultNonSyncTransDuration(float fDuration);
 
     // Functions for performing lookups on components or component data.
-    KFM_RC IsTransitionAllowed(unsigned int uiSrcID, unsigned int uiDesID,
+    KFM_RC IsTransitionAllowed(SequenceID uiSrcID, SequenceID uiDesID,
         bool& bAllowed) const;
     static const char* LookupReturnCode(KFM_RC eReturnCode);
-    bool IsValidChainTransition(unsigned int uiSrcID, unsigned int uiDesID,
+    bool IsValidChainTransition(SequenceID uiSrcID, SequenceID uiDesID,
         Transition* pkTransition);
 
     // Functions for getting fully qualified paths.
     inline const NiFixedString& GetBaseKFMPath() const;
     inline void SetBaseKFMPath(const NiFixedString& kBaseKFMPath);
     const NiFixedString& GetFullModelPath();
-    NiFixedString GetFullKFFilename(unsigned int uiSequenceID);
+    NiFixedString GetFullKFFilename(SequenceID uiSequenceID);
 
     // Functions for streaming data to a file.
     KFM_RC LoadFile(const char* pcFilename);
@@ -344,23 +350,23 @@ public:
     KFM_RC LoadFromStream(efd::BinaryStream* pkStream, const char* pcFilename);
 
 protected:
-    void UpdateTransitionsContainingSequence(unsigned int uiOldID,
-        unsigned int uiNewID);
-    void UpdateSequenceGroupsContainingSequence(unsigned int uiOldID,
-        unsigned int uiNewID);
-    void RemoveTransitionsContainingSequence(unsigned int uiSequenceID);
-    void RemoveSequenceFromSequenceGroups(unsigned int uiSequenceID);
+    void UpdateTransitionsContainingSequence(SequenceID uiOldID,
+        SequenceID uiNewID);
+    void UpdateSequenceGroupsContainingSequence(SequenceID uiOldID,
+        SequenceID uiNewID);
+    void RemoveTransitionsContainingSequence(SequenceID uiSequenceID);
+    void RemoveSequenceFromSequenceGroups(SequenceID uiSequenceID);
 
-    KFM_RC AddSequence(unsigned int uiSequenceID,
-        const NiFixedString& kFilename, int iAnimIndex);
+    KFM_RC AddSequence(SequenceID uiSequenceID,
+        const NiFixedString& kFilename, AnimIndex iAnimIndex);
 
-    inline Sequence* GetSequenceFromID(unsigned int uiSequenceID) const;
-    inline Transition* GetTransitionFromID(unsigned int uiSequenceID,
+    inline Sequence* GetSequenceFromID(SequenceID uiSequenceID) const;
+    inline Transition* GetTransitionFromID(SequenceID uiSequenceID,
         Sequence* pkSequence) const;
     inline SequenceGroup* GetSequenceGroupFromID(
-        unsigned int uiGroupID) const;
+        GroupID uiGroupID) const;
 
-    void GatherChainIDs(unsigned int uiSrcID, unsigned int uiDesID,
+    void GatherChainIDs(SequenceID uiSrcID, SequenceID uiDesID,
         Transition* pkTransition, NiUnsignedIntSet& kChainIDs);
     void HandleDelayedBlendsInChains();
 
@@ -369,9 +375,9 @@ protected:
     // Streaming functions.
     KFM_RC WriteBinary(efd::BinaryStream& kFile);
     KFM_RC WriteAscii(efd::BinaryStream& kFile);
-    KFM_RC ReadBinary(efd::BinaryStream& kFile, unsigned int uiVersion);
-    KFM_RC ReadAscii(efd::BinaryStream& kFile, unsigned int uiVersion);
-    KFM_RC ReadOldVersionAscii(efd::BinaryStream& kFile, unsigned int uiVersion);
+    KFM_RC ReadBinary(efd::BinaryStream& kFile, FileVersion uiVersion);
+    KFM_RC ReadAscii(efd::BinaryStream& kFile, FileVersion uiVersion);
+    KFM_RC ReadOldVersionAscii(efd::BinaryStream& kFile, FileVersion uiVersion);
 
     // Streaming helper functions.
     void SaveCString(efd::BinaryStream& kFile, const char* pcString);
@@ -385,8 +391,8 @@ protected:
     NiFixedString m_kFullPathBuffer;
     NiFixedString m_kModelPath;
     NiFixedString m_kModelRoot;
-    NiTPointerMap<unsigned int, Sequence*> m_mapSequences;
-    NiTPointerMap<unsigned int, SequenceGroup*> m_mapSequenceGroups;
+    NiTPointerMap<SequenceID, Sequence*> m_mapSequences;
+    NiTPointerMap<GroupID, SequenceGroup*> m_mapSequenceGroups;
 
     // Default transition settings.
     Transition* m_pkDefaultSyncTrans;

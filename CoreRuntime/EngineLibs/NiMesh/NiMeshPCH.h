@@ -21,9 +21,8 @@
 #include <NiMainPCH.h>
 
 #if !defined(NIDEBUG)
-#pragma message("using fat pch's")
-// For full builds, it is faster to include all of the current project's headers.
 
+// For full builds, it is faster to include all of the current project's headers.
 #include "NiMeshLib.h"
 
 #else

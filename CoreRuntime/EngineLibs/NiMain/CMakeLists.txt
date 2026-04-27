@@ -28,6 +28,17 @@ target_compile_definitions(NiMain
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIMAIN_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiMain
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiMainPCH.h>"
+)
+
+set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/NiTPointerAllocator.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+)
+
 # Link dependencies
 target_link_libraries(NiMain
     PUBLIC

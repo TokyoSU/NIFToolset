@@ -35,6 +35,13 @@ class NiAVObject;
 class NIMAIN_ENTRY NiStream : public NiMemObject
 {
 public:
+    typedef NiUInt32 FileVersion;
+    typedef NiUInt32 UserVersion;
+    typedef NiUInt32 LinkID;
+    typedef NiUInt32 MetaDataTag;
+    typedef NiUInt32 MetaDataSize;
+    typedef NiUInt16 LegacyFlags;
+
     NiStream();
     virtual ~NiStream();
 
@@ -58,7 +65,7 @@ public:
     virtual bool Save(efd::BinaryStream* pkOstr);
 
     // meta-data manipulation flags
-    void AddMetaDataBuffer(unsigned int uiTag, unsigned int uiBufferSize,
+    void AddMetaDataBuffer(MetaDataTag uiTag, MetaDataSize uiBufferSize,
         const NiUInt8* ucBuffer);
 
     enum CommonMetaDataTags
@@ -66,10 +73,10 @@ public:
         EMBEDDED_THUMBNAIL = 1
     };
 
-    inline unsigned int GetMetaDataBufferCount() const;
-    inline unsigned int GetMetaDataTag(unsigned int uiWhichBuffer) const;
+    inline MetaDataSize GetMetaDataBufferCount() const;
+    inline MetaDataTag GetMetaDataTag(unsigned int uiWhichBuffer) const;
     inline const NiUInt8* GetMetaDataBuffer(unsigned int uiWhichBuffer,
-        unsigned int& uiBufferSize) const;
+        MetaDataSize& uiBufferSize) const;
     inline bool GetLoadMetaData() const;
     inline void SetLoadMetaData(bool bLoad);
     inline void ClearMetaData();
@@ -137,11 +144,11 @@ public:
     // version information
     // GetVersionFromString should only be used on strings of the form w.x.y.z where
     // each of w, x, y and z are integers 0-255.
-    static unsigned int GetVersionFromString(const char* pcVersionString);
-    static unsigned int GetVersion(unsigned int uiMajor, unsigned int uiMinor,
-        unsigned int uiPatch, unsigned int uiInternal);
-    inline unsigned int GetFileVersion() const;
-    inline unsigned int GetFileUserDefinedVersion() const;
+    static FileVersion GetVersionFromString(const char* pcVersionString);
+    static FileVersion GetVersion(FileVersion uiMajor, FileVersion uiMinor,
+        FileVersion uiPatch, FileVersion uiInternal);
+    inline FileVersion GetFileVersion() const;
+    inline UserVersion GetFileUserDefinedVersion() const;
 
     // error messages
     inline unsigned int GetLastError() const;
@@ -173,21 +180,21 @@ public:
     void SaveFixedString(const NiFixedString& kString);
     void LoadCStringAsFixedString(NiFixedString& kString);
 
-    static const unsigned int NULL_LINKID; /* = 0xffffffff */
+    static const LinkID NULL_LINKID; /* = 0xffffffff */
 
     virtual bool RegisterFixedString(const NiFixedString& kString);
     virtual bool RegisterSaveObject(NiObject* pkObject);
     virtual void ChangeObject(NiObject* pkNewObject,
         bool bLink = true);
-    virtual unsigned int GetLinkIDFromObject(const NiObject* pkObject) const;
+    virtual LinkID GetLinkIDFromObject(const NiObject* pkObject) const;
     virtual void SaveLinkID(const NiObject* pkObject);
     virtual NiObject* ResolveLinkID();
     virtual void ReadLinkID();
     virtual NiObject* GetObjectFromLinkID();
 
-    unsigned int ReadMultipleLinkIDs();
-    unsigned int GetNumberOfLinkIDs();
-    void SetNumberOfLinkIDs(unsigned int uiLinks);
+    LinkID ReadMultipleLinkIDs();
+    LinkID GetNumberOfLinkIDs();
+    void SetNumberOfLinkIDs(LinkID uiLinks);
 
     NiObjectGroup* GetGroupFromID(unsigned int uiID) const;
     unsigned int GetIDFromGroup(NiObjectGroup* pkGroup) const;
@@ -207,14 +214,14 @@ public:
     inline const char* GetLastLoadedRTTI() const;
 
     // Cached flag values for legacy NIF files.
-    inline unsigned short GetLastNiAVObjectFlags() const;
-    inline void SetLastNiAVObjectFlags(unsigned short usFlags);
+    inline LegacyFlags GetLastNiAVObjectFlags() const;
+    inline void SetLastNiAVObjectFlags(LegacyFlags usFlags);
 
-    inline unsigned short GetLastNiTimeControllerFlags() const;
-    inline void SetLastNiTimeControllerFlags(unsigned short usFlags);
+    inline LegacyFlags GetLastNiTimeControllerFlags() const;
+    inline void SetLastNiTimeControllerFlags(LegacyFlags usFlags);
 
-    inline unsigned short GetLastNiPropertyFlags() const;
-    inline void SetLastNiPropertyFlags(unsigned short usFlags);
+    inline LegacyFlags GetLastNiPropertyFlags() const;
+    inline void SetLastNiPropertyFlags(LegacyFlags usFlags);
 
     // Indicates if mesh modifers should be prepared
     inline bool GetPrepareMeshModifiers();
@@ -273,13 +280,13 @@ public:
     class StreamMetaDataObject : public NiRefObject
     {
     public:
-        inline StreamMetaDataObject(unsigned int uiTag,
-            unsigned int uiBufferSize,
+        inline StreamMetaDataObject(MetaDataTag uiTag,
+            MetaDataSize uiBufferSize,
             const NiUInt8* ucBuffer);
         inline StreamMetaDataObject();
         inline ~StreamMetaDataObject();
-        unsigned int m_uiTag;
-        unsigned int m_uiBufferSize;
+        MetaDataTag m_uiTag;
+        MetaDataSize m_uiBufferSize;
         NiUInt8* m_pucBuffer;
     };
     typedef efd::SmartPointer<NiStream::StreamMetaDataObject>
@@ -299,8 +306,8 @@ protected:
     virtual void LoadTopLevelObjects();
     virtual void SaveTopLevelObjects();
     virtual bool LoadObject();
-    virtual unsigned int PreSaveObjectSizeTable();
-    virtual bool SaveObjectSizeTable(unsigned int uiStartOffset);
+    virtual NiUInt32 PreSaveObjectSizeTable();
+    virtual bool SaveObjectSizeTable(NiUInt32 uiStartOffset);
     virtual bool LoadObjectSizeTable();
     void FreeLoadData();
     void DoThreadPause();
@@ -317,7 +324,7 @@ protected:
     void RTTIError(const char* pcRTTI);
 
     // NiFixedString
-    unsigned int GetStringID(const NiFixedString& kString);
+    LinkID GetStringID(const NiFixedString& kString);
     void SaveFixedStringTable();
     bool LoadFixedStringTable();
 
@@ -332,8 +339,8 @@ protected:
     typedef NiTPrimitiveArray<NiObjectGroup*> NiObjectGroupArray;
     NiObjectGroupArray m_kGroups;
 
-    unsigned int m_uiNifFileVersion;
-    unsigned int m_uiNifFileUserDefinedVersion;
+    FileVersion m_uiNifFileVersion;
+    UserVersion m_uiNifFileUserDefinedVersion;
     char m_acFileName[NI_MAX_PATH];// needed to resolve names of external nifs
     bool m_bSaveLittleEndian;
     bool m_bSourceIsLittleEndian;
@@ -341,7 +348,7 @@ protected:
     NiSearchPath* m_pkSearchPath;
 
     NiTLargeObjectArray<StreamObjectArrayElement> m_kObjects;
-    NiTLargePrimitiveArray<unsigned int> m_kObjectSizes;
+    NiTLargePrimitiveArray<NiUInt32> m_kObjectSizes;
     NiTLargeObjectArray<NiObjectPtr> m_kTopObjects;
     NiTLargeObjectArray<NiFixedString> m_kFixedStrings;
     NiTObjectArray<StreamMetaDataObjectPtr> m_kMetaDataObjects;
@@ -352,12 +359,12 @@ protected:
 
     // ordered set of link id's for load-link phase
     NiUnsignedIntSet m_kLinkIDs;
-    unsigned int m_uiLinkIndex;
+    LinkID m_uiLinkIndex;
     NiUnsignedIntSet m_kLinkIDBlocks;
-    unsigned int m_uiLinkBlockIndex;
+    LinkID m_uiLinkBlockIndex;
 
     // Hash table to convert registered object pointers to IDs at save time.
-    NiTPointerMap<const NiObject*, unsigned int> m_kRegisterMap;
+    NiTPointerMap<const NiObject*, LinkID> m_kRegisterMap;
 
     // Hash table for tranlating converted objects into new objects.
     // Ex. conversion from NiGeometry objects to NiRenderObjectImpl ones..
@@ -367,9 +374,9 @@ protected:
     NiTexturePalettePtr m_spTexturePalette;
 
     // Legacy NIF flag conversion variables
-    unsigned short m_usNiAVObjectFlags;
-    unsigned short m_usNiTimeControllerFlags;
-    unsigned short m_usNiPropertyFlags;
+    LegacyFlags m_usNiAVObjectFlags;
+    LegacyFlags m_usNiTimeControllerFlags;
+    LegacyFlags m_usNiPropertyFlags;
 
     // background loading
     void BackgroundLoadBegin();

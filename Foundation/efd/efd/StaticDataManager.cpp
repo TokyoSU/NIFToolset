@@ -179,9 +179,11 @@ void StaticDataManager::RemoveLibrary(const char* pcLibName)
         }
     }
 
-    // You hit this assert if you try to remove a library that has not been
-    // added.
-    EE_ASSERT(uiRemove != ms_uiNumLibraries);
+    // DLL detach/unload order is not reliable enough to treat this as fatal.
+    // A module can be detached after its SDM registration was never committed,
+    // or after it was already removed through another unload path.
+    if (uiRemove == ms_uiNumLibraries)
+        return;
 
     // You hit this assert if the library you are trying to remove still has
     // active dependents. Remove the dependents first.

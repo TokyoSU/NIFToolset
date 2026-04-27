@@ -30,6 +30,12 @@ target_compile_definitions(NiAudio
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIAUDIO_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiAudio
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiAudioPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiAudio
     PUBLIC

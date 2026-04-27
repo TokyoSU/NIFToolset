@@ -31,6 +31,7 @@ public:
     typedef void (*UpdateCallback)(NiApplication* pApp, float fDeltaTime, void* pUserData);
     typedef void (*RenderCallback)(NiApplication* pApp, void* pUserData);
     typedef bool (*EventCallback)(NiApplication* pApp, const SDL_Event& kEvent, void* pUserData);
+	typedef void (*ResizeCallback)(NiApplication* pApp, unsigned int uiWidth, unsigned int uiHeight, void* pUserData);
 
     struct Settings
     {
@@ -124,35 +125,65 @@ public:
     void SetUpdateCallback  (UpdateCallback   pfn, void* pUserData = nullptr);
     void SetRenderCallback  (RenderCallback   pfn, void* pUserData = nullptr);
     void SetEventCallback   (EventCallback    pfn, void* pUserData = nullptr);
+	void SetResizeCallback  (ResizeCallback   pfn, void* pUserData = nullptr);
 
     SDL_Window*            GetWindow()           const;
     NiRenderer*            GetRenderer()         const;
     NiCamera*              GetCamera()           const;
     unsigned int           GetWidth()            const;
     unsigned int           GetHeight()           const;
-    float                  GetLastDeltaTime()    const;
+    float                  GetDeltaTime()        const;
+    float 				   GetTime()             const;
     NiAlphaAccumulator*    GetAlphaAccumulator() const;
     NiMeshCullingProcess*  GetCullingProcess()   const;
     bool                   GetShadowsEnabled()   const;
-
-    void RenderScene();
+#if WIN32
+    HWND                   GetHandle() const;
+#else
+    void*                  GetHandle() const;
+#endif
     void SetShadowsActive(bool bActive);
+
+    /// <summary>
+    /// Begins a rendering scene with optional render target and clear flags.
+	/// NOTE: This must be called before any rendering is done for the scene, and EndScene() must be called after all rendering is done for the scene, and before EndFrame() is called.
+    /// </summary>
+    /// <param name="pRenderTargetGroup">The render target group to render to, or nullptr to use the default render target.</param>
+    /// <param name="clearFlags">Flags specifying which buffers to clear before rendering.</param>
+    /// <returns>true if the scene was successfully begun; otherwise, false.</returns>
+    bool BeginScene(NiRenderTargetGroup* pRenderTargetGroup = nullptr, NiRenderer::ClearFlags clearFlags = NiRenderer::ClearFlags::CLEAR_ALL);
+	// Ends the current scene. This must be called after all rendering is done for the scene, and before EndFrame() is called.
+    void EndScene();
+    // Begins a new frame. This must be called before any rendering is done, and EndFrame() must be called after all rendering is done for the frame.
+	void BeginFrame();
+	/// <summary>
+	/// Marks the end of the current frame.
+	/// </summary>
+	void EndFrame();
+    /// <summary>
+    /// Presents the rendered frame to the screen.
+    /// </summary>
+    void Present();
 
 private:
     bool  CreateSDLWindow(const Settings& kSettings);
     bool  CreateRenderer (const Settings& kSettings);
     void  ApplyShaderDefaults(const Settings& kSettings);
     void  DestroyAll();
-    bool  DispatchEvent  (const SDL_Event& kEvent);
+    bool  DispatchEvent(const SDL_Event& kEvent);
     float ComputeDeltaTime();
 
-    SDL_Window* m_pWindow = nullptr;
+    SDL_Window*                     m_pWindow = nullptr;
     NiPointer<NiRenderer>           m_spRenderer;
     NiPointer<NiCamera>             m_spCamera;
-    NiPointer<NiNode>               m_spScene;
     NiPointer<NiAlphaAccumulator>   m_spAlphaAccum;
     NiPointer<NiMeshCullingProcess> m_spCuller;
-	NiVisibleArray m_kVisibleSet;
+	NiVisibleArray                  m_kVisibleSet;
+#if WIN32
+	HWND m_hWnd = nullptr;
+#else
+	void* m_hWnd = nullptr;
+#endif
 
     unsigned int m_uiWidth     = 0;
     unsigned int m_uiHeight    = 0;
@@ -168,6 +199,8 @@ private:
     void*            m_pRenderUserData   = nullptr;
     EventCallback    m_pfnEvent          = nullptr;
     void*            m_pEventUserData    = nullptr;
+	ResizeCallback   m_pfnResize         = nullptr;
+	void*            m_pResizeUserData   = nullptr;
 
     bool m_bInitialized  = false;
     bool m_bQuit         = false;
@@ -176,6 +209,7 @@ private:
     Uint64 m_uiPerfFreq = 0;
     Uint64 m_uiLastTick = 0;
     float  m_fLastDelta = 0.0f;
+	float  m_fTime      = 0.0f;
 };
 
 #endif // NIAPPLICATION_H
