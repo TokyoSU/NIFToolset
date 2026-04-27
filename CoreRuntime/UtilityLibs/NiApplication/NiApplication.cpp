@@ -498,49 +498,57 @@ void NiApplication::DestroyAll()
 
 bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
 {
-    if (m_pfnEvent && m_pfnEvent(this, kEvent, m_pEventUserData))
-        return true;
+	// Only process events for our window.
+    if (kEvent.window.windowID != SDL_GetWindowID(m_pWindow)) {
+        return false;
+    }
 
+	// Call the user event callback, if set, before processing the event internally. If the callback returns false, skip internal processing of the event.
+    if (m_pfnEvent) {
+        m_pfnEvent(this, kEvent, m_pEventUserData);
+    }
+
+	// Handle window events and quit event. For window resize events, also update the renderer viewport size if applicable.
     switch (kEvent.type)
     {
     case SDL_EVENT_QUIT:
         return false;
 
     case SDL_EVENT_WINDOW_RESIZED:
-        if (kEvent.window.windowID == SDL_GetWindowID(m_pWindow))
-        {
-            m_uiWidth  = static_cast<unsigned int>(kEvent.window.data1);
-            m_uiHeight = static_cast<unsigned int>(kEvent.window.data2);
+    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+    {
+        m_uiWidth = static_cast<unsigned int>(kEvent.window.data1);
+        m_uiHeight = static_cast<unsigned int>(kEvent.window.data2);
 #if defined(NI_RENDERER_DX10)
-            // Update the D3D10 viewport size:
-            auto* pD3D10Renderer = NiDynamicCast(NiD3D10Renderer, m_spRenderer);
-            if (pD3D10Renderer)
-            {
-                D3D10_VIEWPORT kViewport = {};
-                kViewport.TopLeftX = 0.0f;
-                kViewport.TopLeftY = 0.0f;
-                kViewport.Width = static_cast<float>(m_uiWidth);
-                kViewport.Height = static_cast<float>(m_uiHeight);
-                kViewport.MinDepth = 0.0f;
-                kViewport.MaxDepth = 1.0f;
-                pD3D10Renderer->GetD3D10Device()->RSSetViewports(1, &kViewport);
-            }
-#elif defined(NI_RENDERER_DX11)
-            // Update the D3D11 viewport size:
-			auto* pD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, m_spRenderer);
-            if (pD3D11Renderer)
-            {
-                D3D11_VIEWPORT kViewport = {};
-                kViewport.TopLeftX = 0.0f;
-                kViewport.TopLeftY = 0.0f;
-                kViewport.Width = static_cast<float>(m_uiWidth);
-                kViewport.Height = static_cast<float>(m_uiHeight);
-                kViewport.MinDepth = 0.0f;
-                kViewport.MaxDepth = 1.0f;
-				pD3D11Renderer->GetCurrentD3D11DeviceContext()->RSSetViewports(1, &kViewport);
-            }
-#endif
+        // Update the D3D10 viewport size:
+        auto* pD3D10Renderer = NiDynamicCast(NiD3D10Renderer, m_spRenderer);
+        if (pD3D10Renderer)
+        {
+            D3D10_VIEWPORT kViewport = {};
+            kViewport.TopLeftX = 0.0f;
+            kViewport.TopLeftY = 0.0f;
+            kViewport.Width = static_cast<float>(m_uiWidth);
+            kViewport.Height = static_cast<float>(m_uiHeight);
+            kViewport.MinDepth = 0.0f;
+            kViewport.MaxDepth = 1.0f;
+            pD3D10Renderer->GetD3D10Device()->RSSetViewports(1, &kViewport);
         }
+#elif defined(NI_RENDERER_DX11)
+        // Update the D3D11 viewport size:
+        auto* pD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, m_spRenderer);
+        if (pD3D11Renderer)
+        {
+            D3D11_VIEWPORT kViewport = {};
+            kViewport.TopLeftX = 0.0f;
+            kViewport.TopLeftY = 0.0f;
+            kViewport.Width = static_cast<float>(m_uiWidth);
+            kViewport.Height = static_cast<float>(m_uiHeight);
+            kViewport.MinDepth = 0.0f;
+            kViewport.MaxDepth = 1.0f;
+            pD3D11Renderer->GetCurrentD3D11DeviceContext()->RSSetViewports(1, &kViewport);
+        }
+#endif
+    }
         break;
 
     case SDL_EVENT_KEY_DOWN:
