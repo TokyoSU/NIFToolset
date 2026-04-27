@@ -74,7 +74,7 @@ bool CApplication::OnSDLEvent(NiApplication* pApp, const SDL_Event& kEvent, void
 NiMilesAudio was removed and replaced with bass audio system using NiBASSAudio,
 Miles used a proprietary library called mss and bink and no source code is currently available to build it correctly.
 
-# Format supported:
+# NiTexture and NiMesh/NiAnimation format supported:
 
 - As image:
     - BMP
