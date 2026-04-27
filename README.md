@@ -24,6 +24,7 @@ m_pApp->SetShutdownCallback(&CApplication::OnShutdown, this);
 m_pApp->SetEventCallback(&CApplication::OnSDLEvent, this);
 m_pApp->SetUpdateCallback(&CApplication::OnUpdate, this);
 m_pApp->SetRenderCallback(&CApplication::OnRender, this);
+// You can also have SetResizeCallback(your_callback, this).
 if (m_pApp->Initialize(settings)) {
 	m_pCamera = m_pApp->GetCamera();
 	m_pApp->Run();
