@@ -31,6 +31,7 @@ public:
     typedef void (*UpdateCallback)(NiApplication* pApp, float fDeltaTime, void* pUserData);
     typedef void (*RenderCallback)(NiApplication* pApp, void* pUserData);
     typedef bool (*EventCallback)(NiApplication* pApp, const SDL_Event& kEvent, void* pUserData);
+	typedef void (*ResizeCallback)(NiApplication* pApp, unsigned int uiWidth, unsigned int uiHeight, void* pUserData);
 
     struct Settings
     {
@@ -124,6 +125,7 @@ public:
     void SetUpdateCallback  (UpdateCallback   pfn, void* pUserData = nullptr);
     void SetRenderCallback  (RenderCallback   pfn, void* pUserData = nullptr);
     void SetEventCallback   (EventCallback    pfn, void* pUserData = nullptr);
+	void SetResizeCallback  (ResizeCallback   pfn, void* pUserData = nullptr);
 
     SDL_Window*            GetWindow()           const;
     NiRenderer*            GetRenderer()         const;
@@ -197,6 +199,8 @@ private:
     void*            m_pRenderUserData   = nullptr;
     EventCallback    m_pfnEvent          = nullptr;
     void*            m_pEventUserData    = nullptr;
+	ResizeCallback   m_pfnResize         = nullptr;
+	void*            m_pResizeUserData   = nullptr;
 
     bool m_bInitialized  = false;
     bool m_bQuit         = false;
