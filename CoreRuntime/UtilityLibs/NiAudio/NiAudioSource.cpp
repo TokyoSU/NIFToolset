@@ -204,6 +204,24 @@ bool NiAudioSource::Unload()
 }
 
 //--------------------------------------------------------------------------------------------------
+bool NiAudioSource::PrepareStreamedAudio(unsigned int,
+    unsigned int, bool)
+{
+    return false;
+}
+
+//--------------------------------------------------------------------------------------------------
+unsigned int NiAudioSource::PushAudioData(const void*, unsigned int)
+{
+    return 0;
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiAudioSource::EndAudioData()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
 void NiAudioSource::Release()
 {
 }

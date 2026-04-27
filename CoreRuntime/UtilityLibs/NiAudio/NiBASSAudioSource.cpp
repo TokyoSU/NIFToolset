@@ -69,6 +69,50 @@ bool NiBASSAudioSource::Unload()
     return true;
 }
 //---------------------------------------------------------------------------
+bool NiBASSAudioSource::PrepareStreamedAudio(unsigned int uiSampleRate,
+    unsigned int uiChannelCount, bool bFloatSamples)
+{
+    if (GetType() != TYPE_VIDEO || uiSampleRate == 0 || uiChannelCount == 0)
+        return false;
+
+    Unload();
+
+    DWORD dwFlags = 0;
+    if (bFloatSamples)
+        dwFlags |= BASS_SAMPLE_FLOAT;
+
+    m_uiSample = 0;
+    m_uiStream = BASS_StreamCreate(uiSampleRate, uiChannelCount, dwFlags,
+        STREAMPROC_PUSH, NULL);
+    if (!m_uiStream)
+        return false;
+
+    SetStreamed(true);
+    SetLoaded(true);
+
+    BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain);
+    if (m_lPlaybackRate > 0)
+        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_FREQ,
+            (float)m_lPlaybackRate);
+
+    return true;
+}
+//---------------------------------------------------------------------------
+unsigned int NiBASSAudioSource::PushAudioData(const void* pvBuffer,
+    unsigned int uiByteCount)
+{
+    if (!m_uiStream || !pvBuffer || uiByteCount == 0)
+        return 0;
+
+    return BASS_StreamPutData(m_uiStream, pvBuffer, uiByteCount);
+}
+//---------------------------------------------------------------------------
+void NiBASSAudioSource::EndAudioData()
+{
+    if (m_uiStream)
+        BASS_StreamPutData(m_uiStream, NULL, BASS_STREAMPROC_END);
+}
+//---------------------------------------------------------------------------
 bool NiBASSAudioSource::Play()
 {
     if (!m_uiStream) return false;

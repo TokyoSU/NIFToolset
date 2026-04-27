@@ -31,6 +31,7 @@ public:
     {
         TYPE_3D = 0x00000000,
         TYPE_AMBIENT = 0x00000001,
+		TYPE_VIDEO = 0x00000002, // Used by PL_MPEG.
         TYPE_DEFAULT = TYPE_3D
     };
 
@@ -55,6 +56,11 @@ public:
 
     virtual bool Load();
     virtual bool Unload();
+    virtual bool PrepareStreamedAudio(unsigned int uiSampleRate,
+        unsigned int uiChannelCount, bool bFloatSamples = true);
+    virtual unsigned int PushAudioData(const void* pvBuffer,
+        unsigned int uiByteCount);
+    virtual void EndAudioData();
 
     //
     // Audio parameters --
