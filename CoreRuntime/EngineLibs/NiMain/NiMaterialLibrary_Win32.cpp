@@ -115,6 +115,13 @@ bool NiMaterialLibrary::LoadMaterialLibraryDLL(const char* pcLibName)
     }
     else
     {
+        // Acquire our own module reference because FreeAllModules will call
+        // FreeLibrary on everything stored in ms_kModules.
+        HMODULE hOwnedLibrary = LoadLibrary(pcLibName);
+        if (hOwnedLibrary == NULL)
+            return false;
+        hLibrary = hOwnedLibrary;
+
         // It was found once; it better be found again!
         pfnLoad = (NIMLI_LOADLIBRARYFUNCTION)GetProcAddress(hLibrary,
             "LoadMaterialLibrary");

@@ -1,6 +1,7 @@
 #pragma once
 #include "NiAudioSystem.h"
 #include "NiAudioLibType.h"
+#include <string>
 
 class NIAUDIO_ENTRY NiBASSAudioSystem : public NiAudioSystem
 {
@@ -28,7 +29,9 @@ public:
     // BASS_MIX bus — controls volume of all TYPE_AMBIENT sources at once
     bool  GetMixerLoaded() const { return m_bMixerLoaded; }
     DWORD GetMusicMixer()  const { return m_hMusicMixer; }
-    bool  SetMusicVolume(float fVolume);
+    bool  SetMusicVolume(float fVolume) const;
+
+	std::string GetLoadedPlugins() const;
 
 protected:
     NiBASSAudioSystem();
@@ -41,9 +44,9 @@ protected:
     bool         m_bBASSFXLoaded;
 
     // PLUGIN definition
-    DWORD m_hBASSFlac;
-    DWORD m_hBASSOpus;
-    DWORD m_hBASSAac;
+    DWORD        m_hBASSFlac;
+    DWORD        m_hBASSOpus;
+    DWORD        m_hBASSAac;
 
     // BASS_MIX
     DWORD        m_hMusicMixer;

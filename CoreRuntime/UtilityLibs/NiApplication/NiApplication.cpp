@@ -15,6 +15,13 @@
 #include <NiPSParticleSystem.h>
 #include <NiMeshHWInstance.h>
 #include <NiShadowGenerator.h>
+#if defined(NI_RENDERER_DX9)
+#include <NiDX9Renderer/NiDX9Renderer.h>
+#elif defined(NI_RENDERER_DX10)
+#include <NiD3D10Renderer/NiD3D10Renderer.h>
+#else // NI_RENDERER_DX11
+#include <ecrD3D11Renderer/D3D11Renderer.h>
+#endif
 #include <NiNode.h>
 
 NiApplication::NiApplication() : m_kVisibleSet(1024, 1024) {
@@ -108,7 +115,6 @@ bool NiApplication::Initialize(const Settings& kSettings)
     NiRect<float> kViewport(0.0f, 1.0f, 1.0f, 0.0f);
     m_spCamera->SetViewFrustum(kFrustum);
     m_spCamera->SetViewPort(kViewport);
-
     m_spCuller = NiNew NiMeshCullingProcess(&m_kVisibleSet, nullptr);
 
     if (kSettings.m_bAlphaSorting)
@@ -207,17 +213,20 @@ NiAlphaAccumulator*     NiApplication::GetAlphaAccumulator()    const { return m
 NiMeshCullingProcess*   NiApplication::GetCullingProcess()      const { return m_spCuller; }
 bool                    NiApplication::GetShadowsEnabled()      const { return m_bShadowsEnabled; }
 
-void NiApplication::RenderScene()
+#if WIN32
+HWND NiApplication::GetHandle() const
+#else
+void* NiApplication::GetHandle() const
+#endif
 {
-    if (!m_spScene || !m_spCamera || !m_spCuller)
-        return;
-    NiDrawScene(m_spCamera, m_spScene, *m_spCuller);
+	return m_hWnd;
 }
 
 void NiApplication::SetShadowsActive(bool bActive)
 {
     if (bActive == m_bShadowsEnabled)
         return;
+
     if (bActive)
     {
         NiShadowManager::Initialize();
@@ -240,7 +249,6 @@ bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRender
             m_spRenderer->BeginUsingRenderTargetGroup(pRenderTargetGroup, clearFlags);
         else
             m_spRenderer->BeginUsingDefaultRenderTargetGroup(clearFlags);
-        m_spRenderer->BeginFrame();
 
         // Be sure to call for shadow render clicks to be generated.
         if (m_bShadowsEnabled && m_spCuller)
@@ -265,10 +273,19 @@ bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRender
 void NiApplication::EndScene()
 {
     if (m_spRenderer)
-    {
         m_spRenderer->EndUsingRenderTargetGroup();
+}
+
+void NiApplication::BeginFrame()
+{
+    if (m_spRenderer)
+        m_spRenderer->BeginFrame();
+}
+
+void NiApplication::EndFrame()
+{
+    if (m_spRenderer)
         m_spRenderer->EndFrame();
-    }
 }
 
 void NiApplication::Present()
@@ -296,22 +313,22 @@ bool NiApplication::CreateSDLWindow(const Settings& kSettings)
         SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
         return false;
     }
+
+    HWND hWnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(m_pWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+    if (!hWnd)
+    {
+        SDL_Log("Failed to retrieve HWND from SDL window: %s", SDL_GetError());
+        SDL_DestroyWindow(m_pWindow);
+        m_pWindow = nullptr;
+        return false;
+	}
+
+	m_hWnd = hWnd;
     return true;
 }
 
 bool NiApplication::CreateRenderer(const Settings& kSettings)
 {
-    HWND hWnd = (HWND)SDL_GetPointerProperty(
-        SDL_GetWindowProperties(m_pWindow),
-        SDL_PROP_WINDOW_WIN32_HWND_POINTER,
-        nullptr);
-
-    if (!hWnd)
-    {
-        SDL_Log("Failed to retrieve HWND from SDL window: %s", SDL_GetError());
-        return false;
-    }
-
 #if defined(NI_RENDERER_DX9)
     unsigned int uiFlags = kSettings.m_uiDX9Flags;
     if (kSettings.m_bFullscreen)
@@ -320,8 +337,8 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
     NiDX9Renderer* pRenderer = NiDX9Renderer::Create(
         kSettings.m_uiWidth, kSettings.m_uiHeight,
         uiFlags,
-        reinterpret_cast<NiWindowRef>(hWnd),
-        reinterpret_cast<NiWindowRef>(hWnd),
+        reinterpret_cast<NiWindowRef>(m_hWnd),
+        reinterpret_cast<NiWindowRef>(m_hWnd),
         kSettings.m_uiAdapter,
         kSettings.m_eDeviceDesc,
         kSettings.m_eFBFormat,
@@ -348,7 +365,7 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
     return true;
 
 #elif defined(NI_RENDERER_DX10)
-    NiD3D10Renderer::CreationParameters kParams(hWnd);
+    NiD3D10Renderer::CreationParameters kParams(m_hWnd);
     kParams.m_eDriverType                   = kSettings.m_eDriverType;
     kParams.m_uiCreateFlags                 = kSettings.m_uiDX10CreateFlags;
     kParams.m_bCreateDepthStencilBuffer     = kSettings.m_bCreateDepthBuffer;
@@ -374,11 +391,26 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
         return false;
     }
 
+    // Ensure at least one viewport is set, for proper rendering. If no viewports are set, create a default one that matches the kSettings window size.
+    UINT uiViewportCount = 0;
+    ID3D10Device* deviceContext = spD3D10->GetD3D10Device();
+    deviceContext->RSGetViewports(&uiViewportCount, nullptr);
+    if (uiViewportCount == 0)
+    {
+        D3D10_VIEWPORT kViewport = {};
+        kViewport.TopLeftX = 0.0f;
+        kViewport.TopLeftY = 0.0f;
+        kViewport.Width = static_cast<float>(kSettings.m_uiWidth);
+        kViewport.Height = static_cast<float>(kSettings.m_uiHeight);
+        kViewport.MinDepth = 0.0f;
+        kViewport.MaxDepth = 1.0f;
+        deviceContext->RSSetViewports(1, &kViewport);
+    }
+
     m_spRenderer->SetBackgroundColor(m_kClearColor);
     return true;
-
 #elif defined(NI_RENDERER_DX11)
-    ecr::D3D11Renderer::CreationParameters kParams(hWnd);
+    ecr::D3D11Renderer::CreationParameters kParams(m_hWnd);
     kParams.m_driverType                    = kSettings.m_eDriverType;
     kParams.m_createFlags                   = kSettings.m_uiDX11CreateFlags;
     kParams.m_createDepthStencilBuffer      = kSettings.m_bCreateDepthBuffer;
@@ -404,14 +436,30 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
 		return false;
     }
 
+    // Ensure at least one viewport is set, for proper rendering. If no viewports are set, create a default one that matches the kSettings window size.
+    UINT uiViewportCount = 0;
+    ID3D11DeviceContext* deviceContext = spD3D11->GetCurrentD3D11DeviceContext();
+    deviceContext->RSGetViewports(&uiViewportCount, nullptr);
+    if (uiViewportCount == 0)
+    {
+        D3D11_VIEWPORT kViewport = {};
+        kViewport.TopLeftX = 0.0f;
+        kViewport.TopLeftY = 0.0f;
+        kViewport.Width = static_cast<float>(kSettings.m_uiWidth);
+        kViewport.Height = static_cast<float>(kSettings.m_uiHeight);
+        kViewport.MinDepth = 0.0f;
+        kViewport.MaxDepth = 1.0f;
+        deviceContext->RSSetViewports(1, &kViewport);
+    }
+
     m_spRenderer->SetBackgroundColor(m_kClearColor);
     return true;
 
 #else
-    (void)hWnd;
     SDL_Log("No DX renderer selected. Define NI_RENDERER_DX9, _DX10 or _DX11.");
     return false;
 #endif
+
 }
 
 void NiApplication::DestroyAll()
@@ -422,7 +470,6 @@ void NiApplication::DestroyAll()
     if (m_pfnShutdown)
         m_pfnShutdown(this, m_pShutdownUserData);
 
-    m_spScene    = nullptr;
     m_spCamera   = nullptr;
 
     if (m_bShadowsEnabled)
@@ -440,6 +487,7 @@ void NiApplication::DestroyAll()
     {
         SDL_DestroyWindow(m_pWindow);
         m_pWindow = nullptr;
+		m_hWnd = nullptr;
     }
 
     NiParticleSDM::Shutdown();
@@ -463,6 +511,35 @@ bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
         {
             m_uiWidth  = static_cast<unsigned int>(kEvent.window.data1);
             m_uiHeight = static_cast<unsigned int>(kEvent.window.data2);
+#if defined(NI_RENDERER_DX10)
+            // Update the D3D10 viewport size:
+            auto* pD3D10Renderer = NiDynamicCast(NiD3D10Renderer, m_spRenderer);
+            if (pD3D10Renderer)
+            {
+                D3D10_VIEWPORT kViewport = {};
+                kViewport.TopLeftX = 0.0f;
+                kViewport.TopLeftY = 0.0f;
+                kViewport.Width = static_cast<float>(m_uiWidth);
+                kViewport.Height = static_cast<float>(m_uiHeight);
+                kViewport.MinDepth = 0.0f;
+                kViewport.MaxDepth = 1.0f;
+                pD3D10Renderer->GetD3D10Device()->RSSetViewports(1, &kViewport);
+            }
+#elif defined(NI_RENDERER_DX11)
+            // Update the D3D11 viewport size:
+			auto* pD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, m_spRenderer);
+            if (pD3D11Renderer)
+            {
+                D3D11_VIEWPORT kViewport = {};
+                kViewport.TopLeftX = 0.0f;
+                kViewport.TopLeftY = 0.0f;
+                kViewport.Width = static_cast<float>(m_uiWidth);
+                kViewport.Height = static_cast<float>(m_uiHeight);
+                kViewport.MinDepth = 0.0f;
+                kViewport.MaxDepth = 1.0f;
+				pD3D11Renderer->GetCurrentD3D11DeviceContext()->RSSetViewports(1, &kViewport);
+            }
+#endif
         }
         break;
 

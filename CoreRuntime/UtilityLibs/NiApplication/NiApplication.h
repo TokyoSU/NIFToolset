@@ -135,14 +135,32 @@ public:
     NiAlphaAccumulator*    GetAlphaAccumulator() const;
     NiMeshCullingProcess*  GetCullingProcess()   const;
     bool                   GetShadowsEnabled()   const;
-
-    void RenderScene();
+#if WIN32
+    HWND                   GetHandle() const;
+#else
+    void*                  GetHandle() const;
+#endif
     void SetShadowsActive(bool bActive);
 
-	// Render the scene to the specified render target group, or to the main back buffer if pRenderTargetGroup is null.
+    /// <summary>
+    /// Begins a rendering scene with optional render target and clear flags.
+	/// NOTE: This must be called before any rendering is done for the scene, and EndScene() must be called after all rendering is done for the scene, and before EndFrame() is called.
+    /// </summary>
+    /// <param name="pRenderTargetGroup">The render target group to render to, or nullptr to use the default render target.</param>
+    /// <param name="clearFlags">Flags specifying which buffers to clear before rendering.</param>
+    /// <returns>true if the scene was successfully begun; otherwise, false.</returns>
     bool BeginScene(NiRenderTargetGroup* pRenderTargetGroup = nullptr, NiRenderer::ClearFlags clearFlags = NiRenderer::ClearFlags::CLEAR_ALL);
-	// End the scene. If BeginScene() return true then this must be called before calling Present().
+	// Ends the current scene. This must be called after all rendering is done for the scene, and before EndFrame() is called.
     void EndScene();
+    // Begins a new frame. This must be called before any rendering is done, and EndFrame() must be called after all rendering is done for the frame.
+	void BeginFrame();
+	/// <summary>
+	/// Marks the end of the current frame.
+	/// </summary>
+	void EndFrame();
+    /// <summary>
+    /// Presents the rendered frame to the screen.
+    /// </summary>
     void Present();
 
 private:
@@ -153,13 +171,17 @@ private:
     bool  DispatchEvent(const SDL_Event& kEvent);
     float ComputeDeltaTime();
 
-    SDL_Window* m_pWindow = nullptr;
+    SDL_Window*                     m_pWindow = nullptr;
     NiPointer<NiRenderer>           m_spRenderer;
     NiPointer<NiCamera>             m_spCamera;
-    NiPointer<NiNode>               m_spScene;
     NiPointer<NiAlphaAccumulator>   m_spAlphaAccum;
     NiPointer<NiMeshCullingProcess> m_spCuller;
-	NiVisibleArray m_kVisibleSet;
+	NiVisibleArray                  m_kVisibleSet;
+#if WIN32
+	HWND m_hWnd = nullptr;
+#else
+	void* m_hWnd = nullptr;
+#endif
 
     unsigned int m_uiWidth     = 0;
     unsigned int m_uiHeight    = 0;

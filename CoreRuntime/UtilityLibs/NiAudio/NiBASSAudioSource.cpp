@@ -92,8 +92,7 @@ bool NiBASSAudioSource::PrepareStreamedAudio(unsigned int uiSampleRate,
 
     BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain);
     if (m_lPlaybackRate > 0)
-        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_FREQ,
-            (float)m_lPlaybackRate);
+        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_FREQ, (float)m_lPlaybackRate);
 
     return true;
 }
