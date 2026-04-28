@@ -60,13 +60,13 @@
 }
 
 //------------------------------------------------------------------------------------------------
-inline Matrix3::Matrix3()
+inline efd::Matrix3::Matrix3()
 {
     // intentionally leave members uninitialized for performance reasons.
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::MakeZero()
+inline void efd::Matrix3::MakeZero()
 {
     SetCol(0, 0.0f, 0.0f, 0.0f);
     SetCol(1, 0.0f, 0.0f, 0.0f);
@@ -74,7 +74,7 @@ inline void Matrix3::MakeZero()
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::GetRow(efd::UInt32 index, Point3& row) const
+inline void efd::Matrix3::GetRow(efd::UInt32 index, Point3& row) const
 {
     EE_ASSERT(index <= 2);
     row.x = m_pEntry[index][0];
@@ -83,7 +83,7 @@ inline void Matrix3::GetRow(efd::UInt32 index, Point3& row) const
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::SetRow(efd::UInt32 index, const Point3& row)
+inline void efd::Matrix3::SetRow(efd::UInt32 index, const Point3& row)
 {
     EE_ASSERT(index <= 2);
     m_pEntry[index][0] = row.x;
@@ -92,7 +92,7 @@ inline void Matrix3::SetRow(efd::UInt32 index, const Point3& row)
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::GetRow(
+inline void efd::Matrix3::GetRow(
     efd::UInt32 index,
     efd::Float32& f0,
     efd::Float32& f1,
@@ -105,7 +105,7 @@ inline void Matrix3::GetRow(
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::SetRow(efd::UInt32 index, efd::Float32 f0, efd::Float32 f1, efd::Float32 f2)
+inline void efd::Matrix3::SetRow(efd::UInt32 index, efd::Float32 f0, efd::Float32 f1, efd::Float32 f2)
 {
     EE_ASSERT(index <= 2);
     m_pEntry[index][0] = f0;
@@ -114,7 +114,7 @@ inline void Matrix3::SetRow(efd::UInt32 index, efd::Float32 f0, efd::Float32 f1,
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::GetRow(efd::UInt32 index, efd::Float32* pRow) const
+inline void efd::Matrix3::GetRow(efd::UInt32 index, efd::Float32* pRow) const
 {
     EE_ASSERT(index <= 2);
     pRow[0] = m_pEntry[index][0];
@@ -123,7 +123,7 @@ inline void Matrix3::GetRow(efd::UInt32 index, efd::Float32* pRow) const
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::SetRow(efd::UInt32 index, const efd::Float32* pRow)
+inline void efd::Matrix3::SetRow(efd::UInt32 index, const efd::Float32* pRow)
 {
     EE_ASSERT(index <= 2);
     m_pEntry[index][0] = pRow[0];
@@ -133,7 +133,7 @@ inline void Matrix3::SetRow(efd::UInt32 index, const efd::Float32* pRow)
 
 //------------------------------------------------------------------------------------------------
 //  Column access functions
-inline void Matrix3::GetCol(efd::UInt32 index, Point3& col) const
+inline void efd::Matrix3::GetCol(efd::UInt32 index, Point3& col) const
 {
     EE_ASSERT(index <= 2);
     col.x = m_pEntry[0][index];
@@ -142,7 +142,7 @@ inline void Matrix3::GetCol(efd::UInt32 index, Point3& col) const
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::SetCol(efd::UInt32 index, const Point3& col)
+inline void efd::Matrix3::SetCol(efd::UInt32 index, const Point3& col)
 {
     EE_ASSERT(index <= 2);
     m_pEntry[0][index] = col.x;
@@ -151,7 +151,7 @@ inline void Matrix3::SetCol(efd::UInt32 index, const Point3& col)
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::GetCol(
+inline void efd::Matrix3::GetCol(
     efd::UInt32 index,
     efd::Float32& f0,
     efd::Float32& f1,
@@ -164,7 +164,7 @@ inline void Matrix3::GetCol(
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::SetCol(efd::UInt32 index, efd::Float32 f0, efd::Float32 f1, efd::Float32 f2)
+inline void efd::Matrix3::SetCol(efd::UInt32 index, efd::Float32 f0, efd::Float32 f1, efd::Float32 f2)
 {
     EE_ASSERT(index <= 2);
     m_pEntry[0][index] = f0;
@@ -173,7 +173,7 @@ inline void Matrix3::SetCol(efd::UInt32 index, efd::Float32 f0, efd::Float32 f1,
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::GetCol(efd::UInt32 index, efd::Float32* pCol) const
+inline void efd::Matrix3::GetCol(efd::UInt32 index, efd::Float32* pCol) const
 {
     EE_ASSERT(index <= 2);
     pCol[0] = m_pEntry[0][index];
@@ -182,7 +182,7 @@ inline void Matrix3::GetCol(efd::UInt32 index, efd::Float32* pCol) const
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::SetCol(efd::UInt32 index, const efd::Float32* pCol)
+inline void efd::Matrix3::SetCol(efd::UInt32 index, const efd::Float32* pCol)
 {
     EE_ASSERT(index <= 2);
     m_pEntry[0][index] = pCol[0];
@@ -191,21 +191,21 @@ inline void Matrix3::SetCol(efd::UInt32 index, const efd::Float32* pCol)
 }
 
 //------------------------------------------------------------------------------------------------
-inline efd::Float32 Matrix3::GetEntry(efd::UInt32 row, efd::UInt32 col) const
+inline efd::Float32 efd::Matrix3::GetEntry(efd::UInt32 row, efd::UInt32 col) const
 {
     EE_ASSERT(row <= 2 && col <= 2);
     return m_pEntry[row][col];
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::SetEntry(efd::UInt32 row, efd::UInt32 col, efd::Float32 entry)
+inline void efd::Matrix3::SetEntry(efd::UInt32 row, efd::UInt32 col, efd::Float32 entry)
 {
     EE_ASSERT(row <= 2 && col <= 2);
     m_pEntry[row][col] = entry;
 }
 
 //------------------------------------------------------------------------------------------------
-inline Matrix3 Matrix3::operator*(const Matrix3& mat) const
+inline efd::Matrix3 efd::Matrix3::operator*(const Matrix3& mat) const
 {
     Matrix3 prd;
 
@@ -250,7 +250,7 @@ inline Matrix3 Matrix3::operator*(const Matrix3& mat) const
 }
 
 //------------------------------------------------------------------------------------------------
-inline Matrix3 Matrix3::operator* (efd::Float32 scalar) const
+inline efd::Matrix3 efd::Matrix3::operator* (efd::Float32 scalar) const
 {
     Matrix3 result;
     result.m_pEntry[0][0] = m_pEntry[0][0] * scalar;
@@ -266,7 +266,7 @@ inline Matrix3 Matrix3::operator* (efd::Float32 scalar) const
 }
 
 //------------------------------------------------------------------------------------------------
-inline Point3 Matrix3::operator* (const Point3& pt) const
+inline efd::Point3 efd::Matrix3::operator* (const Point3& pt) const
 {
     return Point3
     (
@@ -277,13 +277,13 @@ inline Point3 Matrix3::operator* (const Point3& pt) const
 }
 
 //------------------------------------------------------------------------------------------------
-inline void Matrix3::MakeRotation(efd::Float32 angle, const Point3& axis)
+inline void efd::Matrix3::MakeRotation(efd::Float32 angle, const Point3& axis)
 {
     MakeRotation(angle,axis.x,axis.y,axis.z);
 }
 
 //------------------------------------------------------------------------------------------------
-inline bool Matrix3::operator!=(const Matrix3& mat) const
+inline bool efd::Matrix3::operator!=(const Matrix3& mat) const
 {
     return !(*this == mat);
 }

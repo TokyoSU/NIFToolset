@@ -1,12 +1,20 @@
 # --- efd (core) ---
 file(GLOB_RECURSE EFD_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/efd/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/efd/win32/*.cpp"
 )
 file(GLOB_RECURSE EFD_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/efd/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/efd/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/efd/*.inl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/efd/win32/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/efd/win32/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/efd/win32/*.inl"
 )
+if(NOT WIN32)
+    list(FILTER EFD_SOURCES EXCLUDE REGEX ".*/efd/win32/.*")
+    list(FILTER EFD_HEADERS EXCLUDE REGEX ".*/efd/win32/.*")
+endif()
 
 # --- efdLogServer ---
 file(GLOB_RECURSE EFDLOGSERVER_SOURCES CONFIGURE_DEPENDS

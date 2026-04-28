@@ -17,21 +17,19 @@
 #include <efd/Matrix3.h>
 #include <efd/EEMath.h>
 #include <efd/SerializeRoutines.h>
-
-
 using namespace efd;
 
-const Matrix3 Matrix3::ZERO(
+const efd::Matrix3 efd::Matrix3::ZERO(
     Point3(0.0f, 0.0f, 0.0f),
     Point3(0.0f, 0.0f, 0.0f),
     Point3(0.0f, 0.0f, 0.0f));
 
-const Matrix3 Matrix3::IDENTITY(
+const efd::Matrix3 efd::Matrix3::IDENTITY(
     Point3(1.0f, 0.0f, 0.0f),
     Point3(0.0f, 1.0f, 0.0f),
     Point3(0.0f, 0.0f, 1.0f));
 
-const Float32 Matrix3::EE_RIGHT_ANGLE_EPSILON = 1e-3f;
+const Float32 efd::Matrix3::EE_RIGHT_ANGLE_EPSILON = 1e-3f;
 
 //------------------------------------------------------------------------------------------------
 Matrix3::Matrix3(

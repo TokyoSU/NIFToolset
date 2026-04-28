@@ -4,14 +4,15 @@ file(GLOB_RECURSE FILE_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.inl"
 )
 
-# Build as a shared library (DLL) so it can be exported via NIAPPLICATION_ENTRY.
-add_library(NiApplication SHARED ${FILE_SOURCES} ${FILE_HEADERS})
+# Add library — type is controlled by BUILD_SHARED_LIBS (ON = DLL, OFF = static)
+add_library(NiApplication ${FILE_SOURCES} ${FILE_HEADERS})
 
-# NIAPPLICATION_EXPORT is defined only when compiling the library itself;
-# consumers of the DLL get NIAPPLICATION_IMPORT through the INTERFACE property.
 target_compile_definitions(NiApplication
-    PRIVATE   NIAPPLICATION_EXPORT
-    INTERFACE NIAPPLICATION_IMPORT
+    PRIVATE
+        $<$<BOOL:${BUILD_SHARED_LIBS}>:NIAPPLICATION_EXPORT>
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:EE_EFD_NO_IMPORT>
+    INTERFACE
+        $<$<BOOL:${BUILD_SHARED_LIBS}>:NIAPPLICATION_IMPORT>
 )
 
 target_include_directories(NiApplication
@@ -46,6 +47,8 @@ elseif(NI_RENDERER STREQUAL "DX10")
     target_compile_definitions(NiApplication PUBLIC NI_RENDERER_DX10)
 elseif(NI_RENDERER STREQUAL "DX11")
     target_link_libraries(NiApplication PUBLIC ecrD3D11Renderer)
+    target_compile_definitions(NiApplication PRIVATE
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:EE_ECRD3D11RENDERER_NO_IMPORT>)
     target_compile_definitions(NiApplication PUBLIC NI_RENDERER_DX11)
 else()
     message(WARNING "[NiApplication] Unknown renderer '${NI_RENDERER}', no renderer linked.")

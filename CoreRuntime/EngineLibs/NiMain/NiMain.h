@@ -219,7 +219,6 @@
 #include "NiTextureStage.h"
 #include "NiTextureTransform.h"
 #include "NiTexturingProperty.h"
-#include "NiTextureBlendUtils.h"
 #include "NiTGAReader.h"
 #include "NiTimeController.h"
 #include "NiTimeSyncController.h"

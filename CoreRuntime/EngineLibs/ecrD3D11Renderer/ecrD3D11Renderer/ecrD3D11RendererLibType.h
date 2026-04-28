@@ -22,7 +22,10 @@
     #ifdef EE_ECRD3D11RENDERER_EXPORT
         // DLL library project uses this
         #define EE_ECRD3D11RENDERER_ENTRY __declspec(dllexport)
-    #elif defined(_WINDLL) || defined (USEDLL) || EE_ECRD3D11RENDERER_IMPORT
+    #elif defined(EE_ECRD3D11RENDERER_NO_IMPORT)
+        // DLL/EXE client linking against a static library uses this
+        #define EE_ECRD3D11RENDERER_ENTRY
+    #elif defined(_WINDLL) || defined(USEDLL) || defined(EE_ECRD3D11RENDERER_IMPORT)
         // client of DLL uses this
         #define EE_ECRD3D11RENDERER_ENTRY __declspec(dllimport)
     #else

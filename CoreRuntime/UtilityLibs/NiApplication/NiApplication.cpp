@@ -107,11 +107,9 @@ bool NiApplication::Initialize(const Settings& kSettings)
                      kSettings.m_fNear, kSettings.m_fFar, false);
     m_spCamera->SetViewFrustum(kProbe);
     const float fActualNear = m_spCamera->GetViewFrustum().m_fNear;
-
     const float fTop   = fActualNear * fSlope;
     const float fRight = fTop * fAspect;
-    NiFrustum kFrustum(-fRight, fRight, fTop, -fTop,
-                       fActualNear, kSettings.m_fFar, false);
+    NiFrustum kFrustum(-fRight, fRight, fTop, -fTop, fActualNear, kSettings.m_fFar, false);
     NiRect<float> kViewport(0.0f, 1.0f, 1.0f, 0.0f);
     m_spCamera->SetViewFrustum(kFrustum);
     m_spCamera->SetViewPort(kViewport);
@@ -167,7 +165,6 @@ int NiApplication::Run()
                 break;
             }
         }
-
         if (m_bQuit)
             break;
 
@@ -467,14 +464,13 @@ bool NiApplication::CreateRenderer(const Settings& kSettings)
 
 void NiApplication::DestroyAll()
 {
-    if (!m_bInitialized && !m_pWindow)
+    if (!m_bInitialized)
         return;
 
     if (m_pfnShutdown)
         m_pfnShutdown(this, m_pShutdownUserData);
 
-    m_spCamera   = nullptr;
-
+    m_spCamera = nullptr;
     if (m_bShadowsEnabled)
     {
         NiShadowManager::SetActive(false);

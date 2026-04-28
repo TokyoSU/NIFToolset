@@ -453,10 +453,10 @@ public:
     void EigenSolveSymmetric(efd::Float32 eigenvalue[3], efd::Point3 eigenvector[3]);
 
     /// Convenience object for the zero matrix.
-    static const Matrix3 ZERO;
+    static const efd::Matrix3 ZERO;
 
     /// Convenience object for the identity matrix.
-    static const Matrix3 IDENTITY;
+    static const efd::Matrix3 IDENTITY;
 
 #if defined(EE_PLATFORM_WIN32)
     /**
