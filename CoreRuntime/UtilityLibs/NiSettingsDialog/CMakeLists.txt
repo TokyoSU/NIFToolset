@@ -16,7 +16,9 @@ add_library(NiSettingsDialog ${FILE_SOURCES} ${FILE_HEADERS})
 target_include_directories(NiSettingsDialog
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/CoreRuntime/EngineLibs/NiDX9Renderer>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/CoreRuntime/EngineLibs/NiD3D10Renderer>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/CoreRuntime/EngineLibs>
         $<INSTALL_INTERFACE:include>
 )
 
