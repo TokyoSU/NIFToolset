@@ -14,14 +14,10 @@
 #include <NiMeshCullingProcess.h>
 #include <NiCullingProcess.h>
 #include <NiCloningProcess.h>
-
-#if defined(NI_RENDERER_DX9)
-    #include <NiDX9Renderer.h>
-#elif defined(NI_RENDERER_DX10)
-    #include <NiD3D10Renderer.h>
-#elif defined(NI_RENDERER_DX11)
-    #include <ecrD3D11Renderer/D3D11Renderer.h>
-#endif
+#include <efd/SystemDesc.h>
+#include <NiDX9Renderer.h>
+#include <NiD3D10Renderer.h>
+#include <ecrD3D11Renderer/D3D11Renderer.h>
 
 class NIAPPLICATION_ENTRY NiApplication
 {
@@ -63,6 +59,7 @@ public:
         bool m_bObserveNoSortHint  = true;
         bool m_bSortByClosestPoint = false;
         bool m_bShadows            = false;
+        efd::SystemDesc::RendererID m_eRendererID = efd::SystemDesc::RENDERER_D3D11;
 
         // ---------------------------------------------------------------
         // Shader / material cache
@@ -88,7 +85,6 @@ public:
         // ---------------------------------------------------------------
         // Renderer-specific
         // ---------------------------------------------------------------
-#if defined(NI_RENDERER_DX9)
         NiDX9Renderer::DeviceDesc           m_eDeviceDesc       = NiDX9Renderer::DEVDESC_PURE;
         NiDX9Renderer::FrameBufferFormat    m_eFBFormat         = NiDX9Renderer::FBFMT_UNKNOWN;
         NiDX9Renderer::DepthStencilFormat   m_eDSFormat         = NiDX9Renderer::DSFMT_D24S8;
@@ -96,19 +92,16 @@ public:
         NiDX9Renderer::SwapEffect           m_eSwapEffect       = NiDX9Renderer::SWAPEFFECT_DEFAULT;
         unsigned int                        m_uiDX9Flags        = NiDX9Renderer::USE_NOFLAGS;
         unsigned int                        m_uiAdapter         = D3DADAPTER_DEFAULT;
-#elif defined(NI_RENDERER_DX10)
-        NiD3D10Renderer::DriverType m_eDriverType           = NiD3D10Renderer::DRIVER_HARDWARE;
-        unsigned int                m_uiDX10CreateFlags     = 0;
-        bool                        m_bCreateDepthBuffer    = true;
-        DXGI_FORMAT                 m_eDepthFormat          = DXGI_FORMAT_UNKNOWN;
-        DXGI_FORMAT                 m_eSwapChainBuffer      = DXGI_FORMAT_R8G8B8A8_UNORM;
-#elif defined(NI_RENDERER_DX11)
-        ecr::D3D11Renderer::DriverType m_eDriverType        = ecr::D3D11Renderer::DRIVER_TYPE_HARDWARE;
-        unsigned int                   m_uiDX11CreateFlags  = 0;
-        bool                           m_bCreateDepthBuffer = true;
-        DXGI_FORMAT                    m_eDepthFormat       = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		DXGI_FORMAT                    m_eSwapChainBuffer   = DXGI_FORMAT_R8G8B8A8_UNORM;
-#endif
+        NiD3D10Renderer::DriverType     m_eDriverType10        = NiD3D10Renderer::DRIVER_HARDWARE;
+        unsigned int                    m_uiDX10CreateFlags    = 0;
+        bool                            m_bCreateDepthBuffer10 = true;
+        DXGI_FORMAT                     m_eDepthFormat10       = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        DXGI_FORMAT                     m_eSwapChainBuffer10   = DXGI_FORMAT_R8G8B8A8_UNORM;
+        ecr::D3D11Renderer::DriverType  m_eDriverType11        = ecr::D3D11Renderer::DRIVER_TYPE_HARDWARE;
+        unsigned int                    m_uiDX11CreateFlags    = 0;
+        bool                            m_bCreateDepthBuffer11 = true;
+        DXGI_FORMAT                     m_eDepthFormat11       = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        DXGI_FORMAT                     m_eSwapChainBuffer11   = DXGI_FORMAT_R8G8B8A8_UNORM;
     };
 
     NiApplication();

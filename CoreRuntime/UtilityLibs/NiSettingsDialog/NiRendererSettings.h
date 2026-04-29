@@ -17,8 +17,8 @@
 
 #include "NiSettingsDialogLibType.h"
 #include <NiMemObject.h>
-#include <NiDX9SystemDesc.h>
-#include <NiD3D10SystemDesc.h>
+#include <NiDX9Renderer/NiDX9SystemDesc.h>
+#include <NiD3D10Renderer/NiD3D10SystemDesc.h>
 
 class NiDX9RendererDesc;
 class NiD3D10RendererDesc;

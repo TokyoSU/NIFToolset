@@ -38,20 +38,14 @@ target_link_libraries(NiApplication
         SDL3::SDL3
 )
 
-# Renderer-specific dependency and compile definition
-if(NI_RENDERER STREQUAL "DX9")
-    target_link_libraries(NiApplication PUBLIC NiDX9Renderer)
-    target_compile_definitions(NiApplication PUBLIC NI_RENDERER_DX9)
-elseif(NI_RENDERER STREQUAL "DX10")
-    target_link_libraries(NiApplication PUBLIC NiD3D10Renderer)
-    target_compile_definitions(NiApplication PUBLIC NI_RENDERER_DX10)
-elseif(NI_RENDERER STREQUAL "DX11")
-    target_link_libraries(NiApplication PUBLIC ecrD3D11Renderer)
-    target_compile_definitions(NiApplication PRIVATE
-        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:EE_ECRD3D11RENDERER_NO_IMPORT>)
-    target_compile_definitions(NiApplication PUBLIC NI_RENDERER_DX11)
-else()
-    message(WARNING "[NiApplication] Unknown renderer '${NI_RENDERER}', no renderer linked.")
-endif()
+target_link_libraries(NiApplication
+    PUBLIC
+        NiDX9Renderer
+        NiD3D10Renderer
+        ecrD3D11Renderer
+)
+
+target_compile_definitions(NiApplication PRIVATE
+    $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:EE_ECRD3D11RENDERER_NO_IMPORT>)
 
 ni_install_target(NiApplication)

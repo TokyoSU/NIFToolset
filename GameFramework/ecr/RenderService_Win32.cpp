@@ -98,17 +98,6 @@ bool RenderService::CreateRenderer()
     settings.m_bFullscreen     = m_bFullscreen;
     settings.m_bRendererDialog = m_bRendererDialog;
 
-    // Force the renderer ID to match the compile-time selection so that
-    // NiBaseRendererSetup::CreateRenderer finds the registered setup even
-    // when the settings dialog is suppressed (default INI value is DX9).
-#if defined(NI_RENDERER_DX11)
-    settings.m_eRendererID = efd::SystemDesc::RENDERER_D3D11;
-#elif defined(NI_RENDERER_DX10)
-    settings.m_eRendererID = efd::SystemDesc::RENDERER_D3D10;
-#else
-    settings.m_eRendererID = efd::SystemDesc::RENDERER_DX9;
-#endif
-
     #if defined(EE_PLATFORM_SERVICE_SDL3)
     if (settings.m_bRendererDialog && (pWin32 || pSDL3))
     {
