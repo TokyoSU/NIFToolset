@@ -16,9 +16,9 @@
 #include <NiMeshHWInstance.h>
 #include <NiShadowGenerator.h>
 #if defined(NI_RENDERER_DX9)
-#include <NiDX9Renderer/NiDX9Renderer.h>
+#include <NiDX9Renderer.h>
 #elif defined(NI_RENDERER_DX10)
-#include <NiD3D10Renderer/NiD3D10Renderer.h>
+#include <NiD3D10Renderer.h>
 #else // NI_RENDERER_DX11
 #include <ecrD3D11Renderer/D3D11Renderer.h>
 #endif
