@@ -4,11 +4,12 @@ else()
     set(_BASS_ARCH "Win32")
 endif()
 
-set(_BASS_LIB_DIR "${CMAKE_SOURCE_DIR}/Extern/bass/lib/${_BASS_ARCH}")
+get_filename_component(_BASS_ROOT "${CMAKE_CURRENT_LIST_DIR}/../Extern/bass" ABSOLUTE)
+set(_BASS_LIB_DIR "${_BASS_ROOT}/lib/${_BASS_ARCH}")
 
 find_path(BASS_INCLUDE_DIR
     NAMES bass.h
-    HINTS "${CMAKE_SOURCE_DIR}/Extern/bass/include"
+    HINTS "${_BASS_ROOT}/include"
     NO_DEFAULT_PATH
 )
 

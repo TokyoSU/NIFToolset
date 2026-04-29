@@ -25,7 +25,7 @@ endif()
 project ("NIFToolset")
 
 # Register custom Find modules (FindBASS.cmake, etc.)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
