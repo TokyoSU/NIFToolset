@@ -48,13 +48,13 @@ target_link_libraries(NiAudio
 # Auto-copy bass.dll next to NiAudio output
 add_custom_command(TARGET NiAudio POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Extern/bass/lib/Win32/bass.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Extern/bass/lib/Win32/bass.dll"
         "$<TARGET_FILE_DIR:NiAudio>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Extern/bass/lib/Win32/bass_fx.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Extern/bass/lib/Win32/bass_fx.dll"
         "$<TARGET_FILE_DIR:NiAudio>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Extern/bass/lib/Win32/bassmix.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Extern/bass/lib/Win32/bassmix.dll"
         "$<TARGET_FILE_DIR:NiAudio>"
     COMMENT "Copying all bass dll to output directory"
 )
