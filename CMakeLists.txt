@@ -83,7 +83,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 # Include install helper function (ni_install_target)
-include("${CMAKE_SOURCE_DIR}/cmake/NiInstall.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NiInstall.cmake")
 
 # Include sub-projects
 add_subdirectory("Foundation")
