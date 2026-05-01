@@ -74,14 +74,17 @@ if(NI_PLATFORM_SERVICE_SDL3)
     target_link_libraries(ecr PUBLIC SDL3::SDL3)
 endif()
 
-# Renderer-specific link (only one renderer target exists per build)
-if(NI_RENDERER STREQUAL "DX9")
-    target_link_libraries(ecr PUBLIC NiDX9Renderer)
-elseif(NI_RENDERER STREQUAL "DX10")
-    target_link_libraries(ecr PUBLIC NiD3D10Renderer)
-elseif(NI_RENDERER STREQUAL "DX11")
-    target_link_libraries(ecr PUBLIC ecrD3D11Renderer)
-endif()
+target_link_libraries(ecr
+    PUBLIC
+        NiDX9Renderer
+        NiD3D10Renderer
+        ecrD3D11Renderer
+)
+
+target_compile_definitions(ecr
+    PRIVATE
+        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:EE_ECRD3D11RENDERER_NO_IMPORT>
+)
 
 # Precompiled header (ecrPCH.h already pulls in egfPCH.h)
 target_precompile_headers(ecr
