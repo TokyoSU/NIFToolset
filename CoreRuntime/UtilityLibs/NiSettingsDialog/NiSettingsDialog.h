@@ -75,7 +75,7 @@ protected:
 
     // Message processing functions
     bool ProcessCommand(NiWindowRef pDlgHandle, WORD wID, WORD wNotifyCode);
-    static BOOL CALLBACK SettingsWndProc(
+    static INT_PTR CALLBACK SettingsWndProc(
         HWND pDlg,
         UINT uiMsg,
         WPARAM wParam,

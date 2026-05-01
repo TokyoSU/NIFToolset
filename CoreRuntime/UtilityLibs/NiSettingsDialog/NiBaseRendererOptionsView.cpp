@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------------------------
 NiWindowRef NiBaseRendererOptionsView::InitDialog(NiWindowRef pParentWnd)
 {
-    LONG_PTR pkTemp = GetWindowLongPtr(pParentWnd, GWL_HINSTANCE);
+    LONG_PTR pkTemp = GetWindowLongPtr(pParentWnd, GWLP_HINSTANCE);
     NiInstanceRef pInstance = (NiInstanceRef)pkTemp;
 
     // Create our dialog
@@ -46,7 +46,7 @@ NiWindowRef NiBaseRendererOptionsView::InitDialog(NiWindowRef pParentWnd)
     SetLastError(0);
     //DT32329 Casting to a LONG is not the 64-bit correct thing to do here,
     // but it silences warnings.
-    SetWindowLongPtr(m_pDlgHandle, GWL_USERDATA, (LONG)(LONG_PTR)this);
+    SetWindowLongPtr(m_pDlgHandle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
     // Check for error - if class pointer was not saved correctly,
     // we'll probably receive a crash. So, exit with error code.
     DWORD dwError = GetLastError();
@@ -450,7 +450,7 @@ bool NiBaseRendererOptionsView::ChangeAdapter()
     if (lResult != CB_ERR)
     {
         // Ask RenderDesc to change adapter and reenum dependent settings
-        unsigned int uiAdapter = PtrToUint(lResult);
+        unsigned int uiAdapter = static_cast<unsigned int>(lResult);
         GetRendDesc()->SelectAdapter(uiAdapter);
         // Refill controls, that depends on adapter choice
         InitAdapterDependentControls();
@@ -590,7 +590,7 @@ bool NiBaseRendererOptionsView::ChangeMultisample()
 
     if (lResult != CB_ERR)
     {
-        unsigned int uiMS = PtrToUint(lResult);
+        unsigned int uiMS = static_cast<unsigned int>(lResult);
         GetRendDesc()->SelectMultisample(uiMS);
     }
 
@@ -656,7 +656,7 @@ bool NiBaseRendererOptionsView::ChangeResolution()
         0,
         0);
 
-    unsigned int uiRes = PtrToUint(lResult);
+    unsigned int uiRes = static_cast<unsigned int>(lResult);
     GetRendDesc()->SelectResolution(uiRes);
 
     InitDeviceDependentControls();
@@ -678,7 +678,7 @@ bool NiBaseRendererOptionsView::ChangeRTFormat()
     if (lResult != CB_ERR)
     {
         // Ask RenderDesc to change adapter and reenum dependent settings
-        unsigned int uiRTFormat = PtrToUint(lResult);
+        unsigned int uiRTFormat = static_cast<unsigned int>(lResult);
         GetRendDesc()->SelectRTFormat(uiRTFormat);
 
         InitDeviceDependentControls();
@@ -727,7 +727,7 @@ bool NiBaseRendererOptionsView::ChangeDSFormat()
     if (lResult != CB_ERR)
     {
         // Ask RenderDesc to change adapter and reenume dependent settings
-        unsigned int uiDSFormat = PtrToUint(lResult);
+        unsigned int uiDSFormat = static_cast<unsigned int>(lResult);
         GetRendDesc()->SelectDSFormat(uiDSFormat);
 
         InitDeviceDependentControls();
@@ -814,14 +814,14 @@ bool NiBaseRendererOptionsView::ProcessCommand(
 }
 
 //------------------------------------------------------------------------------------------------
-BOOL CALLBACK NiBaseRendererOptionsView::RendererOptionsViewWndProc(
+INT_PTR CALLBACK NiBaseRendererOptionsView::RendererOptionsViewWndProc(
     HWND pDlg,
     UINT uiMsg,
     WPARAM wParam,
     LPARAM lParam)
 {
     // Get pointer to corresponding OptionsView to pass it messages.
-    LONG_PTR pkPtr = GetWindowLongPtr(pDlg, GWL_USERDATA);
+    LONG_PTR pkPtr = GetWindowLongPtr(pDlg, GWLP_USERDATA);
     NiBaseRendererOptionsView* pkOptionsView =
         reinterpret_cast<NiBaseRendererOptionsView*>(pkPtr);
 

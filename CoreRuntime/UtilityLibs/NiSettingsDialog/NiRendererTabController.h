@@ -52,7 +52,7 @@ protected:
 
     // Message processing functions
     bool ProcessCommand(NiWindowRef pDlgHandle, WORD wID, WORD wNotifyCode);
-    static BOOL CALLBACK RendererTabWndProc(
+    static INT_PTR CALLBACK RendererTabWndProc(
         HWND pDlg,
         UINT uiMsg,
         WPARAM wParam,

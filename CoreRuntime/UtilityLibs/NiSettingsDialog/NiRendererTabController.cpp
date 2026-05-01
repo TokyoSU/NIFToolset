@@ -108,7 +108,7 @@ NiWindowRef NiRendererTabController::InitDialog(
     NiRendererSettings* pkSettings,
     NiWindowRef pParentWnd)
 {
-    LONG_PTR pkTemp = GetWindowLongPtr(pParentWnd, GWL_HINSTANCE);
+    LONG_PTR pkTemp = GetWindowLongPtr(pParentWnd, GWLP_HINSTANCE);
     NiInstanceRef pInstance = (NiInstanceRef)pkTemp;
 
     // Create dialog
@@ -133,7 +133,7 @@ NiWindowRef NiRendererTabController::InitDialog(
     SetLastError(0);
     //DT32329 Casting to a LONG is not the 64-bit correct thing to do here,
     // but it silences warnings.
-    SetWindowLongPtr(m_pDlgHandle, GWL_USERDATA, (LONG)(LONG_PTR)this);
+    SetWindowLongPtr(m_pDlgHandle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
     // Check for error - if class pointer was not saved correctly,
     // we'll probably receive a crash. So, exit with error code.
@@ -295,7 +295,7 @@ bool NiRendererTabController::ProcessCommand(
             return false;
 
         m_kViewArray[m_uiCurrentViewIdx]->Deactivate();
-        m_uiCurrentViewIdx = PtrToUint(lResult);
+        m_uiCurrentViewIdx = static_cast<unsigned int>(lResult);
         m_kViewArray[m_uiCurrentViewIdx]->Activate();
 
         return true;
@@ -304,14 +304,14 @@ bool NiRendererTabController::ProcessCommand(
 }
 
 //--------------------------------------------------------------------------------------------------
-BOOL CALLBACK NiRendererTabController::RendererTabWndProc(
+INT_PTR CALLBACK NiRendererTabController::RendererTabWndProc(
     HWND pDlg,
     UINT uiMsg,
     WPARAM wParam,
     LPARAM lParam)
 {
     // Get pointer to class to pass it messages
-    LONG_PTR pkPtr = GetWindowLongPtr(pDlg, GWL_USERDATA);
+    LONG_PTR pkPtr = GetWindowLongPtr(pDlg, GWLP_USERDATA);
     NiRendererTabController* pkTabCtrl =
         reinterpret_cast<NiRendererTabController*>(pkPtr);
 

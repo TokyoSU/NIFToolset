@@ -142,7 +142,7 @@ bool NiSettingsDialog::InitDialog(NiInstanceRef pInstance, NiWindowRef pParentWn
     SetLastError(0);
     //DT32329 Casting to a LONG is not the 64-bit correct thing to do here,
     // but it silences warnings.
-    SetWindowLongPtr(m_pDlgHandle, GWL_USERDATA, (LONG)(LONG_PTR)this);
+    SetWindowLongPtr(m_pDlgHandle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
     // Check for error - if class pointer was not saved correctly,
     // we'll probably receive a crash. So, exit with error code.
@@ -349,7 +349,7 @@ void NiSettingsDialog::ChangeSize()
         return;
 
     // Get height of tab client area
-    unsigned int uiIdx = PtrToUint(lResult);
+    unsigned int uiIdx = static_cast<unsigned int>(lResult);
     unsigned int uiTabHeight;
     if (m_bViewAdvanced)
         uiTabHeight = m_kTabArray[uiIdx]->SetAdvancedHeight();
@@ -548,14 +548,14 @@ bool NiSettingsDialog::ProcessCommand(
 }
 
 //--------------------------------------------------------------------------------------------------
-BOOL CALLBACK NiSettingsDialog::SettingsWndProc(
+INT_PTR CALLBACK NiSettingsDialog::SettingsWndProc(
     HWND pDlg,
     UINT uiMsg,
     WPARAM wParam,
     LPARAM lParam)
 {
     // Get pointer to class to pass it messages
-    LONG_PTR pkPtr = GetWindowLongPtr(pDlg, GWL_USERDATA);
+    LONG_PTR pkPtr = GetWindowLongPtr(pDlg, GWLP_USERDATA);
     NiSettingsDialog* pkSetDlg =
         reinterpret_cast<NiSettingsDialog*>(pkPtr);
 
@@ -601,7 +601,7 @@ BOOL CALLBACK NiSettingsDialog::SettingsWndProc(
             break;
 
         // Show or hide tab dialog?
-        unsigned int uiTabIdx = PtrToUint(lResult);
+        unsigned int uiTabIdx = static_cast<unsigned int>(lResult);
         if (pNMHDR->code == TCN_SELCHANGING)
             pkSetDlg->DeactivateTab(uiTabIdx);
         else

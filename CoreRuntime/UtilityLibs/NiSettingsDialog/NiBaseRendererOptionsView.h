@@ -87,7 +87,7 @@ protected:
 private:
     // Message processing functions
     bool ProcessCommand(NiWindowRef pDlgHandle, WORD wID, WORD wNotifyCode);
-    static BOOL CALLBACK RendererOptionsViewWndProc(
+    static INT_PTR CALLBACK RendererOptionsViewWndProc(
         HWND pDlg,
         UINT uiMsg,
         WPARAM wParam,
