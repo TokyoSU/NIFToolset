@@ -71,12 +71,14 @@ D3D11RenderTargetBufferData::~D3D11RenderTargetBufferData()
 D3D11RenderTargetBufferData* D3D11RenderTargetBufferData::Create(
     ID3D11Texture2D* pD3DTexture, 
     Ni2DBuffer*& pBuffer,
-    D3D11_RENDER_TARGET_VIEW_DESC* pRTViewDesc)
+    D3D11_RENDER_TARGET_VIEW_DESC* pRTViewDesc,
+    D3D11Renderer* pRenderer)
 {
     if (pD3DTexture == NULL)
         return NULL;
 
-    D3D11Renderer* pRenderer = D3D11Renderer::GetRenderer();
+    if (pRenderer == NULL)
+        pRenderer = D3D11Renderer::GetRenderer();
     EE_ASSERT (pRenderer);
     ID3D11Device* pDevice = pRenderer->GetD3D11Device();
     EE_ASSERT (pDevice);
@@ -166,12 +168,14 @@ D3D11SwapChainBufferData::~D3D11SwapChainBufferData()
 //------------------------------------------------------------------------------------------------
 D3D11SwapChainBufferData* D3D11SwapChainBufferData::Create(
     IDXGISwapChain* pSwapChain, 
-    Ni2DBuffer*& pBuffer)
+    Ni2DBuffer*& pBuffer,
+    D3D11Renderer* pRenderer)
 {
     if (pSwapChain == NULL)
         return NULL;
 
-    D3D11Renderer* pRenderer = D3D11Renderer::GetRenderer();
+    if (pRenderer == NULL)
+        pRenderer = D3D11Renderer::GetRenderer();
     EE_ASSERT (pRenderer);
     ID3D11Device* pDevice = pRenderer->GetD3D11Device();
     EE_ASSERT (pDevice);

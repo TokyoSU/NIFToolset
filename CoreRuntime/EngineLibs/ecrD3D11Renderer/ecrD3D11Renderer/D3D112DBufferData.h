@@ -121,7 +121,8 @@ public:
     static D3D11RenderTargetBufferData* Create(
         ID3D11Texture2D* pD3DTexture,
         Ni2DBuffer*& pBuffer,
-        D3D11_RENDER_TARGET_VIEW_DESC* pRTViewDesc = NULL);
+        D3D11_RENDER_TARGET_VIEW_DESC* pRTViewDesc = NULL,
+        D3D11Renderer* pRenderer = NULL);
 
     /// Returns the render target view.
     inline ID3D11RenderTargetView* GetRenderTargetView() const;
@@ -202,7 +203,8 @@ public:
     */
     static D3D11SwapChainBufferData* Create(
         IDXGISwapChain* pSwapChain,
-        Ni2DBuffer*& pBuffer);
+        Ni2DBuffer*& pBuffer,
+        D3D11Renderer* pRenderer = NULL);
 
     /// Returns the swap chain.
     IDXGISwapChain* GetSwapChain() const;

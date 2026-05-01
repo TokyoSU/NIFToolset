@@ -1555,7 +1555,14 @@ efd::Bool D3D11Renderer::CreateBuffersFromSwapChain(
         return false;
     }
 
-    D3D11SwapChainBufferData::Create(pSwapChain, pBackBuffer);
+    D3D11SwapChainBufferData* pSwapChainBufferData =
+        D3D11SwapChainBufferData::Create(pSwapChain, pBackBuffer, this);
+    if (pSwapChainBufferData == NULL || pBackBuffer == NULL)
+    {
+        D3D11Error::ReportWarning(
+            "CreateRenderTargetGroupFromSwapChain failed to create swap chain buffer data.");
+        return false;
+    }
 
     if (createDepthStencilBuffer)
     {
