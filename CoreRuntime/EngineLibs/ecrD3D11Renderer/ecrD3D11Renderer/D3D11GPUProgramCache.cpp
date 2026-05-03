@@ -50,13 +50,14 @@ D3D11GPUProgramCache::D3D11GPUProgramCache(
         fileName, 
         efd::EE_MAX_PATH,
 #if defined(EE_CONFIG_DEBUG)
-        "%s_%s_%s_D.cache",
+        "%s_%s_%s_%s_D.cache",
 #else
-        "%s_%s_%s.cache",
+        "%s_%s_%s_%s.cache",
 #endif
         pMaterialIdentifier, 
         (const efd::Char*)shaderProfile,
-        (const efd::Char*)GetPlatform());
+        (const efd::Char*)GetPlatform(),
+        GetArchitectureSuffix());
 
     m_kFilename = fileName;
     SetWorkingDirectory(pWorkingDir);

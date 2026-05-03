@@ -40,6 +40,16 @@ NiGPUProgramCache::~NiGPUProgramCache()
 }
 
 //--------------------------------------------------------------------------------------------------
+const char* NiGPUProgramCache::GetArchitectureSuffix()
+{
+#if defined(_WIN64)
+    return "X64";
+#else
+    return "WIN32";
+#endif
+}
+
+//--------------------------------------------------------------------------------------------------
 NiGPUProgram* NiGPUProgramCache::FindCachedProgram(
     const char* pcName, NiTObjectPtrSet<NiMaterialResourcePtr>& kUniforms,
     bool& bFailedToCompilePreviously)

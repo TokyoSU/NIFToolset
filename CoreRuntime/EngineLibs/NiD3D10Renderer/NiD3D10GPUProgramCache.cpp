@@ -37,12 +37,12 @@ NiD3D10GPUProgramCache::NiD3D10GPUProgramCache(unsigned int uiVersion,
     char acFilename[NI_MAX_PATH];
     NiSprintf(acFilename, NI_MAX_PATH,
 #if defined(NIDEBUG)
-        "%s_%s_%s_D.cache",
+        "%s_%s_%s_%s_D.cache",
 #else
-        "%s_%s_%s.cache",
+        "%s_%s_%s_%s.cache",
 #endif
         pcMaterialIdentifier, (const char*)kShaderProfile,
-        (const char*)GetPlatform());
+        (const char*)GetPlatform(), GetArchitectureSuffix());
 
     m_kFilename = acFilename;
     SetWorkingDirectory(pcWorkingDir);

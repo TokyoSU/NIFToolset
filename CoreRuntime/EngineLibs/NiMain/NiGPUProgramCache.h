@@ -75,6 +75,8 @@ public:
     // *** end Emergent internal use only ***
 
 protected:
+    static const char* GetArchitectureSuffix();
+
     virtual bool PruneUnusedConstants(NiGPUProgram* pkProgram,
         NiTObjectPtrSet<NiMaterialResourcePtr>& kUniforms);
 
