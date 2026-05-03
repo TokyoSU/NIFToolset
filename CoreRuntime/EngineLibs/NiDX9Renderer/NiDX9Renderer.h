@@ -403,35 +403,35 @@ public:
     void PurgeAllD3DShaders();
 
     // Access D3D interfaces
-    inline LPDIRECT3DDEVICE9 GetD3DDevice() const;
-    inline unsigned int GetAdapter() const;
-    inline D3DDEVTYPE GetDevType() const;
-    inline D3DPRESENT_PARAMETERS* GetPresentParams(
+    LPDIRECT3DDEVICE9 GetD3DDevice() const;
+    unsigned int GetAdapter() const;
+    D3DDEVTYPE GetDevType() const;
+    D3DPRESENT_PARAMETERS* GetPresentParams(
         const NiRenderTargetGroup* pkTarget = NULL) const;
-    inline D3DFORMAT GetAdapterFormat() const;
-    inline const D3DCAPS9* GetDeviceCaps() const;
+    D3DFORMAT GetAdapterFormat() const;
+    const D3DCAPS9* GetDeviceCaps() const;
 
     static LPDIRECT3D9 GetDirect3D();
 
     // Access Gamebryo representations of the device
-    inline const NiDX9AdapterDesc* GetAdapterDesc() const;
-    inline const NiDX9DeviceDesc* GetDeviceDesc() const;
+    const NiDX9AdapterDesc* GetAdapterDesc() const;
+    const NiDX9DeviceDesc* GetDeviceDesc() const;
 
     static const NiDX9SystemDesc* GetSystemDesc();
 
     // Access DX9 renderer manager classes
-    inline NiDX9RenderState* GetRenderState() const;
-    inline NiDX9TextureManager* GetTextureManager() const;
-    inline NiDX9LightManager* GetLightManager() const;
+    NiDX9RenderState* GetRenderState() const;
+    NiDX9TextureManager* GetTextureManager() const;
+    NiDX9LightManager* GetLightManager() const;
 
-    inline NiD3DShader* GetLegacyDefaultShader() const;
+    NiD3DShader* GetLegacyDefaultShader() const;
 
     // Query D3D device capabilities
-    inline unsigned int GetMaxStreams() const;
-    inline unsigned int GetPixelShaderVersion() const;
-    inline unsigned int GetVertexShaderVersion() const;
-    inline bool GetMipmapCubeMaps() const;
-    inline bool IsDynamicTexturesCapable() const;
+    unsigned int GetMaxStreams() const;
+    unsigned int GetPixelShaderVersion() const;
+    unsigned int GetVertexShaderVersion() const;
+    bool GetMipmapCubeMaps() const;
+    bool IsDynamicTexturesCapable() const;
     bool GetMRTPostPixelShaderBlendingCapability() const;
     bool GetFormatPostPixelShaderBlendingCapability(D3DFORMAT eFormat) const;
 

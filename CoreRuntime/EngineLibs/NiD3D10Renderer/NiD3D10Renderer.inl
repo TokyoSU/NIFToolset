@@ -133,51 +133,6 @@ inline void NiD3D10Renderer::SetSyncInterval(unsigned int uiSyncInterval)
 }
 
 //--------------------------------------------------------------------------------------------------
-inline NiD3D10DeviceState* NiD3D10Renderer::GetDeviceState() const
-{
-    return m_pkDeviceState;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline NiD3D10RenderStateManager* NiD3D10Renderer::
-    GetRenderStateManager() const
-{
-    return m_pkRenderStateManager;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline NiD3D10ResourceManager* NiD3D10Renderer::GetResourceManager() const
-{
-    return m_pkResourceManager;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline NiD3D10ShaderConstantManager* NiD3D10Renderer::
-    GetShaderConstantManager() const
-{
-    return m_pkShaderConstantManager;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline void NiD3D10Renderer::InvalidateDeviceState()
-{
-    if (m_pkDeviceState)
-        m_pkDeviceState->InvalidateDeviceState();
-}
-
-//--------------------------------------------------------------------------------------------------
-inline ID3D10Device* NiD3D10Renderer::GetD3D10Device() const
-{
-    return m_pkD3D10Device;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline ID3D10Device* NiD3D10Renderer::GetD3D10Device1() const
-{
-    return m_pkD3D10Device1;
-}
-
-//--------------------------------------------------------------------------------------------------
 inline bool NiD3D10Renderer::ReleaseResources()
 {
     m_spDefaultRenderTargetGroup = NULL;

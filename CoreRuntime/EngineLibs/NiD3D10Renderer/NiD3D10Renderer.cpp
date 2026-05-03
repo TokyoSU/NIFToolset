@@ -1501,6 +1501,18 @@ bool NiD3D10Renderer::ReleaseDevice()
 }
 
 //------------------------------------------------------------------------------------------------
+ID3D10Device* NiD3D10Renderer::GetD3D10Device() const
+{
+    return m_pkD3D10Device;
+}
+
+//------------------------------------------------------------------------------------------------
+ID3D10Device* NiD3D10Renderer::GetD3D10Device1() const
+{
+    return m_pkD3D10Device1;
+}
+
+//------------------------------------------------------------------------------------------------
 ID3D10Device* NiD3D10Renderer::CreateTempDevice(IDXGIAdapter* pkAdapter,
     D3D10_DRIVER_TYPE eType, unsigned int uiFlags)
 {

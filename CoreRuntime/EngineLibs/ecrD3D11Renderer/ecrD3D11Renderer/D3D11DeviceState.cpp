@@ -15,30 +15,8 @@
 #include "ecrD3D11RendererPCH.h"
 
 #include "D3D11DeviceState.h"
-#include "D3D11Error.h"
 
 using namespace ecr;
-
-namespace
-{
-void LogDeviceStatePointers(
-    const char* pStage,
-    const ecr::D3D11DeviceState* pState,
-    const ID3D11BlendState* pBlendState,
-    const ID3D11DepthStencilState* pDepthStencilState,
-    const ID3D11RasterizerState* pRasterizerState,
-    const ID3D11DeviceContext* pDeviceContext)
-{
-    ecr::D3D11Error::ReportWarning(
-        "[D3D11DeviceState] %s this=%p blend=%p depth=%p raster=%p context=%p",
-        pStage,
-        static_cast<const void*>(pState),
-        static_cast<const void*>(pBlendState),
-        static_cast<const void*>(pDepthStencilState),
-        static_cast<const void*>(pRasterizerState),
-        static_cast<const void*>(pDeviceContext));
-}
-}
 
 //------------------------------------------------------------------------------------------------
 D3D11DeviceState::D3D11DeviceState(
@@ -2441,21 +2419,8 @@ void D3D11DeviceState::CSClearUnorderedAccessViews()
 //------------------------------------------------------------------------------------------------
 void D3D11DeviceState::InvalidateDeviceState()
 {
-    LogDeviceStatePointers(
-        "InvalidateDeviceState.entry",
-        this,
-        m_pBlendState,
-        m_pDepthStencilState,
-        m_pRasterizerState,
-        m_pDeviceContext);
-
     if (m_pBlendState)
-    {
-        D3D11Error::ReportWarning(
-            "[D3D11DeviceState] InvalidateDeviceState.releasing-blend blend=%p",
-            static_cast<const void*>(m_pBlendState));
         m_pBlendState->Release();
-    }
     m_pBlendState = NULL;
     if (m_pDepthStencilState)
         m_pDepthStencilState->Release();
@@ -2529,14 +2494,6 @@ void D3D11DeviceState::InvalidateDeviceState()
 
     m_blendStateUnchanged = false;
     m_depthStencilStateUnchanged = false;
-
-    LogDeviceStatePointers(
-        "InvalidateDeviceState.exit",
-        this,
-        m_pBlendState,
-        m_pDepthStencilState,
-        m_pRasterizerState,
-        m_pDeviceContext);
 }
 
 //------------------------------------------------------------------------------------------------

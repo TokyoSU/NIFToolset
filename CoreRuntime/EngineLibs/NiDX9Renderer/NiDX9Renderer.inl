@@ -127,66 +127,6 @@ inline void NiDX9Renderer::UseQuickDecals(bool bQuickDecals)
 }
 
 //--------------------------------------------------------------------------------------------------
-inline LPDIRECT3DDEVICE9 NiDX9Renderer::GetD3DDevice() const
-{
-    return m_pkD3DDevice9;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline NiDX9RenderState* NiDX9Renderer::GetRenderState() const
-{
-    return m_pkRenderState;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline NiDX9TextureManager* NiDX9Renderer::GetTextureManager() const
-{
-    return m_pkTextureManager;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline NiDX9LightManager* NiDX9Renderer::GetLightManager() const
-{
-    return m_pkLightManager;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline NiD3DShader* NiDX9Renderer::GetLegacyDefaultShader() const
-{
-    return m_spLegacyDefaultShader;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline unsigned int NiDX9Renderer::GetMaxStreams() const
-{
-    return m_uiMaxStreams;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline unsigned int NiDX9Renderer::GetPixelShaderVersion() const
-{
-    return m_uiMaxPixelShaderVersion;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline unsigned int NiDX9Renderer::GetVertexShaderVersion() const
-{
-    return m_uiMaxVertexShaderVersion;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline bool NiDX9Renderer::GetMipmapCubeMaps() const
-{
-    return m_bMipmapCubeMaps;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline bool NiDX9Renderer::IsDynamicTexturesCapable() const
-{
-    return m_bDynamicTexturesCapable;
-}
-
-//--------------------------------------------------------------------------------------------------
 inline const char* NiDX9Renderer::GetDevTypeString() const
 {
     switch (m_eDevType)
@@ -491,36 +431,6 @@ inline NiDX9Renderer::FilterSettings NiDX9Renderer::GetD3DFilterMode(
 }
 
 //--------------------------------------------------------------------------------------------------
-inline unsigned int NiDX9Renderer::GetAdapter() const
-{
-    return m_uiAdapter;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline D3DDEVTYPE NiDX9Renderer::GetDevType() const
-{
-    return m_eDevType;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline D3DPRESENT_PARAMETERS* NiDX9Renderer::GetPresentParams(
-    const NiRenderTargetGroup* pkTarget) const
-{
-    if (pkTarget == NULL)
-        pkTarget = m_spDefaultRenderTargetGroup;
-    const Ni2DBuffer* pkBuffer = pkTarget->GetBuffer(0);
-    NiDX9OnscreenBufferData* pkData = NiDynamicCast(NiDX9OnscreenBufferData,
-        (NiDX92DBufferData*)pkBuffer->GetRendererData());
-    EE_ASSERT(pkData);
-    return &pkData->GetPresentParams();
-}
-
-//--------------------------------------------------------------------------------------------------
-inline D3DFORMAT NiDX9Renderer::GetAdapterFormat() const
-{
-    return m_eAdapterFormat;
-}
-
 //--------------------------------------------------------------------------------------------------
 inline NiPixelFormat** NiDX9Renderer::GetTextureFormatArray(
     TexUsage eUse)
@@ -565,24 +475,6 @@ inline LPDIRECT3D9 NiDX9Renderer::GetDirect3D()
 inline unsigned int NiDX9Renderer::GetProjectedTextureFlags()
 {
     return ms_uiProjectedTextureFlags;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline const D3DCAPS9* NiDX9Renderer::GetDeviceCaps() const
-{
-    return &m_kD3DCaps9;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline const NiDX9AdapterDesc* NiDX9Renderer::GetAdapterDesc() const
-{
-    return m_pkAdapterDesc;
-}
-
-//--------------------------------------------------------------------------------------------------
-inline const NiDX9DeviceDesc* NiDX9Renderer::GetDeviceDesc() const
-{
-    return m_pkDeviceDesc;
 }
 
 //--------------------------------------------------------------------------------------------------

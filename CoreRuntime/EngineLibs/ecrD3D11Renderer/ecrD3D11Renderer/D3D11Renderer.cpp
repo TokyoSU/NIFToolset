@@ -369,11 +369,6 @@ D3D11Renderer::FeatureLevel D3D11Renderer::GetFeatureLevel() const
 //------------------------------------------------------------------------------------------------
 void D3D11Renderer::InvalidateDeviceState()
 {
-    D3D11Error::ReportWarning(
-        "[D3D11Renderer] InvalidateDeviceState this=%p deviceState=%p",
-        static_cast<const void*>(this),
-        static_cast<const void*>(m_pDeviceState));
-
     if (m_pDeviceState)
         m_pDeviceState->InvalidateDeviceState();
 }

@@ -192,8 +192,8 @@ class NID3D10RENDERER_ENTRY NiD3D10Renderer : public NiRenderer
 
     bool SetDefaultSwapChainRenderTargetGroup(HWND hWnd);
 
-    inline ID3D10Device* GetD3D10Device() const;
-    inline ID3D10Device* GetD3D10Device1() const;
+    ID3D10Device* GetD3D10Device() const;
+    ID3D10Device* GetD3D10Device1() const;
 
     // Occluded device notification functions
     typedef bool (*OCCLUDEDNOTIFYFUNC)(bool bBeginOccluded, void* pvData);
@@ -245,12 +245,12 @@ class NID3D10RENDERER_ENTRY NiD3D10Renderer : public NiRenderer
     inline unsigned int GetSyncInterval() const;
     inline void SetSyncInterval(unsigned int uiSyncInterval);
 
-    inline NiD3D10DeviceState* GetDeviceState() const;
-    inline NiD3D10RenderStateManager* GetRenderStateManager() const;
-    inline NiD3D10ResourceManager* GetResourceManager() const;
-    inline NiD3D10ShaderConstantManager* GetShaderConstantManager() const;
+    NiD3D10DeviceState* GetDeviceState() const;
+    NiD3D10RenderStateManager* GetRenderStateManager() const;
+    NiD3D10ResourceManager* GetResourceManager() const;
+    NiD3D10ShaderConstantManager* GetShaderConstantManager() const;
 
-    inline void InvalidateDeviceState();
+    void InvalidateDeviceState();
 
     // Shaders
     inline void RegisterD3D10Shader(NiD3D10ShaderInterface* pkD3D10Shader);

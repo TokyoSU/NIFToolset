@@ -298,6 +298,115 @@ void NiDX9Renderer::InitToDefault()
 }
 
 //------------------------------------------------------------------------------------------------
+LPDIRECT3DDEVICE9 NiDX9Renderer::GetD3DDevice() const
+{
+    return m_pkD3DDevice9;
+}
+
+//------------------------------------------------------------------------------------------------
+unsigned int NiDX9Renderer::GetAdapter() const
+{
+    return m_uiAdapter;
+}
+
+//------------------------------------------------------------------------------------------------
+D3DDEVTYPE NiDX9Renderer::GetDevType() const
+{
+    return m_eDevType;
+}
+
+//------------------------------------------------------------------------------------------------
+D3DPRESENT_PARAMETERS* NiDX9Renderer::GetPresentParams(
+    const NiRenderTargetGroup* pkTarget) const
+{
+    if (pkTarget == NULL)
+        pkTarget = m_spDefaultRenderTargetGroup;
+    const Ni2DBuffer* pkBuffer = pkTarget->GetBuffer(0);
+    NiDX9OnscreenBufferData* pkData = NiDynamicCast(NiDX9OnscreenBufferData,
+        (NiDX92DBufferData*)pkBuffer->GetRendererData());
+    EE_ASSERT(pkData);
+    return &pkData->GetPresentParams();
+}
+
+//------------------------------------------------------------------------------------------------
+D3DFORMAT NiDX9Renderer::GetAdapterFormat() const
+{
+    return m_eAdapterFormat;
+}
+
+//------------------------------------------------------------------------------------------------
+const D3DCAPS9* NiDX9Renderer::GetDeviceCaps() const
+{
+    return &m_kD3DCaps9;
+}
+
+//------------------------------------------------------------------------------------------------
+const NiDX9AdapterDesc* NiDX9Renderer::GetAdapterDesc() const
+{
+    return m_pkAdapterDesc;
+}
+
+//------------------------------------------------------------------------------------------------
+const NiDX9DeviceDesc* NiDX9Renderer::GetDeviceDesc() const
+{
+    return m_pkDeviceDesc;
+}
+
+//------------------------------------------------------------------------------------------------
+NiDX9RenderState* NiDX9Renderer::GetRenderState() const
+{
+    return m_pkRenderState;
+}
+
+//------------------------------------------------------------------------------------------------
+NiDX9TextureManager* NiDX9Renderer::GetTextureManager() const
+{
+    return m_pkTextureManager;
+}
+
+//------------------------------------------------------------------------------------------------
+NiDX9LightManager* NiDX9Renderer::GetLightManager() const
+{
+    return m_pkLightManager;
+}
+
+//------------------------------------------------------------------------------------------------
+NiD3DShader* NiDX9Renderer::GetLegacyDefaultShader() const
+{
+    return m_spLegacyDefaultShader;
+}
+
+//------------------------------------------------------------------------------------------------
+unsigned int NiDX9Renderer::GetMaxStreams() const
+{
+    return m_uiMaxStreams;
+}
+
+//------------------------------------------------------------------------------------------------
+unsigned int NiDX9Renderer::GetPixelShaderVersion() const
+{
+    return m_uiMaxPixelShaderVersion;
+}
+
+//------------------------------------------------------------------------------------------------
+unsigned int NiDX9Renderer::GetVertexShaderVersion() const
+{
+    return m_uiMaxVertexShaderVersion;
+}
+
+//------------------------------------------------------------------------------------------------
+bool NiDX9Renderer::GetMipmapCubeMaps() const
+{
+    return m_bMipmapCubeMaps;
+}
+
+//------------------------------------------------------------------------------------------------
+bool NiDX9Renderer::IsDynamicTexturesCapable() const
+{
+    return m_bDynamicTexturesCapable;
+}
+
+//------------------------------------------------------------------------------------------------
 bool NiDX9Renderer::IsD3D9Create()
 {
     // This function assumes the critical section has already been locked.
