@@ -337,6 +337,48 @@ ID3D11DeviceContext* D3D11Renderer::GetCurrentD3D11DeviceContext() const
 }
 
 //------------------------------------------------------------------------------------------------
+D3D11DeviceState* D3D11Renderer::GetDeviceState() const
+{
+    return m_pDeviceState;
+}
+
+//------------------------------------------------------------------------------------------------
+D3D11RenderStateManager* D3D11Renderer::GetRenderStateManager() const
+{
+    return m_pRenderStateManager;
+}
+
+//------------------------------------------------------------------------------------------------
+D3D11ResourceManager* D3D11Renderer::GetResourceManager() const
+{
+    return m_pResourceManager;
+}
+
+//------------------------------------------------------------------------------------------------
+D3D11ShaderConstantManager* D3D11Renderer::GetShaderConstantManager() const
+{
+    return m_pShaderConstantManager;
+}
+
+//------------------------------------------------------------------------------------------------
+D3D11Renderer::FeatureLevel D3D11Renderer::GetFeatureLevel() const
+{
+    return (FeatureLevel)m_featureLevel;
+}
+
+//------------------------------------------------------------------------------------------------
+void D3D11Renderer::InvalidateDeviceState()
+{
+    D3D11Error::ReportWarning(
+        "[D3D11Renderer] InvalidateDeviceState this=%p deviceState=%p",
+        static_cast<const void*>(this),
+        static_cast<const void*>(m_pDeviceState));
+
+    if (m_pDeviceState)
+        m_pDeviceState->InvalidateDeviceState();
+}
+
+//------------------------------------------------------------------------------------------------
 void D3D11Renderer::_SDMInit()
 {
     ms_pDefaultVisibleArray = EE_NEW NiVisibleArray();

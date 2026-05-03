@@ -126,36 +126,6 @@ inline void D3D11Renderer::SetSyncInterval(efd::UInt32 syncInterval)
 }
 
 //------------------------------------------------------------------------------------------------
-inline D3D11DeviceState* D3D11Renderer::GetDeviceState() const
-{
-    return m_pDeviceState;
-}
-
-//------------------------------------------------------------------------------------------------
-inline D3D11RenderStateManager* D3D11Renderer::GetRenderStateManager() const
-{
-    return m_pRenderStateManager;
-}
-
-//------------------------------------------------------------------------------------------------
-inline D3D11ResourceManager* D3D11Renderer::GetResourceManager() const
-{
-    return m_pResourceManager;
-}
-
-//------------------------------------------------------------------------------------------------
-inline D3D11ShaderConstantManager* D3D11Renderer::GetShaderConstantManager() const
-{
-    return m_pShaderConstantManager;
-}
-
-//------------------------------------------------------------------------------------------------
-inline D3D11Renderer::FeatureLevel D3D11Renderer::GetFeatureLevel() const
-{
-    return (FeatureLevel)m_featureLevel;
-}
-
-//------------------------------------------------------------------------------------------------
 inline efd::UInt32 D3D11Renderer::GetSupportedShaderTypeCount() const
 {
     return m_supportedShaderProgramTypeCount;
@@ -173,13 +143,6 @@ inline NiGPUProgram::ProgramType D3D11Renderer::GetSupportedShaderType(efd::UInt
 inline efd::UInt32 D3D11Renderer::GetMaxComputeShader() const
 {
     return m_maxComputeShaderVersion;
-}
-
-//------------------------------------------------------------------------------------------------
-inline void D3D11Renderer::InvalidateDeviceState()
-{
-    if (m_pDeviceState)
-        m_pDeviceState->InvalidateDeviceState();
 }
 
 inline efd::Bool D3D11Renderer::ReleaseResources()

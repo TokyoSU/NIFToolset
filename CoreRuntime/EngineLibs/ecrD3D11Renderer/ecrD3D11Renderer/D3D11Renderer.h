@@ -474,16 +474,16 @@ public:
     inline void SetSyncInterval(efd::UInt32 syncInterval);
 
     /// Return the renderer's D3D11DeviceState.
-    inline D3D11DeviceState* GetDeviceState() const;
+    D3D11DeviceState* GetDeviceState() const;
     /// Return the renderer's D3D11RenderStateManager.
-    inline D3D11RenderStateManager* GetRenderStateManager() const;
+    D3D11RenderStateManager* GetRenderStateManager() const;
     /// Return the renderer's D3D11ResourceManager.
-    inline D3D11ResourceManager* GetResourceManager() const;
+    D3D11ResourceManager* GetResourceManager() const;
     /// Return the renderer's D3D11ShaderConstantManager.
-    inline D3D11ShaderConstantManager* GetShaderConstantManager() const;
+    D3D11ShaderConstantManager* GetShaderConstantManager() const;
 
     /// Return the current feature level for the device.
-    inline FeatureLevel GetFeatureLevel() const;
+    FeatureLevel GetFeatureLevel() const;
     /**
         Return the number of supported shader program types that the devices supports.
         
@@ -529,7 +529,7 @@ public:
         D3D11 device to inform Gamebryo that the state objects may have changed. This prevents 
         Gamebryo from incorrectly optimizing out a call to set a state object on the device.
     */
-    inline void InvalidateDeviceState();
+    void InvalidateDeviceState();
 
     /**
         Register an instance of a D3D11 NiShader class with the renderer.
