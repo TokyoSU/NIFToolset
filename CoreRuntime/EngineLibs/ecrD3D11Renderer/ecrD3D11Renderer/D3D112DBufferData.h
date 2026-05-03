@@ -25,6 +25,8 @@ class NiDepthStencilBuffer;
 namespace ecr
 {
 
+class D3D11Renderer;
+
 //------------------------------------------------------------------------------------------------
 /**
     Abstract base class representing a 2D buffer that can be used as a render or depth stencil 
