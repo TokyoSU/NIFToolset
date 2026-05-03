@@ -153,18 +153,8 @@ void D3D11DeviceState::OMSetBlendState(
     m_blendFactor[1] = blendFactor[1];
     m_blendFactor[2] = blendFactor[2];
     m_blendFactor[3] = blendFactor[3];
-
     m_sampleMask = sampleMask;
-
     m_blendStateUnchanged = false;
-
-    LogDeviceStatePointers(
-        "OMSetBlendState.exit",
-        this,
-        m_pBlendState,
-        m_pDepthStencilState,
-        m_pRasterizerState,
-        m_pDeviceContext);
 }
 
 //------------------------------------------------------------------------------------------------
