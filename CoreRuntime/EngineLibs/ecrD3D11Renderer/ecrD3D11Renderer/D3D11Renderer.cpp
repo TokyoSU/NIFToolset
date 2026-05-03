@@ -73,10 +73,10 @@ void LogRendererState(const char* pStage, const ecr::D3D11Renderer* pRenderer)
     ecr::D3D11Error::ReportWarning(
         "[D3D11Renderer] %s this=%p device=%p immediateContext=%p currentContext=%p deviceThreadId=%u",
         pStage,
-        pRenderer,
-        pRenderer->GetD3D11Device(),
-        pRenderer->GetImmediateD3D11DeviceContext(),
-        pRenderer->GetCurrentD3D11DeviceContext(),
+        static_cast<const void*>(pRenderer),
+        static_cast<const void*>(pRenderer->GetD3D11Device()),
+        static_cast<const void*>(pRenderer->GetImmediateD3D11DeviceContext()),
+        static_cast<const void*>(pRenderer->GetCurrentD3D11DeviceContext()),
         pRenderer->GetDeviceThreadID());
 }
 }
@@ -316,6 +316,24 @@ D3D11Renderer::~D3D11Renderer()
     NiPersistentSrcTextureRendererData::ResetStreamingFunctions();
 
     EE_FREE(m_pShaderMacroArray);
+}
+
+//------------------------------------------------------------------------------------------------
+ID3D11Device* D3D11Renderer::GetD3D11Device() const
+{
+    return m_pD3D11Device;
+}
+
+//------------------------------------------------------------------------------------------------
+ID3D11DeviceContext* D3D11Renderer::GetImmediateD3D11DeviceContext() const
+{
+    return m_pImmediateD3D11DeviceContext;
+}
+
+//------------------------------------------------------------------------------------------------
+ID3D11DeviceContext* D3D11Renderer::GetCurrentD3D11DeviceContext() const
+{
+    return m_pCurrentD3D11DeviceContext;
 }
 
 //------------------------------------------------------------------------------------------------

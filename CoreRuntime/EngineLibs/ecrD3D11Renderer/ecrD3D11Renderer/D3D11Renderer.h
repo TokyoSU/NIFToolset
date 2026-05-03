@@ -335,11 +335,11 @@ public:
     efd::Bool SetDefaultSwapChainRenderTargetGroup(HWND hWnd);
 
     /// Returns the D3D11 device.
-    inline ID3D11Device* GetD3D11Device() const;
+    ID3D11Device* GetD3D11Device() const;
     /// Returns the immediate D3D11 device context.
-    inline ID3D11DeviceContext* GetImmediateD3D11DeviceContext() const;
+    ID3D11DeviceContext* GetImmediateD3D11DeviceContext() const;
     /// Returns the current D3D11 device context.
-    inline ID3D11DeviceContext* GetCurrentD3D11DeviceContext() const;
+    ID3D11DeviceContext* GetCurrentD3D11DeviceContext() const;
 
     /// @name Occluded device notification functions
     //@{

@@ -182,25 +182,6 @@ inline void D3D11Renderer::InvalidateDeviceState()
         m_pDeviceState->InvalidateDeviceState();
 }
 
-//------------------------------------------------------------------------------------------------
-inline ID3D11Device* D3D11Renderer::GetD3D11Device() const
-{
-    return m_pD3D11Device;
-}
-
-//------------------------------------------------------------------------------------------------
-inline ID3D11DeviceContext* D3D11Renderer::GetImmediateD3D11DeviceContext() const
-{
-    return m_pImmediateD3D11DeviceContext;
-}
-
-//------------------------------------------------------------------------------------------------
-inline ID3D11DeviceContext* D3D11Renderer::GetCurrentD3D11DeviceContext() const
-{
-    return m_pCurrentD3D11DeviceContext;
-}
-
-//------------------------------------------------------------------------------------------------
 inline efd::Bool D3D11Renderer::ReleaseResources()
 {
     m_spDefaultRenderTargetGroup = NULL;
