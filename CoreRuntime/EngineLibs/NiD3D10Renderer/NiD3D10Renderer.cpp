@@ -1179,6 +1179,37 @@ void NiD3D10Renderer::ReleaseManagers()
 }
 
 //------------------------------------------------------------------------------------------------
+NiD3D10DeviceState* NiD3D10Renderer::GetDeviceState() const
+{
+    return m_pkDeviceState;
+}
+
+//------------------------------------------------------------------------------------------------
+NiD3D10RenderStateManager* NiD3D10Renderer::GetRenderStateManager() const
+{
+    return m_pkRenderStateManager;
+}
+
+//------------------------------------------------------------------------------------------------
+NiD3D10ResourceManager* NiD3D10Renderer::GetResourceManager() const
+{
+    return m_pkResourceManager;
+}
+
+//------------------------------------------------------------------------------------------------
+NiD3D10ShaderConstantManager* NiD3D10Renderer::GetShaderConstantManager() const
+{
+    return m_pkShaderConstantManager;
+}
+
+//------------------------------------------------------------------------------------------------
+void NiD3D10Renderer::InvalidateDeviceState()
+{
+    if (m_pkDeviceState)
+        m_pkDeviceState->InvalidateDeviceState();
+}
+
+//------------------------------------------------------------------------------------------------
 unsigned int NiD3D10Renderer::AddOccludedNotificationFunc(
     OCCLUDEDNOTIFYFUNC pfnNotify, void* pvData)
 {
