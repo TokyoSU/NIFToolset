@@ -60,6 +60,27 @@ static efd::Char EmergentCopyright[] EE_UNUSED = "Copyright (c) 1996-2009 Emerge
 static efd::Char acGamebryoVersion[] EE_UNUSED = GAMEBRYO_MODULE_VERSION_STRING(D3D11);
 //------------------------------------------------------------------------------------------------
 
+namespace
+{
+void LogRendererState(const char* pStage, const ecr::D3D11Renderer* pRenderer)
+{
+    if (pRenderer == NULL)
+    {
+        ecr::D3D11Error::ReportWarning("[D3D11Renderer] %s renderer=NULL", pStage);
+        return;
+    }
+
+    ecr::D3D11Error::ReportWarning(
+        "[D3D11Renderer] %s this=%p device=%p immediateContext=%p currentContext=%p deviceThreadId=%u",
+        pStage,
+        pRenderer,
+        pRenderer->GetD3D11Device(),
+        pRenderer->GetImmediateD3D11DeviceContext(),
+        pRenderer->GetCurrentD3D11DeviceContext(),
+        pRenderer->GetDeviceThreadID());
+}
+}
+
 HINSTANCE D3D11Renderer::ms_hD3D11 = NULL;
 HINSTANCE D3D11Renderer::ms_hD3D10 = NULL;
 HINSTANCE D3D11Renderer::ms_hD3D9 = NULL;
@@ -321,6 +342,7 @@ efd::Bool D3D11Renderer::Create(CreationParameters& createParams,
 
     spRenderer = EE_NEW D3D11Renderer;
     EE_ASSERT(spRenderer);
+    LogRendererState("Create.after-allocation", spRenderer);
     efd::Bool success = spRenderer->Initialize(createParams);
 
     if (success == false)
@@ -387,6 +409,8 @@ efd::Bool D3D11Renderer::ResizeBuffers(efd::UInt32 width,
 //------------------------------------------------------------------------------------------------
 efd::Bool D3D11Renderer::Initialize(CreationParameters& createParams)
 {
+    LogRendererState("Initialize.entry", this);
+
     if (m_initialized)
     {
         D3D11Error::ReportWarning(
@@ -396,7 +420,10 @@ efd::Bool D3D11Renderer::Initialize(CreationParameters& createParams)
 
     if (CreateDevice(createParams))
     {
+        LogRendererState("Initialize.after-CreateDevice", this);
+
         CreateManagers();
+        LogRendererState("Initialize.after-CreateManagers", this);
 
         if (createParams.m_createSwapChain == false)
         {
@@ -404,10 +431,12 @@ efd::Bool D3D11Renderer::Initialize(CreationParameters& createParams)
         }
         else
         {
+            LogRendererState("Initialize.before-CreateSwapChain", this);
             IDXGISwapChain* pSwapChain =
                 CreateSwapChain(createParams.m_swapChain, createParams.m_outputIndex);
             if (pSwapChain != NULL)
             {
+                LogRendererState("Initialize.after-CreateSwapChain", this);
                 NiRenderTargetGroup* pRTGroup =
                     CreateRenderTargetGroupFromSwapChain(pSwapChain,
                     createParams.m_createDepthStencilBuffer,
@@ -1537,6 +1566,8 @@ efd::Bool D3D11Renderer::CreateBuffersFromSwapChain(
     Ni2DBuffer*& pBackBuffer,
     NiDepthStencilBuffer*& pDepthBuffer)
 {
+    LogRendererState("CreateBuffersFromSwapChain.entry", this);
+
     pBackBuffer = NULL;
     pDepthBuffer = NULL;
 
