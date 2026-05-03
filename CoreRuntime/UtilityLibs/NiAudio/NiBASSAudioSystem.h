@@ -25,6 +25,7 @@ public:
 
     virtual void Update(float fTime, bool bUpdateAll = false) override;
     virtual bool SetUnitsPerMeter(float fUnits) override;
+    virtual bool SetMasterVolume(float fVolume) override;
 
     // BASS_MIX bus — controls volume of all TYPE_AMBIENT sources at once
     bool  GetMixerLoaded() const { return m_bMixerLoaded; }

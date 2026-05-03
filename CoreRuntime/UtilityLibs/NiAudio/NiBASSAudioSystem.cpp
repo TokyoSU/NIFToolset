@@ -6,6 +6,19 @@
 #include <bass_fx.h>
 #include <bassmix.h>
 
+namespace
+{
+    DWORD NiAudioVolumeToBASSConfig(float fVolume)
+    {
+        if (fVolume < 0.0f)
+            fVolume = 0.0f;
+        else if (fVolume > 1.0f)
+            fVolume = 1.0f;
+
+        return (DWORD)(fVolume * 10000.0f + 0.5f);
+    }
+}
+
 NiImplementRTTI(NiBASSAudioSystem, NiAudioSystem);
 
 //---------------------------------------------------------------------------
@@ -79,6 +92,7 @@ bool NiBASSAudioSystem::Startup(const char* /*pcDirectoryname*/)
 
     m_spListener = NiNew NiBASSAudioListener;
     m_spListener->Startup();
+    SetMasterVolume(m_fMasterVolume);
     return true;
 }
 //---------------------------------------------------------------------------
@@ -101,6 +115,22 @@ bool NiBASSAudioSystem::SetMusicVolume(float fVolume) const
 {
     if (!m_hMusicMixer) return false;
     return BASS_ChannelSetAttribute(m_hMusicMixer, BASS_ATTRIB_VOL, fVolume) != 0;
+}
+
+//---------------------------------------------------------------------------
+bool NiBASSAudioSystem::SetMasterVolume(float fVolume)
+{
+    if (!NiAudioSystem::SetMasterVolume(fVolume))
+        return false;
+
+    if (!m_spListener)
+        return true;
+
+    const DWORD uiVolume = NiAudioVolumeToBASSConfig(m_fMasterVolume);
+    const bool bStreams = BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, uiVolume) != 0;
+    const bool bSamples = BASS_SetConfig(BASS_CONFIG_GVOL_SAMPLE, uiVolume) != 0;
+    const bool bMusic = BASS_SetConfig(BASS_CONFIG_GVOL_MUSIC, uiVolume) != 0;
+    return bStreams && bSamples && bMusic;
 }
 //---------------------------------------------------------------------------
 std::string NiBASSAudioSystem::GetLoadedPlugins() const

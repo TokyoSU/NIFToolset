@@ -109,6 +109,9 @@ public:
     virtual bool SetUnitsPerMeter(float fUnits);
     virtual float GetUnitsPerMeter();
 
+    virtual bool SetMasterVolume(float fVolume);
+    virtual float GetMasterVolume();
+
     /////////////////////////////////////////////////////////
     // BEGIN REVERB SPECIFIC FUNCTIONS.
     //
@@ -180,6 +183,7 @@ protected:
     virtual void RemoveSource(NiAudioSource* pSource);
 
     float  m_fUnitsPerMeter;
+    float  m_fMasterVolume;
 
     NiAudioListenerPtr m_spListener;
     NiTPointerList<NiAudioSource*>* m_pSources;

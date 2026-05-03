@@ -32,6 +32,7 @@ NiAudioSystem::NiAudioSystem()
     EE_ASSERT(m_pSources);
 
     m_fUnitsPerMeter = 1.0;     // set units to meters
+    m_fMasterVolume = 1.0f;
     m_uFlags = 0;
 }
 
@@ -204,6 +205,19 @@ bool NiAudioSystem::SetUnitsPerMeter(float fUnits)
 }
 
 //--------------------------------------------------------------------------------------------------
+bool NiAudioSystem::SetMasterVolume(float fVolume)
+{
+    if (fVolume < 0.0f)
+        return false;
+
+    if (fVolume > 1.0f)
+        fVolume = 1.0f;
+
+    m_fMasterVolume = fVolume;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
 // Streaming
 //--------------------------------------------------------------------------------------------------
 NiObject* NiAudioSystem::CreateObject(const char**,
@@ -271,6 +285,12 @@ NiAudioSystem* NiAudioSystem::GetAudioSystem()
 float NiAudioSystem::GetUnitsPerMeter()
 {
     return m_fUnitsPerMeter;
+}
+
+//--------------------------------------------------------------------------------------------------
+float NiAudioSystem::GetMasterVolume()
+{
+    return m_fMasterVolume;
 }
 
 //--------------------------------------------------------------------------------------------------
