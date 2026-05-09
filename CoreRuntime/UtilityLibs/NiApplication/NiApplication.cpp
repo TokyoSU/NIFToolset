@@ -143,15 +143,21 @@ bool NiApplication::Initialize(const Settings& kSettings)
     return true;
 }
 
-int NiApplication::Run()
+int NiApplication::Run(double targetFps)
 {
     if (!m_bInitialized)
         return -1;
 
     m_bQuit = false;
 
+    const double kTargetFrameSeconds = 1.0 / targetFps;
+    const Uint64 uiPerfFreq = (m_uiPerfFreq > 0) ? m_uiPerfFreq : SDL_GetPerformanceFrequency();
+    const double fPerfFreq = static_cast<double>(uiPerfFreq);
+
     while (!m_bQuit)
     {
+        const Uint64 uiFrameStart = SDL_GetPerformanceCounter();
+
         SDL_Event kEvent;
         while (SDL_PollEvent(&kEvent))
         {
@@ -165,11 +171,29 @@ int NiApplication::Run()
             break;
 
         const float fDelta = ComputeDeltaTime();
-
         if (m_pfnUpdate)
             m_pfnUpdate(this, fDelta, m_pUpdateUserData);
         if (m_pfnRender)
             m_pfnRender(this, m_pRenderUserData);
+
+        const Uint64 uiFrameEnd = SDL_GetPerformanceCounter();
+        const double fElapsedSeconds = static_cast<double>(uiFrameEnd - uiFrameStart) / fPerfFreq;
+        if (fElapsedSeconds < kTargetFrameSeconds)
+        {
+            const double fRemainingSeconds = kTargetFrameSeconds - fElapsedSeconds;
+            const Uint32 uiSleepMs = static_cast<Uint32>(fRemainingSeconds * 1000.0);
+            if (uiSleepMs > 1)
+                SDL_Delay(uiSleepMs - 1);
+
+            while (true)
+            {
+                const Uint64 uiNow = SDL_GetPerformanceCounter();
+                const double fTotalSeconds = static_cast<double>(uiNow - uiFrameStart) / fPerfFreq;
+                if (fTotalSeconds >= kTargetFrameSeconds)
+                    break;
+                SDL_Delay(0);
+            }
+        }
     }
 
     return 0;
@@ -568,9 +592,8 @@ bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
 float NiApplication::ComputeDeltaTime()
 {
     const Uint64 uiNow = SDL_GetPerformanceCounter();
-    const float fDelta = (m_uiPerfFreq > 0)
-        ? static_cast<float>(uiNow - m_uiLastTick) / static_cast<float>(m_uiPerfFreq)
-        : 0.0f;
+    float fDelta = (m_uiPerfFreq > 0) ? static_cast<float>(uiNow - m_uiLastTick) / static_cast<float>(m_uiPerfFreq) : 0.0f;
+    fDelta = std::min(fDelta, 0.1f);
     m_uiLastTick = uiNow;
     m_fLastDelta = fDelta;
 	m_fTime += fDelta;

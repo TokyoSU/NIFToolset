@@ -110,7 +110,7 @@ public:
     NiApplication& operator=(const NiApplication&) = delete;
 
     bool Initialize(const Settings& kSettings = Settings{});
-    int  Run();
+    int  Run(double targetFps = 60.0);
     void Quit();
 
     void SetInitCallback    (InitCallback     pfn, void* pUserData = nullptr);
