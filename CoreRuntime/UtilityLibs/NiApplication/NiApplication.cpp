@@ -91,21 +91,13 @@ bool NiApplication::Initialize(const Settings& kSettings)
     }
 
     m_spCamera = NiNew NiCamera();
-    const float fAspect = static_cast<float>(kSettings.m_uiWidth) /
-                          static_cast<float>(kSettings.m_uiHeight);
-    const float fSlope  = std::tan(NiDegToRad(kSettings.m_fFov) * 0.5f);
-
-    // NiCamera::SetViewFrustum silently clamps m_fNear to
-    // max(m_fFar / m_fMaxFarNearRatio, m_fMinNearPlaneDist).
-    // Probe the camera with the requested near/far so it resolves
-    // the actual near plane, then recompute half-extents from that value.
-    NiFrustum kProbe(0.0f, 0.0f, 0.0f, 0.0f,
-                     kSettings.m_fNear, kSettings.m_fFar, false);
-    m_spCamera->SetViewFrustum(kProbe);
-    const float fActualNear = m_spCamera->GetViewFrustum().m_fNear;
-    const float fTop   = fActualNear * fSlope;
+    const float fAspect = static_cast<float>(kSettings.m_uiWidth) / static_cast<float>(kSettings.m_uiHeight);
+    const float fSlope = std::tan(NiDegToRad(kSettings.m_fFov) * 0.5f);
+    float fNear = kSettings.m_fNear;
+    const float fTop = fNear * fSlope;
     const float fRight = fTop * fAspect;
-    NiFrustum kFrustum(-fRight, fRight, fTop, -fTop, fActualNear, kSettings.m_fFar, false);
+
+    NiFrustum kFrustum(-fRight, fRight, fTop, -fTop, fNear, kSettings.m_fFar, false);
     NiRect<float> kViewport(0.0f, 1.0f, 1.0f, 0.0f);
     m_spCamera->SetViewFrustum(kFrustum);
     m_spCamera->SetViewPort(kViewport);
