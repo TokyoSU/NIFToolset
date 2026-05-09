@@ -28,7 +28,7 @@ bool NiBASSAudioSource::Load()
 
     DWORD dwFlags = 0;
     if (m_bIs3D)
-        dwFlags |= BASS_SAMPLE_3D | BASS_SAMPLE_MONO;
+        dwFlags |= BASS_SAMPLE_3D | BASS_SAMPLE_MONO | BASS_SAMPLE_MUTEMAX;
     if (m_iLoopCount == LOOP_INFINITE)
         dwFlags |= BASS_SAMPLE_LOOP;
 
@@ -52,6 +52,7 @@ bool NiBASSAudioSource::Load()
 
     if (m_bIs3D)
     {
+        BASS_ChannelFlags(m_uiStream, BASS_SAMPLE_MUTEMAX, BASS_SAMPLE_MUTEMAX);
         BASS_ChannelSet3DAttributes(m_uiStream,
             BASS_3DMODE_NORMAL,
             m_fMinDistance,
@@ -97,6 +98,8 @@ bool NiBASSAudioSource::PrepareStreamedAudio(unsigned int uiSampleRate,
     DWORD dwFlags = 0;
     if (bFloatSamples)
         dwFlags |= BASS_SAMPLE_FLOAT;
+    if (m_bIs3D)
+        dwFlags |= BASS_SAMPLE_3D | BASS_SAMPLE_MONO | BASS_SAMPLE_MUTEMAX;
 
     m_uiSample = 0;
     m_uiStream = BASS_StreamCreate(uiSampleRate, uiChannelCount, dwFlags,
@@ -113,6 +116,7 @@ bool NiBASSAudioSource::PrepareStreamedAudio(unsigned int uiSampleRate,
 
     if (m_bIs3D)
     {
+        BASS_ChannelFlags(m_uiStream, BASS_SAMPLE_MUTEMAX, BASS_SAMPLE_MUTEMAX);
         BASS_ChannelSet3DAttributes(m_uiStream,
             BASS_3DMODE_NORMAL,
             m_fMinDistance,
@@ -214,9 +218,11 @@ long NiBASSAudioSource::GetPlaybackRate()
 //---------------------------------------------------------------------------
 bool NiBASSAudioSource::SetMinMaxDistance(float fMin, float fMax)
 {
-    m_fMinDistance = fMin;
-    m_fMaxDistance = fMax;
+    m_fMinDistance = fMin < 0.0f ? 0.0f : fMin;
+    m_fMaxDistance = fMax < m_fMinDistance ? m_fMinDistance : fMax;
     if (!m_uiStream) return false;
+    if (m_bIs3D)
+        BASS_ChannelFlags(m_uiStream, BASS_SAMPLE_MUTEMAX, BASS_SAMPLE_MUTEMAX);
     return BASS_ChannelSet3DAttributes(m_uiStream, m_bIs3D ? BASS_3DMODE_NORMAL : BASS_3DMODE_OFF, m_fMinDistance, m_fMaxDistance, -1, -1, -1.0f) != 0;
 }
 //---------------------------------------------------------------------------
