@@ -4,6 +4,19 @@
 #include <bass.h>
 #include <bassmix.h>
 
+namespace
+{
+    float GetEffectiveGain(float fGain, float fOcclusionFactor)
+    {
+        float fEffectiveGain = fGain * (1.0f - fOcclusionFactor);
+        if (fEffectiveGain < 0.0f)
+            return 0.0f;
+        if (fEffectiveGain > 1.0f)
+            return 1.0f;
+        return fEffectiveGain;
+    }
+}
+
 NiImplementRTTI(NiBASSAudioSource, NiAudioSource);
 
 //---------------------------------------------------------------------------
@@ -46,7 +59,8 @@ bool NiBASSAudioSource::Load()
     if (!m_uiStream)
         return false;
 
-    BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain);
+    BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL,
+        GetEffectiveGain(m_fGain, m_fOcclusionFactor));
     if (m_lPlaybackRate > 0)
         BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_FREQ, (float)m_lPlaybackRate);
 
@@ -99,7 +113,7 @@ bool NiBASSAudioSource::PrepareStreamedAudio(unsigned int uiSampleRate,
     if (bFloatSamples)
         dwFlags |= BASS_SAMPLE_FLOAT;
     if (m_bIs3D)
-        dwFlags |= BASS_SAMPLE_3D | BASS_SAMPLE_MONO | BASS_SAMPLE_MUTEMAX;
+        dwFlags |= BASS_SAMPLE_3D | BASS_SAMPLE_MONO;
 
     m_uiSample = 0;
     m_uiStream = BASS_StreamCreate(uiSampleRate, uiChannelCount, dwFlags,
@@ -110,7 +124,8 @@ bool NiBASSAudioSource::PrepareStreamedAudio(unsigned int uiSampleRate,
     SetStreamed(true);
     SetLoaded(true);
 
-    BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain);
+    BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL,
+        GetEffectiveGain(m_fGain, m_fOcclusionFactor));
     if (m_lPlaybackRate > 0)
         BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_FREQ, (float)m_lPlaybackRate);
 
@@ -190,7 +205,8 @@ bool NiBASSAudioSource::SetGain(float fGain)
 {
     m_fGain = fGain;
     if (!m_uiStream) return false;
-    return BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, fGain) != 0;
+    return BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL,
+        GetEffectiveGain(m_fGain, m_fOcclusionFactor)) != 0;
 }
 //---------------------------------------------------------------------------
 float NiBASSAudioSource::GetGain()
@@ -306,7 +322,8 @@ bool NiBASSAudioSource::SetOcclusionFactor(float fLevel)
 {
     m_fOcclusionFactor = fLevel;
     if (m_uiStream)
-        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain * (1.0f - fLevel));
+        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL,
+            GetEffectiveGain(m_fGain, m_fOcclusionFactor));
     return true;
 }
 //---------------------------------------------------------------------------
@@ -344,4 +361,21 @@ void NiBASSAudioSource::UpdateAudioData(float /*fTime*/)
     BASS_3DVECTOR orient = { m_kDirection.x, m_kDirection.y, m_kDirection.z };
     BASS_ChannelSet3DPosition(m_uiStream, &pos,
         GetCone() ? &orient : NULL, &vel);
+
+    float fVolume = GetEffectiveGain(m_fGain, m_fOcclusionFactor);
+    if (m_fMaxDistance > 0.0f)
+    {
+        NiAudioSystem* pkAudioSystem = NiAudioSystem::GetAudioSystem();
+        NiAudioListener* pkListener = pkAudioSystem ? pkAudioSystem->GetListener() : NULL;
+        if (pkListener)
+        {
+            NiPoint3 kDelta = kPos - pkListener->GetWorldTranslate();
+            float fDistanceSqr = kDelta.SqrLength();
+            float fMaxDistanceSqr = m_fMaxDistance * m_fMaxDistance;
+            if (fDistanceSqr > fMaxDistanceSqr)
+                fVolume = 0.0f;
+        }
+    }
+
+    BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, fVolume);
 }
