@@ -9,6 +9,7 @@
 #include <NiFragmentMaterial.h>
 #include <NiDevImageConverter.h>
 #include <NiParticleSDM.h>
+#include <NiPortal/NiPortalSDM.h>
 #include <NiMath.h>
 #include <NiBillboardNode.h>
 #include <NiParticleSystem.h>
@@ -129,7 +130,9 @@ bool NiApplication::Initialize(const Settings& kSettings)
         return false;
     }
 
-    NiParticleSDM::Init(); // Not init like other SDMs.
+    // Not init like other SDMs.
+    NiParticleSDM::Init();
+    NiPortalSDM::Init();
 
     m_bInitialized = true;
     return true;
@@ -508,7 +511,9 @@ void NiApplication::DestroyAll()
     }
 
     NiParticleSDM::Shutdown();
+    NiPortalSDM::Shutdown();
     NiShutdown(true);
+
     SDL_Quit();
     m_bInitialized = false;
 }
