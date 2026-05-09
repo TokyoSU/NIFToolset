@@ -35,6 +35,7 @@ target_link_libraries(NiApplication
         NiAnimation
         NiEnvironment
         NiParticle
+        NiPortal
         SDL3::SDL3
 )
 
