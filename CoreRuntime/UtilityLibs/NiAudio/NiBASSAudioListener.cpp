@@ -15,6 +15,7 @@ void NiBASSAudioListener::Startup()
     BASS_3DVECTOR front = { 0.0f,  0.0f, -1.0f };
     BASS_3DVECTOR top   = { 0.0f,  1.0f,  0.0f };
     BASS_Set3DPosition(&pos, &vel, &front, &top);
+    BASS_Apply3D();
 }
 //---------------------------------------------------------------------------
 void NiBASSAudioListener::SetDirectionVector(const NiPoint3& kDir)
@@ -42,6 +43,7 @@ void NiBASSAudioListener::UpdateAudioData()
     BASS_3DVECTOR front = { m_kDirection.x, m_kDirection.y, m_kDirection.z };
     BASS_3DVECTOR top   = { m_kUp.x, m_kUp.y, m_kUp.z };
     BASS_Set3DPosition(&pos, &vel, &front, &top);
+    BASS_Apply3D();
 }
 //---------------------------------------------------------------------------
 NiPoint3 NiBASSAudioListener::GetPosition()   { return GetWorldTranslate(); }
