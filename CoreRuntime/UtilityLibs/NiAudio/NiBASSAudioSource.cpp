@@ -46,6 +46,23 @@ bool NiBASSAudioSource::Load()
     if (!m_uiStream)
         return false;
 
+    BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain);
+    if (m_lPlaybackRate > 0)
+        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_FREQ, (float)m_lPlaybackRate);
+
+    if (m_bIs3D)
+    {
+        BASS_ChannelSet3DAttributes(m_uiStream,
+            BASS_3DMODE_NORMAL,
+            m_fMinDistance,
+            m_fMaxDistance,
+            GetCone() ? (int)m_fConeAngle1Deg : -1,
+            GetCone() ? (int)m_fConeAngle2Deg : -1,
+            GetCone() ? m_fConeGain : -1.0f);
+
+        UpdateAudioData(0.0f);
+    }
+
     SetLoaded(true);
     return true;
 }
@@ -93,6 +110,19 @@ bool NiBASSAudioSource::PrepareStreamedAudio(unsigned int uiSampleRate,
     BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain);
     if (m_lPlaybackRate > 0)
         BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_FREQ, (float)m_lPlaybackRate);
+
+    if (m_bIs3D)
+    {
+        BASS_ChannelSet3DAttributes(m_uiStream,
+            BASS_3DMODE_NORMAL,
+            m_fMinDistance,
+            m_fMaxDistance,
+            GetCone() ? (int)m_fConeAngle1Deg : -1,
+            GetCone() ? (int)m_fConeAngle2Deg : -1,
+            GetCone() ? m_fConeGain : -1.0f);
+
+        UpdateAudioData(0.0f);
+    }
 
     return true;
 }
@@ -187,9 +217,7 @@ bool NiBASSAudioSource::SetMinMaxDistance(float fMin, float fMax)
     m_fMinDistance = fMin;
     m_fMaxDistance = fMax;
     if (!m_uiStream) return false;
-    return BASS_ChannelSet3DAttributes(m_uiStream,
-        m_bIs3D ? BASS_3DMODE_NORMAL : BASS_3DMODE_OFF,
-        fMin, fMax, -1, -1, -1.0f) != 0;
+    return BASS_ChannelSet3DAttributes(m_uiStream, m_bIs3D ? BASS_3DMODE_NORMAL : BASS_3DMODE_OFF, m_fMinDistance, m_fMaxDistance, -1, -1, -1.0f) != 0;
 }
 //---------------------------------------------------------------------------
 void NiBASSAudioSource::GetMinMaxDistance(float& fMin, float& fMax)
@@ -272,8 +300,7 @@ bool NiBASSAudioSource::SetOcclusionFactor(float fLevel)
 {
     m_fOcclusionFactor = fLevel;
     if (m_uiStream)
-        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL,
-            m_fGain * (1.0f - fLevel));
+        BASS_ChannelSetAttribute(m_uiStream, BASS_ATTRIB_VOL, m_fGain * (1.0f - fLevel));
     return true;
 }
 //---------------------------------------------------------------------------
