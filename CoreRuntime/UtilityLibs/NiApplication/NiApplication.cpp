@@ -25,6 +25,86 @@
 #include <Ni3DRenderView.h>
 #include <NiAlphaSortProcessor.h>
 
+// ---------------------------------------------------------------------------
+// Internal processor: renders opaques immediately, discards transparents.
+// Used by the opaque main click so that alpha objects are deferred until
+// after the water pass.
+// ---------------------------------------------------------------------------
+class NiOpaqueOnlyProcessor : public NiAlphaSortProcessor
+{
+public:
+    NiOpaqueOnlyProcessor() = default;
+    virtual void PreRenderProcessList(const NiVisibleArray* pkInput,
+        NiVisibleArray& kOutput, void* pvExtra) override
+    {
+        if (!pkInput) return;
+        NiRenderer* pkRenderer = NiRenderer::GetRenderer();
+        EE_ASSERT(pkRenderer);
+        const unsigned int uiCount = pkInput->GetCount();
+        for (unsigned int ui = 0; ui < uiCount; ui++)
+        {
+            NiRenderObject& kMesh = pkInput->GetAt(ui);
+            if (!IsTransparent(kMesh))
+                kMesh.RenderImmediate(pkRenderer);
+            // transparents are intentionally dropped here
+        }
+        // kOutput stays empty — the click renders nothing extra
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Internal processor: sorts and renders only transparent objects.
+// Used by the deferred alpha click drawn after the water pass.
+// ---------------------------------------------------------------------------
+class NiAlphaOnlyProcessor : public NiAlphaSortProcessor
+{
+public:
+    NiAlphaOnlyProcessor() = default;
+    virtual void PreRenderProcessList(const NiVisibleArray* pkInput,
+        NiVisibleArray& kOutput, void* pvExtra) override
+    {
+        if (!pkInput) return;
+        NiRenderer* pkRenderer = NiRenderer::GetRenderer();
+        EE_ASSERT(pkRenderer);
+
+        NiPoint3 kWorldLoc, kWorldDir, kWorldUp, kWorldRight;
+        NiFrustum kFrustum;
+        NiRect<float> kViewport;
+        pkRenderer->GetCameraData(kWorldLoc, kWorldDir, kWorldUp, kWorldRight, kFrustum, kViewport);
+
+        const unsigned int uiCount = pkInput->GetCount();
+        if (m_uiAllocatedDepths < uiCount)
+        {
+            NiFree(m_pfDepths);
+            m_pfDepths = NiAlloc(float, uiCount);
+            m_uiAllocatedDepths = uiCount;
+        }
+
+        unsigned int uiDepthIndex = 0;
+        for (unsigned int ui = 0; ui < uiCount; ui++)
+        {
+            NiRenderObject& kMesh = pkInput->GetAt(ui);
+            if (IsTransparent(kMesh))
+            {
+                m_pfDepths[uiDepthIndex++] = ComputeDepth(kMesh, kWorldLoc, kWorldDir);
+                kOutput.Add(kMesh);
+            }
+            // opaques are skipped — already rendered by the opaque click
+        }
+
+        SortObjectsByDepth(kOutput, 0, (int)kOutput.GetCount() - 1);
+
+        // Render sorted transparents back-to-front.
+        const unsigned int uiGeomCount = kOutput.GetCount();
+        for (unsigned int ui = uiGeomCount; ui > 0; ui--)
+        {
+            NiAVObject* pkAVObj = &kOutput.GetAt(ui - 1);
+            reinterpret_cast<NiRenderObject*>(pkAVObj)->RenderImmediate(pkRenderer);
+        }
+        kOutput.RemoveAll();
+    }
+};
+
 NiApplication::NiApplication() : m_kVisibleSet(1024, 1024) {
 }
 
@@ -266,32 +346,41 @@ void NiApplication::SetShadowsActive(bool bActive)
 //--------------------------------------------------------------------------------------------------
 void NiApplication::CreateRenderPipeline()
 {
-    // --- Main click: renders the primary scene (terrain, statics, NPCs). ---
-    // No scene is attached here; the caller populates scenes via the render
-    // view returned by GetMainRenderView (or directly through BeginScene).
-    // A Ni3DRenderView with no scenes attached simply produces no geometry.
-    NiPointer<Ni3DRenderView> spMainView = NiNew Ni3DRenderView(m_spCamera, m_spCuller);
+    // Shared view for both main clicks — culling only happens once per frame
+    // because Ni3DRenderView caches PV geometry by frame ID.
+    m_spMainView = NiNew Ni3DRenderView(m_spCamera, m_spCuller);
 
-    m_spMainClick = NiNew NiViewRenderClick();
-    m_spMainClick->AppendRenderView(spMainView);
-    m_spMainClick->SetClearAllBuffers(false);  // caller opens + clears the RTG via BeginScene
-    m_spMainClick->SetProcessor(NiNew NiAlphaSortProcessor());
+    // --- Opaque click: renders non-transparent geometry, drops transparents ---
+    m_spMainOpaqueClick = NiNew NiViewRenderClick();
+    m_spMainOpaqueClick->AppendRenderView(m_spMainView);
+    m_spMainOpaqueClick->SetClearAllBuffers(false);
+    m_spMainOpaqueClick->SetProcessor(NiNew NiOpaqueOnlyProcessor());
 
-    // --- Water click: renders water/lava on top, reusing the depth buffer. ---
+    // --- Alpha click: sorts and renders only transparent geometry -----------
+    // Shares the same view so it reuses the PV geometry from the opaque click.
+    m_spMainAlphaClick = NiNew NiViewRenderClick();
+    m_spMainAlphaClick->AppendRenderView(m_spMainView);
+    m_spMainAlphaClick->SetClearAllBuffers(false);
+    m_spMainAlphaClick->SetProcessor(NiNew NiAlphaOnlyProcessor());
+
+    // --- Water click: renders water/lava on top, reusing the depth buffer ---
     m_spWaterView = NiNew Ni3DRenderView(m_spCamera, m_spCuller);
 
     m_spWaterClick = NiNew NiViewRenderClick();
     m_spWaterClick->AppendRenderView(m_spWaterView);
-    m_spWaterClick->SetClearColorBuffers(false);   // keep colour from main pass
-    m_spWaterClick->SetClearDepthBuffer(false);    // depth-test water against main pass
+    m_spWaterClick->SetClearColorBuffers(false);
+    m_spWaterClick->SetClearDepthBuffer(false);
     m_spWaterClick->SetClearStencilBuffer(false);
     m_spWaterClick->SetProcessor(NiNew NiAlphaSortProcessor());
-    m_spWaterClick->SetActive(false);              // inactive until a scene is set
+    m_spWaterClick->SetActive(false);
 
-    // --- Render step: ordered sequence of clicks. ---
+    // The render step is kept for reference/advanced use but
+    // DrawMainOpaquePass / DrawWaterPass / DrawMainAlphaPass are
+    // driven manually by the caller in the correct order.
     m_spRenderStep = NiNew NiDefaultClickRenderStep();
-    m_spRenderStep->AppendRenderClick(m_spMainClick);
+    m_spRenderStep->AppendRenderClick(m_spMainOpaqueClick);
     m_spRenderStep->AppendRenderClick(m_spWaterClick);
+    m_spRenderStep->AppendRenderClick(m_spMainAlphaClick);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -323,20 +412,36 @@ void NiApplication::ClearWaterScene()
 }
 
 //--------------------------------------------------------------------------------------------------
+static void ExecuteClick(NiViewRenderClick* pkClick, NiRenderer* pkRenderer)
+{
+    NiRenderTargetGroup* pkCurrent = const_cast<NiRenderTargetGroup*>(
+        pkRenderer->GetCurrentRenderTargetGroup());
+    pkClick->SetRenderTargetGroup(pkCurrent);
+    pkClick->Render(pkRenderer->GetFrameID());
+    pkClick->SetRenderTargetGroup(nullptr);
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiApplication::DrawMainOpaquePass()
+{
+    if (!m_spMainOpaqueClick || !m_spRenderer)
+        return;
+    ExecuteClick(m_spMainOpaqueClick, m_spRenderer);
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiApplication::DrawMainAlphaPass()
+{
+    if (!m_spMainAlphaClick || !m_spRenderer)
+        return;
+    ExecuteClick(m_spMainAlphaClick, m_spRenderer);
+}
+
+//--------------------------------------------------------------------------------------------------
 void NiApplication::DrawMainPass()
 {
-    if (!m_spMainClick || !m_spRenderer)
-        return;
-
-    // Route to the currently open RTG so the click stays in the
-    // "same RTG" branch (ClearBuffer only, no Begin/End).
-    NiRenderTargetGroup* pkCurrent = const_cast<NiRenderTargetGroup*>(
-        m_spRenderer->GetCurrentRenderTargetGroup());
-    m_spMainClick->SetRenderTargetGroup(pkCurrent);
-
-    m_spMainClick->Render(m_spRenderer->GetFrameID());
-
-    m_spMainClick->SetRenderTargetGroup(nullptr);
+    DrawMainOpaquePass();
+    DrawMainAlphaPass();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -363,10 +468,7 @@ void NiApplication::DrawWaterPass()
 //--------------------------------------------------------------------------------------------------
 Ni3DRenderView* NiApplication::GetMainRenderView() const
 {
-    if (!m_spMainClick)
-        return nullptr;
-    NiRenderView* pkView = m_spMainClick->GetRenderViews().GetHead();
-    return pkView ? NiDynamicCast(Ni3DRenderView, pkView) : nullptr;
+    return m_spMainView;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -632,10 +734,12 @@ void NiApplication::DestroyAll()
     // Release the render pipeline before the renderer and NiShutdown,
     // so that render-click and render-view destructors run while the
     // Ni allocator and renderer are still alive.
-    m_spWaterView  = nullptr;
-    m_spWaterClick = nullptr;
-    m_spMainClick  = nullptr;
-    m_spRenderStep = nullptr;
+    m_spWaterView        = nullptr;
+    m_spWaterClick       = nullptr;
+    m_spMainAlphaClick   = nullptr;
+    m_spMainOpaqueClick  = nullptr;
+    m_spMainView         = nullptr;
+    m_spRenderStep       = nullptr;
 
     m_spRenderer   = nullptr;
 

@@ -148,16 +148,24 @@ public:
     // Removes the water scene root and deactivates the water render click.
     void ClearWaterScene();
 
-    // Returns the Ni3DRenderView used by the main render click so that
+    // Returns the Ni3DRenderView used by the main render clicks so that
     // CScene (or any other owner) can attach / detach its scene root.
     Ni3DRenderView*            GetMainRenderView()  const;
 
     // Returns the render step driving the main + water passes.
     NiDefaultClickRenderStep*  GetRenderStep()      const;
 
-    // Executes the main render click (opaque geometry, alpha-sorted
-    // transparents) against the currently open render target group.
+    // Draws only opaque main-scene geometry.
     // Call this after BeginScene() and before DrawWaterPass().
+    void DrawMainOpaquePass();
+
+    // Draws only the alpha-sorted (transparent) main-scene geometry.
+    // Call this AFTER DrawWaterPass() so that particles/foliage etc.
+    // composite correctly on top of water.
+    void DrawMainAlphaPass();
+
+    // Convenience: draws opaques + alpha in one call (no water pass).
+    // Equivalent to DrawMainOpaquePass() + DrawMainAlphaPass().
     void DrawMainPass();
 
     // Executes the water render click against the currently open render
@@ -202,7 +210,9 @@ private:
 	NiPointer<NiAlphaAccumulator>          m_spAlphaAccum;
 	NiPointer<NiMeshCullingProcess>        m_spCuller;
 	NiPointer<NiDefaultClickRenderStep>    m_spRenderStep;
-	NiPointer<NiViewRenderClick>           m_spMainClick;
+	NiPointer<Ni3DRenderView>              m_spMainView;       // shared by both main clicks
+	NiPointer<NiViewRenderClick>           m_spMainOpaqueClick;
+	NiPointer<NiViewRenderClick>           m_spMainAlphaClick;
 	NiPointer<NiViewRenderClick>           m_spWaterClick;
 	NiPointer<Ni3DRenderView>              m_spWaterView;
 	NiVisibleArray                         m_kVisibleSet;
