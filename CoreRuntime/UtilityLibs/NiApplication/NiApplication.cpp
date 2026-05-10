@@ -748,11 +748,11 @@ bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
     {
         m_uiWidth = static_cast<unsigned int>(kEvent.window.data1);
         m_uiHeight = static_cast<unsigned int>(kEvent.window.data2);
-#if defined(NI_RENDERER_DX10)
+
         // Resize the renderer's swap chain / back buffer with the new window size.
         // This is necessary for proper rendering after a window resize, especially in fullscreen mode where the swap chain is tied to the window size.
-        if (m_spRenderer) {
-            auto* pRenderer = NiDynamicCast(NiD3D10Renderer, m_spRenderer);
+        auto* pRenderer = NiDynamicCast(NiD3D10Renderer, m_spRenderer);
+        if (pRenderer) {
             pRenderer->ResizeBuffers(m_uiWidth, m_uiHeight, m_hWnd);
 
             D3D10_VIEWPORT kViewport = {};
@@ -764,11 +764,11 @@ bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
             kViewport.MaxDepth = 1.0f;
             pRenderer->GetD3D10Device()->RSSetViewports(1, &kViewport);
         }
-#elif defined(NI_RENDERER_DX11)
+
         // Resize the renderer's swap chain / back buffer with the new window size.
         // This is necessary for proper rendering after a window resize, especially in fullscreen mode where the swap chain is tied to the window size.
-        if (m_spRenderer) {
-            auto* pD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, m_spRenderer);
+        auto* pD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, m_spRenderer);
+        if (pD3D11Renderer) {
             pD3D11Renderer->ResizeBuffers(m_uiWidth, m_uiHeight, m_hWnd);
 
             D3D11_VIEWPORT kViewport = {};
@@ -780,7 +780,7 @@ bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
             kViewport.MaxDepth = 1.0f;
             pD3D11Renderer->GetCurrentD3D11DeviceContext()->RSSetViewports(1, &kViewport);
         }
-#endif
+
         if (m_pfnResize)
 			m_pfnResize(this, m_uiWidth, m_uiHeight, m_pResizeUserData);
     }
