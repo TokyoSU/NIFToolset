@@ -155,6 +155,11 @@ public:
     // Returns the render step driving the main + water passes.
     NiDefaultClickRenderStep*  GetRenderStep()      const;
 
+    // Executes the main render click (opaque geometry, alpha-sorted
+    // transparents) against the currently open render target group.
+    // Call this after BeginScene() and before DrawWaterPass().
+    void DrawMainPass();
+
     // Executes the water render click against the currently open render
     // target group.  Call this AFTER your opaque scene draw (RenderState)
     // so that the water pass depth-tests against written depth values.

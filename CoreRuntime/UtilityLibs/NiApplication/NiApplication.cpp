@@ -323,6 +323,23 @@ void NiApplication::ClearWaterScene()
 }
 
 //--------------------------------------------------------------------------------------------------
+void NiApplication::DrawMainPass()
+{
+    if (!m_spMainClick || !m_spRenderer)
+        return;
+
+    // Route to the currently open RTG so the click stays in the
+    // "same RTG" branch (ClearBuffer only, no Begin/End).
+    NiRenderTargetGroup* pkCurrent = const_cast<NiRenderTargetGroup*>(
+        m_spRenderer->GetCurrentRenderTargetGroup());
+    m_spMainClick->SetRenderTargetGroup(pkCurrent);
+
+    m_spMainClick->Render(m_spRenderer->GetFrameID());
+
+    m_spMainClick->SetRenderTargetGroup(nullptr);
+}
+
+//--------------------------------------------------------------------------------------------------
 void NiApplication::DrawWaterPass()
 {
     if (!m_spWaterClick || !m_spWaterClick->GetActive())
