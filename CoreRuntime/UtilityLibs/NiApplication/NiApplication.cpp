@@ -340,40 +340,44 @@ NiDefaultClickRenderStep* NiApplication::GetRenderStep() const
 //--------------------------------------------------------------------------------------------------
 bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRenderer::ClearFlags clearFlags)
 {
-    if (m_spRenderer) {
-        if (pRenderTargetGroup)
-            m_spRenderer->BeginUsingRenderTargetGroup(pRenderTargetGroup, clearFlags);
-        else
-            m_spRenderer->BeginUsingDefaultRenderTargetGroup(clearFlags);
+	if (!m_spRenderer)
+		return false;
 
-        // Be sure to call for shadow render clicks to be generated.
-        if (m_bShadowsEnabled && m_spCuller)
-        {
-            NiShadowManager::SetSceneCamera(m_spCamera);
-            const NiTPointerList<NiRenderClick*>& kClicks = NiShadowManager::GenerateRenderClicks();
-            const unsigned int uiFrameID = m_spRenderer->GetFrameID();
-            NiTListIterator kIter = kClicks.GetHeadPos();
-            while (kIter)
-            {
-                NiRenderClick* pkClick = kClicks.GetNext(kIter);
-                if (pkClick && pkClick->GetActive())
-                    pkClick->Render(uiFrameID);
-            }
-        }
+	// If the caller supplied a custom render target group, route the main
+	// click to it. nullptr means "use the default", which is also the
+	// NiRenderClick default (m_spRenderTargetGroup == nullptr).
+	if (m_spMainClick)
+		m_spMainClick->SetRenderTargetGroup(pRenderTargetGroup);
 
-        // Execute main + water render passes.
-        if (m_spRenderStep)
-            m_spRenderStep->Render();
-
-        return true;
+	// Shadow passes run before the main scene and open/close their own
+	// render target groups internally.
+	if (m_bShadowsEnabled && m_spCuller)
+	{
+		NiShadowManager::SetSceneCamera(m_spCamera);
+		const NiTPointerList<NiRenderClick*>& kClicks = NiShadowManager::GenerateRenderClicks();
+		const unsigned int uiFrameID = m_spRenderer->GetFrameID();
+		NiTListIterator kIter = kClicks.GetHeadPos();
+		while (kIter)
+		{
+			NiRenderClick* pkClick = kClicks.GetNext(kIter);
+			if (pkClick && pkClick->GetActive())
+				pkClick->Render(uiFrameID);
+		}
 	}
-    return false;
+
+	// The render step drives NiRenderClick::Render() for each active click.
+	// Each click manages BeginUsingRenderTargetGroup / EndUsingRenderTargetGroup
+	// internally, so we must NOT call BeginUsingRenderTargetGroup here.
+	if (m_spRenderStep)
+		m_spRenderStep->Render();
+
+	return true;
 }
 
 void NiApplication::EndScene()
 {
-    if (m_spRenderer)
-        m_spRenderer->EndUsingRenderTargetGroup();
+    // The render step's clicks manage the render target group lifecycle.
+    // Nothing to do here; kept for API symmetry.
 }
 
 void NiApplication::BeginFrame()
