@@ -586,6 +586,15 @@ void NiApplication::DestroyAll()
 
     m_spCuller     = nullptr;
     m_spAlphaAccum = nullptr;
+
+    // Release the render pipeline before the renderer and NiShutdown,
+    // so that render-click and render-view destructors run while the
+    // Ni allocator and renderer are still alive.
+    m_spWaterView  = nullptr;
+    m_spWaterClick = nullptr;
+    m_spMainClick  = nullptr;
+    m_spRenderStep = nullptr;
+
     m_spRenderer   = nullptr;
 
     if (m_pWindow)
