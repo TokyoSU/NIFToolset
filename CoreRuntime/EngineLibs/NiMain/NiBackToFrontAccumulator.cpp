@@ -103,11 +103,14 @@ void NiBackToFrontAccumulator::Sort()
     NiTListIterator kPos = m_kItems.GetHeadPos();
 
     NiPoint3 kViewDir = m_pkCamera->GetWorldDirection();
+    NiPoint3 kCameraLoc = m_pkCamera->GetWorldLocation();
 
     for (int i = 0; i < m_iNumItems; i++)
     {
         m_ppkItems[i] = m_kItems.GetNext(kPos);
-        m_pfDepths[i] = m_ppkItems[i]->GetWorldBound().GetCenter() * kViewDir;
+        m_pfDepths[i] =
+            (m_ppkItems[i]->GetWorldBound().GetCenter() - kCameraLoc) *
+            kViewDir;
     }
 
     SortObjectsByDepth(0, m_iNumItems - 1);

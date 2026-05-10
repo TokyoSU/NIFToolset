@@ -127,7 +127,8 @@ void NiShaderSortProcessor::PreRenderProcessList(
             kOutput.Add(kMesh);
 
             // Compute and store depth from camera.
-            m_pfDepths[uiDepthIndex++] = ComputeDepth(kMesh, kWorldDir);
+            m_pfDepths[uiDepthIndex++] =
+                ComputeDepth(kMesh, kWorldLoc, kWorldDir);
             continue;
         }
         else if (!kMesh.GetSortObject())

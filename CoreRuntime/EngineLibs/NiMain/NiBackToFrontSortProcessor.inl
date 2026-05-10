@@ -33,10 +33,11 @@ inline bool NiBackToFrontSortProcessor::GetSortByClosestPoint() const
 
 //--------------------------------------------------------------------------------------------------
 inline float NiBackToFrontSortProcessor::ComputeDepth(
-    const NiRenderObject& kGeometry, const NiPoint3& kDir)
+    const NiRenderObject& kGeometry, const NiPoint3& kCameraLoc,
+    const NiPoint3& kDir)
 {
     const NiBound& kWorldBound = kGeometry.GetWorldBound();
-    float fDepth = kWorldBound.GetCenter() * kDir;
+    float fDepth = (kWorldBound.GetCenter() - kCameraLoc) * kDir;
     if (m_bSortByClosestPoint)
     {
         fDepth -= kWorldBound.GetRadius();

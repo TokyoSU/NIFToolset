@@ -38,7 +38,8 @@ public:
     virtual void ReleaseCaches();
 protected:
     // Computes the depth of a geometry object along a particular view vector.
-    inline float ComputeDepth(const NiRenderObject& kGeometry, const NiPoint3& kDir);
+    inline float ComputeDepth(const NiRenderObject& kGeometry,
+        const NiPoint3& kCameraLoc, const NiPoint3& kDir);
 
     // Sorts objects in the specified array using the depth values stored in
     // m_kObjectDepths. Requires m_kObjectDepths to be properly populated.

@@ -62,7 +62,8 @@ void NiAlphaSortProcessor::PreRenderProcessList(const NiVisibleArray* pkInput,
             kOutput.Add(kMesh);
 
             // Compute and store depth from camera.
-            m_pfDepths[uiDepthIndex++] = ComputeDepth(kMesh, kWorldDir);
+            m_pfDepths[uiDepthIndex++] =
+                ComputeDepth(kMesh, kWorldLoc, kWorldDir);
         }
         else
         {

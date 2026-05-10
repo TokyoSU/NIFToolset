@@ -92,15 +92,16 @@ void NiAlphaAccumulator::Sort()
     NiTListIterator pkPos = m_kItems.GetHeadPos();
 
     NiPoint3 kViewDir = m_pkCamera->GetWorldDirection();
+    NiPoint3 kCameraLoc = m_pkCamera->GetWorldLocation();
 
     if (m_bSortByClosestPoint)
     {
         for (int i = 0; i < m_iNumItems; i++)
         {
             m_ppkItems[i] = m_kItems.GetNext(pkPos);
-            m_pfDepths[i] =
-                m_ppkItems[i]->GetWorldBound().GetCenter() * kViewDir -
-                m_ppkItems[i]->GetWorldBound().GetRadius();
+            const NiBound& kBound = m_ppkItems[i]->GetWorldBound();
+            m_pfDepths[i] = (kBound.GetCenter() - kCameraLoc) * kViewDir -
+                kBound.GetRadius();
         }
     }
     else
@@ -108,8 +109,8 @@ void NiAlphaAccumulator::Sort()
         for (int i = 0; i < m_iNumItems; i++)
         {
             m_ppkItems[i] = m_kItems.GetNext(pkPos);
-            m_pfDepths[i] =
-                m_ppkItems[i]->GetWorldBound().GetCenter() * kViewDir;
+            const NiBound& kBound = m_ppkItems[i]->GetWorldBound();
+            m_pfDepths[i] = (kBound.GetCenter() - kCameraLoc) * kViewDir;
         }
     }
 

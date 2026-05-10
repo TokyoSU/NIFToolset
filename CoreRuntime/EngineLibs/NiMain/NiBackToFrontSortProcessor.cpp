@@ -66,7 +66,7 @@ void NiBackToFrontSortProcessor::PreRenderProcessList(
         kOutput.Add(kGeometry);
 
         // Compute and store depth from camera.
-        m_pfDepths[ui] = ComputeDepth(kGeometry, kWorldDir);
+        m_pfDepths[ui] = ComputeDepth(kGeometry, kWorldLoc, kWorldDir);
     }
 
     // Sort output array by depth.
