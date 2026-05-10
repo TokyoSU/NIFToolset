@@ -14,6 +14,10 @@
 #include <NiMeshCullingProcess.h>
 #include <NiCullingProcess.h>
 #include <NiCloningProcess.h>
+#include <NiDefaultClickRenderStep.h>
+#include <NiViewRenderClick.h>
+#include <Ni3DRenderView.h>
+#include <NiAlphaSortProcessor.h>
 #include <efd/SystemDesc.h>
 #include <NiDX9Renderer.h>
 #include <NiD3D10Renderer.h>
@@ -137,6 +141,20 @@ public:
 #endif
     void SetShadowsActive(bool bActive);
 
+    // Assigns pkScene as the water/lava scene root for the dedicated water
+    // render pass.  Pass nullptr to disable the pass without releasing state.
+    void SetWaterScene(NiAVObject* pkScene);
+
+    // Removes the water scene root and deactivates the water render click.
+    void ClearWaterScene();
+
+    // Returns the Ni3DRenderView used by the main render click so that
+    // CScene (or any other owner) can attach / detach its scene root.
+    Ni3DRenderView*            GetMainRenderView()  const;
+
+    // Returns the render step driving the main + water passes.
+    NiDefaultClickRenderStep*  GetRenderStep()      const;
+
     /// <summary>
     /// Begins a rendering scene with optional render target and clear flags.
 	/// NOTE: This must be called before any rendering is done for the scene, and EndScene() must be called after all rendering is done for the scene, and before EndFrame() is called.
@@ -162,6 +180,7 @@ private:
     bool  CreateSDLWindow(const Settings& kSettings);
     bool  CreateRenderer (const Settings& kSettings);
     void  ApplyShaderDefaults(const Settings& kSettings);
+    void  CreateRenderPipeline();
     void  DestroyAll();
     bool  DispatchEvent(const SDL_Event& kEvent);
     float ComputeDeltaTime();
@@ -169,9 +188,13 @@ private:
     SDL_Window*                     m_pWindow = nullptr;
     NiPointer<NiRenderer>           m_spRenderer;
     NiPointer<NiCamera>             m_spCamera;
-    NiPointer<NiAlphaAccumulator>   m_spAlphaAccum;
-    NiPointer<NiMeshCullingProcess> m_spCuller;
-	NiVisibleArray                  m_kVisibleSet;
+	NiPointer<NiAlphaAccumulator>          m_spAlphaAccum;
+	NiPointer<NiMeshCullingProcess>        m_spCuller;
+	NiPointer<NiDefaultClickRenderStep>    m_spRenderStep;
+	NiPointer<NiViewRenderClick>           m_spMainClick;
+	NiPointer<NiViewRenderClick>           m_spWaterClick;
+	NiPointer<Ni3DRenderView>              m_spWaterView;
+	NiVisibleArray                         m_kVisibleSet;
 #if WIN32
 	HWND m_hWnd = nullptr;
 #else

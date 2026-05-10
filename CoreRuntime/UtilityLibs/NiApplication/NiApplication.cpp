@@ -20,6 +20,10 @@
 #include <NiD3D10Renderer.h>
 #include <ecrD3D11Renderer/D3D11Renderer.h>
 #include <NiNode.h>
+#include <NiDefaultClickRenderStep.h>
+#include <NiViewRenderClick.h>
+#include <Ni3DRenderView.h>
+#include <NiAlphaSortProcessor.h>
 
 NiApplication::NiApplication() : m_kVisibleSet(1024, 1024) {
 }
@@ -120,6 +124,8 @@ bool NiApplication::Initialize(const Settings& kSettings)
         NiShadowManager::SetActiveShadowClickGenerator("NiDefaultShadowClickGenerator");
         m_bShadowsEnabled = true;
     }
+
+    CreateRenderPipeline();
 
     m_uiPerfFreq = SDL_GetPerformanceFrequency();
     m_uiLastTick = SDL_GetPerformanceCounter();
@@ -257,6 +263,81 @@ void NiApplication::SetShadowsActive(bool bActive)
     m_bShadowsEnabled = bActive;
 }
 
+//--------------------------------------------------------------------------------------------------
+void NiApplication::CreateRenderPipeline()
+{
+    // --- Main click: renders the primary scene (terrain, statics, NPCs). ---
+    // No scene is attached here; the caller populates scenes via the render
+    // view returned by GetMainRenderView (or directly through BeginScene).
+    // A Ni3DRenderView with no scenes attached simply produces no geometry.
+    NiPointer<Ni3DRenderView> spMainView = NiNew Ni3DRenderView(m_spCamera, m_spCuller);
+
+    m_spMainClick = NiNew NiViewRenderClick();
+    m_spMainClick->AppendRenderView(spMainView);
+    m_spMainClick->SetClearAllBuffers(true);
+    m_spMainClick->SetProcessor(NiNew NiAlphaSortProcessor());
+
+    // --- Water click: renders water/lava on top, reusing the depth buffer. ---
+    m_spWaterView = NiNew Ni3DRenderView(m_spCamera, m_spCuller);
+
+    m_spWaterClick = NiNew NiViewRenderClick();
+    m_spWaterClick->AppendRenderView(m_spWaterView);
+    m_spWaterClick->SetClearColorBuffers(false);   // keep colour from main pass
+    m_spWaterClick->SetClearDepthBuffer(false);    // depth-test water against main pass
+    m_spWaterClick->SetClearStencilBuffer(false);
+    m_spWaterClick->SetProcessor(NiNew NiAlphaSortProcessor());
+    m_spWaterClick->SetActive(false);              // inactive until a scene is set
+
+    // --- Render step: ordered sequence of clicks. ---
+    m_spRenderStep = NiNew NiDefaultClickRenderStep();
+    m_spRenderStep->AppendRenderClick(m_spMainClick);
+    m_spRenderStep->AppendRenderClick(m_spWaterClick);
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiApplication::SetWaterScene(NiAVObject* pkScene)
+{
+    if (!m_spWaterView || !m_spWaterClick)
+        return;
+
+    m_spWaterView->RemoveAllScenes();
+    if (pkScene)
+    {
+        m_spWaterView->AppendScene(pkScene);
+        m_spWaterClick->SetActive(true);
+    }
+    else
+    {
+        m_spWaterClick->SetActive(false);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiApplication::ClearWaterScene()
+{
+    if (!m_spWaterView || !m_spWaterClick)
+        return;
+
+    m_spWaterView->RemoveAllScenes();
+    m_spWaterClick->SetActive(false);
+}
+
+//--------------------------------------------------------------------------------------------------
+Ni3DRenderView* NiApplication::GetMainRenderView() const
+{
+    if (!m_spMainClick)
+        return nullptr;
+    NiRenderView* pkView = m_spMainClick->GetRenderViews().GetHead();
+    return pkView ? NiDynamicCast(Ni3DRenderView, pkView) : nullptr;
+}
+
+//--------------------------------------------------------------------------------------------------
+NiDefaultClickRenderStep* NiApplication::GetRenderStep() const
+{
+    return m_spRenderStep;
+}
+
+//--------------------------------------------------------------------------------------------------
 bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRenderer::ClearFlags clearFlags)
 {
     if (m_spRenderer) {
@@ -279,6 +360,10 @@ bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRender
                     pkClick->Render(uiFrameID);
             }
         }
+
+        // Execute main + water render passes.
+        if (m_spRenderStep)
+            m_spRenderStep->Render();
 
         return true;
 	}
