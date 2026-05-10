@@ -274,7 +274,7 @@ void NiApplication::CreateRenderPipeline()
 
     m_spMainClick = NiNew NiViewRenderClick();
     m_spMainClick->AppendRenderView(spMainView);
-    m_spMainClick->SetClearAllBuffers(true);
+    m_spMainClick->SetClearAllBuffers(false);  // caller opens + clears the RTG via BeginScene
     m_spMainClick->SetProcessor(NiNew NiAlphaSortProcessor());
 
     // --- Water click: renders water/lava on top, reusing the depth buffer. ---
@@ -323,6 +323,27 @@ void NiApplication::ClearWaterScene()
 }
 
 //--------------------------------------------------------------------------------------------------
+void NiApplication::DrawWaterPass()
+{
+    if (!m_spWaterClick || !m_spWaterClick->GetActive())
+        return;
+    if (!m_spRenderer)
+        return;
+
+    // The water click must render into the same RTG that is currently open
+    // so that it depth-tests against what was already drawn by RenderState().
+    // We route it to the current open group so NiRenderClick::Render() stays
+    // in the "same RTG" branch (ClearBuffer only, no Begin/End).
+    NiRenderTargetGroup* pkCurrent = const_cast<NiRenderTargetGroup*>(m_spRenderer->GetCurrentRenderTargetGroup());
+    m_spWaterClick->SetRenderTargetGroup(pkCurrent);
+
+    m_spWaterClick->Render(m_spRenderer->GetFrameID());
+
+    // Reset to nullptr so the click reverts to the default RTG next call.
+    m_spWaterClick->SetRenderTargetGroup(nullptr);
+}
+
+//--------------------------------------------------------------------------------------------------
 Ni3DRenderView* NiApplication::GetMainRenderView() const
 {
     if (!m_spMainClick)
@@ -343,14 +364,19 @@ bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRender
 	if (!m_spRenderer)
 		return false;
 
-	// If the caller supplied a custom render target group, route the main
-	// click to it. nullptr means "use the default", which is also the
-	// NiRenderClick default (m_spRenderTargetGroup == nullptr).
-	if (m_spMainClick)
-		m_spMainClick->SetRenderTargetGroup(pRenderTargetGroup);
+	// Open the render target group so that subsequent direct rendering calls
+	// (e.g. NiDrawScene, NiAlphaAccumulator) have a valid target bound.
+	// If the caller already opened it (non-null current group) we skip to
+	// avoid a double-open.
+	if (!m_spRenderer->GetCurrentRenderTargetGroup())
+	{
+		if (pRenderTargetGroup)
+			m_spRenderer->BeginUsingRenderTargetGroup(pRenderTargetGroup, clearFlags);
+		else
+			m_spRenderer->BeginUsingDefaultRenderTargetGroup(clearFlags);
+	}
 
-	// Shadow passes run before the main scene and open/close their own
-	// render target groups internally.
+	// Shadow passes run before the main scene and manage their own RTG.
 	if (m_bShadowsEnabled && m_spCuller)
 	{
 		NiShadowManager::SetSceneCamera(m_spCamera);
@@ -365,19 +391,14 @@ bool NiApplication::BeginScene(NiRenderTargetGroup* pRenderTargetGroup, NiRender
 		}
 	}
 
-	// The render step drives NiRenderClick::Render() for each active click.
-	// Each click manages BeginUsingRenderTargetGroup / EndUsingRenderTargetGroup
-	// internally, so we must NOT call BeginUsingRenderTargetGroup here.
-	if (m_spRenderStep)
-		m_spRenderStep->Render();
-
 	return true;
 }
 
 void NiApplication::EndScene()
 {
-    // The render step's clicks manage the render target group lifecycle.
-    // Nothing to do here; kept for API symmetry.
+    // Close the render target group that BeginScene conditionally opened.
+    if (m_spRenderer && m_spRenderer->GetCurrentRenderTargetGroup())
+        m_spRenderer->EndUsingRenderTargetGroup();
 }
 
 void NiApplication::BeginFrame()
