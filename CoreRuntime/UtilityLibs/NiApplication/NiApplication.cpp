@@ -384,38 +384,9 @@ void NiApplication::CreateRenderPipeline()
 }
 
 //--------------------------------------------------------------------------------------------------
-void NiApplication::SetWaterScene(NiAVObject* pkScene)
-{
-    if (!m_spWaterView || !m_spWaterClick)
-        return;
-
-    m_spWaterView->RemoveAllScenes();
-    if (pkScene)
-    {
-        m_spWaterView->AppendScene(pkScene);
-        m_spWaterClick->SetActive(true);
-    }
-    else
-    {
-        m_spWaterClick->SetActive(false);
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-void NiApplication::ClearWaterScene()
-{
-    if (!m_spWaterView || !m_spWaterClick)
-        return;
-
-    m_spWaterView->RemoveAllScenes();
-    m_spWaterClick->SetActive(false);
-}
-
-//--------------------------------------------------------------------------------------------------
 static void ExecuteClick(NiViewRenderClick* pkClick, NiRenderer* pkRenderer)
 {
-    NiRenderTargetGroup* pkCurrent = const_cast<NiRenderTargetGroup*>(
-        pkRenderer->GetCurrentRenderTargetGroup());
+    NiRenderTargetGroup* pkCurrent = const_cast<NiRenderTargetGroup*>(pkRenderer->GetCurrentRenderTargetGroup());
     pkClick->SetRenderTargetGroup(pkCurrent);
     pkClick->Render(pkRenderer->GetFrameID());
     pkClick->SetRenderTargetGroup(nullptr);
@@ -426,6 +397,7 @@ void NiApplication::DrawMainOpaquePass()
 {
     if (!m_spMainOpaqueClick || !m_spRenderer)
         return;
+
     ExecuteClick(m_spMainOpaqueClick, m_spRenderer);
 }
 
@@ -434,6 +406,7 @@ void NiApplication::DrawMainAlphaPass()
 {
     if (!m_spMainAlphaClick || !m_spRenderer)
         return;
+
     ExecuteClick(m_spMainAlphaClick, m_spRenderer);
 }
 
@@ -447,28 +420,27 @@ void NiApplication::DrawMainPass()
 //--------------------------------------------------------------------------------------------------
 void NiApplication::DrawWaterPass()
 {
-    if (!m_spWaterClick || !m_spWaterClick->GetActive())
-        return;
-    if (!m_spRenderer)
+    if (!m_spWaterClick || !m_spWaterView || !m_spRenderer)
         return;
 
-    // The water click must render into the same RTG that is currently open
-    // so that it depth-tests against what was already drawn by RenderState().
-    // We route it to the current open group so NiRenderClick::Render() stays
-    // in the "same RTG" branch (ClearBuffer only, no Begin/End).
-    NiRenderTargetGroup* pkCurrent = const_cast<NiRenderTargetGroup*>(m_spRenderer->GetCurrentRenderTargetGroup());
-    m_spWaterClick->SetRenderTargetGroup(pkCurrent);
+    // Auto-deactivate if no scenes are registered.
+    m_spWaterClick->SetActive(m_spWaterView->GetScenes().GetSize() > 0);
+    if (!m_spWaterClick->GetActive())
+        return;
 
-    m_spWaterClick->Render(m_spRenderer->GetFrameID());
-
-    // Reset to nullptr so the click reverts to the default RTG next call.
-    m_spWaterClick->SetRenderTargetGroup(nullptr);
+    ExecuteClick(m_spWaterClick, m_spRenderer);
 }
 
 //--------------------------------------------------------------------------------------------------
 Ni3DRenderView* NiApplication::GetMainRenderView() const
 {
     return m_spMainView;
+}
+
+//--------------------------------------------------------------------------------------------------
+Ni3DRenderView* NiApplication::GetWaterRenderView() const
+{
+    return m_spWaterView;
 }
 
 //--------------------------------------------------------------------------------------------------

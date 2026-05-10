@@ -141,16 +141,10 @@ public:
 #endif
     void SetShadowsActive(bool bActive);
 
-    // Assigns pkScene as the water/lava scene root for the dedicated water
-    // render pass.  Pass nullptr to disable the pass without releasing state.
-    void SetWaterScene(NiAVObject* pkScene);
-
-    // Removes the water scene root and deactivates the water render click.
-    void ClearWaterScene();
-
     // Returns the Ni3DRenderView used by the main render clicks so that
     // CScene (or any other owner) can attach / detach its scene root.
     Ni3DRenderView*            GetMainRenderView()  const;
+    Ni3DRenderView*            GetWaterRenderView() const;
 
     // Returns the render step driving the main + water passes.
     NiDefaultClickRenderStep*  GetRenderStep()      const;
