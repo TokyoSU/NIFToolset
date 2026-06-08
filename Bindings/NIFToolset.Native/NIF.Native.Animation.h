@@ -1,0 +1,195 @@
+#pragma once
+#ifndef NIF_NATIVE_ANIMATION_H
+#define NIF_NATIVE_ANIMATION_H
+
+#include "NIF.Native.Common.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+typedef struct NIF_TextKeyDesc
+{
+	float time;
+	const char* text;
+} NIF_TextKeyDesc;
+
+typedef struct NIF_KFMSequenceGroupEntryDesc
+{
+	unsigned int sequenceId;
+	int priority;
+	float weight;
+	float easeInTime;
+	float easeOutTime;
+	unsigned int synchronizeSequenceId;
+	int additive;
+} NIF_KFMSequenceGroupEntryDesc;
+
+typedef struct NIF_KFMBlendPairDesc
+{
+	const char* startKey;
+	const char* targetKey;
+} NIF_KFMBlendPairDesc;
+
+typedef struct NIF_KFMChainEntryDesc
+{
+	unsigned int sequenceId;
+	float duration;
+} NIF_KFMChainEntryDesc;
+
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_KFM_Destroy(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY NIF_KFMToolHandle NIF_Animation_KFM_Create(void);
+NIFTOOLSET_NATIVE_ENTRY NIF_KFMToolHandle NIF_Animation_KFM_Load(const char* filename);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_LoadFile(NIF_KFMToolHandle kfmTool, const char* filename);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_KFM_GetModelPath(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_KFM_SetModelPath(NIF_KFMToolHandle kfmTool, const char* modelPath);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_KFM_GetModelRoot(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_KFM_SetModelRoot(NIF_KFMToolHandle kfmTool, const char* modelRoot);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_KFM_GetBaseKFMPath(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_KFM_SetBaseKFMPath(NIF_KFMToolHandle kfmTool, const char* baseKfmPath);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_KFM_GetSequenceCount(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_GetSequenceIdAt(NIF_KFMToolHandle kfmTool, unsigned int index, unsigned int* outSequenceId);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_KFM_FindSequenceId(NIF_KFMToolHandle kfmTool, const char* sequenceName);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_AddSequence(NIF_KFMToolHandle kfmTool, unsigned int sequenceId, const char* filename, const char* sequenceName);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_UpdateSequence(NIF_KFMToolHandle kfmTool, unsigned int sequenceId, const char* filename, const char* sequenceName);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveSequence(NIF_KFMToolHandle kfmTool, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_AddTransition(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, int transitionType, float duration);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_UpdateTransition(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, int transitionType, float duration);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveTransition(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_IsTransitionAllowed(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, int* outAllowed);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_AddSequenceGroup(NIF_KFMToolHandle kfmTool, unsigned int groupId, const char* groupName);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveSequenceGroup(NIF_KFMToolHandle kfmTool, unsigned int groupId);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_KFM_GetGroupCount(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_GetGroupIdAt(NIF_KFMToolHandle kfmTool, unsigned int index, unsigned int* outGroupId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_AddSequenceToGroup(NIF_KFMToolHandle kfmTool, unsigned int groupId, unsigned int sequenceId, int priority, float weight, float easeInTime, float easeOutTime, unsigned int synchronizeSequenceId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveSequenceFromGroup(NIF_KFMToolHandle kfmTool, unsigned int groupId, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveAllSequencesFromGroup(NIF_KFMToolHandle kfmTool, unsigned int groupId);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_KFM_GetSequenceGroupEntryCount(NIF_KFMToolHandle kfmTool, unsigned int groupId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_GetSequenceGroupEntryAt(NIF_KFMToolHandle kfmTool, unsigned int groupId, unsigned int index, NIF_KFMSequenceGroupEntryDesc* outEntry);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_AddBlendPair(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, const char* startKey, const char* targetKey);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveBlendPair(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, const char* startKey, const char* targetKey);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveAllBlendPairs(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_KFM_GetBlendPairCount(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_GetBlendPairAt(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, unsigned int index, NIF_KFMBlendPairDesc* outBlendPair);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_AddSequenceToChain(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, unsigned int sequenceId, float duration);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveSequenceFromChain(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_RemoveAllSequencesFromChain(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_KFM_GetChainEntryCount(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_GetChainEntryAt(NIF_KFMToolHandle kfmTool, unsigned int sourceSequenceId, unsigned int destinationSequenceId, unsigned int index, NIF_KFMChainEntryDesc* outChainEntry);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_GetDefaultSyncTransitionType(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_SetDefaultSyncTransitionType(NIF_KFMToolHandle kfmTool, int transitionType);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_GetDefaultNonSyncTransitionType(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_KFM_SetDefaultNonSyncTransitionType(NIF_KFMToolHandle kfmTool, int transitionType);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_KFM_GetDefaultSyncTransitionDuration(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_KFM_SetDefaultSyncTransitionDuration(NIF_KFMToolHandle kfmTool, float duration);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_KFM_GetDefaultNonSyncTransitionDuration(NIF_KFMToolHandle kfmTool);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_KFM_SetDefaultNonSyncTransitionDuration(NIF_KFMToolHandle kfmTool, float duration);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_KFM_LookupReturnCode(int returnCode);
+
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_Destroy(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY NIF_ActorManagerHandle NIF_Animation_ActorManager_CreateFromKFM(NIF_KFMToolHandle kfmTool, const char* kfmFilePath, int cumulativeAnimations, int loadFilesFromDisk);
+NIFTOOLSET_NATIVE_ENTRY NIF_ActorManagerHandle NIF_Animation_ActorManager_CreateFromFile(const char* kfmFilename, int cumulativeAnimations, int loadFilesFromDisk);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_ReloadNIFFile(NIF_ActorManagerHandle actorManager, int loadNifFile);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_ReloadKFFile(NIF_ActorManagerHandle actorManager, const char* filename);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_ChangeNIFRoot(NIF_ActorManagerHandle actorManager, NIF_AVObjectHandle nifRoot);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_LoadSequenceData(NIF_ActorManagerHandle actorManager, unsigned int sequenceId, int loadKfFile);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_LoadAllSequenceData(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_UnloadSequenceData(NIF_ActorManagerHandle actorManager, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_Update(NIF_ActorManagerHandle actorManager, float time);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_ActorManager_GetLastUpdateTime(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_ActorManager_GetTargetAnimation(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_SetTargetAnimation(NIF_ActorManagerHandle actorManager, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_Reset(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_ActorManager_GetCurrentAnimation(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_GetTransitionState(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_ActorManager_GetNextAnimation(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_IsPaused(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_SetPaused(NIF_ActorManagerHandle actorManager, int paused);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_RefreshControllerManager(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY NIF_ActorManagerHandle NIF_Animation_ActorManager_Clone(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY NIF_ActorManagerHandle NIF_Animation_ActorManager_CloneOnlyAnimation(NIF_ActorManagerHandle actorManager, NIF_AVObjectHandle avObject, int cumulativeAnimations);
+NIFTOOLSET_NATIVE_ENTRY NIF_KFMToolHandle NIF_Animation_ActorManager_GetKFMTool(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Animation_ActorManager_GetNIFRoot(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Animation_ActorManager_GetActorRoot(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Animation_ActorManager_GetAccumRoot(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_ActorManager_FindSequenceId(NIF_ActorManagerHandle actorManager, const char* sequenceName);
+NIFTOOLSET_NATIVE_ENTRY NIF_ObjectHandle NIF_Animation_ActorManager_GetSequenceData(NIF_ActorManagerHandle actorManager, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY NIF_ControllerSequenceHandle NIF_Animation_ActorManager_GetActiveSequence(NIF_ActorManagerHandle actorManager, unsigned int sequenceId, int checkExtraSequences, int checkStateSequences);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_ActorManager_GetSequenceId(NIF_ActorManagerHandle actorManager, NIF_ControllerSequenceHandle sequence, int checkExtraSequences, int checkStateSequences);
+NIFTOOLSET_NATIVE_ENTRY NIF_ControllerSequenceHandle NIF_Animation_ActorManager_ActivateSequence(NIF_ActorManagerHandle actorManager, unsigned int sequenceId, int priority, float weight, float easeInTime, unsigned int timeSyncSequenceId, float frequency, float startFrame, int additiveBlend, float additiveRefFrame);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_DeactivateSequence(NIF_ActorManagerHandle actorManager, unsigned int sequenceId, float easeOutTime);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_RegisterTextKeyCallback(NIF_ActorManagerHandle actorManager, int eventType, unsigned int sequenceId, const char* textKey);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_UnregisterTextKeyCallback(NIF_ActorManagerHandle actorManager, int eventType, unsigned int sequenceId, const char* textKey);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_ActorManager_RegisterCallback(NIF_ActorManagerHandle actorManager, int eventType, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_UnregisterCallback(NIF_ActorManagerHandle actorManager, int eventType, unsigned int sequenceId);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_ActorManager_ClearAllRegisteredCallbacks(NIF_ActorManagerHandle actorManager);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_ActorManager_GetNextTextKeyEventTime(NIF_ActorManagerHandle actorManager, unsigned int sequenceId, const char* textKey);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_ActorManager_GetNextEndOfSequenceTime(NIF_ActorManagerHandle actorManager, unsigned int sequenceId);
+
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_GetStartTextKey(void);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_GetEndTextKey(void);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_GetMorphTextKey(void);
+
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_SequenceData_Destroy(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY NIF_SequenceDataHandle NIF_Animation_SequenceData_CreateFromFileByName(const char* filename, const char* sequenceName);
+NIFTOOLSET_NATIVE_ENTRY NIF_SequenceDataHandle NIF_Animation_SequenceData_CreateFromFileByIndex(const char* filename, unsigned int index);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_SequenceData_GetName(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_SequenceData_SetName(NIF_SequenceDataHandle sequenceData, const char* name);
+NIFTOOLSET_NATIVE_ENTRY NIF_TextKeyExtraDataHandle NIF_Animation_SequenceData_GetTextKeys(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_SequenceData_SetTextKeys(NIF_SequenceDataHandle sequenceData, NIF_TextKeyExtraDataHandle textKeys);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_SequenceData_GetEvaluatorCount(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_SequenceData_GetKeyTime(NIF_SequenceDataHandle sequenceData, const char* textKey);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_SequenceData_TimeDivFreq(NIF_SequenceDataHandle sequenceData, float time);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_SequenceData_TimeMultFreq(NIF_SequenceDataHandle sequenceData, float time);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_SequenceData_GetDuration(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_SequenceData_GetDurationDivFreq(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_SequenceData_SetDuration(NIF_SequenceDataHandle sequenceData, float duration);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_SequenceData_GetCycleType(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_SequenceData_SetCycleType(NIF_SequenceDataHandle sequenceData, int cycleType);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_SequenceData_GetFrequency(NIF_SequenceDataHandle sequenceData);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_SequenceData_SetFrequency(NIF_SequenceDataHandle sequenceData, float frequency);
+NIFTOOLSET_NATIVE_ENTRY NIF_ObjectHandle NIF_Animation_SequenceData_AsObject(NIF_SequenceDataHandle sequenceData);
+
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_Sequence_Destroy(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Animation_Sequence_GetName(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_Sequence_GetActivationId(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_Sequence_GetState(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_Sequence_IsAdditiveBlend(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetOffset(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_Sequence_SetOffset(NIF_ControllerSequenceHandle sequence, float offset);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_Sequence_GetPriority(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetWeight(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_Sequence_SetWeight(NIF_ControllerSequenceHandle sequence, float weight);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetDuration(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetDurationDivFreq(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_Sequence_GetCycleType(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_Sequence_SetCycleType(NIF_ControllerSequenceHandle sequence, int cycleType);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetFrequency(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_Sequence_SetFrequency(NIF_ControllerSequenceHandle sequence, float frequency);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_TimeDivFreq(NIF_ControllerSequenceHandle sequence, float time);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_TimeMultFreq(NIF_ControllerSequenceHandle sequence, float time);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetLastTime(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetLastScaledTime(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetSpinnerScaledWeight(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetEaseSpinner(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetEaseEndTime(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetDestFrame(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_Sequence_Reset(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetKeyTime(NIF_ControllerSequenceHandle sequence, const char* textKey);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Animation_Sequence_GetTimeAt(NIF_ControllerSequenceHandle sequence, const char* textKey, float currentTime);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_Sequence_GetEvaluatorCount(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY NIF_TextKeyExtraDataHandle NIF_Animation_Sequence_GetTextKeys(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY NIF_ControllerSequenceHandle NIF_Animation_Sequence_GetTimeSyncSequence(NIF_ControllerSequenceHandle sequence);
+NIFTOOLSET_NATIVE_ENTRY NIF_ObjectHandle NIF_Animation_Sequence_AsObject(NIF_ControllerSequenceHandle sequence);
+
+NIFTOOLSET_NATIVE_ENTRY void NIF_Animation_TextKeys_Destroy(NIF_TextKeyExtraDataHandle textKeys);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Animation_TextKeys_GetCount(NIF_TextKeyExtraDataHandle textKeys);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Animation_TextKeys_GetAt(NIF_TextKeyExtraDataHandle textKeys, unsigned int index, NIF_TextKeyDesc* outKey);
+NIFTOOLSET_NATIVE_ENTRY NIF_ObjectHandle NIF_Animation_TextKeys_AsObject(NIF_TextKeyExtraDataHandle textKeys);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // NIF_NATIVE_ANIMATION_H

@@ -1,0 +1,31 @@
+#pragma once
+#ifndef NIF_NATIVE_RENDER_TARGET_H
+#define NIF_NATIVE_RENDER_TARGET_H
+
+#include "NIF.Native.Common.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+NIFTOOLSET_NATIVE_ENTRY void NIF_RenderTargetGroup_Destroy(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY NIF_RenderTargetGroupHandle NIF_RenderTargetGroup_Create(unsigned int bufferCount, NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderTargetGroup_GetBufferCount(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderTargetGroup_GetWidth(NIF_RenderTargetGroupHandle renderTargetGroup, unsigned int index);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderTargetGroup_GetHeight(NIF_RenderTargetGroupHandle renderTargetGroup, unsigned int index);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderTargetGroup_GetDepthStencilWidth(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderTargetGroup_GetDepthStencilHeight(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY int NIF_RenderTargetGroup_HasDepthStencil(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY int NIF_RenderTargetGroup_IsValid(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY int NIF_RenderTargetGroup_CheckMSAAPrefConsistency(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY int NIF_RenderTargetGroup_AttachBuffer(NIF_RenderTargetGroupHandle renderTargetGroup, NIF_RenderBufferHandle buffer, unsigned int index);
+NIFTOOLSET_NATIVE_ENTRY int NIF_RenderTargetGroup_AttachDepthStencilBuffer(NIF_RenderTargetGroupHandle renderTargetGroup, NIF_DepthStencilBufferHandle depthStencilBuffer);
+NIFTOOLSET_NATIVE_ENTRY int NIF_RenderTargetGroup_GetBuffer(NIF_RenderTargetGroupHandle renderTargetGroup, unsigned int index, NIF_RenderBufferHandle* outBuffer);
+NIFTOOLSET_NATIVE_ENTRY int NIF_RenderTargetGroup_GetDepthStencilBuffer(NIF_RenderTargetGroupHandle renderTargetGroup, NIF_DepthStencilBufferHandle* outDepthStencilBuffer);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // NIF_NATIVE_RENDER_TARGET_H
