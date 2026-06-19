@@ -147,7 +147,9 @@ void NiFogProperty::_SDMInit()
 
 void NiFogProperty::_SDMShutdown()
 {
+#if defined(ENABLE_SDM_SHUTDOWN_ASSERT)
     EE_ASSERT(ms_spDefault->GetRefCount() == 1);
+#endif
     ms_spDefault = NULL;
 }
 

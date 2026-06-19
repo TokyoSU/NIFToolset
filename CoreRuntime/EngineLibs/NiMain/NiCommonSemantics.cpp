@@ -121,7 +121,9 @@ void NiCommonSemantics::_SDMShutdown()
     Macro(DISPLAYLIST);
 
 #undef Macro
+#if defined(ENABLE_SDM_SHUTDOWN_ASSERT)
     EE_ASSERT(uiCount == E__EnumerationCount);
+#endif
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -35,10 +35,13 @@ endif()
 
 # Set ON for DLL (.dll), OFF for static (.lib) — default to shared
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(ENABLE_SDM_SHUTDOWN_ASSERT "Enable SDM shutdown assert" OFF)
 
 # Use native MSVC STL instead of stlport
 add_compile_definitions(EE_USE_NATIVE_STL) # stlport is no longer supported, but this definition is still used in some places to conditionally compile code that depends on the STL.
-
+if(ENABLE_SDM_SHUTDOWN_ASSERT)
+    add_compile_definitions(ENABLE_SDM_SHUTDOWN_ASSERT)
+endif()
 add_compile_definitions(EE_GAMEBRYO_VERSION="4.0.0.57") # Gamebryo version used for conditional compilation (e.g. to exclude code for older versions)
 
 # Enable multi-threaded compilation for MSVC (/MP) and

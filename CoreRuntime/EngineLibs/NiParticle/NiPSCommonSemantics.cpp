@@ -74,7 +74,9 @@ void NiPSCommonSemantics::_SDMShutdown()
 
 #undef UndefSemantic
 
+#if defined(ENABLE_SDM_SHUTDOWN_ASSERT)
     EE_ASSERT(usCount == PS_SEMANTICSCOUNT);
+#endif
 }
 
 //--------------------------------------------------------------------------------------------------
