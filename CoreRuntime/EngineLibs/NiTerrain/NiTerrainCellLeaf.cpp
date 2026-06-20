@@ -19,7 +19,7 @@
 #include "NiTerrainDataSnapshot.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainCellLeaf, NiTerrainCell);
+NiImplementRTTI(NiTerrainCellLeaf, NiTerrainCell, NiTypeMask::NiTerrainCellLeaf);
 //--------------------------------------------------------------------------------------------------
 NiTerrainCellLeaf::NiTerrainCellLeaf(NiTerrainSector* pkSector, NiUInt32 uiLevel) : 
     NiTerrainCell(pkSector, uiLevel),

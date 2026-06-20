@@ -9,7 +9,7 @@
 using namespace efd;
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiLPPDecorationFinalMaterial, NiDecorationMaterial);
+NiImplementRTTI(NiLPPDecorationFinalMaterial, NiDecorationMaterial, NiTypeMask::NiLPPDecorationFinalMaterial);
 //------------------------------------------------------------------------------------------------
 NiLPPDecorationFinalMaterial* NiLPPDecorationFinalMaterial::Create()
 {

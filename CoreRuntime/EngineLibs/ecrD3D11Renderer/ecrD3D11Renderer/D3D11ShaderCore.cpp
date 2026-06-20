@@ -46,7 +46,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(D3D11ShaderCore, D3D11ShaderInterface);
+NiImplementRTTI(D3D11ShaderCore, D3D11ShaderInterface, NiTypeMask::D3D11ShaderCore);
 
 //------------------------------------------------------------------------------------------------
 void D3D11ShaderCore::_SDMInit()

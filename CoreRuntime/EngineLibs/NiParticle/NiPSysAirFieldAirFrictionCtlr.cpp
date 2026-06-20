@@ -18,7 +18,7 @@
 
 #include "NiPSysAirFieldAirFrictionCtlr.h"
 
-NiImplementRTTI(NiPSysAirFieldAirFrictionCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysAirFieldAirFrictionCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysAirFieldAirFrictionCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysAirFieldAirFrictionCtlr::NiPSysAirFieldAirFrictionCtlr()

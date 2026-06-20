@@ -19,7 +19,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(RenderSurfaceStep, NiDefaultClickRenderStep);
+NiImplementRTTI(RenderSurfaceStep, NiDefaultClickRenderStep, NiTypeMask::RenderSurfaceStep);
 
 //--------------------------------------------------------------------------------------------------
 RenderSurfaceStep::RenderSurfaceStep()

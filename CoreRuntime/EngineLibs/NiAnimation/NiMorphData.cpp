@@ -29,7 +29,7 @@
 #include "NiFloatInterpolator.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiMorphData,NiObject);
+NiImplementRTTI(NiMorphData,NiObject, NiTypeMask::NiMorphData);
 
 //--------------------------------------------------------------------------------------------------
 // NiMorphData::MorphTarget

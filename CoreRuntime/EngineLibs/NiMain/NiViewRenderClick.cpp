@@ -17,7 +17,7 @@
 #include "NiViewRenderClick.h"
 #include "NiRenderObject.h"
 
-NiImplementRTTI(NiViewRenderClick, NiRenderClick);
+NiImplementRTTI(NiViewRenderClick, NiRenderClick, NiTypeMask::NiViewRenderClick);
 
 NiRenderListProcessorPtr NiViewRenderClick::ms_spDefaultProcessor;
 

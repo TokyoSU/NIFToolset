@@ -17,7 +17,7 @@
 #include "NiPSBombForce.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSBombForce, NiPSForce);
+NiImplementRTTI(NiPSBombForce, NiPSForce, NiTypeMask::NiPSBombForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSBombForce::NiPSBombForce(

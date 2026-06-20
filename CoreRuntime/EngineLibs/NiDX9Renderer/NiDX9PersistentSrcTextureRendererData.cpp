@@ -20,7 +20,7 @@
 #include "NiDX9Renderer.h"
 
 NiImplementRTTI(NiDX9PersistentSrcTextureRendererData,
-    NiPersistentSrcTextureRendererData);
+    NiPersistentSrcTextureRendererData, NiTypeMask::NiDX9PersistentSrcTextureRendererData);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9PersistentSrcTextureRendererData::NiDX9PersistentSrcTextureRendererData()

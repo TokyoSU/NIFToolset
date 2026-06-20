@@ -25,7 +25,7 @@
 
 #include <NiSystem.h>
 
-NiImplementRTTI(NiSkinPartition, NiObject);
+NiImplementRTTI(NiSkinPartition, NiObject, NiTypeMask::NiSkinPartition);
 
 //--------------------------------------------------------------------------------------------------
 // NiSkinPartition::Partition member functions

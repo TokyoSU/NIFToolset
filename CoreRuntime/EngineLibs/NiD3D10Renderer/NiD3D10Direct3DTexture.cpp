@@ -16,7 +16,7 @@
 
 #include "NiD3D10Direct3DTexture.h"
 
-NiImplementRTTI(NiD3D10Direct3DTexture, NiTexture);
+NiImplementRTTI(NiD3D10Direct3DTexture, NiTexture, NiTypeMask::NiD3D10Direct3DTexture);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10Direct3DTexture* NiD3D10Direct3DTexture::Create(NiRenderer* pkRenderer)

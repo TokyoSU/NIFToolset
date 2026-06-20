@@ -18,7 +18,7 @@
 
 #include "NiPSysResetOnLoopCtlr.h"
 
-NiImplementRTTI(NiPSysResetOnLoopCtlr, NiTimeController);
+NiImplementRTTI(NiPSysResetOnLoopCtlr, NiTimeController, NiTypeMask::NiPSysResetOnLoopCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysResetOnLoopCtlr::NiPSysResetOnLoopCtlr()

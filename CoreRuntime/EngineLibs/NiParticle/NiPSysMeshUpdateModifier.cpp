@@ -19,7 +19,7 @@
 #include "NiPSysMeshUpdateModifier.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysMeshUpdateModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysMeshUpdateModifier, NiPSysModifier, NiTypeMask::NiPSysMeshUpdateModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysMeshUpdateModifier::NiPSysMeshUpdateModifier()

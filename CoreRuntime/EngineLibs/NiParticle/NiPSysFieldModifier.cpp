@@ -21,7 +21,7 @@
 #include <NiBool.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysFieldModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysFieldModifier, NiPSysModifier, NiTypeMask::NiPSysFieldModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysFieldModifier::NiPSysFieldModifier() :

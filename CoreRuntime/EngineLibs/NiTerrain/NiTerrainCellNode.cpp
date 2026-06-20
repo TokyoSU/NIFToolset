@@ -16,7 +16,7 @@
 #include "NiTerrainCellNode.h"
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainCellNode, NiTerrainCell);
+NiImplementRTTI(NiTerrainCellNode, NiTerrainCell, NiTypeMask::NiTerrainCellNode);
 //---------------------------------------------------------------------------
 NiTerrainCellNode::NiTerrainCellNode(NiTerrainSector* pkSector, NiUInt32 uiLevel) : 
     NiTerrainCell(pkSector, uiLevel)

@@ -19,7 +19,7 @@
 #include <NiSourceTexture.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiFont);
+NiImplementRootRTTI(NiFont, NiTypeMask::NiFont);
 
 unsigned int NiFont::ms_uiCurrentVersion = 5;
 NiWChar NiFont::ms_akConversionBuffer[2048];

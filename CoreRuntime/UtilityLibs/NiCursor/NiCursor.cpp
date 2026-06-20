@@ -20,7 +20,7 @@
 #include <NiSourceTexture.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiCursor);
+NiImplementRootRTTI(NiCursor, NiTypeMask::NiCursor);
 
 //--------------------------------------------------------------------------------------------------
 NiCursor* NiCursor::Create(NiRenderer* pkRenderer,

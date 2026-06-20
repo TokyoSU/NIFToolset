@@ -18,7 +18,7 @@
 #include "NiScreenElementsData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiScreenElementsData, NiTriShapeData);
+NiImplementRTTI(NiScreenElementsData, NiTriShapeData, NiTypeMask::NiScreenElementsData);
 
 const unsigned short NiScreenElementsData::ms_usInvalid = (unsigned short)~0;
 

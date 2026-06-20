@@ -16,7 +16,7 @@
 
 #include "NiRendererSpecificProperty.h"
 
-NiImplementRTTI(NiRendererSpecificProperty, NiProperty);
+NiImplementRTTI(NiRendererSpecificProperty, NiProperty, NiTypeMask::NiRendererSpecificProperty);
 
 NiRendererSpecificPropertyPtr NiRendererSpecificProperty::ms_spDefault;
 

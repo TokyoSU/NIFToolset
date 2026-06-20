@@ -30,7 +30,7 @@
 #define NIDIRECTIONALSHADOWWRITEMATERIAL_VERTEX_VERSION   7
 #define NIDIRECTIONALSHADOWWRITEMATERIAL_PIXEL_VERSION    5
 
-NiImplementRTTI(NiDirectionalShadowWriteMaterial, NiStandardMaterial);
+NiImplementRTTI(NiDirectionalShadowWriteMaterial, NiStandardMaterial, NiTypeMask::NiDirectionalShadowWriteMaterial);
 
 //--------------------------------------------------------------------------------------------------
 NiDirectionalShadowWriteMaterial::NiDirectionalShadowWriteMaterial(

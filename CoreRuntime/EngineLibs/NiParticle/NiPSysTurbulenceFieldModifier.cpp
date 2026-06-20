@@ -19,7 +19,7 @@
 #include "NiPSysTurbulenceFieldModifier.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysTurbulenceFieldModifier, NiPSysFieldModifier);
+NiImplementRTTI(NiPSysTurbulenceFieldModifier, NiPSysFieldModifier, NiTypeMask::NiPSysTurbulenceFieldModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysTurbulenceFieldModifier::NiPSysTurbulenceFieldModifier() :

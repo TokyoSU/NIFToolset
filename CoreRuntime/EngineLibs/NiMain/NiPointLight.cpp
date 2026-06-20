@@ -17,7 +17,7 @@
 #include "NiPointLight.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiPointLight,NiLight);
+NiImplementRTTI(NiPointLight, NiLight, NiTypeMask::NiPointLight);
 
 //--------------------------------------------------------------------------------------------------
 NiPointLight::NiPointLight()

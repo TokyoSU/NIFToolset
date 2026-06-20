@@ -16,7 +16,7 @@
 
 #include "NiLogicalANDCompositeValidator.h"
 
-NiImplementRTTI(NiLogicalANDCompositeValidator, NiCompositeValidator);
+NiImplementRTTI(NiLogicalANDCompositeValidator, NiCompositeValidator, NiTypeMask::NiLogicalANDCompositeValidator);
 
 //--------------------------------------------------------------------------------------------------
 bool NiLogicalANDCompositeValidator::ValidateClick(

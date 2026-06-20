@@ -19,7 +19,7 @@
 #include "NiPSSimulatorForcesStep.h"
 #include "NiPSFieldForce.h"
 
-NiImplementRTTI(NiPSFieldMagnitudeCtlr, NiPSForceFloatCtlr);
+NiImplementRTTI(NiPSFieldMagnitudeCtlr, NiPSForceFloatCtlr, NiTypeMask::NiPSFieldMagnitudeCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSFieldMagnitudeCtlr::NiPSFieldMagnitudeCtlr(

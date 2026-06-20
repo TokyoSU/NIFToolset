@@ -16,7 +16,7 @@
 
 #include "NiD3DVertexShader.h"
 #include "NiD3DShaderProgramFactory.h"
-NiImplementRTTI(NiD3DVertexShader, NiD3DShaderProgram);
+NiImplementRTTI(NiD3DVertexShader, NiD3DShaderProgram, NiTypeMask::NiD3DVertexShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3DVertexShader::~NiD3DVertexShader()

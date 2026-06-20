@@ -20,7 +20,7 @@
 #include "NiLODNode.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiRangeLODData, NiLODData);
+NiImplementRTTI(NiRangeLODData, NiLODData, NiTypeMask::NiRangeLODData);
 
 //--------------------------------------------------------------------------------------------------
 NiRangeLODData::NiRangeLODData()

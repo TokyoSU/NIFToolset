@@ -19,7 +19,7 @@
 #include "NiPSysBoundUpdateModifier.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysBoundUpdateModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysBoundUpdateModifier, NiPSysModifier, NiTypeMask::NiPSysBoundUpdateModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier() : m_sUpdateSkip(0)

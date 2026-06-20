@@ -16,7 +16,7 @@
 
 #include "NiBSplineBasisData.h"
 
-NiImplementRTTI(NiBSplineBasisData, NiObject);
+NiImplementRTTI(NiBSplineBasisData, NiObject, NiTypeMask::NiBSplineBasisData);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineBasisData::NiBSplineBasisData()

@@ -19,7 +19,7 @@
 #include "NiPSSimulatorForcesStep.h"
 #include "NiPSGravityForce.h"
 
-NiImplementRTTI(NiPSGravityStrengthCtlr, NiPSForceFloatCtlr);
+NiImplementRTTI(NiPSGravityStrengthCtlr, NiPSForceFloatCtlr, NiTypeMask::NiPSGravityStrengthCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSGravityStrengthCtlr::NiPSGravityStrengthCtlr(

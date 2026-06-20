@@ -21,7 +21,7 @@
 #include "NiFloatInterpolator.h"
 #include "NiConstFloatEvaluator.h"
 
-NiImplementRTTI(NiFloatsExtraDataController, NiExtraDataController);
+NiImplementRTTI(NiFloatsExtraDataController, NiExtraDataController, NiTypeMask::NiFloatsExtraDataController);
 
 //------------------------------------------------------------------------------------------------
 NiFloatsExtraDataController::NiFloatsExtraDataController(

@@ -21,7 +21,7 @@
 #include "NiControllerSequence.h"
 #include "NiControllerManager.h"
 
-NiImplementRTTI(NiScratchPad,NiObject);
+NiImplementRTTI(NiScratchPad,NiObject, NiTypeMask::NiScratchPad);
 
 //--------------------------------------------------------------------------------------------------
 NiScratchPad::NiScratchPad(NiControllerSequence* pkSequence) :

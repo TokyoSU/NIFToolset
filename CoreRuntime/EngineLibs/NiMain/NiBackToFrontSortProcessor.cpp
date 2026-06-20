@@ -18,7 +18,7 @@
 #include "NiRenderer.h"
 #include "NiRenderObject.h"
 
-NiImplementRTTI(NiBackToFrontSortProcessor, NiRenderListProcessor);
+NiImplementRTTI(NiBackToFrontSortProcessor, NiRenderListProcessor, NiTypeMask::NiBackToFrontSortProcessor);
 
 //--------------------------------------------------------------------------------------------------
 NiBackToFrontSortProcessor::~NiBackToFrontSortProcessor()

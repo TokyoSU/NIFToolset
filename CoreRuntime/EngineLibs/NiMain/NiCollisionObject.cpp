@@ -18,7 +18,7 @@
 #include "NiAVObject.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiCollisionObject,NiObject);
+NiImplementRTTI(NiCollisionObject, NiObject, NiTypeMask::NiCollisionObject);
 
 //--------------------------------------------------------------------------------------------------
 NiCollisionObject::NiCollisionObject(NiAVObject* pkSceneObject)

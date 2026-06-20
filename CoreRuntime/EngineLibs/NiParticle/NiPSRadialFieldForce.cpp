@@ -17,7 +17,7 @@
 #include "NiPSRadialFieldForce.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSRadialFieldForce, NiPSFieldForce);
+NiImplementRTTI(NiPSRadialFieldForce, NiPSFieldForce, NiTypeMask::NiPSRadialFieldForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSRadialFieldForce::NiPSRadialFieldForce(

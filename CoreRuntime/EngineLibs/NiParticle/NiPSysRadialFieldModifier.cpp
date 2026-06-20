@@ -19,7 +19,7 @@
 #include "NiPSysRadialFieldModifier.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysRadialFieldModifier, NiPSysFieldModifier);
+NiImplementRTTI(NiPSysRadialFieldModifier, NiPSysFieldModifier, NiTypeMask::NiPSysRadialFieldModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysRadialFieldModifier::NiPSysRadialFieldModifier() : m_fRadialType(0.0f)

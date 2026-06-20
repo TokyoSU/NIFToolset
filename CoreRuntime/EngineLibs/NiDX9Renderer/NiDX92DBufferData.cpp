@@ -19,7 +19,7 @@
 #include "NiDX92DBufferData.h"
 #include "NiDX9SystemDesc.h"
 
-NiImplementRootRTTI(NiDX92DBufferData);
+NiImplementRootRTTI(NiDX92DBufferData, NiTypeMask::NiDX92DBufferData);
 
 LPDIRECT3DSURFACE9 NiDX92DBufferData::ms_apkCurrentBuffer[4] =
 {
@@ -162,7 +162,7 @@ bool NiDX92DBufferData::Recreate(LPDIRECT3DDEVICE9)
 //--------------------------------------------------------------------------------------------------
 // NiDX9TextureBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDX9TextureBufferData,NiDX92DBufferData);
+NiImplementRTTI(NiDX9TextureBufferData,NiDX92DBufferData, NiTypeMask::NiDX9TextureBufferData);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9TextureBufferData::~NiDX9TextureBufferData()
@@ -455,8 +455,7 @@ void NiDX9TextureBufferData::ReleaseTRTReferences()
 //--------------------------------------------------------------------------------------------------
 // NiDX9Direct3DBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDX9Direct3DBufferData ,
-                NiDX92DBufferData);
+NiImplementRTTI(NiDX9Direct3DBufferData, NiDX92DBufferData, NiTypeMask::NiDX9Direct3DBufferData);
 //--------------------------------------------------------------------------------------------------
 NiDX9Direct3DBufferData* NiDX9Direct3DBufferData::Create(
     LPDIRECT3DSURFACE9 pkD3DSurface, Ni2DBuffer*& pkBuffer)
@@ -536,7 +535,7 @@ bool NiDX9Direct3DBufferData::RecreateBufferData(
 //--------------------------------------------------------------------------------------------------
 // NiDX9DepthStencilBuffer Class Implementation
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDX9DepthStencilBufferData, NiDX92DBufferData);
+NiImplementRTTI(NiDX9DepthStencilBufferData, NiDX92DBufferData, NiTypeMask::NiDX9DepthStencilBufferData);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9DepthStencilBufferData::~NiDX9DepthStencilBufferData()
@@ -638,7 +637,7 @@ bool NiDX9DepthStencilBufferData::HasValidStencilBuffer()
 // NiDX9ImplicitDepthStencilBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
 NiImplementRTTI(NiDX9ImplicitDepthStencilBufferData,
-    NiDX9DepthStencilBufferData);
+    NiDX9DepthStencilBufferData, NiTypeMask::NiDX9ImplicitDepthStencilBufferData);
 //--------------------------------------------------------------------------------------------------
 bool NiDX9ImplicitDepthStencilBufferData::Recreate(
     LPDIRECT3DDEVICE9 pkD3DDevice9)
@@ -735,7 +734,7 @@ NiDX9ImplicitDepthStencilBufferData::Create(LPDIRECT3DDEVICE9 pkD3DDevice9,
 // NiDX9Direct3DDepthStencilBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
 NiImplementRTTI(NiDX9Direct3DDepthStencilBufferData,
-                NiDX9DepthStencilBufferData);
+                NiDX9DepthStencilBufferData, NiTypeMask::NiDX9Direct3DDepthStencilBufferData);
 //--------------------------------------------------------------------------------------------------
 NiDX9Direct3DDepthStencilBufferData*
     NiDX9Direct3DDepthStencilBufferData::Create(
@@ -818,7 +817,7 @@ bool NiDX9Direct3DDepthStencilBufferData::RecreateBufferData(
 // NiDX9AdditionalDepthStencilBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
 NiImplementRTTI(NiDX9AdditionalDepthStencilBufferData,
-    NiDX9DepthStencilBufferData);
+    NiDX9DepthStencilBufferData, NiTypeMask::NiDX9AdditionalDepthStencilBufferData);
 //--------------------------------------------------------------------------------------------------
 // Static variables
 //--------------------------------------------------------------------------------------------------
@@ -1038,14 +1037,14 @@ NiDX9AdditionalDepthStencilBufferData::Create(LPDIRECT3DDEVICE9 pkD3DDevice9,
 //--------------------------------------------------------------------------------------------------
 // NiDX9OnscreenBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDX9OnscreenBufferData,NiDX92DBufferData);
+NiImplementRTTI(NiDX9OnscreenBufferData,NiDX92DBufferData, NiTypeMask::NiDX9OnscreenBufferData);
 
 //--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 // NiDX9ImplicitBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDX9ImplicitBufferData,NiDX9OnscreenBufferData);
+NiImplementRTTI(NiDX9ImplicitBufferData,NiDX9OnscreenBufferData, NiTypeMask::NiDX9ImplicitBufferData);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9ImplicitBufferData::NiDX9ImplicitBufferData()
@@ -1216,7 +1215,7 @@ void NiDX9ImplicitBufferData::ReleaseIRTReferences()
 //--------------------------------------------------------------------------------------------------
 // NiDX9SwapChainBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDX9SwapChainBufferData,NiDX9OnscreenBufferData);
+NiImplementRTTI(NiDX9SwapChainBufferData,NiDX9OnscreenBufferData, NiTypeMask::NiDX9SwapChainBufferData);
 
 //--------------------------------------------------------------------------------------------------
 
@@ -1375,7 +1374,7 @@ void NiDX9SwapChainBufferData::ReleaseSCRTReferences()
 // NiDX9SwapChainDepthStencilBufferData Class Implementation
 //--------------------------------------------------------------------------------------------------
 NiImplementRTTI(NiDX9SwapChainDepthStencilBufferData,
-    NiDX9DepthStencilBufferData);
+    NiDX9DepthStencilBufferData, NiTypeMask::NiDX9SwapChainDepthStencilBufferData);
 //--------------------------------------------------------------------------------------------------
 bool NiDX9SwapChainDepthStencilBufferData::Recreate(
     LPDIRECT3DDEVICE9 pkD3DDevice9)

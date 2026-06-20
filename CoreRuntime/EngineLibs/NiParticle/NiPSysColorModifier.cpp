@@ -19,7 +19,7 @@
 #include "NiPSysColorModifier.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysColorModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysColorModifier, NiPSysModifier, NiTypeMask::NiPSysColorModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysColorModifier::NiPSysColorModifier()

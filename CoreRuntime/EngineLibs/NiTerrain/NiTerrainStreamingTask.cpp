@@ -23,7 +23,7 @@
 #include <NiFilename.h>
 #include <efd/SmartCriticalSection.h>
 
-NiImplementRootRTTI(NiTerrainStreamingTask);
+NiImplementRootRTTI(NiTerrainStreamingTask, NiTypeMask::NiTerrainStreamingTask);
 
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainStreamingTask::Cancel()

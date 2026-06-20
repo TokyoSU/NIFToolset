@@ -15,7 +15,7 @@
 #include "NiDecorationMeshGenerator.h"
 #include "NiDecorationMaterial.h"
 
-NiImplementRTTI(NiDecorationMeshGenerator, NiDecorationGenerator);
+NiImplementRTTI(NiDecorationMeshGenerator, NiDecorationGenerator, NiTypeMask::NiDecorationMeshGenerator);
 
 //------------------------------------------------------------------------------------------------
 NiDecorationMeshGenerator::NiDecorationMeshGenerator(bool bUseInstancing) :

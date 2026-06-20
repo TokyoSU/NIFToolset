@@ -17,7 +17,7 @@
 #include "NiDynamicTexture.h"
 #include "NiRenderer.h"
 
-NiImplementRTTI(NiDynamicTexture, NiTexture);
+NiImplementRTTI(NiDynamicTexture, NiTexture, NiTypeMask::NiDynamicTexture);
 
 NiTexture::FormatPrefs NiDynamicTexture::ms_kDefaultPrefs;
 

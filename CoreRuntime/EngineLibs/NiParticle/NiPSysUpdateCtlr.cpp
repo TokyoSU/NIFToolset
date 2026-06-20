@@ -19,7 +19,7 @@
 #include "NiPSysUpdateCtlr.h"
 #include <NiObjectNET.h>
 
-NiImplementRTTI(NiPSysUpdateCtlr, NiTimeController);
+NiImplementRTTI(NiPSysUpdateCtlr, NiTimeController, NiTypeMask::NiPSysUpdateCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysUpdateCtlr::NiPSysUpdateCtlr()

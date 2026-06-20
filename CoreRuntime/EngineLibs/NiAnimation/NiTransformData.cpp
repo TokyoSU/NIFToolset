@@ -18,7 +18,7 @@
 #include "NiTransformData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiTransformData,NiObject);
+NiImplementRTTI(NiTransformData,NiObject, NiTypeMask::NiTransformData);
 
 //------------------------------------------------------------------------------------------------
 NiTransformData::NiTransformData()

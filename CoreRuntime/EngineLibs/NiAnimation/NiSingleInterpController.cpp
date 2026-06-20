@@ -17,7 +17,7 @@
 #include "NiSingleInterpController.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiSingleInterpController, NiInterpController);
+NiImplementRTTI(NiSingleInterpController, NiInterpController, NiTypeMask::NiSingleInterpController);
 
 //--------------------------------------------------------------------------------------------------
 NiSingleInterpController::NiSingleInterpController()

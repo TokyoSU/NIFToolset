@@ -17,7 +17,7 @@
 #include "NiD3D10GeometryShader.h"
 #include "NiD3D10ShaderProgramFactory.h"
 
-NiImplementRTTI(NiD3D10GeometryShader, NiD3D10ShaderProgram);
+NiImplementRTTI(NiD3D10GeometryShader, NiD3D10ShaderProgram, NiTypeMask::NiD3D10GeometryShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10GeometryShader::NiD3D10GeometryShader() :

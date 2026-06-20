@@ -19,7 +19,7 @@
 #include "NiRoom.h"
 #include "NiRoomGroup.h"
 
-NiImplementRTTI(NiRoom, NiNode);
+NiImplementRTTI(NiRoom, NiNode, NiTypeMask::NiRoom);
 
 unsigned int NiRoom::ms_uiCurrentTimestamp = 0;
 
@@ -289,7 +289,7 @@ public:
 
 typedef efd::SmartPointer<NiOldWall> NiOldWallPtr;
 
-NiImplementRTTI(NiOldWall,NiNode);
+NiImplementRTTI(NiOldWall,NiNode, NiTypeMask::NiOldWall);
 
 //------------------------------------------------------------------------------------------------
 NiObject* NiRoom::CreateOldWallObject(const char**,

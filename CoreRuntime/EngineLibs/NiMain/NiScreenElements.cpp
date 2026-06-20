@@ -17,7 +17,7 @@
 
 #include "NiScreenElements.h"
 
-NiImplementRTTI(NiScreenElements,NiTriShape);
+NiImplementRTTI(NiScreenElements, NiTriShape, NiTypeMask::NiScreenElements);
 
 //--------------------------------------------------------------------------------------------------
 NiScreenElements::NiScreenElements()

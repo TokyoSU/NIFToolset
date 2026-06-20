@@ -19,7 +19,7 @@
 #include "NiPSysGrowFadeModifier.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysGrowFadeModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysGrowFadeModifier, NiPSysModifier, NiTypeMask::NiPSysGrowFadeModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysGrowFadeModifier::NiPSysGrowFadeModifier() :

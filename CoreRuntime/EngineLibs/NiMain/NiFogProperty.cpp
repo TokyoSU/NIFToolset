@@ -18,7 +18,7 @@
 #include "NiFogProperty.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiFogProperty, NiProperty);
+NiImplementRTTI(NiFogProperty, NiProperty, NiTypeMask::NiFogProperty);
 
 NiFogPropertyPtr NiFogProperty::ms_spDefault;
 

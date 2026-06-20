@@ -18,7 +18,7 @@
 #include "NiMath.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiCurve3, NiObject);
+NiImplementRTTI(NiCurve3, NiObject, NiTypeMask::NiCurve3);
 
 //--------------------------------------------------------------------------------------------------
 NiCurve3::NiCurve3() :

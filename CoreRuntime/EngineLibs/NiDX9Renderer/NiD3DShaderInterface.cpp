@@ -25,7 +25,7 @@
 
 #include "NiD3DShaderProgramCreator.h"
 
-NiImplementRTTI(NiD3DShaderInterface, NiShader);
+NiImplementRTTI(NiD3DShaderInterface, NiShader, NiTypeMask::NiD3DShaderInterface);
 
 //--------------------------------------------------------------------------------------------------
 void NiD3DShaderInterface::SetD3DDevice(D3DDevicePtr pkD3DDevice)

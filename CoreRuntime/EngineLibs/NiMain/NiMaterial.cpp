@@ -24,7 +24,7 @@ char NiMaterial::ms_acDefaultWorkingDirectory[NI_MAX_PATH];
 NiRWLock NiMaterial::ms_kRWLock;
 
 
-NiImplementRootRTTI(NiMaterial);
+NiImplementRootRTTI(NiMaterial, NiTypeMask::NiMaterial);
 
 //--------------------------------------------------------------------------------------------------
 NiMaterial::NiMaterial(const NiFixedString& kName) :

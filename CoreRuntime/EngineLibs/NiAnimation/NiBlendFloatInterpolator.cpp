@@ -17,7 +17,7 @@
 #include "NiBlendFloatInterpolator.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiBlendFloatInterpolator, NiBlendInterpolator);
+NiImplementRTTI(NiBlendFloatInterpolator, NiBlendInterpolator, NiTypeMask::NiBlendFloatInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBlendFloatInterpolator::NiBlendFloatInterpolator(bool bManagerControlled,

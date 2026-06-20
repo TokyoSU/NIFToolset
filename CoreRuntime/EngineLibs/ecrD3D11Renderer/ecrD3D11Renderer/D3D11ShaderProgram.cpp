@@ -19,7 +19,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(D3D11ShaderProgram, NiGPUProgram);
+NiImplementRTTI(D3D11ShaderProgram, NiGPUProgram, NiTypeMask::D3D11ShaderProgram);
 
 //------------------------------------------------------------------------------------------------
 D3D11ShaderProgram::D3D11ShaderProgram(

@@ -19,8 +19,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiBSplineCompPoint3Evaluator,
-    NiBSplinePoint3Evaluator);
+NiImplementRTTI(NiBSplineCompPoint3Evaluator, NiBSplinePoint3Evaluator, NiTypeMask::NiBSplineCompPoint3Evaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineCompPoint3Evaluator::NiBSplineCompPoint3Evaluator() :

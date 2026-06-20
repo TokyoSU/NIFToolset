@@ -18,7 +18,7 @@
 #include <efd/Profiler.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiRenderView);
+NiImplementRootRTTI(NiRenderView, NiTypeMask::NiRenderView);
 NiFixedString NiRenderView::ms_kDefaultName;
 EE_PROFILER_CONTEXT_EXTERN(Renderer);
 //------------------------------------------------------------------------------------------------

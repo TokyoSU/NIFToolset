@@ -18,7 +18,7 @@
 
 #include "NiVertWeightsExtraData.h"
 
-NiImplementRTTI(NiVertWeightsExtraData,NiExtraData);
+NiImplementRTTI(NiVertWeightsExtraData, NiExtraData, NiTypeMask::NiVertWeightsExtraData);
 
 //--------------------------------------------------------------------------------------------------
 

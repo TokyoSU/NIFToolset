@@ -23,7 +23,7 @@
 #include "NiOBBRoot.h"
 
 
-NiImplementRTTI(NiCollisionData, NiCollisionObject);
+NiImplementRTTI(NiCollisionData, NiCollisionObject, NiTypeMask::NiCollisionData);
 
 // File Scope Helpers
 void TransformPoints (NiMesh* pkMesh, float* pWorld);

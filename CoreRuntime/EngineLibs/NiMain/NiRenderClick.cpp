@@ -16,7 +16,7 @@
 
 #include "NiRenderClick.h"
 
-NiImplementRootRTTI(NiRenderClick);
+NiImplementRootRTTI(NiRenderClick, NiTypeMask::NiRenderClick);
 
 NiFixedString NiRenderClick::ms_kDefaultName;
 

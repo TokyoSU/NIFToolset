@@ -22,7 +22,7 @@
 #include <NiSPWorkflow.h>
 #include <NiCullingProcess.h>
 
-NiImplementRTTI(NiPSFacingQuadGenerator, NiMeshModifier);
+NiImplementRTTI(NiPSFacingQuadGenerator, NiMeshModifier, NiTypeMask::NiPSFacingQuadGenerator);
 
 const NiUInt32 NiPSFacingQuadGenerator::MAX_SUPPORTED_PARTICLES = UINT_MAX / 6;
 const NiUInt16 NiPSFacingQuadGenerator::MAX_PARTICLES_FOR_16BIT_INDICES =

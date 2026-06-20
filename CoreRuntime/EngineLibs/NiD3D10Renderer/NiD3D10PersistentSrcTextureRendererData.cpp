@@ -21,7 +21,7 @@
 #include "NiD3D10Renderer.h"
 
 NiImplementRTTI(NiD3D10PersistentSrcTextureRendererData,
-    NiPersistentSrcTextureRendererData);
+    NiPersistentSrcTextureRendererData, NiTypeMask::NiD3D10PersistentSrcTextureRendererData);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10PersistentSrcTextureRendererData::NiD3D10PersistentSrcTextureRendererData()

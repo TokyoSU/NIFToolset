@@ -16,7 +16,7 @@
 
 #include "Ni2DStringRenderClick.h"
 
-NiImplementRTTI(Ni2DStringRenderClick, NiRenderClick);
+NiImplementRTTI(Ni2DStringRenderClick, NiRenderClick, NiTypeMask::Ni2DStringRenderClick);
 
 //--------------------------------------------------------------------------------------------------
 unsigned int Ni2DStringRenderClick::GetNumObjectsDrawn() const

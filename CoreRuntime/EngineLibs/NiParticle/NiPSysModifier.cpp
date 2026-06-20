@@ -20,7 +20,7 @@
 #include <NiParticleSystem.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysModifier, NiObject);
+NiImplementRTTI(NiPSysModifier, NiObject, NiTypeMask::NiPSysModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysModifier::NiPSysModifier() :

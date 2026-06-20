@@ -23,7 +23,7 @@
 #include "NiRenderer.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiDynamicEffect,NiAVObject);
+NiImplementRTTI(NiDynamicEffect, NiAVObject, NiTypeMask::NiDynamicEffect);
 
 int NiDynamicEffect::ms_iNextIndex = 1;
 

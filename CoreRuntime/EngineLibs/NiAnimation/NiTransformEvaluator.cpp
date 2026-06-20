@@ -22,7 +22,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiTransformEvaluator, NiKeyBasedEvaluator);
+NiImplementRTTI(NiTransformEvaluator, NiKeyBasedEvaluator, NiTypeMask::NiTransformEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiTransformEvaluator::NiTransformEvaluator() :

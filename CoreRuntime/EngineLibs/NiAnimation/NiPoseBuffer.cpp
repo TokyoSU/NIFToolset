@@ -17,7 +17,7 @@
 #include "NiPoseBuffer.h"
 
 
-NiImplementRTTI(NiPoseBuffer,NiObject);
+NiImplementRTTI(NiPoseBuffer,NiObject, NiTypeMask::NiPoseBuffer);
 
 //--------------------------------------------------------------------------------------------------
 NiPoseBuffer::NiPoseBuffer(NiPoseBinding* pkPoseBinding) :

@@ -16,7 +16,7 @@
 #include "NiCubeMapDepthStencilBuffer.h"
 #include "NiD3D10Renderer.h"
 
-NiImplementRTTI(NiCubeMapDepthStencilBuffer, NiDepthStencilBuffer);
+NiImplementRTTI(NiCubeMapDepthStencilBuffer, NiDepthStencilBuffer, NiTypeMask::NiCubeMapDepthStencilBuffer);
 
 //--------------------------------------------------------------------------------------------------
 NiCubeMapDepthStencilBuffer::NiCubeMapDepthStencilBuffer()

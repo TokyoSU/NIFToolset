@@ -20,7 +20,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiQuaternionEvaluator, NiKeyBasedEvaluator);
+NiImplementRTTI(NiQuaternionEvaluator, NiKeyBasedEvaluator, NiTypeMask::NiQuaternionEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiQuaternionEvaluator::NiQuaternionEvaluator() :

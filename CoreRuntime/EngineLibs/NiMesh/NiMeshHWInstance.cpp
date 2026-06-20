@@ -21,7 +21,7 @@
 #include "NiInstancingUtilities.h"
 #include "NiInstancingMeshModifier.h"
 
-NiImplementRTTI(NiMeshHWInstance, NiAVObject);
+NiImplementRTTI(NiMeshHWInstance, NiAVObject, NiTypeMask::NiMeshHWInstance);
 
 //--------------------------------------------------------------------------------------------------
 NiMeshHWInstance::NiMeshHWInstance(NiMesh* pkMesh)

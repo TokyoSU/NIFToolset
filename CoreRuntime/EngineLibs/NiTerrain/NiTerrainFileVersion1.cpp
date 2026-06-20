@@ -19,7 +19,7 @@
 #include "NiTerrain.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainFileVersion1, NiTerrainFileVersion2);
+NiImplementRTTI(NiTerrainFileVersion1, NiTerrainFileVersion2, NiTypeMask::NiTerrainFileVersion1);
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainFileVersion1::DetectFileVersion(FileIdentifier kID)
 {

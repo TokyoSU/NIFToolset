@@ -19,7 +19,7 @@
 #include "NiPSKernelDefinitions.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSSimulatorForcesStep, NiPSSimulatorStep);
+NiImplementRTTI(NiPSSimulatorForcesStep, NiPSSimulatorStep, NiTypeMask::NiPSSimulatorForcesStep);
 
 //--------------------------------------------------------------------------------------------------
 NiPSSimulatorForcesStep::NiPSSimulatorForcesStep() :

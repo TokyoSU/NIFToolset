@@ -22,7 +22,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiObjectNET, NiObject);
+NiImplementRTTI(NiObjectNET, NiObject, NiTypeMask::NiObjectNET);
 
 NiObjectNET::EqualityType NiObjectNET::ms_eEqualityType =
     NiObjectNET::EQUAL_EXACT;

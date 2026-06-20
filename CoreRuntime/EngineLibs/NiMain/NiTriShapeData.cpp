@@ -20,7 +20,7 @@
 #include "NiBool.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiTriShapeData,NiTriBasedGeomData);
+NiImplementRTTI(NiTriShapeData, NiTriBasedGeomData, NiTypeMask::NiTriShapeData);
 
 //--------------------------------------------------------------------------------------------------
 NiTriShapeData::NiTriShapeData(unsigned short usVertices,

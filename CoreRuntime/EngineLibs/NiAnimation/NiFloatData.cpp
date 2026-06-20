@@ -17,7 +17,7 @@
 #include "NiFloatData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiFloatData,NiObject);
+NiImplementRTTI(NiFloatData, NiObject, NiTypeMask::NiFloatData);
 
 //------------------------------------------------------------------------------------------------
 NiFloatData::~NiFloatData ()

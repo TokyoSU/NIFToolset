@@ -19,7 +19,7 @@
 #include <NiCloningProcess.h>
 #include <NiBool.h>
 
-NiImplementRTTI(NiPSCollider, NiObject);
+NiImplementRTTI(NiPSCollider, NiObject, NiTypeMask::NiPSCollider);
 
 //--------------------------------------------------------------------------------------------------
 NiPSCollider::NiPSCollider(

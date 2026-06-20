@@ -21,7 +21,7 @@
 #include "NiObjectGroup.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiTriStripsData,NiTriBasedGeomData);
+NiImplementRTTI(NiTriStripsData, NiTriBasedGeomData, NiTypeMask::NiTriStripsData);
 
 //--------------------------------------------------------------------------------------------------
 NiTriStripsData::NiTriStripsData(unsigned short usVertices,

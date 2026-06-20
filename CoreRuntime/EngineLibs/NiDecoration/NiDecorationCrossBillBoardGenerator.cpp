@@ -14,7 +14,7 @@
 #include "NiDecorationPCH.h"
 #include "NiDecorationCrossBillboardGenerator.h"
 
-NiImplementRTTI(NiDecorationCrossBillBoardGenerator, NiDecorationBillBoardGenerator);
+NiImplementRTTI(NiDecorationCrossBillBoardGenerator, NiDecorationBillBoardGenerator, NiTypeMask::NiDecorationCrossBillBoardGenerator);
 
 //------------------------------------------------------------------------------------------------
 NiFixedString NiDecorationCrossBillBoardGenerator::GENERATOR_NAME = NULL;

@@ -17,10 +17,10 @@
 #include "NiTTimeOfDayDefaultFunctor.h"
 
 //---------------------------------------------------------------------------
-NiImplementRootRTTI(NiSkyBlendStage);
-NiImplementRTTI(NiSkyFogBlendStage, NiSkyBlendStage);
-NiImplementRTTI(NiSkyGradientBlendStage, NiSkyBlendStage);
-NiImplementRTTI(NiSkySkyboxBlendStage, NiSkyBlendStage);
+NiImplementRootRTTI(NiSkyBlendStage, NiTypeMask::NiSkyBlendStage);
+NiImplementRTTI(NiSkyFogBlendStage, NiSkyBlendStage, NiTypeMask::NiSkyFogBlendStage);
+NiImplementRTTI(NiSkyGradientBlendStage, NiSkyBlendStage, NiTypeMask::NiSkyGradientBlendStage);
+NiImplementRTTI(NiSkySkyboxBlendStage, NiSkyBlendStage, NiTypeMask::NiSkySkyboxBlendStage);
 
 //---------------------------------------------------------------------------
 NiSkyBlendStage::NiSkyBlendStage(

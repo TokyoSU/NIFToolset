@@ -21,7 +21,7 @@
 using namespace ecr;
 
 efd::Bool D3D11ShadowWriteShader::ms_renderBackfaces = true;
-NiImplementRTTI(D3D11ShadowWriteShader, D3D11FragmentShader);
+NiImplementRTTI(D3D11ShadowWriteShader, D3D11FragmentShader, NiTypeMask::D3D11ShadowWriteShader);
 
 //------------------------------------------------------------------------------------------------
 D3D11ShadowWriteShader::D3D11ShadowWriteShader(NiMaterialDescriptor* pDesc) : 

@@ -18,7 +18,7 @@
 #include <NiNode.h>
 #include <NiBool.h>
 
-NiImplementRTTI(NiInterpController, NiTimeController);
+NiImplementRTTI(NiInterpController, NiTimeController, NiTypeMask::NiInterpController);
 
 const unsigned short NiInterpController::INVALID_INDEX = (unsigned short) -1;
 const float NiInterpController::INVALID_TIME = -FLT_MAX;

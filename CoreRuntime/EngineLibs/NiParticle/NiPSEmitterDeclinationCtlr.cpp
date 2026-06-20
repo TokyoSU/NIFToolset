@@ -16,7 +16,7 @@
 
 #include "NiPSEmitterDeclinationCtlr.h"
 
-NiImplementRTTI(NiPSEmitterDeclinationCtlr, NiPSEmitterFloatCtlr);
+NiImplementRTTI(NiPSEmitterDeclinationCtlr, NiPSEmitterFloatCtlr, NiTypeMask::NiPSEmitterDeclinationCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterDeclinationCtlr::NiPSEmitterDeclinationCtlr(

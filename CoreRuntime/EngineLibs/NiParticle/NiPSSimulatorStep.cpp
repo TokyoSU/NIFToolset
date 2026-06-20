@@ -16,7 +16,7 @@
 
 #include "NiPSSimulatorStep.h"
 
-NiImplementRTTI(NiPSSimulatorStep, NiObject);
+NiImplementRTTI(NiPSSimulatorStep, NiObject, NiTypeMask::NiPSSimulatorStep);
 
 //--------------------------------------------------------------------------------------------------
 void NiPSSimulatorStep::Detach(NiPSParticleSystem*)

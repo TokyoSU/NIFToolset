@@ -54,8 +54,8 @@
 using namespace efd;
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrain, NiNode);
-NiImplementRTTI(NiTerrain::StoragePolicy, NiTerrainStoragePolicy);
+NiImplementRTTI(NiTerrain, NiNode, NiTypeMask::NiTerrain);
+NiImplementRTTI(NiTerrain::StoragePolicy, NiTerrainStoragePolicy, NiTypeMask::NiTerrainStoragePolicy);
 //--------------------------------------------------------------------------------------------------
 NiTerrainConfiguration NiTerrain::ms_kDefaultConfiguration;
 bool NiTerrain::ms_bInToolMode = false;

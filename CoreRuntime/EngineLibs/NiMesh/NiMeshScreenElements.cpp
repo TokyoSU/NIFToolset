@@ -17,7 +17,7 @@
 #include "NiDataStreamElementLock.h"
 #include <NiVertexColorProperty.h>
 
-NiImplementRTTI(NiMeshScreenElements, NiMesh);
+NiImplementRTTI(NiMeshScreenElements, NiMesh, NiTypeMask::NiMeshScreenElements);
 
 const NiUInt16 NiMeshScreenElements::ms_usInvalid = (NiUInt16)~0;
 

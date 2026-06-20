@@ -18,7 +18,7 @@
 
 #include "NiPSysModifierActiveCtlr.h"
 
-NiImplementRTTI(NiPSysModifierActiveCtlr, NiPSysModifierBoolCtlr);
+NiImplementRTTI(NiPSysModifierActiveCtlr, NiPSysModifierBoolCtlr, NiTypeMask::NiPSysModifierActiveCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr()

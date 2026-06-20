@@ -18,7 +18,7 @@
 
 #include "NiPSysGravityFieldModifier.h"
 
-NiImplementRTTI(NiPSysGravityFieldModifier, NiPSysFieldModifier);
+NiImplementRTTI(NiPSysGravityFieldModifier, NiPSysFieldModifier, NiTypeMask::NiPSysGravityFieldModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysGravityFieldModifier::NiPSysGravityFieldModifier() :

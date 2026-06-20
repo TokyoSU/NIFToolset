@@ -16,7 +16,7 @@
 
 #include "NiMesh2DRenderView.h"
 
-NiImplementRTTI(NiMesh2DRenderView, NiRenderView);
+NiImplementRTTI(NiMesh2DRenderView, NiRenderView, NiTypeMask::NiMesh2DRenderView);
 
 //--------------------------------------------------------------------------------------------------
 void NiMesh2DRenderView::SetCameraData(const NiRect<float>& kViewport)

@@ -24,7 +24,7 @@
 #include "NiTerrainStreamingManager.h"
 #include "NiTerrainDataSnapshot.h"
 
-NiImplementRTTI(NiTerrainSector, NiNode);
+NiImplementRTTI(NiTerrainSector, NiNode, NiTypeMask::NiTerrainSector);
 
 //--------------------------------------------------------------------------------------------------
 NiTerrainSector::NiTerrainSector(bool) :

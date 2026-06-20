@@ -19,7 +19,7 @@
 #include "NiCullingProcess.h"
 #include <NiRTLib.h>
 
-NiImplementRTTI(NiBSPNode,NiNode);
+NiImplementRTTI(NiBSPNode, NiNode, NiTypeMask::NiBSPNode);
 
 //--------------------------------------------------------------------------------------------------
 void NiBSPNode::UpdateWorldPlane()

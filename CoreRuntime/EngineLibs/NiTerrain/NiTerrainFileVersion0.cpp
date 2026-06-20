@@ -16,7 +16,7 @@
 #include "NiTerrainXMLHelpers.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainFileVersion0, NiTerrainFileVersion1);
+NiImplementRTTI(NiTerrainFileVersion0, NiTerrainFileVersion1, NiTypeMask::NiTerrainFileVersion0);
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainFileVersion0::DetectFileVersion(FileIdentifier kID)
 {

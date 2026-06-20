@@ -17,7 +17,7 @@
 #include "NiBSplineData.h"
 #include <NiCompUtility.h>
 
-NiImplementRTTI(NiBSplineData,NiObject);
+NiImplementRTTI(NiBSplineData, NiObject, NiTypeMask::NiBSplineData);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineData::NiBSplineData() : m_pafControlPoints(NULL),

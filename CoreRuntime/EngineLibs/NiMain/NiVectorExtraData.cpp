@@ -17,7 +17,7 @@
 #include "NiVectorExtraData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiVectorExtraData,NiExtraData);
+NiImplementRTTI(NiVectorExtraData, NiExtraData, NiTypeMask::NiVectorExtraData);
 
 //--------------------------------------------------------------------------------------------------
 NiVectorExtraData::NiVectorExtraData()

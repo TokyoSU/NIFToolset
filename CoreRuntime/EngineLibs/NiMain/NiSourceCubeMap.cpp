@@ -22,7 +22,7 @@
 #include "NiPixelData.h"
 #include <NiBool.h>
 
-NiImplementRTTI(NiSourceCubeMap, NiSourceTexture);
+NiImplementRTTI(NiSourceCubeMap, NiSourceTexture, NiTypeMask::NiSourceCubeMap);
 
 //--------------------------------------------------------------------------------------------------
 NiSourceCubeMap* NiSourceCubeMap::Create(const NiFixedString& kFilename,

@@ -16,7 +16,7 @@
 
 #include "NiBSplineInterpolator.h"
 #include <NiMath.h>
-NiImplementRTTI(NiBSplineInterpolator, NiInterpolator);
+NiImplementRTTI(NiBSplineInterpolator, NiInterpolator, NiTypeMask::NiBSplineInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineInterpolator::NiBSplineInterpolator(NiBSplineData* pkData, NiBSplineBasisData* pkBasisData)

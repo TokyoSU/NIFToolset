@@ -20,7 +20,7 @@
 #include <NiBool.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysAirFieldModifier, NiPSysFieldModifier);
+NiImplementRTTI(NiPSysAirFieldModifier, NiPSysFieldModifier, NiTypeMask::NiPSysAirFieldModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysAirFieldModifier::NiPSysAirFieldModifier() : NiPSysFieldModifier()

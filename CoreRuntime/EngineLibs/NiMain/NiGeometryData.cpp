@@ -24,7 +24,7 @@
 #include <NiBool.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiGeometryData, NiObject);
+NiImplementRTTI(NiGeometryData, NiObject, NiTypeMask::NiGeometryData);
 
 // zero is not used
 unsigned short NiGeometryData::ms_usNextID = 1;

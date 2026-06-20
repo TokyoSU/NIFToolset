@@ -16,4 +16,4 @@
 
 #include "NiTask.h"
 
-NiImplementRTTI(NiTask, NiObject);
+NiImplementRTTI(NiTask, NiObject, NiTypeMask::NiTask);

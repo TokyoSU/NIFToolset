@@ -113,11 +113,11 @@ NiInputSystem* NiInputSystem::Create(CreateParams* pkParams)
 }
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDI8InputSystem, NiInputSystem);
+NiImplementRTTI(NiDI8InputSystem, NiInputSystem, NiTypeMask::NiDI8InputSystem);
 
 //--------------------------------------------------------------------------------------------------
 NiImplementRTTI(NiDI8InputSystem::DI8CreateParams,
-    NiInputSystem::CreateParams);
+    NiInputSystem::CreateParams, NiTypeMask::NiDI8InputSystem_DI8CreateParams);
 //--------------------------------------------------------------------------------------------------
 HINSTANCE NiDI8InputSystem::ms_hOwnerInst = 0;
 HWND NiDI8InputSystem::ms_hOwnerWnd = 0;

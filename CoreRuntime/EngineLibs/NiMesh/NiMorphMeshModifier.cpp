@@ -23,7 +23,7 @@
 
 #include <NiFloat16.h>
 
-NiImplementRTTI(NiMorphMeshModifier, NiMeshModifier);
+NiImplementRTTI(NiMorphMeshModifier, NiMeshModifier, NiTypeMask::NiMorphMeshModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiMorphMeshModifier::NiMorphMeshModifier(NiUInt16 uiNumTargets)

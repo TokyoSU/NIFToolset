@@ -23,7 +23,7 @@
 #include "NiGeometry.h"
 #include <NiSystem.h>
 
-NiImplementRTTI(NiTimeController,NiObject);
+NiImplementRTTI(NiTimeController, NiObject, NiTypeMask::NiTimeController);
 
 efd::FastCriticalSection NiTimeController::ms_kCachedValuesLock;
 

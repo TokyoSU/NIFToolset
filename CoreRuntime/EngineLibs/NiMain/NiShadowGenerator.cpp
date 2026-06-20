@@ -25,7 +25,7 @@
 #include "NiStencilProperty.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiShadowGenerator, NiObject);
+NiImplementRTTI(NiShadowGenerator, NiObject, NiTypeMask::NiShadowGenerator);
 
 //--------------------------------------------------------------------------------------------------
 NiShadowGenerator::NiShadowGenerator() :

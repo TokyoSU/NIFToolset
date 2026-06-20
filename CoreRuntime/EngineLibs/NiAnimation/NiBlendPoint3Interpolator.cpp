@@ -17,7 +17,7 @@
 #include "NiBlendPoint3Interpolator.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiBlendPoint3Interpolator, NiBlendInterpolator);
+NiImplementRTTI(NiBlendPoint3Interpolator, NiBlendInterpolator, NiTypeMask::NiBlendPoint3Interpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(bool bManagerControlled,

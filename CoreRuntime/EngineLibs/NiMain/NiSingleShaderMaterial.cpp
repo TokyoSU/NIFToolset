@@ -17,7 +17,7 @@
 #include "NiSingleShaderMaterial.h"
 #include "NiShaderFactory.h"
 
-NiImplementRTTI(NiSingleShaderMaterial, NiMaterial);
+NiImplementRTTI(NiSingleShaderMaterial, NiMaterial, NiTypeMask::NiSingleShaderMaterial);
 
 //--------------------------------------------------------------------------------------------------
 NiSingleShaderMaterial::NiSingleShaderMaterial(const NiFixedString& kName) :

@@ -19,7 +19,7 @@ namespace
     }
 }
 
-NiImplementRTTI(NiBASSAudioSystem, NiAudioSystem);
+NiImplementRTTI(NiBASSAudioSystem, NiAudioSystem, NiTypeMask::NiBASSAudioSystem);
 
 //---------------------------------------------------------------------------
 NiBASSAudioSystem::NiBASSAudioSystem()

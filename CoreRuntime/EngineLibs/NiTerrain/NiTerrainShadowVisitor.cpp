@@ -18,7 +18,7 @@
 #include "NiTerrainSector.h"
 #include "NiTerrainShadowVisitor.h"
 
-NiImplementRTTI(NiTerrainShadowVisitor, NiShadowVisitor);
+NiImplementRTTI(NiTerrainShadowVisitor, NiShadowVisitor, NiTypeMask::NiTerrainShadowVisitor);
 
 //--------------------------------------------------------------------------------------------------
 NiTerrainShadowVisitor::~NiTerrainShadowVisitor()

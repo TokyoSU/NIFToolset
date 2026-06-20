@@ -18,7 +18,7 @@
 #include "NiShadowClickGenerator.h"
 #include "NiScreenFillingRenderView.h"
 
-NiImplementRootRTTI(NiShadowClickGenerator);
+NiImplementRootRTTI(NiShadowClickGenerator, NiTypeMask::NiShadowClickGenerator);
 
 //--------------------------------------------------------------------------------------------------
 NiShadowClickGenerator::NiShadowClickGenerator() :

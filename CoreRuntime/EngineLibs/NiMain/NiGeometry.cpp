@@ -26,7 +26,7 @@
 #include <NiSystem.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiGeometry, NiAVObject);
+NiImplementRTTI(NiGeometry, NiAVObject, NiTypeMask::NiGeometry);
 
 bool NiGeometry::ms_bStreamingAppliesDefaultMaterial = true;
 

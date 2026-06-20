@@ -22,10 +22,10 @@
 #include <NiSystem.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiInputSystem);
+NiImplementRootRTTI(NiInputSystem, NiTypeMask::NiInputSystem);
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiInputSystem::CreateParams);
+NiImplementRootRTTI(NiInputSystem::CreateParams, NiTypeMask::NiInputSystemCreateParams);
 
 //--------------------------------------------------------------------------------------------------
 unsigned int NiInputSystem::ms_uiSequence = 0;

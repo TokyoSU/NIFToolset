@@ -18,7 +18,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiBoolTimelineEvaluator, NiBoolEvaluator);
+NiImplementRTTI(NiBoolTimelineEvaluator, NiBoolEvaluator, NiTypeMask::NiBoolTimelineEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiBoolTimelineEvaluator::NiBoolTimelineEvaluator()

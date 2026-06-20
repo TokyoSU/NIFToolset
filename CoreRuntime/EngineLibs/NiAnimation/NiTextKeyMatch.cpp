@@ -16,4 +16,4 @@
 
 #include "NiTextKeyMatch.h"
 
-NiImplementRTTI(NiTextKeyMatch, NiObject);
+NiImplementRTTI(NiTextKeyMatch, NiObject, NiTypeMask::NiTextKeyMatch);

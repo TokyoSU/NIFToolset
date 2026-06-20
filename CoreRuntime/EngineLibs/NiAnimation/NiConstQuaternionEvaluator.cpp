@@ -18,7 +18,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiConstQuaternionEvaluator, NiEvaluator);
+NiImplementRTTI(NiConstQuaternionEvaluator, NiEvaluator, NiTypeMask::NiConstQuaternionEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiConstQuaternionEvaluator::NiConstQuaternionEvaluator() :

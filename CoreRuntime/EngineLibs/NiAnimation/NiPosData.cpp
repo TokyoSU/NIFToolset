@@ -17,7 +17,7 @@
 #include "NiPosData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiPosData,NiObject);
+NiImplementRTTI(NiPosData,NiObject, NiTypeMask::NiPosData);
 
 //------------------------------------------------------------------------------------------------
 NiPosData::~NiPosData ()

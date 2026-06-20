@@ -21,10 +21,10 @@
 #include "NiZBufferProperty.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiScreenGeometryData,NiTriShapeData);
-NiImplementRTTI(NiScreenGeometry,NiTriShape);
-NiImplementRTTI(NiScreenPolygon, NiObject);
-NiImplementRTTI(NiScreenSpaceCamera,NiCamera);
+NiImplementRTTI(NiScreenGeometryData,NiTriShapeData, NiTypeMask::NiScreenGeometryData);
+NiImplementRTTI(NiScreenGeometry,NiTriShape, NiTypeMask::NiScreenGeometry);
+NiImplementRTTI(NiScreenPolygon, NiObject, NiTypeMask::NiScreenPolygon);
+NiImplementRTTI(NiScreenSpaceCamera,NiCamera, NiTypeMask::NiScreenSpaceCamera);
 
 NiScreenGeometryData::ScreenElementPool*
     NiScreenGeometryData::ms_pkScreenElementPool = 0;

@@ -20,7 +20,7 @@
 #include "NiPSParticleSystem.h"
 #include <NiDataStreamElementLock.h>
 
-NiImplementRTTI(NiPSCurveEmitter, NiPSEmitter);
+NiImplementRTTI(NiPSCurveEmitter, NiPSEmitter, NiTypeMask::NiPSCurveEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSCurveEmitter::NiPSCurveEmitter(

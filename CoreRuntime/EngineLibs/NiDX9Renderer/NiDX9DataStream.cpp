@@ -19,7 +19,7 @@
 #include "NiDX9Error.h"
 #include "NiDX9Renderer.h"
 
-NiImplementRTTI(NiDX9DataStream, NiDataStream);
+NiImplementRTTI(NiDX9DataStream, NiDataStream, NiTypeMask::NiDX9DataStream);
 
 // Clients can configure this if needed with
 NiUInt32 NiDX9DataStream::ms_uiSharedBufferDefaultSize = 1024*1024;

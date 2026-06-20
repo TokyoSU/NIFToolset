@@ -16,4 +16,4 @@
 
 #include "NiRenderClickValidator.h"
 
-NiImplementRootRTTI(NiRenderClickValidator);
+NiImplementRootRTTI(NiRenderClickValidator, NiTypeMask::NiRenderClickValidator);

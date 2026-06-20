@@ -18,7 +18,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(D3D11Direct3DResource, NiTexture);
+NiImplementRTTI(D3D11Direct3DResource, NiTexture, NiTypeMask::D3D11Direct3DResource);
 
 //------------------------------------------------------------------------------------------------
 D3D11Direct3DResource* D3D11Direct3DResource::Create(NiRenderer* pkRenderer)

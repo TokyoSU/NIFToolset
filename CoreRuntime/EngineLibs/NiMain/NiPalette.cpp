@@ -19,7 +19,7 @@
 #include <NiBool.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiPalette, NiObject);
+NiImplementRTTI(NiPalette, NiObject, NiTypeMask::NiPalette);
 
 NiPalette* NiPalette::ms_pkHead = 0;
 NiPalette* NiPalette::ms_pkTail = 0;

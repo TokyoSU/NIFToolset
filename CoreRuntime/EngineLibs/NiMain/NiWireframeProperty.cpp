@@ -18,7 +18,7 @@
 #include "NiWireframeProperty.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiWireframeProperty,NiProperty);
+NiImplementRTTI(NiWireframeProperty,NiProperty, NiTypeMask::NiWireframeProperty);
 
 NiWireframePropertyPtr NiWireframeProperty::ms_spDefault;
 

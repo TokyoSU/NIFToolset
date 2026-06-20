@@ -33,7 +33,7 @@
 //--------------------------------------------------------------------------------------------------
 EE_PROFILER_CONTEXT_EXTERN(Renderer);
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiShaderSortProcessor, NiAlphaSortProcessor);
+NiImplementRTTI(NiShaderSortProcessor, NiAlphaSortProcessor, NiTypeMask::NiShaderSortProcessor);
 //--------------------------------------------------------------------------------------------------
 NiShaderSortProcessor::NiShaderSortProcessor(
     NiUInt32 uiBucketSize,

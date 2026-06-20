@@ -21,7 +21,7 @@
 #include <NiMath.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiInputGamePad, NiInputDevice);
+NiImplementRTTI(NiInputGamePad, NiInputDevice, NiTypeMask::NiInputGamePad);
 
 //--------------------------------------------------------------------------------------------------
 unsigned int NiInputGamePad::ms_uiMaxButtonCount =

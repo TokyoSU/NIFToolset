@@ -16,7 +16,7 @@
 
 #include "NiScreenFillingRenderViewImpl.h"
 
-NiImplementRTTI(NiScreenFillingRenderViewImpl, NiScreenFillingRenderView);
+NiImplementRTTI(NiScreenFillingRenderViewImpl, NiScreenFillingRenderView, NiTypeMask::NiScreenFillingRenderViewImpl);
 
 //--------------------------------------------------------------------------------------------------
 NiScreenFillingRenderViewImpl::NiScreenFillingRenderViewImpl() :

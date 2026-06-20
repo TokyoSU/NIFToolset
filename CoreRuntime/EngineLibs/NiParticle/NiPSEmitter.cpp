@@ -18,7 +18,7 @@
 #include "NiPSParticleSystem.h"
 #include "NiPSSimulator.h"
 
-NiImplementRTTI(NiPSEmitter, NiObject);
+NiImplementRTTI(NiPSEmitter, NiObject, NiTypeMask::NiPSEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitter::NiPSEmitter(

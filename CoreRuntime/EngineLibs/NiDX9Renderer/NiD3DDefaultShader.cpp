@@ -23,7 +23,7 @@
 #include <NiSkinningMeshModifier.h>
 #include <NiSourceTexture.h>
 
-NiImplementRTTI(NiD3DDefaultShader, NiD3DShader);
+NiImplementRTTI(NiD3DDefaultShader, NiD3DShader, NiTypeMask::NiD3DDefaultShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3DDefaultShader::NiD3DDefaultShader() :

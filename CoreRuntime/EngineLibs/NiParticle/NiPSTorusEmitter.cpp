@@ -18,7 +18,7 @@
 #include <NiTransform.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSTorusEmitter, NiPSVolumeEmitter);
+NiImplementRTTI(NiPSTorusEmitter, NiPSVolumeEmitter, NiTypeMask::NiPSTorusEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSTorusEmitter::NiPSTorusEmitter(

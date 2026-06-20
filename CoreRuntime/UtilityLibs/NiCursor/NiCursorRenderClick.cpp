@@ -16,7 +16,7 @@
 
 #include "NiCursorRenderClick.h"
 
-NiImplementRTTI(NiCursorRenderClick, NiRenderClick);
+NiImplementRTTI(NiCursorRenderClick, NiRenderClick, NiTypeMask::NiCursorRenderClick);
 
 //--------------------------------------------------------------------------------------------------
 unsigned int NiCursorRenderClick::GetNumObjectsDrawn() const

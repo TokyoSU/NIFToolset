@@ -18,7 +18,7 @@
 
 #include "NiParticles.h"
 
-NiImplementRTTI(NiParticles, NiGeometry);
+NiImplementRTTI(NiParticles, NiGeometry, NiTypeMask::NiParticles);
 
 //--------------------------------------------------------------------------------------------------
 NiParticles::NiParticles()

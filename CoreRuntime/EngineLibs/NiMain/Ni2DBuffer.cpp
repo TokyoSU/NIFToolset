@@ -18,7 +18,7 @@
 #include "NiRenderer.h"
 #include "NiDepthStencilBuffer.h"
 
-NiImplementRTTI(Ni2DBuffer, NiObject);
+NiImplementRTTI(Ni2DBuffer, NiObject, NiTypeMask::Ni2DBuffer);
 
 //--------------------------------------------------------------------------------------------------
 Ni2DBuffer* Ni2DBuffer::Create(unsigned int uiWidth, unsigned int uiHeight)

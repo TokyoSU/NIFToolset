@@ -16,7 +16,7 @@
 
 #include "NiAmbientLight.h"
 
-NiImplementRTTI(NiAmbientLight,NiLight);
+NiImplementRTTI(NiAmbientLight, NiLight, NiTypeMask::NiAmbientLight);
 
 //--------------------------------------------------------------------------------------------------
 NiAmbientLight::NiAmbientLight()

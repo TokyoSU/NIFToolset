@@ -18,7 +18,7 @@
 #include "NiRenderer.h"
 #include "NiRenderObject.h"
 
-NiImplementRootRTTI(NiRenderListProcessor);
+NiImplementRootRTTI(NiRenderListProcessor, NiTypeMask::NiRenderListProcessor);
 
 //--------------------------------------------------------------------------------------------------
 void NiRenderListProcessor::PreRenderProcessList(const NiVisibleArray* pkInput,

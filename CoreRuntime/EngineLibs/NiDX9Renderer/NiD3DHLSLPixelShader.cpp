@@ -17,7 +17,7 @@
 #include "NiD3DHLSLPixelShader.h"
 #include "NiShaderConstantMapEntry.h"
 
-NiImplementRTTI(NiD3DHLSLPixelShader, NiD3DPixelShader);
+NiImplementRTTI(NiD3DHLSLPixelShader, NiD3DPixelShader, NiTypeMask::NiD3DHLSLPixelShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3DHLSLPixelShader::~NiD3DHLSLPixelShader()

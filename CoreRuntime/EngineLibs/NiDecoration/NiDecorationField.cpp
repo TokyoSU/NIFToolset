@@ -16,7 +16,7 @@
 
 #include <NiTransform.h>
 
-NiImplementRTTI(NiDecorationField, NiNode);
+NiImplementRTTI(NiDecorationField, NiNode, NiTypeMask::NiDecorationField);
 
 //------------------------------------------------------------------------------------------------
 NiDecorationField::NiDecorationField(NiPoint2 kWidth) 

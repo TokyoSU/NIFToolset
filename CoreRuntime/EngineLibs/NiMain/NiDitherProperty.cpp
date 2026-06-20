@@ -19,7 +19,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiDitherProperty,NiProperty);
+NiImplementRTTI(NiDitherProperty, NiProperty, NiTypeMask::NiDitherProperty);
 
 NiDitherPropertyPtr NiDitherProperty::ms_spDefault;
 

@@ -18,8 +18,8 @@
 #include "NiTerrainXMLHelpers.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiITerrainFileVersion3, NiTerrainFileInterface);
-NiImplementRTTI(NiTerrainFileVersion3, NiITerrainFileVersion3);
+NiImplementRTTI(NiITerrainFileVersion3, NiTerrainFileInterface, NiTypeMask::NiITerrainFileVersion3);
+NiImplementRTTI(NiTerrainFileVersion3, NiITerrainFileVersion3, NiTypeMask::NiTerrainFileVersion3);
 //--------------------------------------------------------------------------------------------------
 const char* NiTerrainFileVersion3::ms_pcTerrainConfigFile = "\\root.terrain";
 //--------------------------------------------------------------------------------------------------

@@ -19,7 +19,7 @@
 #include "NiShadowManager.h"
 #include "NiStandardMaterial.h"
 
-NiImplementRootRTTI(NiShadowMap);
+NiImplementRootRTTI(NiShadowMap, NiTypeMask::NiShadowMap);
 NiFixedString NiShadowMap::ms_akMapName[NiStandardMaterial::LIGHT_MAX];
 
 //--------------------------------------------------------------------------------------------------

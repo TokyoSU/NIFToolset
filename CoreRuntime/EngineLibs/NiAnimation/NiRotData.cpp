@@ -17,7 +17,7 @@
 #include "NiRotData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiRotData, NiObject);
+NiImplementRTTI(NiRotData, NiObject, NiTypeMask::NiRotData);
 
 //------------------------------------------------------------------------------------------------
 NiRotData::NiRotData() : m_uiNumKeys(0), m_pkKeys(NULL),

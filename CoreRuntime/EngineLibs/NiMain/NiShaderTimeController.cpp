@@ -22,7 +22,7 @@ NiTPointerList<NiObjectNETPtr>*
 NiTPointerList<NiShaderTimeControllerPtr>*
     NiShaderTimeController::ms_pkControllersList = NULL;
 
-NiImplementRTTI(NiShaderTimeController, NiTimeController);
+NiImplementRTTI(NiShaderTimeController, NiTimeController, NiTypeMask::NiShaderTimeController);
 
 //--------------------------------------------------------------------------------------------------
 NiShaderTimeController::NiShaderTimeController()

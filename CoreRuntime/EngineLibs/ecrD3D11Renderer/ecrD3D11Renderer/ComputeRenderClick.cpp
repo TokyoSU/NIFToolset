@@ -19,7 +19,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(ComputeRenderClick, NiRenderClick);
+NiImplementRTTI(ComputeRenderClick, NiRenderClick, NiTypeMask::ComputeRenderClick);
 
 //------------------------------------------------------------------------------------------------
 ComputeRenderClick::ComputeRenderClick() : 

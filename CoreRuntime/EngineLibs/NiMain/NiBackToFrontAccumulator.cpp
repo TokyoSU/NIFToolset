@@ -19,7 +19,7 @@
 #include "NiRenderer.h"
 #include "NiRenderObject.h"
 
-NiImplementRTTI(NiBackToFrontAccumulator, NiAccumulator);
+NiImplementRTTI(NiBackToFrontAccumulator, NiAccumulator, NiTypeMask::NiBackToFrontAccumulator);
 
 //--------------------------------------------------------------------------------------------------
 NiBackToFrontAccumulator::NiBackToFrontAccumulator() :

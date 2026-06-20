@@ -29,7 +29,7 @@
 
 bool NiRenderObject::ms_bStreamingAppliesDefaultMaterial = true;
 
-NiImplementRTTI(NiRenderObject, NiAVObject);
+NiImplementRTTI(NiRenderObject, NiAVObject, NiTypeMask::NiRenderObject);
 
 //--------------------------------------------------------------------------------------------------
 NiRenderObject::NiRenderObject() :

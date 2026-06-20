@@ -16,7 +16,7 @@
 
 #include "NiColorExtraData.h"
 
-NiImplementRTTI(NiColorExtraData,NiExtraData);
+NiImplementRTTI(NiColorExtraData, NiExtraData, NiTypeMask::NiColorExtraData);
 
 
 //--------------------------------------------------------------------------------------------------

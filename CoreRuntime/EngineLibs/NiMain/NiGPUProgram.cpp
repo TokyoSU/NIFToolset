@@ -16,5 +16,5 @@
 
 #include "NiGPUProgram.h"
 
-NiImplementRootRTTI(NiGPUProgram);
+NiImplementRootRTTI(NiGPUProgram, NiTypeMask::NiGPUProgram);
 

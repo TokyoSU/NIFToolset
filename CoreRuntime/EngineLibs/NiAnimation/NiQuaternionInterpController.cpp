@@ -20,7 +20,7 @@
 #include "NiConstQuaternionEvaluator.h"
 #include <NiQuaternion.h>
 
-NiImplementRTTI(NiQuaternionInterpController, NiSingleInterpController);
+NiImplementRTTI(NiQuaternionInterpController, NiSingleInterpController, NiTypeMask::NiQuaternionInterpController);
 
 //--------------------------------------------------------------------------------------------------
 NiQuaternionInterpController::NiQuaternionInterpController()

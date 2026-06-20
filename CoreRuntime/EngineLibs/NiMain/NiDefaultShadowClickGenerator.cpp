@@ -23,7 +23,7 @@
 #include "NiRenderedCubeMap.h"
 #include "NiShadowTechnique.h"
 
-NiImplementRTTI(NiDefaultShadowClickGenerator, NiShadowClickGenerator);
+NiImplementRTTI(NiDefaultShadowClickGenerator, NiShadowClickGenerator, NiTypeMask::NiDefaultShadowClickGenerator);
 
 //--------------------------------------------------------------------------------------------------
 NiDefaultShadowClickGenerator::NiDefaultShadowClickGenerator() :

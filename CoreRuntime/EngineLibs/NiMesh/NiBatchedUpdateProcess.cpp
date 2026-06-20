@@ -19,7 +19,7 @@
 
 //--------------------------------------------------------------------------------------------------
 
-NiImplementRTTI(NiBatchedUpdateProcess, NiMeshUpdateProcess);
+NiImplementRTTI(NiBatchedUpdateProcess, NiMeshUpdateProcess, NiTypeMask::NiMeshUpdateProcess);
 
 //--------------------------------------------------------------------------------------------------
 NiBatchedUpdateProcess::NiBatchedUpdateProcess(

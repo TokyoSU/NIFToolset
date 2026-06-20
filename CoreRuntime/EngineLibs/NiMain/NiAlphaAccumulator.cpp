@@ -20,7 +20,7 @@
 #include "NiVisibleArray.h"
 #include "NiRenderObject.h"
 
-NiImplementRTTI(NiAlphaAccumulator, NiBackToFrontAccumulator);
+NiImplementRTTI(NiAlphaAccumulator, NiBackToFrontAccumulator, NiTypeMask::NiAlphaAccumulator);
 
 //--------------------------------------------------------------------------------------------------
 NiAlphaAccumulator::NiAlphaAccumulator() :

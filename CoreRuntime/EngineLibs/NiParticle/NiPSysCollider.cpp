@@ -22,7 +22,7 @@
 #include <NiStream.h>
 #include <NiBool.h>
 
-NiImplementRTTI(NiPSysCollider, NiObject);
+NiImplementRTTI(NiPSysCollider, NiObject, NiTypeMask::NiPSysCollider);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysCollider::NiPSysCollider() :

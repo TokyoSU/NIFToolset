@@ -17,7 +17,7 @@
 #include "NiPoint3Interpolator.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiPoint3Interpolator, NiKeyBasedInterpolator);
+NiImplementRTTI(NiPoint3Interpolator, NiKeyBasedInterpolator, NiTypeMask::NiPoint3Interpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiPoint3Interpolator::NiPoint3Interpolator() :

@@ -20,7 +20,7 @@
 #include <NiCloningProcess.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiLookAtInterpolator, NiInterpolator);
+NiImplementRTTI(NiLookAtInterpolator, NiInterpolator, NiTypeMask::NiLookAtInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiLookAtInterpolator::NiLookAtInterpolator() : m_uFlags(0), m_pkLookAt(NULL)

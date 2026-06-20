@@ -27,8 +27,8 @@ static const char* XML_ATTRIBUTE_NORMALMAP = "NormalMap";
 static const char* XML_ATTRIBUTE_PACKAGEVERSION = "version";
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiITerrainSurfacePackageFileVersion0, NiITerrainSurfacePackageFileVersion1);
-NiImplementRTTI(NiTerrainSurfacePackageFileVersion0, NiITerrainSurfacePackageFileVersion0);
+NiImplementRTTI(NiITerrainSurfacePackageFileVersion0, NiITerrainSurfacePackageFileVersion1, NiTypeMask::NiITerrainSurfacePackageFileVersion0);
+NiImplementRTTI(NiTerrainSurfacePackageFileVersion0, NiITerrainSurfacePackageFileVersion0, NiTypeMask::NiTerrainSurfacePackageFileVersion0);
 //--------------------------------------------------------------------------------------------------
 NiITerrainSurfacePackageFileVersion0::NiITerrainSurfacePackageFileVersion0()
 {

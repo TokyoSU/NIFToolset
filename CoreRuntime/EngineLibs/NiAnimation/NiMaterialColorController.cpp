@@ -19,7 +19,7 @@
 #include "NiPoint3Interpolator.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiMaterialColorController,NiPoint3InterpController);
+NiImplementRTTI(NiMaterialColorController,NiPoint3InterpController, NiTypeMask::NiMaterialColorController);
 
 
 //--------------------------------------------------------------------------------------------------

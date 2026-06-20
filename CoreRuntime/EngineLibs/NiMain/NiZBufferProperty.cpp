@@ -18,7 +18,7 @@
 #include "NiZBufferProperty.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiZBufferProperty, NiProperty);
+NiImplementRTTI(NiZBufferProperty, NiProperty, NiTypeMask::NiZBufferProperty);
 
 NiZBufferPropertyPtr NiZBufferProperty::ms_spDefault;
 

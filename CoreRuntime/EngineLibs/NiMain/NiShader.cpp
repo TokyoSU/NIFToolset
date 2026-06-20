@@ -18,8 +18,8 @@
 #include "NiShader.h"
 #include "NiRenderer.h"
 
-NiImplementRootRTTI(NiShader);
-NiImplementRootRTTI(NiShader::NiShaderInstanceDescriptor);
+NiImplementRootRTTI(NiShader, NiTypeMask::NiShader);
+NiImplementRootRTTI(NiShader::NiShaderInstanceDescriptor, NiTypeMask::NiShaderInstanceDescriptor);
 
 //--------------------------------------------------------------------------------------------------
 NiShader::NiShader() :

@@ -14,7 +14,7 @@
 #include "NiMainPCH.h"
 #include "NiCullingProcess.h"
 
-NiImplementRootRTTI(NiCullingProcess);
+NiImplementRootRTTI(NiCullingProcess, NiTypeMask::NiCullingProcess);
 
 //--------------------------------------------------------------------------------------------------
 NiCullingProcess::NiCullingProcess(NiVisibleArray* pkVisibleSet,

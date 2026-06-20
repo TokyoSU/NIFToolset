@@ -19,7 +19,7 @@
 #include <NiBool.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiTextureEffect,NiDynamicEffect);
+NiImplementRTTI(NiTextureEffect, NiDynamicEffect, NiTypeMask::NiTextureEffect);
 
 NiFixedString NiTextureEffect::ms_akTextureTypeStrings[TEXTURE_TYPE_MAX];
 

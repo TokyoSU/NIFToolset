@@ -19,7 +19,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiBooleanExtraData,NiExtraData);
+NiImplementRTTI(NiBooleanExtraData, NiExtraData, NiTypeMask::NiBooleanExtraData);
 
 
 //--------------------------------------------------------------------------------------------------

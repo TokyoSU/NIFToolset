@@ -24,7 +24,7 @@
 #include "NiPSKernelDefinitions.h"
 #include "NiPSMeshParticleSystem.h"
 
-NiImplementRTTI(NiPSSimulatorMeshAlignStep, NiPSSimulatorStep);
+NiImplementRTTI(NiPSSimulatorMeshAlignStep, NiPSSimulatorStep, NiTypeMask::NiPSSimulatorMeshAlignStep);
 
 //--------------------------------------------------------------------------------------------------
 NiPSSimulatorMeshAlignStep::NiPSSimulatorMeshAlignStep(

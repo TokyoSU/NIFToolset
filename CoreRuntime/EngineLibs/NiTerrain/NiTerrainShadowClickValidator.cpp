@@ -20,7 +20,7 @@
 #include "NiTerrainShadowClickValidator.h"
 #include "NiTerrainCullingProcess.h"
 
-NiImplementRTTI(NiTerrainShadowClickValidator, NiShadowClickValidator);
+NiImplementRTTI(NiTerrainShadowClickValidator, NiShadowClickValidator, NiTypeMask::NiTerrainShadowClickValidator);
 
 //------------------------------------------------------------------------------------------------
 NiShadowClickValidator* NiTerrainShadowClickValidator::CreateTerrainShadowClickValidator()

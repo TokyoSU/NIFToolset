@@ -18,7 +18,7 @@
 #include "NiRenderer.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiMaterialProperty,NiProperty);
+NiImplementRTTI(NiMaterialProperty, NiProperty, NiTypeMask::NiMaterialProperty);
 
 NiMaterialPropertyPtr NiMaterialProperty::ms_spDefault;
 int NiMaterialProperty::ms_iNextIndex = 1;

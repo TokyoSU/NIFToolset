@@ -17,7 +17,7 @@
 #include "NiLightDimmerController.h"
 #include "NiFloatInterpolator.h"
 
-NiImplementRTTI(NiLightDimmerController,NiFloatInterpController);
+NiImplementRTTI(NiLightDimmerController,NiFloatInterpController,NiTypeMask::NiLightDimmerController);
 
 //------------------------------------------------------------------------------------------------
 NiLightDimmerController::NiLightDimmerController()

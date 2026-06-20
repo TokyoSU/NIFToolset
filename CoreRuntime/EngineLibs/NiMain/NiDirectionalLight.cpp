@@ -16,7 +16,7 @@
 
 #include "NiDirectionalLight.h"
 
-NiImplementRTTI(NiDirectionalLight,NiLight);
+NiImplementRTTI(NiDirectionalLight, NiLight, NiTypeMask::NiDirectionalLight);
 
 //--------------------------------------------------------------------------------------------------
 NiDirectionalLight::NiDirectionalLight()

@@ -22,7 +22,7 @@
 using namespace ecr;
 
 NiImplementRTTI(D3D11PersistentSrcTextureRendererData,
-    NiPersistentSrcTextureRendererData);
+    NiPersistentSrcTextureRendererData, NiTypeMask::D3D11PersistentSrcTextureRendererData);
 
 //------------------------------------------------------------------------------------------------
 D3D11PersistentSrcTextureRendererData::D3D11PersistentSrcTextureRendererData()

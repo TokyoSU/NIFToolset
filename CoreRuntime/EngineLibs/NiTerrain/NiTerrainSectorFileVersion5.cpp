@@ -18,7 +18,7 @@
 #include <NiBound.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiITerrainSectorFileVersion5, NiTerrainFileInterface);
+NiImplementRTTI(NiITerrainSectorFileVersion5, NiTerrainFileInterface, NiTypeMask::NiITerrainSectorFileVersion5);
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainSectorFileVersion5::DetectFileVersion(FileIdentifier kID)
 {

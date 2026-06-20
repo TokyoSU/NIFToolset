@@ -19,7 +19,7 @@
 #include <NiMemHint.h>
 #include <NiDepthStencilBuffer.h>
 
-NiImplementRTTI(NiRenderedTexture, NiTexture);
+NiImplementRTTI(NiRenderedTexture, NiTexture, NiTypeMask::NiRenderedTexture);
 
 NiTexture::FormatPrefs NiRenderedTexture::ms_kDefaultPrefs;
 

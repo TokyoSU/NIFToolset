@@ -19,7 +19,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiColorEvaluator, NiKeyBasedEvaluator);
+NiImplementRTTI(NiColorEvaluator, NiKeyBasedEvaluator, NiTypeMask::NiColorEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiColorEvaluator::NiColorEvaluator() :

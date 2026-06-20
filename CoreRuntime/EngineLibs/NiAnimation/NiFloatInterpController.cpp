@@ -20,7 +20,7 @@
 #include "NiConstFloatEvaluator.h"
 #include "NiFloatData.h"
 
-NiImplementRTTI(NiFloatInterpController, NiSingleInterpController);
+NiImplementRTTI(NiFloatInterpController, NiSingleInterpController, NiTypeMask::NiFloatInterpController);
 
 //--------------------------------------------------------------------------------------------------
 NiFloatInterpController::NiFloatInterpController()

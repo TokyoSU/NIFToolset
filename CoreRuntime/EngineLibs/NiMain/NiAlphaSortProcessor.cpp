@@ -17,7 +17,7 @@
 #include "NiAlphaSortProcessor.h"
 #include "NiRenderer.h"
 
-NiImplementRTTI(NiAlphaSortProcessor, NiBackToFrontSortProcessor);
+NiImplementRTTI(NiAlphaSortProcessor, NiBackToFrontSortProcessor, NiTypeMask::NiAlphaSortProcessor);
 
 //--------------------------------------------------------------------------------------------------
 void NiAlphaSortProcessor::PreRenderProcessList(const NiVisibleArray* pkInput,

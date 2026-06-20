@@ -18,7 +18,7 @@
 
 #include "NiPSysInitialRotSpeedCtlr.h"
 
-NiImplementRTTI(NiPSysInitialRotSpeedCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysInitialRotSpeedCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysInitialRotSpeedCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr()

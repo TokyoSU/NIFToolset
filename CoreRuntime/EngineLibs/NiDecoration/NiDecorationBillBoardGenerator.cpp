@@ -26,7 +26,7 @@
 
 NiFixedString NiDecorationBillBoardGenerator::GENERATOR_NAME = NULL;
 
-NiImplementRTTI(NiDecorationBillBoardGenerator, NiDecorationMeshGenerator);
+NiImplementRTTI(NiDecorationBillBoardGenerator, NiDecorationMeshGenerator, NiTypeMask::NiDecorationBillBoardGenerator);
 
 //------------------------------------------------------------------------------------------------
 NiDecorationBillBoardGenerator::NiDecorationBillBoardGenerator(bool bUseInstancing, 

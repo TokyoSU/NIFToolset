@@ -18,7 +18,7 @@
 #include "NiEulerRotKey.h"
 #include <NiMath.h>
 
-NiImplementRTTI(NiKeyBasedInterpolator, NiInterpolator);
+NiImplementRTTI(NiKeyBasedInterpolator, NiInterpolator, NiTypeMask::NiKeyBasedInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiKeyBasedInterpolator::NiKeyBasedInterpolator()

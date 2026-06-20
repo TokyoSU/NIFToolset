@@ -19,7 +19,7 @@
 #include "NiPSCommonSemantics.h"
 #include <NiSPWorkflow.h>
 
-NiImplementRTTI(NiPSSimulator, NiMeshModifier);
+NiImplementRTTI(NiPSSimulator, NiMeshModifier, NiTypeMask::NiPSSimulator);
 
 const NiUInt32 NiPSSimulator::INVALID_INDEX = (NiUInt32) -1;
 

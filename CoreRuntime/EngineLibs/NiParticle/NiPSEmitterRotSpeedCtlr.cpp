@@ -16,7 +16,7 @@
 
 #include "NiPSEmitterRotSpeedCtlr.h"
 
-NiImplementRTTI(NiPSEmitterRotSpeedCtlr, NiPSEmitterFloatCtlr);
+NiImplementRTTI(NiPSEmitterRotSpeedCtlr, NiPSEmitterFloatCtlr, NiTypeMask::NiPSEmitterRotSpeedCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterRotSpeedCtlr::NiPSEmitterRotSpeedCtlr(

@@ -16,8 +16,8 @@
 #include "NiTerrainXMLHelpers.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiITerrainFileVersion4, NiTerrainFileInterface);
-NiImplementRTTI(NiTerrainFileVersion4, NiITerrainFileVersion4);
+NiImplementRTTI(NiITerrainFileVersion4, NiTerrainFileInterface, NiTypeMask::NiITerrainFileVersion4);
+NiImplementRTTI(NiTerrainFileVersion4, NiITerrainFileVersion4, NiTypeMask::NiTerrainFileVersion4);
 //--------------------------------------------------------------------------------------------------
 NiITerrainFileVersion4::NiITerrainFileVersion4()
     : NiTerrainFileInterface(ms_InterfaceVersion)

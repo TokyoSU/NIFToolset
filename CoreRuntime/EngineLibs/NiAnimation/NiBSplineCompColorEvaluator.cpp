@@ -19,8 +19,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiBSplineCompColorEvaluator,
-    NiBSplineColorEvaluator);
+NiImplementRTTI(NiBSplineCompColorEvaluator, NiBSplineColorEvaluator, NiTypeMask::NiBSplineCompColorEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineCompColorEvaluator::NiBSplineCompColorEvaluator() :

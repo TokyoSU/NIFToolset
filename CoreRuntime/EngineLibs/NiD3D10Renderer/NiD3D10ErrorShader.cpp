@@ -13,22 +13,14 @@
 
 // Precompiled Header
 #include "NiD3D10RendererPCH.h"
-#pragma message("post pch")
-
 #include "NiD3D10ErrorShader.h"
-#pragma message("posta pch")
 #include "NiD3D10PixelShader.h"
-#pragma message("postb pch")
 #include "NiD3D10Renderer.h"
-#pragma message("postc pch")
 #include "NiD3D10ShaderProgramFactory.h"
-#pragma message("postd pch")
 #include "NiD3D10VertexShader.h"
-#pragma message("poste pch")
 #include "NiD3D10MeshMaterialBinding.h"
 
-NiImplementRTTI(NiD3D10ErrorShader, NiD3D10Shader);
-#pragma message("postf pch")
+NiImplementRTTI(NiD3D10ErrorShader, NiD3D10Shader, NiTypeMask::NiD3D10ErrorShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10ErrorShader::NiD3D10ErrorShader()

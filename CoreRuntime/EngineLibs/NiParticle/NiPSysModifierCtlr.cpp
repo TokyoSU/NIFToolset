@@ -19,7 +19,7 @@
 #include "NiPSysModifierCtlr.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysModifierCtlr, NiSingleInterpController);
+NiImplementRTTI(NiPSysModifierCtlr, NiSingleInterpController, NiTypeMask::NiPSysModifierCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysModifierCtlr::NiPSysModifierCtlr() : m_pkModifier(NULL)

@@ -18,7 +18,7 @@
 
 #include "NiPSysPositionModifier.h"
 
-NiImplementRTTI(NiPSysPositionModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysPositionModifier, NiPSysModifier, NiTypeMask::NiPSysPositionModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysPositionModifier::NiPSysPositionModifier()

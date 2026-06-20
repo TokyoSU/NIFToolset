@@ -19,7 +19,7 @@
 #include <NiSystem.h>
 #include <NiFilename.h>
 
-NiImplementRTTI(NiAudioSource,NiAVObject);
+NiImplementRTTI(NiAudioSource,NiAVObject, NiTypeMask::NiAudioSource);
 
 //--------------------------------------------------------------------------------------------------
 NiAudioSource::NiAudioSource(unsigned int uiType)

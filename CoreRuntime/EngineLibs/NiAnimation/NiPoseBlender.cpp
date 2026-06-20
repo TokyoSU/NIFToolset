@@ -18,7 +18,7 @@
 #include "NiControllerSequence.h"
 #include "NiControllerManager.h"
 
-NiImplementRTTI(NiPoseBlender,NiObject);
+NiImplementRTTI(NiPoseBlender,NiObject, NiTypeMask::NiPoseBlender);
 
 //--------------------------------------------------------------------------------------------------
 NiPoseBlender::NiPoseBlender(NiControllerManager* pkOwner) :

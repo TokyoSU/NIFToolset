@@ -19,7 +19,7 @@
 #include "NiShadowGenerator.h"
 #include "NiLODNode.h"
 
-NiImplementRTTI(NiShadowClickValidator, NiRenderClickValidator);
+NiImplementRTTI(NiShadowClickValidator, NiRenderClickValidator, NiTypeMask::NiShadowClickValidator);
 
 //--------------------------------------------------------------------------------------------------
 NiShadowClickValidator::NiShadowClickValidator() :

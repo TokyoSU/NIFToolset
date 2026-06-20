@@ -16,7 +16,7 @@
 #include "NiShadowGenerator.h"
 #include "NiShadowTechnique.h"
 
-NiImplementRootRTTI(NiShadowTechnique);
+NiImplementRootRTTI(NiShadowTechnique, NiTypeMask::NiShadowTechnique);
 
 //--------------------------------------------------------------------------------------------------
 NiShadowTechnique::NiShadowTechnique(const NiFixedString& kName,

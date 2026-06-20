@@ -18,7 +18,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiBinaryExtraData,NiExtraData);
+NiImplementRTTI(NiBinaryExtraData, NiExtraData, NiTypeMask::NiBinaryExtraData);
 
 
 //--------------------------------------------------------------------------------------------------

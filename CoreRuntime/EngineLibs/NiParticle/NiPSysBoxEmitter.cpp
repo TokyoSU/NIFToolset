@@ -19,7 +19,7 @@
 #include "NiPSysBoxEmitter.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysBoxEmitter, NiPSysVolumeEmitter);
+NiImplementRTTI(NiPSysBoxEmitter, NiPSysVolumeEmitter, NiTypeMask::NiPSysBoxEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysBoxEmitter::NiPSysBoxEmitter() :

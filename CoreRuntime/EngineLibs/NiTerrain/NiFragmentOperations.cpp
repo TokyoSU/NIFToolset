@@ -19,7 +19,7 @@
 #include "NiFragmentOperationsNodeLibrary.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiFragmentOperations, NiFragment);
+NiImplementRTTI(NiFragmentOperations, NiFragment, NiTypeMask::NiFragmentOperations);
 //--------------------------------------------------------------------------------------------------
 NiFragmentOperations::NiFragmentOperations():
     NiFragment(VERTEX_VERSION,GEOMETRY_VERSION,PIXEL_VERSION)

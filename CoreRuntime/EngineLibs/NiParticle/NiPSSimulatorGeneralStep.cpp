@@ -19,7 +19,7 @@
 #include "NiPSCommonSemantics.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSSimulatorGeneralStep, NiPSSimulatorStep);
+NiImplementRTTI(NiPSSimulatorGeneralStep, NiPSSimulatorStep, NiTypeMask::NiPSSimulatorGeneralStep);
 
 //--------------------------------------------------------------------------------------------------
 NiPSSimulatorGeneralStep::NiPSSimulatorGeneralStep() :

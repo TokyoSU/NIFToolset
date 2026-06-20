@@ -21,7 +21,7 @@
 #include "NiToolDataStream.h"
 #include <NiBool.h>
 
-NiImplementRTTI(NiDataStream, NiObject);
+NiImplementRTTI(NiDataStream, NiObject, NiTypeMask::NiDataStream);
 
 //--------------------------------------------------------------------------------------------------
 static const NiUInt32 MAX_COMPS = 64;

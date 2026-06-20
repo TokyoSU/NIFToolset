@@ -20,7 +20,7 @@
 #include "NiD3D10Renderer.h"
 #include "NiD3D10MeshMaterialBinding.h"
 
-NiImplementRTTI(NiD3D10ShaderInterface, NiShader);
+NiImplementRTTI(NiD3D10ShaderInterface, NiShader, NiTypeMask::NiD3D10ShaderInterface);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10ShaderInterface::NiD3D10ShaderInterface()

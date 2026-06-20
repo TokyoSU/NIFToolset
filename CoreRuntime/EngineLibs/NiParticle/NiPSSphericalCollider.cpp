@@ -17,7 +17,7 @@
 #include "NiPSSphericalCollider.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSSphericalCollider, NiPSCollider);
+NiImplementRTTI(NiPSSphericalCollider, NiPSCollider, NiTypeMask::NiPSSphericalCollider);
 
 //--------------------------------------------------------------------------------------------------
 NiPSSphericalCollider::NiPSSphericalCollider(

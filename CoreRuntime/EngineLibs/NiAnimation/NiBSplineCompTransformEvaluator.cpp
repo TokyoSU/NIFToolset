@@ -21,8 +21,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiBSplineCompTransformEvaluator,
-    NiBSplineTransformEvaluator);
+NiImplementRTTI(NiBSplineCompTransformEvaluator, NiBSplineTransformEvaluator, NiTypeMask::NiBSplineCompTransformEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineCompTransformEvaluator::NiBSplineCompTransformEvaluator() :

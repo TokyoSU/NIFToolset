@@ -16,7 +16,7 @@
 #include "NiExternalAssetParams.h"
 
 //---------------------------------------------------------------------------
-NiImplementRootRTTI(NiExternalAssetParams);
+NiImplementRootRTTI(NiExternalAssetParams, NiTypeMask::NiExternalAssetParams);
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------

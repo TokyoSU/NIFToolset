@@ -21,7 +21,7 @@
 #include "NiAVObject.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiSkinInstance, NiObject);
+NiImplementRTTI(NiSkinInstance, NiObject, NiTypeMask::NiSkinInstance);
 
 #include "NiSystem.h"
 

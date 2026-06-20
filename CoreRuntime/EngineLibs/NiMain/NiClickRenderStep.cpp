@@ -16,7 +16,7 @@
 
 #include "NiClickRenderStep.h"
 
-NiImplementRTTI(NiClickRenderStep, NiRenderStep);
+NiImplementRTTI(NiClickRenderStep, NiRenderStep, NiTypeMask::NiClickRenderStep);
 
 //--------------------------------------------------------------------------------------------------
 NiClickRenderStep::NiClickRenderStep() : m_uiNumObjectsDrawn(0),

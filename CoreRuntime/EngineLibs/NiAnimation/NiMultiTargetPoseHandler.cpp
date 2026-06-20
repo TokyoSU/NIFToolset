@@ -23,7 +23,7 @@
 #include "NiControllerManager.h"
 
 
-NiImplementRTTI(NiMultiTargetPoseHandler, NiObject);
+NiImplementRTTI(NiMultiTargetPoseHandler, NiObject, NiTypeMask::NiMultiTargetPoseHandler);
 
 
 //--------------------------------------------------------------------------------------------------

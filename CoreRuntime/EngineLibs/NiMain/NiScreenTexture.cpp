@@ -19,7 +19,7 @@
 #include "NiScreenTexture.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiScreenTexture, NiObject);
+NiImplementRTTI(NiScreenTexture, NiObject, NiTypeMask::NiScreenTexture);
 
 // construction and destruction
 //--------------------------------------------------------------------------------------------------

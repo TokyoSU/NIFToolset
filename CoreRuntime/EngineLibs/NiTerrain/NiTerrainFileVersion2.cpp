@@ -16,7 +16,7 @@
 #include "NiTerrainXMLHelpers.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainFileVersion2, NiTerrainFileVersion3);
+NiImplementRTTI(NiTerrainFileVersion2, NiTerrainFileVersion3, NiTypeMask::NiTerrainFileVersion2);
 //--------------------------------------------------------------------------------------------------
 const char* NiTerrainFileVersion2::ms_pcTerrainConfigFile = "\\root.terrain";
 //--------------------------------------------------------------------------------------------------

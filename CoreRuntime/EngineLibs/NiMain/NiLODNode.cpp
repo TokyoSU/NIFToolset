@@ -19,7 +19,7 @@
 #include "NiCullingProcess.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiLODNode, NiSwitchNode);
+NiImplementRTTI(NiLODNode, NiSwitchNode, NiTypeMask::NiLODNode);
 
 int  NiLODNode::ms_iGlobalLOD = -1;
 

@@ -19,7 +19,7 @@
 #include "NiTriShapeDynamicData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiTriShapeDynamicData,NiTriShapeData);
+NiImplementRTTI(NiTriShapeDynamicData, NiTriShapeData, NiTypeMask::NiTriShapeDynamicData);
 
 //--------------------------------------------------------------------------------------------------
 NiTriShapeDynamicData::NiTriShapeDynamicData(unsigned short usVertices,

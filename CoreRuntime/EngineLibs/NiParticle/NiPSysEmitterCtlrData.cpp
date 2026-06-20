@@ -19,7 +19,7 @@
 #include "NiPSysEmitterCtlrData.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysEmitterCtlrData, NiObject);
+NiImplementRTTI(NiPSysEmitterCtlrData, NiObject, NiTypeMask::NiPSysEmitterCtlrData);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysEmitterCtlrData::NiPSysEmitterCtlrData() :

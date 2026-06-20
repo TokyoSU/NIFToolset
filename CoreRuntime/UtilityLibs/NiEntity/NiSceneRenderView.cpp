@@ -16,7 +16,7 @@
 
 #include "NiSceneRenderView.h"
 
-NiImplementRTTI(NiSceneRenderView, NiRenderView);
+NiImplementRTTI(NiSceneRenderView, NiRenderView, NiTypeMask::NiSceneRenderView);
 
 //---------------------------------------------------------------------------
 void NiSceneRenderView::SetCameraData(const NiRect<float>& kViewport)

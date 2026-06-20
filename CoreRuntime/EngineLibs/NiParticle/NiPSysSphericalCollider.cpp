@@ -20,7 +20,7 @@
 #include <NiAVObject.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysSphericalCollider, NiPSysCollider);
+NiImplementRTTI(NiPSysSphericalCollider, NiPSysCollider, NiTypeMask::NiPSysSphericalCollider);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysSphericalCollider::NiPSysSphericalCollider() :

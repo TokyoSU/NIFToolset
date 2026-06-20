@@ -16,4 +16,4 @@
 
 #include "NiCompositeValidator.h"
 
-NiImplementRTTI(NiCompositeValidator, NiRenderClickValidator);
+NiImplementRTTI(NiCompositeValidator, NiRenderClickValidator, NiTypeMask::NiCompositeValidator);

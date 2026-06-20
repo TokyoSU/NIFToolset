@@ -24,7 +24,7 @@
 
 using namespace efd;
 
-NiImplementRTTI(NiDebugVisualizationClick, NiRenderClick);
+NiImplementRTTI(NiDebugVisualizationClick, NiRenderClick, NiTypeMask::NiDebugVisualizationClick);
 
 //--------------------------------------------------------------------------------------------------
 NiDebugVisualizationClick::NiDebugVisualizationClick(NiUInt8 uiMask) :

@@ -19,7 +19,7 @@
 #include "NiPSysColliderManager.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysColliderManager, NiPSysModifier);
+NiImplementRTTI(NiPSysColliderManager, NiPSysModifier, NiTypeMask::NiPSysColliderManager);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysColliderManager::NiPSysColliderManager()

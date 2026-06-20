@@ -22,7 +22,7 @@
 //--------------------------------------------------------------------------------------------------
 // Default implementation - NiDefaultAVObjectPalette
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDefaultAVObjectPalette, NiAVObjectPalette);
+NiImplementRTTI(NiDefaultAVObjectPalette, NiAVObjectPalette, NiTypeMask::NiDefaultAVObjectPalette);
 
 //--------------------------------------------------------------------------------------------------
 // cloning

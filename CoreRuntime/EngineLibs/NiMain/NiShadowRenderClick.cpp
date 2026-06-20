@@ -17,7 +17,7 @@
 #include "NiShadowGenerator.h"
 #include "NiShadowRenderClick.h"
 
-NiImplementRTTI(NiShadowRenderClick, NiViewRenderClick);
+NiImplementRTTI(NiShadowRenderClick, NiViewRenderClick, NiTypeMask::NiShadowRenderClick);
 
 bool NiShadowRenderClick::ms_bDisableLODProcessing = true;
 

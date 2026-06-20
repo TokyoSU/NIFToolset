@@ -17,7 +17,7 @@
 #include "NiRenderedCubeMap.h"
 #include "NiRenderer.h"
 
-NiImplementRTTI(NiRenderedCubeMap, NiRenderedTexture);
+NiImplementRTTI(NiRenderedCubeMap, NiRenderedTexture, NiTypeMask::NiRenderedCubeMap);
 
 //--------------------------------------------------------------------------------------------------
 NiRenderedCubeMap::NiRenderedCubeMap()

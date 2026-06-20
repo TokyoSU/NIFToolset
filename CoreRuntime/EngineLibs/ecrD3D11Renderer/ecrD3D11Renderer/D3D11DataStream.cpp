@@ -23,7 +23,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(D3D11DataStream, NiDataStream);
+NiImplementRTTI(D3D11DataStream, NiDataStream, NiTypeMask::D3D11DataStream);
 
 //------------------------------------------------------------------------------------------------
 D3D11DataStream::D3D11DataStream(

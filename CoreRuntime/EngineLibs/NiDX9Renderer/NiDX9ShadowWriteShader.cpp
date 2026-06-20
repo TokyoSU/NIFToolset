@@ -30,7 +30,7 @@ unsigned int NiDX9ShadowWriteShader::ms_auiBackfaceCullModeMapping[
     D3DCULL_NONE    // NiStencilProperty::DRAW_BOTH, Right Hand
 };
 
-NiImplementRTTI(NiDX9ShadowWriteShader, NiDX9FragmentShader);
+NiImplementRTTI(NiDX9ShadowWriteShader, NiDX9FragmentShader, NiTypeMask::NiDX9ShadowWriteShader);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9ShadowWriteShader::NiDX9ShadowWriteShader(

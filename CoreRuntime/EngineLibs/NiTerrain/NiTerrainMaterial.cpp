@@ -36,7 +36,7 @@
 #include <NiFloatExtraData.h>
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainMaterial, NiFragmentMaterial);
+NiImplementRTTI(NiTerrainMaterial, NiFragmentMaterial, NiTypeMask::NiTerrainMaterial);
 //---------------------------------------------------------------------------
 const NiColor NiTerrainMaterial::ms_kDefaultColor = NiColor(1.0f, 1.0f, 1.0f);
 //---------------------------------------------------------------------------

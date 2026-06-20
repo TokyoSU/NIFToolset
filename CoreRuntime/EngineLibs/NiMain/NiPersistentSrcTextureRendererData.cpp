@@ -20,7 +20,7 @@
 #include "NiPixelData.h"
 #include <NiMemHint.h>
 
-NiImplementRTTI(NiPersistentSrcTextureRendererData, NiTexture::RendererData);
+NiImplementRTTI(NiPersistentSrcTextureRendererData, NiTexture::RendererData, NiTypeMask::NiPersistentSrcTextureRendererData);
 
 bool NiPersistentSrcTextureRendererData::ms_bToolModeStreaming = false;
 

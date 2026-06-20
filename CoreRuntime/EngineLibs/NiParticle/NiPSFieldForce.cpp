@@ -19,7 +19,7 @@
 #include <NiBool.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSFieldForce, NiPSForce);
+NiImplementRTTI(NiPSFieldForce, NiPSForce, NiTypeMask::NiPSFieldForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSFieldForce::NiPSFieldForce(

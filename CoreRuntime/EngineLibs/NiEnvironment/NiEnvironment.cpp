@@ -21,7 +21,7 @@
 #include "NiSkyRenderView.h"
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiEnvironment, NiNode);
+NiImplementRTTI(NiEnvironment, NiNode, NiTypeMask::NiEnvironment);
 
 //---------------------------------------------------------------------------
 NiEnvironment::NiEnvironment():

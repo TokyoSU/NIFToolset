@@ -20,7 +20,7 @@
 #include <NiSystem.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiInputDevice);
+NiImplementRootRTTI(NiInputDevice, NiTypeMask::NiInputDevice);
 
 //--------------------------------------------------------------------------------------------------
 unsigned int NiInputDevice::Description::AddControlDesc(

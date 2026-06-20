@@ -16,7 +16,7 @@
 
 #include "NiPSEmitterRotAngleCtlr.h"
 
-NiImplementRTTI(NiPSEmitterRotAngleCtlr, NiPSEmitterFloatCtlr);
+NiImplementRTTI(NiPSEmitterRotAngleCtlr, NiPSEmitterFloatCtlr, NiTypeMask::NiPSEmitterRotAngleCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterRotAngleCtlr::NiPSEmitterRotAngleCtlr(

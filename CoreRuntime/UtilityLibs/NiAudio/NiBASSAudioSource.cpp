@@ -17,7 +17,7 @@ namespace
     }
 }
 
-NiImplementRTTI(NiBASSAudioSource, NiAudioSource);
+NiImplementRTTI(NiBASSAudioSource, NiAudioSource, NiTypeMask::NiBASSAudioSource);
 
 //---------------------------------------------------------------------------
 NiBASSAudioSource::NiBASSAudioSource(unsigned int uiType)

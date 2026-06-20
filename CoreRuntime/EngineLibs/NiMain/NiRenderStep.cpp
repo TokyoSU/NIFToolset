@@ -17,7 +17,7 @@
 #include "NiRenderer.h"
 #include "NiRenderStep.h"
 
-NiImplementRootRTTI(NiRenderStep);
+NiImplementRootRTTI(NiRenderStep, NiTypeMask::NiRenderStep);
 
 NiFixedString NiRenderStep::ms_kDefaultName;
 

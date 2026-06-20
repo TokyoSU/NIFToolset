@@ -29,7 +29,7 @@
 #include <NiRTLib.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiNode, NiAVObject);
+NiImplementRTTI(NiNode, NiAVObject, NiTypeMask::NiNode);
 
 //--------------------------------------------------------------------------------------------------
 // construction and destruction
