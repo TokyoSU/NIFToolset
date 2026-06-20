@@ -16,7 +16,7 @@
 
 #include "NiCulledObjectValidator.h"
 
-NiImplementRTTI(NiCulledObjectValidator, NiRenderClickValidator);
+NiImplementRTTI(NiCulledObjectValidator, NiRenderClickValidator, NiTypeMask::NiCulledObjectValidator);
 
 //--------------------------------------------------------------------------------------------------
 bool NiCulledObjectValidator::ValidateClick(NiRenderClick*,

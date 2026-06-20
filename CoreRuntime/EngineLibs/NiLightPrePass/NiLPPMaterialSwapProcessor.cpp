@@ -28,8 +28,8 @@
 #endif
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiLPPMaterialSwapProcessorG, NiMaterialSwapProcessor);
-NiImplementRTTI(NiLPPMaterialSwapProcessorF, NiMaterialSwapProcessor);
+NiImplementRTTI(NiLPPMaterialSwapProcessorG, NiMaterialSwapProcessor, NiTypeMask::NiLPPMaterialSwapProcessorG);
+NiImplementRTTI(NiLPPMaterialSwapProcessorF, NiMaterialSwapProcessor, NiTypeMask::NiLPPMaterialSwapProcessorF);
 //-------------------------------------------------------------------------------------------------
 NiLPPMaterialSwapProcessorG::NiLPPMaterialSwapProcessorG()
 {

@@ -25,7 +25,7 @@
 
 #include <NiMeshUpdateProcess.h>
 
-NiImplementRTTI(NiPSMeshParticleSystem, NiPSParticleSystem);
+NiImplementRTTI(NiPSMeshParticleSystem, NiPSParticleSystem, NiTypeMask::NiPSMeshParticleSystem);
 
 //--------------------------------------------------------------------------------------------------
 NiPSMeshParticleSystem* NiPSMeshParticleSystem::Create(

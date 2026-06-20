@@ -19,7 +19,7 @@
 #include "NiPSysEmitter.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysEmitter, NiPSysModifier);
+NiImplementRTTI(NiPSysEmitter, NiPSysModifier, NiTypeMask::NiPSysEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysEmitter::NiPSysEmitter() :

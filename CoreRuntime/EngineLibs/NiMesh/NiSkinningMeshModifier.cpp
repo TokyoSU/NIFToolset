@@ -35,7 +35,7 @@
 #include "NiSkinningKernelPNBT16.h"
 #include "NiSkinningKernelPNBT32.h"
 
-NiImplementRTTI(NiSkinningMeshModifier, NiMeshModifier);
+NiImplementRTTI(NiSkinningMeshModifier, NiMeshModifier, NiTypeMask::NiSkinningMeshModifier);
 
 //--------------------------------------------------------------------------------------------------
 void NiSkinningMeshModifier::Initialize(NiUInt32 uiBoneCount)

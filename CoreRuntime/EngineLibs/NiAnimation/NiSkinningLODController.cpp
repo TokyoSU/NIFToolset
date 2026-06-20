@@ -18,7 +18,7 @@
 #include <NiMesh.h>
 #include "NiSkinningLODController.h"
 
-NiImplementRTTI(NiSkinningLODController, NiTimeController);
+NiImplementRTTI(NiSkinningLODController, NiTimeController, NiTypeMask::NiSkinningLODController);
 
 //--------------------------------------------------------------------------------------------------
 NiSkinningLODController* NiSkinningLODController::FindSkinningLODController(

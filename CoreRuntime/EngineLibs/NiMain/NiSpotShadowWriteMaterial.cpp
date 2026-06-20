@@ -30,7 +30,7 @@
 #define NISPOTSHADOWWRITEMATERIAL_VERTEX_VERSION   7
 #define NISPOTSHADOWWRITEMATERIAL_PIXEL_VERSION    6
 
-NiImplementRTTI(NiSpotShadowWriteMaterial, NiStandardMaterial);
+NiImplementRTTI(NiSpotShadowWriteMaterial, NiStandardMaterial, NiTypeMask::NiSpotShadowWriteMaterial);
 
 //--------------------------------------------------------------------------------------------------
 NiSpotShadowWriteMaterial::NiSpotShadowWriteMaterial(

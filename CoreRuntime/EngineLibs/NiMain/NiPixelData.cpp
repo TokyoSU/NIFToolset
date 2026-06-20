@@ -18,7 +18,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPixelData, NiObject);
+NiImplementRTTI(NiPixelData, NiObject, NiTypeMask::NiPixelData);
 
 //--------------------------------------------------------------------------------------------------
 NiPixelData::NiPixelData()

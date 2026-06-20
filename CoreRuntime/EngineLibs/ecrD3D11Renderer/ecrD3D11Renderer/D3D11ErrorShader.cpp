@@ -24,7 +24,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(D3D11ErrorShader, D3D11ShaderCore);
+NiImplementRTTI(D3D11ErrorShader, D3D11ShaderCore, NiTypeMask::D3D11ErrorShader);
 
 //------------------------------------------------------------------------------------------------
 D3D11ErrorShader::D3D11ErrorShader()

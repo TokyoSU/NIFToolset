@@ -10,7 +10,7 @@
 using namespace efd;
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiLPPDecorationDepthNormalMaterial, NiDecorationMaterial);
+NiImplementRTTI(NiLPPDecorationDepthNormalMaterial, NiDecorationMaterial, NiTypeMask::NiLPPDecorationDepthNormalMaterial);
 //------------------------------------------------------------------------------------------------
 NiLPPDecorationDepthNormalMaterial* NiLPPDecorationDepthNormalMaterial::Create()
 {

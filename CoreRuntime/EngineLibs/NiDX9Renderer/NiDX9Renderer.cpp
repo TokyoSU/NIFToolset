@@ -80,7 +80,7 @@ static char acGamebryoVersion[] EE_UNUSED =
     GAMEBRYO_MODULE_VERSION_STRING(NiDX9);
 //------------------------------------------------------------------------------------------------
 
-NiImplementRTTI(NiDX9Renderer,NiRenderer);
+NiImplementRTTI(NiDX9Renderer,NiRenderer, NiTypeMask::NiDX9Renderer);
 
 HINSTANCE NiDX9Renderer::ms_hDXLib = NULL;
 LPDIRECT3D9 NiDX9Renderer::ms_pkD3D9 = NULL;

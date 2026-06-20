@@ -18,7 +18,7 @@
 #include <NiRenderer.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiMeshModifier, NiObject);
+NiImplementRTTI(NiMeshModifier, NiObject, NiTypeMask::NiMeshModifier);
 
 //--------------------------------------------------------------------------------------------------
 

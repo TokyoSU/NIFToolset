@@ -19,7 +19,7 @@
 #include "NiBinaryStream.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiAlphaProperty,NiProperty);
+NiImplementRTTI(NiAlphaProperty, NiProperty, NiTypeMask::NiAlphaProperty);
 
 NiAlphaPropertyPtr NiAlphaProperty::ms_spDefault;
 

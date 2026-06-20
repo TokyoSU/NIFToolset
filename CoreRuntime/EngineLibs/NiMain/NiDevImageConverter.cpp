@@ -29,7 +29,7 @@
 #include <NiSystem.h>
 #include <NiMemHint.h>
 
-NiImplementRTTI(NiDevImageConverter, NiImageConverter);
+NiImplementRTTI(NiDevImageConverter, NiImageConverter, NiTypeMask::NiDevImageConverter);
 
 //--------------------------------------------------------------------------------------------------
 NiDevImageConverter::NiDevImageConverter()

@@ -19,7 +19,7 @@
 #include "NiLinesData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiLinesData,NiGeometryData);
+NiImplementRTTI(NiLinesData, NiGeometryData, NiTypeMask::NiLinesData);
 
 //--------------------------------------------------------------------------------------------------
 NiLinesData::NiLinesData(unsigned short usVertices, NiPoint3* pkVertex,

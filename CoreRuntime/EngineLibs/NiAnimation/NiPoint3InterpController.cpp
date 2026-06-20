@@ -20,7 +20,7 @@
 #include "NiConstPoint3Evaluator.h"
 #include <NiPoint3.h>
 
-NiImplementRTTI(NiPoint3InterpController, NiSingleInterpController);
+NiImplementRTTI(NiPoint3InterpController, NiSingleInterpController, NiTypeMask::NiPoint3InterpController);
 
 //--------------------------------------------------------------------------------------------------
 NiPoint3InterpController::NiPoint3InterpController()

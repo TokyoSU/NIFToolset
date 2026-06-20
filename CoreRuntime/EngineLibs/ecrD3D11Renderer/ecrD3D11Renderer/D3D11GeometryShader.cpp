@@ -19,7 +19,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(D3D11GeometryShader, D3D11ShaderProgram);
+NiImplementRTTI(D3D11GeometryShader, D3D11ShaderProgram, NiTypeMask::D3D11GeometryShader);
 
 //------------------------------------------------------------------------------------------------
 D3D11GeometryShader::D3D11GeometryShader() :

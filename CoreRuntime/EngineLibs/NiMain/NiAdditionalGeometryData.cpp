@@ -20,7 +20,7 @@
 #include "NiBool.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiAdditionalGeometryData,NiObject);
+NiImplementRTTI(NiAdditionalGeometryData, NiObject, NiTypeMask::NiAdditionalGeometryData);
 
 //--------------------------------------------------------------------------------------------------
 void NiAdditionalGeometryData::NiAGDDataStream::FillInByteSizeArray(

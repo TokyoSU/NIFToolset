@@ -16,7 +16,7 @@
 
 #include "NiUpdateProcess.h"
 
-NiImplementRootRTTI(NiUpdateProcess);
+NiImplementRootRTTI(NiUpdateProcess, NiTypeMask::NiUpdateProcess);
 
 //--------------------------------------------------------------------------------------------------
 NiUpdateProcess::~NiUpdateProcess()

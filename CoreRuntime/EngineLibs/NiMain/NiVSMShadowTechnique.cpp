@@ -25,7 +25,7 @@
 #include "NiSingleShaderMaterial.h"
 #include "NiVSMBlurMaterialNodeLibrary.h"
 
-NiImplementRTTI(NiVSMShadowTechnique, NiShadowTechnique);
+NiImplementRTTI(NiVSMShadowTechnique, NiShadowTechnique, NiTypeMask::NiVSMShadowTechnique);
 
 //--------------------------------------------------------------------------------------------------
 NiVSMShadowTechnique::NiVSMShadowTechnique(const NiFixedString& kName,

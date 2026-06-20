@@ -18,7 +18,7 @@
 #include "NiCloningProcess.h"
 #include <NiSystem.h>
 
-NiImplementRTTI(NiAVObjectPalette, NiObject);
+NiImplementRTTI(NiAVObjectPalette, NiObject, NiTypeMask::NiAVObjectPalette);
 
 //--------------------------------------------------------------------------------------------------
 // Base interface - NiAVObjectPalette

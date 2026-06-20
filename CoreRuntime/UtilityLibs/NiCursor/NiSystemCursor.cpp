@@ -19,7 +19,7 @@
 #include <NiRenderTargetGroup.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiSystemCursor, NiCursor);
+NiImplementRTTI(NiSystemCursor, NiCursor, NiTypeMask::NiSystemCursor);
 
 //--------------------------------------------------------------------------------------------------
 NiSystemCursorPtr NiSystemCursor::ms_spSystemCursor = 0;

@@ -21,7 +21,7 @@
 #include <NiSkinningMeshModifier.h>
 #include <NiDataStreamElementLock.h>
 
-NiImplementRTTI(NiPSMeshEmitter, NiPSEmitter);
+NiImplementRTTI(NiPSMeshEmitter, NiPSEmitter, NiTypeMask::NiPSMeshEmitter);
 
 const NiUInt32 NiPSMeshEmitter::MAX_DEGENERATE_TRIANGLES = 6;
 

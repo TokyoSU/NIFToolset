@@ -21,7 +21,7 @@
 #include <NiBoolTimelineInterpolator.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysModifierBoolCtlr, NiPSysModifierCtlr);
+NiImplementRTTI(NiPSysModifierBoolCtlr, NiPSysModifierCtlr, NiTypeMask::NiPSysModifierBoolCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysModifierBoolCtlr::NiPSysModifierBoolCtlr()

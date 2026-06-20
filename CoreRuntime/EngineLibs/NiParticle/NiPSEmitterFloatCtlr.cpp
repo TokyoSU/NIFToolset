@@ -19,7 +19,7 @@
 #include <NiConstFloatEvaluator.h>
 #include <NiBlendFloatInterpolator.h>
 
-NiImplementRTTI(NiPSEmitterFloatCtlr, NiPSEmitterCtlr);
+NiImplementRTTI(NiPSEmitterFloatCtlr, NiPSEmitterCtlr, NiTypeMask::NiPSEmitterFloatCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterFloatCtlr::NiPSEmitterFloatCtlr(const NiFixedString& kEmitterName) :

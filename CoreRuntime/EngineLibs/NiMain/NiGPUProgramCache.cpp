@@ -23,7 +23,7 @@
 
 bool NiGPUProgramCache::ms_bOverwriteDeprecatedCacheFiles = true;
 
-NiImplementRootRTTI(NiGPUProgramCache);
+NiImplementRootRTTI(NiGPUProgramCache, NiTypeMask::NiGPUProgramCache);
 
 //--------------------------------------------------------------------------------------------------
 NiGPUProgramCache::NiGPUProgramCache(unsigned int uiVersion,

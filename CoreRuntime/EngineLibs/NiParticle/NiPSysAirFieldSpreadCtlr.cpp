@@ -18,7 +18,7 @@
 
 #include "NiPSysAirFieldSpreadCtlr.h"
 
-NiImplementRTTI(NiPSysAirFieldSpreadCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysAirFieldSpreadCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysAirFieldSpreadCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysAirFieldSpreadCtlr::NiPSysAirFieldSpreadCtlr()

@@ -23,7 +23,7 @@
 
 NiFixedString NiShaderDeclaration::ms_akUsageStrings[SPUSAGE_COUNT];
 
-NiImplementRTTI(NiShaderDeclaration, NiObject);
+NiImplementRTTI(NiShaderDeclaration, NiObject, NiTypeMask::NiShaderDeclaration);
 
 //--------------------------------------------------------------------------------------------------
 NiShaderDeclaration::NiShaderDeclaration() :

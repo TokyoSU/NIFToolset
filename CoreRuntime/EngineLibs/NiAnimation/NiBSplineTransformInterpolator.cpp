@@ -16,7 +16,7 @@
 
 #include "NiBSplineTransformInterpolator.h"
 
-NiImplementRTTI(NiBSplineTransformInterpolator, NiBSplineInterpolator);
+NiImplementRTTI(NiBSplineTransformInterpolator, NiBSplineInterpolator, NiTypeMask::NiBSplineTransformInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineTransformInterpolator::NiBSplineTransformInterpolator() :

@@ -20,7 +20,7 @@
 #include <NiBool.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysDragFieldModifier, NiPSysFieldModifier);
+NiImplementRTTI(NiPSysDragFieldModifier, NiPSysFieldModifier, NiTypeMask::NiPSysDragFieldModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysDragFieldModifier::NiPSysDragFieldModifier() :

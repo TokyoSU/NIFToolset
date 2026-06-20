@@ -17,7 +17,7 @@
 #include "NiPSTurbulenceFieldForce.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSTurbulenceFieldForce, NiPSFieldForce);
+NiImplementRTTI(NiPSTurbulenceFieldForce, NiPSFieldForce, NiTypeMask::NiPSTurbulenceFieldForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSTurbulenceFieldForce::NiPSTurbulenceFieldForce(

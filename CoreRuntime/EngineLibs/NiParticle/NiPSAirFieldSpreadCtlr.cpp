@@ -19,7 +19,7 @@
 #include "NiPSSimulatorForcesStep.h"
 #include "NiPSAirFieldForce.h"
 
-NiImplementRTTI(NiPSAirFieldSpreadCtlr, NiPSForceFloatCtlr);
+NiImplementRTTI(NiPSAirFieldSpreadCtlr, NiPSForceFloatCtlr, NiTypeMask::NiPSAirFieldSpreadCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSAirFieldSpreadCtlr::NiPSAirFieldSpreadCtlr(

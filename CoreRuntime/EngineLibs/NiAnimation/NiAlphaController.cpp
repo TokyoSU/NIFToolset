@@ -19,7 +19,7 @@
 #include "NiFloatInterpolator.h"
 #include "NiFloatData.h"
 
-NiImplementRTTI(NiAlphaController, NiFloatInterpController);
+NiImplementRTTI(NiAlphaController, NiFloatInterpController, NiTypeMask::NiAlphaController);
 
 //--------------------------------------------------------------------------------------------------
 NiAlphaController::NiAlphaController()

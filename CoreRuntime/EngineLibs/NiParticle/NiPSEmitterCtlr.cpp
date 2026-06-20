@@ -16,7 +16,7 @@
 
 #include "NiPSEmitterCtlr.h"
 
-NiImplementRTTI(NiPSEmitterCtlr, NiSingleInterpController);
+NiImplementRTTI(NiPSEmitterCtlr, NiSingleInterpController, NiTypeMask::NiPSEmitterCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterCtlr::NiPSEmitterCtlr(const NiFixedString& kEmitterName) :

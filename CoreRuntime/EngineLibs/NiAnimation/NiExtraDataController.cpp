@@ -18,7 +18,7 @@
 #include <NiCloningProcess.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiExtraDataController, NiSingleInterpController);
+NiImplementRTTI(NiExtraDataController, NiSingleInterpController, NiTypeMask::NiExtraDataController);
 
 //--------------------------------------------------------------------------------------------------
 NiExtraDataController::NiExtraDataController(

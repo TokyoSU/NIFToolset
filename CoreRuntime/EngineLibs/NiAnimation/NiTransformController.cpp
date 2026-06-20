@@ -21,7 +21,7 @@
 #include "NiTransformInterpolator.h"
 #include "NiConstTransformEvaluator.h"
 
-NiImplementRTTI(NiTransformController, NiSingleInterpController);
+NiImplementRTTI(NiTransformController, NiSingleInterpController, NiTypeMask::NiTransformController);
 
 //--------------------------------------------------------------------------------------------------
 NiTransformController::NiTransformController()

@@ -100,7 +100,7 @@ NiVisibleArray* D3D11Renderer::ms_pDefaultVisibleArray = NULL;
 
 static ecrD3D11RendererSDM ecrD3D11RendererSDMObject;
 
-NiImplementRTTI(D3D11Renderer, NiRenderer);
+NiImplementRTTI(D3D11Renderer, NiRenderer, NiTypeMask::D3D11Renderer);
 
 //------------------------------------------------------------------------------------------------
 D3D11Renderer::CreationParameters::CreationParameters() :

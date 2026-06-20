@@ -17,7 +17,7 @@
 #include "NiPSDragForce.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSDragForce, NiPSForce);
+NiImplementRTTI(NiPSDragForce, NiPSForce, NiTypeMask::NiPSDragForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSDragForce::NiPSDragForce(

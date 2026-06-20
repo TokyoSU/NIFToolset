@@ -15,7 +15,7 @@
 #include "NiNoiseTexture.h"
 //---------------------------------------------------------------------------
 
-NiImplementRTTI(NiNoiseTexture, NiSourceTexture);
+NiImplementRTTI(NiNoiseTexture, NiSourceTexture, NiTypeMask::NiNoiseTexture);
 NiFixedString NiNoiseTexture::ms_akMapFromTypeName[
     NiStandardMaterial::NOISE_MAX];
 

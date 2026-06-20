@@ -18,7 +18,7 @@
 
 #include "NiPSysFieldAttenuationCtlr.h"
 
-NiImplementRTTI(NiPSysFieldAttenuationCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysFieldAttenuationCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysFieldAttenuationCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysFieldAttenuationCtlr::NiPSysFieldAttenuationCtlr()

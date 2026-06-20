@@ -22,7 +22,7 @@
 #include <NiShadowMap.h>
 #include <NiNoiseTexture.h>
 
-NiImplementRTTI(NiDX9FragmentShader,NiD3DShader);
+NiImplementRTTI(NiDX9FragmentShader,NiD3DShader, NiTypeMask::NiDX9FragmentShader);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9FragmentShader::NiDX9FragmentShader(NiMaterialDescriptor* pkDesc)

@@ -18,7 +18,7 @@
 
 #include "NiPSysInitialRotAngleCtlr.h"
 
-NiImplementRTTI(NiPSysInitialRotAngleCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysInitialRotAngleCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysInitialRotAngleCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysInitialRotAngleCtlr::NiPSysInitialRotAngleCtlr()

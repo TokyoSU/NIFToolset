@@ -19,7 +19,7 @@
 #include "NiNode.h"
 #include "NiTriBasedGeom.h"
 
-NiImplementRTTI(NiTriBasedGeom, NiGeometry);
+NiImplementRTTI(NiTriBasedGeom, NiGeometry, NiTypeMask::NiTriBasedGeom);
 
 //--------------------------------------------------------------------------------------------------
 NiTriBasedGeom::NiTriBasedGeom(NiTriBasedGeomData* pkModelData)

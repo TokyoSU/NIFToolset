@@ -24,7 +24,7 @@
 #include "NiDecorationPixelProgramDescriptor.h"
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiDecorationMaterial, NiStandardMaterial);
+NiImplementRTTI(NiDecorationMaterial, NiStandardMaterial, NiTypeMask::NiDecorationMaterial);
 //------------------------------------------------------------------------------------------------
 const char* NiDecorationMaterial::FADE_OUTERMINDISTSQR_SHADER_CONSTANT = "g_FadeOuterMinDistSqr";
 const char* NiDecorationMaterial::FADE_OUTERMAXDISTSQR_SHADER_CONSTANT = "g_FadeOuterMaxDistSqr";

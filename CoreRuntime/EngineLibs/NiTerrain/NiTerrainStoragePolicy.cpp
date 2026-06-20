@@ -15,7 +15,7 @@
 #include "NiTerrainStoragePolicy.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiTerrainStoragePolicy);
+NiImplementRootRTTI(NiTerrainStoragePolicy, NiTypeMask::NiTerrainStoragePolicy);
 //--------------------------------------------------------------------------------------------------
 NiTerrainStoragePolicy::NiTerrainStoragePolicy()
 {

@@ -2,7 +2,7 @@
 #include "NiBASSAudioListener.h"
 #include <bass.h>
 
-NiImplementRTTI(NiBASSAudioListener, NiAudioListener);
+NiImplementRTTI(NiBASSAudioListener, NiAudioListener, NiTypeMask::NiBASSAudioListener);
 
 //---------------------------------------------------------------------------
 NiBASSAudioListener::NiBASSAudioListener() { /* */ }

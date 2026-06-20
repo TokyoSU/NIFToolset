@@ -20,7 +20,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiBSplineTransformEvaluator, NiBSplineEvaluator);
+NiImplementRTTI(NiBSplineTransformEvaluator, NiBSplineEvaluator, NiTypeMask::NiBSplineTransformEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineTransformEvaluator::NiBSplineTransformEvaluator() :

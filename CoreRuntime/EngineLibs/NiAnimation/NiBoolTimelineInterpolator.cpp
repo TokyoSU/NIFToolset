@@ -16,7 +16,7 @@
 
 #include "NiBoolTimelineInterpolator.h"
 
-NiImplementRTTI(NiBoolTimelineInterpolator, NiBoolInterpolator);
+NiImplementRTTI(NiBoolTimelineInterpolator, NiBoolInterpolator, NiTypeMask::NiBoolTimelineInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBoolTimelineInterpolator::NiBoolTimelineInterpolator()

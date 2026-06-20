@@ -17,7 +17,7 @@
 #include "NiTerrainCullingProcess.h"
 #include "NiTerrainUtils.h"
 
-NiImplementRTTI(NiTerrainCullingProcess, NiMeshCullingProcess);
+NiImplementRTTI(NiTerrainCullingProcess, NiMeshCullingProcess, NiTypeMask::NiTerrainCullingProcess);
 
 //--------------------------------------------------------------------------------------------------
 NiTerrainCullingProcess::NiTerrainCullingProcess(NiVisibleArray* pkVisibleSet,

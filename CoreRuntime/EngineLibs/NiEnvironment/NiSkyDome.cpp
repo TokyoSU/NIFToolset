@@ -20,7 +20,7 @@
 #include <NiZBufferProperty.h>
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiSkyDome, NiSky);
+NiImplementRTTI(NiSkyDome, NiSky, NiTypeMask::NiSkyDome);
 
 //---------------------------------------------------------------------------
 NiSkyDome::NiSkyDome()

@@ -19,7 +19,7 @@
 #include "NiTimeSyncController.h"
 #include "NiShaderConstantMap.h"
 
-NiImplementRTTI(NiTimeSyncController,NiShaderTimeController);
+NiImplementRTTI(NiTimeSyncController, NiShaderTimeController, NiTypeMask::NiTimeSyncController);
 
 //--------------------------------------------------------------------------------------------------
 NiTimeSyncController::~NiTimeSyncController()

@@ -19,7 +19,7 @@
 #include "NiRenderObject.h"
 #include "NiNode.h"
 
-NiImplementRTTI(Ni3DRenderView, NiRenderView);
+NiImplementRTTI(Ni3DRenderView, NiRenderView, NiTypeMask::Ni3DRenderView);
 
 //--------------------------------------------------------------------------------------------------
 void Ni3DRenderView::SetCameraData(const NiRect<float>& kViewport)

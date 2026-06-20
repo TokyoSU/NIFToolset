@@ -19,7 +19,7 @@
 #include <NiConstBoolEvaluator.h>
 #include <NiBlendBoolInterpolator.h>
 
-NiImplementRTTI(NiPSForceBoolCtlr, NiPSForceCtlr);
+NiImplementRTTI(NiPSForceBoolCtlr, NiPSForceCtlr, NiTypeMask::NiPSForceBoolCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSForceBoolCtlr::NiPSForceBoolCtlr(const NiFixedString& kForceName) :

@@ -17,7 +17,7 @@
 #include "NiIndex.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainSectorFileVersion2, NiTerrainSectorFileVersion3);
+NiImplementRTTI(NiTerrainSectorFileVersion2, NiTerrainSectorFileVersion3, NiTypeMask::NiTerrainSectorFileVersion2);
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainSectorFileVersion2::DetectFileVersion(FileIdentifier kID)
 {

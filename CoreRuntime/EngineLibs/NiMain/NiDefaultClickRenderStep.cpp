@@ -16,7 +16,7 @@
 
 #include "NiDefaultClickRenderStep.h"
 
-NiImplementRTTI(NiDefaultClickRenderStep, NiClickRenderStep);
+NiImplementRTTI(NiDefaultClickRenderStep, NiClickRenderStep, NiTypeMask::NiDefaultClickRenderStep);
 
 //--------------------------------------------------------------------------------------------------
 const NiTPointerList<NiRenderClickPtr>&

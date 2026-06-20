@@ -29,7 +29,7 @@
 NiD3DShader::DynamicEffectPacker NiD3DShader::ms_apfnDynEffectPackers[
     NiTextureEffect::NUM_COORD_GEN];
 
-NiImplementRTTI(NiD3DShader, NiD3DShaderInterface);
+NiImplementRTTI(NiD3DShader, NiD3DShaderInterface, NiTypeMask::NiD3DShader);
 
 //------------------------------------------------------------------------------------------------
 void NiD3DShader::_SDMInit()

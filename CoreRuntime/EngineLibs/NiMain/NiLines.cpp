@@ -20,7 +20,7 @@
 #include "NiLines.h"
 #include "NiRenderer.h"
 
-NiImplementRTTI(NiLines, NiGeometry);
+NiImplementRTTI(NiLines, NiGeometry, NiTypeMask::NiLines);
 
 //--------------------------------------------------------------------------------------------------
 NiLines::NiLines(unsigned short usVertices, NiPoint3* pkVertex,

@@ -17,7 +17,7 @@
 #include "NiMaterialNode.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiMaterialNode);
+NiImplementRootRTTI(NiMaterialNode, NiTypeMask::NiMaterialNode);
 
 //--------------------------------------------------------------------------------------------------
 NiMaterialNode::NiMaterialNode()

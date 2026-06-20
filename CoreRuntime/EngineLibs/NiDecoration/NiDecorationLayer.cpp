@@ -23,7 +23,7 @@
 #include "NiDecorationField.h"
 #include "NiDecorationLayerTransformProcessor.h"
 
-NiImplementRTTI(NiDecorationLayer, NiNode);
+NiImplementRTTI(NiDecorationLayer, NiNode, NiTypeMask::NiDecorationLayer);
 
 //------------------------------------------------------------------------------------------------
 NiDecorationLayer::NiDecorationLayer(NiDecorationGenerator* pkGenerator) :

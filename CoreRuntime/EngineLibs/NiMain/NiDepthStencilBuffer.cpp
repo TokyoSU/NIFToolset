@@ -16,7 +16,7 @@
 #include "NiDepthStencilBuffer.h"
 #include "NiRenderer.h"
 
-NiImplementRTTI(NiDepthStencilBuffer, Ni2DBuffer);
+NiImplementRTTI(NiDepthStencilBuffer, Ni2DBuffer, NiTypeMask::NiDepthStencilBuffer);
 
 //--------------------------------------------------------------------------------------------------
 NiDepthStencilBuffer::NiDepthStencilBuffer()

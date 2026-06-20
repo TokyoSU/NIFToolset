@@ -38,7 +38,7 @@
 
 //--------------------------------------------------------------------------------------------------
 EE_PROFILER_CONTEXT(LightPrePass);
-NiImplementRTTI(NiLPPViewRenderClick, NiViewRenderClick);
+NiImplementRTTI(NiLPPViewRenderClick, NiViewRenderClick, NiTypeMask::NiLPPViewRenderClick);
 //-------------------------------------------------------------------------------------------------
 NiLPPViewRenderClick::NiLPPViewRenderClick(bool bInitializeSwaps) :
     m_iDraws(0),

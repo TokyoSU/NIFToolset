@@ -21,7 +21,7 @@
 #include <NiCloningProcess.h>
 #include <NiMesh.h>
 
-NiImplementRTTI(NiMorphWeightsController, NiInterpController);
+NiImplementRTTI(NiMorphWeightsController, NiInterpController, NiTypeMask::NiMorphWeightsController);
 
 //--------------------------------------------------------------------------------------------------
 NiMorphWeightsController::NiMorphWeightsController(NiUInt32 uiNumTargets)

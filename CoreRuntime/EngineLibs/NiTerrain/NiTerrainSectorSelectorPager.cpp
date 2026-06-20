@@ -18,7 +18,7 @@
 #include <algorithm>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainSectorSelectorPager, NiTerrainSectorSelector);
+NiImplementRTTI(NiTerrainSectorSelectorPager, NiTerrainSectorSelector, NiTypeMask::NiTerrainSectorSelectorPager);
 //--------------------------------------------------------------------------------------------------
 NiTerrainSectorSelectorPager::NiTerrainSectorSelectorPager(NiTerrain* pkTerrain):
     NiTerrainSectorSelector(pkTerrain)

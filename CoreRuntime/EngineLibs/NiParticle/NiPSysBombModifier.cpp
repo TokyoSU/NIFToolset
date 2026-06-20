@@ -20,7 +20,7 @@
 #include <NiAVObject.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysBombModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysBombModifier, NiPSysModifier, NiTypeMask::NiPSysBombModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysBombModifier::NiPSysBombModifier() :

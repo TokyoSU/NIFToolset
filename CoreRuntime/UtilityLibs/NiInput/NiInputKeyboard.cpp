@@ -20,7 +20,7 @@
 #include <NiSystem.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiInputKeyboard, NiInputDevice);
+NiImplementRTTI(NiInputKeyboard, NiInputDevice, NiTypeMask::NiInputKeyboard);
 
 //--------------------------------------------------------------------------------------------------
 NiInputKeyboard::NiInputKeyboard(NiInputDevice::Description* pkDescription) :

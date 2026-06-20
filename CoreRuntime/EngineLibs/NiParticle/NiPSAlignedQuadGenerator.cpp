@@ -22,7 +22,7 @@
 #include <NiSPWorkflow.h>
 #include <NiCullingProcess.h>
 
-NiImplementRTTI(NiPSAlignedQuadGenerator, NiMeshModifier);
+NiImplementRTTI(NiPSAlignedQuadGenerator, NiMeshModifier, NiTypeMask::NiPSAlignedQuadGenerator);
 
 const NiUInt32 NiPSAlignedQuadGenerator::MAX_SUPPORTED_PARTICLES = UINT_MAX/6;
 const NiUInt16 NiPSAlignedQuadGenerator::MAX_PARTICLES_FOR_16BIT_INDICES = USHRT_MAX/4;

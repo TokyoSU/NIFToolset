@@ -18,7 +18,7 @@
 
 #include "NiPSysEmitterSpeedCtlr.h"
 
-NiImplementRTTI(NiPSysEmitterSpeedCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysEmitterSpeedCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysEmitterSpeedCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr()

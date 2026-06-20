@@ -17,7 +17,7 @@
 #include "NiPSVolumeEmitter.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSVolumeEmitter, NiPSEmitter);
+NiImplementRTTI(NiPSVolumeEmitter, NiPSEmitter, NiTypeMask::NiPSVolumeEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSVolumeEmitter::NiPSVolumeEmitter(

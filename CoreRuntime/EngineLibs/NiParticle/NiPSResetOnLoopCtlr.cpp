@@ -17,7 +17,7 @@
 #include "NiPSResetOnLoopCtlr.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSResetOnLoopCtlr, NiTimeController);
+NiImplementRTTI(NiPSResetOnLoopCtlr, NiTimeController, NiTypeMask::NiPSResetOnLoopCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSResetOnLoopCtlr::NiPSResetOnLoopCtlr() :

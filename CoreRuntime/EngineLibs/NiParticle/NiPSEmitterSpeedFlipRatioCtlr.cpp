@@ -16,7 +16,7 @@
 
 #include "NiPSEmitterSpeedFlipRatioCtlr.h"
 
-NiImplementRTTI(NiPSEmitterSpeedFlipRatioCtlr, NiPSEmitterFloatCtlr);
+NiImplementRTTI(NiPSEmitterSpeedFlipRatioCtlr, NiPSEmitterFloatCtlr, NiTypeMask::NiPSEmitterSpeedFlipRatioCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterSpeedFlipRatioCtlr::NiPSEmitterSpeedFlipRatioCtlr(

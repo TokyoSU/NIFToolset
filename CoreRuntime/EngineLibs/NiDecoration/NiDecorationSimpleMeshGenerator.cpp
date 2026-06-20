@@ -20,7 +20,7 @@
 #include <NiMesh.h>
 #include <NiSkinningMeshModifier.h>
 
-NiImplementRTTI(NiDecorationSimpleMeshGenerator, NiDecorationGenerator);
+NiImplementRTTI(NiDecorationSimpleMeshGenerator, NiDecorationGenerator, NiTypeMask::NiDecorationSimpleMeshGenerator);
 
 NiFixedString NiDecorationSimpleMeshGenerator::GENERATOR_NAME = NULL;
 

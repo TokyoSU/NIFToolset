@@ -20,7 +20,7 @@
 #include "NiImageConverter.h"
 #include "NiPixelData.h"
 
-NiImplementRootRTTI(NiImageConverter);
+NiImplementRootRTTI(NiImageConverter, NiTypeMask::NiImageConverter);
 
 NiImageConverterPtr NiImageConverter::ms_spConverter = 0;
 char* NiImageConverter::ms_pcPlatformSubDir = 0;

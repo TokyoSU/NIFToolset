@@ -19,7 +19,7 @@
 #include "NiPSFlagsHelpers.h"
 #include "NiPSKernelDefinitions.h"
 
-NiImplementRTTI(NiPSSpawner, NiObject);
+NiImplementRTTI(NiPSSpawner, NiObject, NiTypeMask::NiPSSpawner);
 
 const NiUInt16 NiPSSpawner::INVALID_ID = 0xFFF;
 

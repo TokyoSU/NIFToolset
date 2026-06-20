@@ -18,13 +18,13 @@
 
 #include "Ni2DRenderView.h"
 
-NiImplementRTTI(Ni2DRenderView, NiRenderView);
+NiImplementRTTI(Ni2DRenderView, NiRenderView, NiTypeMask::Ni2DRenderView);
 
 //--------------------------------------------------------------------------------------------------
 void Ni2DRenderView::SetCameraData(const NiRect<float>&)
 {
     // [deprecated]
-    EE_FAIL("Ni2DRenderView::CalculatePVGeometry() has been deprecated.");
+    EE_FAIL("Ni2DRenderView::SetCameraData() has been deprecated.");
 }
 
 //--------------------------------------------------------------------------------------------------

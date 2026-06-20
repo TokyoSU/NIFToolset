@@ -73,7 +73,7 @@ const char* NiSkyMaterial::SC_STAGEGRADIENTHORIZONBIAS =
 const char* NiSkyMaterial::SC_STAGESKYBOXORIENTATION =
     "SkyboxOrientation";
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiSkyMaterial, NiFragmentMaterial);
+NiImplementRTTI(NiSkyMaterial, NiFragmentMaterial, NiTypeMask::NiSkyMaterial);
 
 //---------------------------------------------------------------------------
 NiSkyMaterial::NiSkyMaterial(NiMaterialNodeLibrary* pkMaterialNodeLib,

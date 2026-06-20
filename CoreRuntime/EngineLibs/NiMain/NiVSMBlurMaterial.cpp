@@ -30,7 +30,7 @@
 #define NIVSMBLURMATERIAL_VERTEX_VERSION   3
 #define NIVSMBLURMATERIAL_PIXEL_VERSION    1
 
-NiImplementRTTI(NiVSMBlurMaterial, NiFragmentMaterial);
+NiImplementRTTI(NiVSMBlurMaterial, NiFragmentMaterial, NiTypeMask::NiVSMBlurMaterial);
 
 //--------------------------------------------------------------------------------------------------
 NiVSMBlurMaterial::NiVSMBlurMaterial(

@@ -20,7 +20,7 @@
 #include "NiMesh.h"
 #include "NiMeshUpdateProcess.h"
 
-NiImplementRTTI(NiMeshUpdateProcess, NiUpdateProcess);
+NiImplementRTTI(NiMeshUpdateProcess, NiUpdateProcess, NiTypeMask::NiMeshUpdateProcess);
 
 //--------------------------------------------------------------------------------------------------
 NiMeshUpdateProcess::~NiMeshUpdateProcess()

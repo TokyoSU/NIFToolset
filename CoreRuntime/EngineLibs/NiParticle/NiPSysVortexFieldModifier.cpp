@@ -18,7 +18,7 @@
 
 #include "NiPSysVortexFieldModifier.h"
 
-NiImplementRTTI(NiPSysVortexFieldModifier, NiPSysFieldModifier);
+NiImplementRTTI(NiPSysVortexFieldModifier, NiPSysFieldModifier, NiTypeMask::NiPSysVortexFieldModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysVortexFieldModifier::NiPSysVortexFieldModifier() :

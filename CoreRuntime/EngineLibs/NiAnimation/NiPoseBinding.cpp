@@ -19,7 +19,7 @@
 #include "NiSkinningLODController.h"
 #include "NiControllerManager.h"
 
-NiImplementRTTI(NiPoseBinding,NiObject);
+NiImplementRTTI(NiPoseBinding,NiObject, NiTypeMask::NiPoseBinding);
 
 //--------------------------------------------------------------------------------------------------
 // NiPoseBinding

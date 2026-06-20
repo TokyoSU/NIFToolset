@@ -18,7 +18,7 @@
 #include "NiImageConverter.h"
 #include "NiPixelData.h"
 
-NiImplementRTTI(NiTexture, NiObjectNET);
+NiImplementRTTI(NiTexture, NiObjectNET, NiTypeMask::NiTexture);
 
 NiTexture* NiTexture::ms_pkHead = 0;
 NiTexture* NiTexture::ms_pkTail = 0;

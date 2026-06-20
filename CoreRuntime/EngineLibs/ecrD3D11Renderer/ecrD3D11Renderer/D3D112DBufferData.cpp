@@ -23,7 +23,7 @@
 
 using namespace ecr;
 
-NiImplementRootRTTI(D3D112DBufferData);
+NiImplementRootRTTI(D3D112DBufferData, NiTypeMask::D3D112DBufferData);
 
 //------------------------------------------------------------------------------------------------
 D3D112DBufferData::~D3D112DBufferData()
@@ -51,7 +51,7 @@ ID3D11Texture2D* D3D112DBufferData::GetTexture2D() const
 }
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(D3D11RenderTargetBufferData, D3D112DBufferData);
+NiImplementRTTI(D3D11RenderTargetBufferData, D3D112DBufferData, NiTypeMask::D3D11RenderTargetBufferData);
 
 //------------------------------------------------------------------------------------------------
 D3D11RenderTargetBufferData::D3D11RenderTargetBufferData() :
@@ -152,7 +152,7 @@ D3D11RenderTargetBufferData* D3D11RenderTargetBufferData::Create(
 }
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(D3D11SwapChainBufferData, D3D11RenderTargetBufferData);
+NiImplementRTTI(D3D11SwapChainBufferData, D3D11RenderTargetBufferData, NiTypeMask::D3D11SwapChainBufferData);
 
 //------------------------------------------------------------------------------------------------
 D3D11SwapChainBufferData::~D3D11SwapChainBufferData()
@@ -414,7 +414,7 @@ HRESULT D3D11SwapChainBufferData::DisplayFrame(efd::UInt32 syncInterval, efd::Bo
 }
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(D3D11DepthStencilBufferData, D3D112DBufferData);
+NiImplementRTTI(D3D11DepthStencilBufferData, D3D112DBufferData, NiTypeMask::D3D11DepthStencilBufferData);
 
 //------------------------------------------------------------------------------------------------
 D3D11DepthStencilBufferData::D3D11DepthStencilBufferData() :

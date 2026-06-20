@@ -27,7 +27,7 @@
 #include "NiInterpolatorConverter.h"
 #include "NiControllerManager.h"
 
-NiImplementRTTI(NiSequenceData, NiObject);
+NiImplementRTTI(NiSequenceData, NiObject, NiTypeMask::NiSequenceData);
 
 const float NiSequenceData::INVALID_TIME = -FLT_MAX;
 const unsigned int NiSequenceData::INVALID_INDEX = (unsigned int) -1;

@@ -18,7 +18,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiBSplineFloatEvaluator, NiBSplineEvaluator);
+NiImplementRTTI(NiBSplineFloatEvaluator, NiBSplineEvaluator, NiTypeMask::NiBSplineFloatEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineFloatEvaluator::NiBSplineFloatEvaluator() :

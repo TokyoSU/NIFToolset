@@ -20,7 +20,7 @@
 #include <NiAVObjectPalette.h>
 #include "NiControllerManager.h"
 
-NiImplementRTTI(NiControllerSequence, NiObject);
+NiImplementRTTI(NiControllerSequence, NiObject, NiTypeMask::NiControllerSequence);
 
 const float NiControllerSequence::INVALID_TIME = -FLT_MAX;
 const float NiControllerSequence::CURRENT_FRAME = -NI_INFINITY;

@@ -20,7 +20,7 @@
 #include "NiBlendColorInterpolator.h"
 #include <NiColor.h>
 
-NiImplementRTTI(NiColorInterpController, NiSingleInterpController);
+NiImplementRTTI(NiColorInterpController, NiSingleInterpController, NiTypeMask::NiColorInterpController);
 
 //--------------------------------------------------------------------------------------------------
 NiColorInterpController::NiColorInterpController()

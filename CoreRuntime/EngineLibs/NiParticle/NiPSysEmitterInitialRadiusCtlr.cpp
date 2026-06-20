@@ -18,7 +18,7 @@
 
 #include "NiPSysEmitterInitialRadiusCtlr.h"
 
-NiImplementRTTI(NiPSysEmitterInitialRadiusCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysEmitterInitialRadiusCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysEmitterInitialRadiusCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr()

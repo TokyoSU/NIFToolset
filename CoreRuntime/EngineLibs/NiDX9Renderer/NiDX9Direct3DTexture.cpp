@@ -16,17 +16,14 @@
 
 #include "NiDX9Direct3DTexture.h"
 
-NiImplementRTTI(NiDX9Direct3DTexture, NiTexture);
+NiImplementRTTI(NiDX9Direct3DTexture, NiTexture, NiTypeMask::NiDX9Direct3DTexture);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9Direct3DTexture* NiDX9Direct3DTexture::Create(NiRenderer* pkRenderer)
 {
     if (!pkRenderer)
         return NULL;
-
-    NiDX9Direct3DTexture* pkThis = NiNew NiDX9Direct3DTexture;
-
-    return pkThis;
+    return NiNew NiDX9Direct3DTexture;
 }
 
 //--------------------------------------------------------------------------------------------------

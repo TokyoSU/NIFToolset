@@ -15,7 +15,7 @@
 #include "NiTerrainFileInterface.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainFileInterface, NiFileInterface);
+NiImplementRTTI(NiTerrainFileInterface, NiFileInterface, NiTypeMask::NiTerrainFileInterface);
 //--------------------------------------------------------------------------------------------------
 NiTerrainFileInterface::NiTerrainFileInterface(FileVersion kVersion)
     : m_pkStoragePolicy(NULL)

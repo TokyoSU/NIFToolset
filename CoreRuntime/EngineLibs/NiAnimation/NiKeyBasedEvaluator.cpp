@@ -18,7 +18,7 @@
 #include <NiMath.h>
 #include "NiEulerRotKey.h"
 
-NiImplementRTTI(NiKeyBasedEvaluator, NiEvaluator);
+NiImplementRTTI(NiKeyBasedEvaluator, NiEvaluator, NiTypeMask::NiKeyBasedEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiKeyBasedEvaluator::NiKeyBasedEvaluator()

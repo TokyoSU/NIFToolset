@@ -26,7 +26,7 @@
 #include "NiCollisionObject.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiAVObject, NiObjectNET);
+NiImplementRTTI(NiAVObject, NiObjectNET, NiTypeMask::NiAVObject);
 
 //------------------------------------------------------------------------------------------------
 NiUpdateProcessPtr NiAVObject::ms_spDefaultUpdateProcess;

@@ -17,7 +17,7 @@
 #include "NiPSAirFieldForce.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSAirFieldForce, NiPSFieldForce);
+NiImplementRTTI(NiPSAirFieldForce, NiPSFieldForce, NiTypeMask::NiPSAirFieldForce);
 
 const NiPoint3 NiPSAirFieldForce::ms_kUninitializedPosition(
     -NI_INFINITY,

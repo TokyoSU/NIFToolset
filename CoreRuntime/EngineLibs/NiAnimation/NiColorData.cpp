@@ -17,7 +17,7 @@
 #include "NiColorData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiColorData,NiObject);
+NiImplementRTTI(NiColorData, NiObject, NiTypeMask::NiColorData);
 
 //------------------------------------------------------------------------------------------------
 NiColorData::~NiColorData ()

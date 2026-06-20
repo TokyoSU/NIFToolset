@@ -19,8 +19,8 @@
 #include <NiSystem.h>
 
 //--------------------------------------------------------------------------------------------------
-NiRTTI::NiRTTI(const char* pcName, const NiRTTI* pkBaseRTTI) :
-    m_pcName(pcName), m_pkBaseRTTI(pkBaseRTTI)
+NiRTTI::NiRTTI(const char* pcName, const NiRTTI* pkBaseRTTI, NiTypeMask uiTypeMask) :
+    m_pcName(pcName), m_pkBaseRTTI(pkBaseRTTI), m_uiTypeMask(uiTypeMask)
 {
 }
 

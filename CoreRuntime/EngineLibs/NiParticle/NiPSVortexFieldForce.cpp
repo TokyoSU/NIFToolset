@@ -17,7 +17,7 @@
 #include "NiPSVortexFieldForce.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSVortexFieldForce, NiPSFieldForce);
+NiImplementRTTI(NiPSVortexFieldForce, NiPSFieldForce, NiTypeMask::NiPSVortexFieldForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSVortexFieldForce::NiPSVortexFieldForce(

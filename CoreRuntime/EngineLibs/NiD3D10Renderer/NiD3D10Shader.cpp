@@ -37,7 +37,7 @@
 #include <NiShadowMap.h>
 #include <NiNoiseTexture.h>
 
-NiImplementRTTI(NiD3D10Shader, NiD3D10ShaderInterface);
+NiImplementRTTI(NiD3D10Shader, NiD3D10ShaderInterface, NiTypeMask::NiD3D10Shader);
 
 NiD3D10Shader::DynamicEffectPacker NiD3D10Shader::ms_apfnDynEffectPackers[
     NiTextureEffect::NUM_COORD_GEN];

@@ -16,7 +16,7 @@
 
 #include "NiSCMExtraData.h"
 
-NiImplementRTTI(NiSCMExtraData, NiExtraData);
+NiImplementRTTI(NiSCMExtraData, NiExtraData, NiTypeMask::NiSCMExtraData);
 
 const unsigned int NiSCMExtraData::m_uiPassShift = 16;
 

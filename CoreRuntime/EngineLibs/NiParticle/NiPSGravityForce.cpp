@@ -17,7 +17,7 @@
 #include "NiPSGravityForce.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSGravityForce, NiPSForce);
+NiImplementRTTI(NiPSGravityForce, NiPSForce, NiTypeMask::NiPSGravityForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSGravityForce::NiPSGravityForce(

@@ -25,7 +25,7 @@
 #include <NiDirectionalLight.h>
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiFragmentLighting, NiFragment);
+NiImplementRTTI(NiFragmentLighting, NiFragment, NiTypeMask::NiFragmentLighting);
 //---------------------------------------------------------------------------
 NiFragmentLighting::NiFragmentLighting():
     NiFragment(VERTEX_VERSION,GEOMETRY_VERSION,PIXEL_VERSION),

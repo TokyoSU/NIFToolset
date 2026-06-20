@@ -19,7 +19,7 @@
 #include "NiPSysSphereEmitter.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysSphereEmitter, NiPSysVolumeEmitter);
+NiImplementRTTI(NiPSysSphereEmitter, NiPSysVolumeEmitter, NiTypeMask::NiPSysSphereEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysSphereEmitter::NiPSysSphereEmitter() :

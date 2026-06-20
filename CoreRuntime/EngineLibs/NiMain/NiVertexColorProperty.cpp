@@ -17,7 +17,7 @@
 #include "NiVertexColorProperty.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiVertexColorProperty,NiProperty);
+NiImplementRTTI(NiVertexColorProperty, NiProperty, NiTypeMask::NiVertexColorProperty);
 
 NiVertexColorPropertyPtr NiVertexColorProperty::ms_spDefault;
 

@@ -26,7 +26,7 @@
 NiFixedString NiPSSMShadowClickGenerator::ms_kPSSMName;
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiPSSMShadowClickGenerator, NiDefaultShadowClickGenerator);
+NiImplementRTTI(NiPSSMShadowClickGenerator, NiDefaultShadowClickGenerator, NiTypeMask::NiPSSMShadowClickGenerator);
 NiShadowGenerator* NiPSSMShadowClickGenerator::ms_pkActiveGenerator = NULL;
 
 //------------------------------------------------------------------------------------------------

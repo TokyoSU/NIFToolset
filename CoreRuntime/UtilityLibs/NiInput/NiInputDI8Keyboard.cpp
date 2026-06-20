@@ -18,7 +18,7 @@
 #include "NiDI8InputSystem.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiInputDI8Keyboard, NiInputKeyboard);
+NiImplementRTTI(NiInputDI8Keyboard, NiInputKeyboard, NiTypeMask::NiInputDI8Keyboard);
 
 //--------------------------------------------------------------------------------------------------
 NiInputDI8Keyboard::NiInputDI8Keyboard(

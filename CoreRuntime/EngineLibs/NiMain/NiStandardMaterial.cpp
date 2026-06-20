@@ -35,7 +35,7 @@
 #include "NiRenderObjectMaterialOption.h"
 #include "NiPSSMShadowClickGenerator.h"
 
-NiImplementRTTI(NiStandardMaterial, NiFragmentMaterial);
+NiImplementRTTI(NiStandardMaterial, NiFragmentMaterial, NiTypeMask::NiStandardMaterial);
 
 //--------------------------------------------------------------------------------------------------
 NiStandardMaterial::NiStandardMaterial(NiMaterialNodeLibrary* pkLibrary,

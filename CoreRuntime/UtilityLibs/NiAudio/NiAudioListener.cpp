@@ -18,7 +18,7 @@
 #include "NiAudioSystem.h"
 #include <NiMatrix3.h>
 
-NiImplementRTTI(NiAudioListener,NiAVObject);
+NiImplementRTTI(NiAudioListener,NiAVObject, NiTypeMask::NiAudioListener);
 
 //--------------------------------------------------------------------------------------------------
 NiAudioListener::NiAudioListener()

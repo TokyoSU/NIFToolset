@@ -17,7 +17,7 @@
 #include "NiRenderer.h"
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiSkyRenderView, Ni3DRenderView);
+NiImplementRTTI(NiSkyRenderView, Ni3DRenderView, NiTypeMask::NiSkyRenderView);
 
 //---------------------------------------------------------------------------
 NiSkyRenderView::NiSkyRenderView(NiEnvironment* pkEnvironment,

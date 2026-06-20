@@ -18,7 +18,7 @@
 #include "NiPSParticleSystem.h"
 #include "NiPSSimulatorForcesStep.h"
 
-NiImplementRTTI(NiPSForceCtlr, NiSingleInterpController);
+NiImplementRTTI(NiPSForceCtlr, NiSingleInterpController, NiTypeMask::NiPSForceCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSForceCtlr::NiPSForceCtlr(const NiFixedString& kForceName) : m_pkForce(NULL)

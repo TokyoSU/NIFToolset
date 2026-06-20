@@ -20,7 +20,7 @@
 #include "NiParticleSystem.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysRotationModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysRotationModifier, NiPSysModifier, NiTypeMask::NiPSysRotationModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysRotationModifier::NiPSysRotationModifier() :

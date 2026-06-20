@@ -31,7 +31,7 @@
 #include "NiFragmentLightPrePass.h"
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiLPPFinalMaterial, NiStandardMaterial);
+NiImplementRTTI(NiLPPFinalMaterial, NiStandardMaterial, NiTypeMask::NiLPPFinalMaterial);
 //------------------------------------------------------------------------------------------------
 NiLPPFinalMaterial* NiLPPFinalMaterial::Create()
 {

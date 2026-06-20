@@ -19,7 +19,7 @@
 #include <NiConstFloatEvaluator.h>
 #include <NiBlendFloatInterpolator.h>
 
-NiImplementRTTI(NiPSForceFloatCtlr, NiPSForceCtlr);
+NiImplementRTTI(NiPSForceFloatCtlr, NiPSForceCtlr, NiTypeMask::NiPSForceFloatCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSForceFloatCtlr::NiPSForceFloatCtlr(const NiFixedString& kForceName) :

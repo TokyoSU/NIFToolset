@@ -18,7 +18,7 @@
 #include "NiQuatTransform.h"
 #include "NiEvaluatorSPData.h"
 
-NiImplementRTTI(NiPathEvaluator, NiKeyBasedEvaluator);
+NiImplementRTTI(NiPathEvaluator, NiKeyBasedEvaluator, NiTypeMask::NiPathEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 float NiPathEvaluator::PathLength(float fNorm, const NiPosKey* pkPosKey1,

@@ -23,7 +23,7 @@
 #include "NiTerrainCellShaderData.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiFragmentLightPrePass, NiFragment);
+NiImplementRTTI(NiFragmentLightPrePass, NiFragment, NiTypeMask::NiFragmentLightPrePass);
 //--------------------------------------------------------------------------------------------------
 NiFragmentLightPrePass::NiFragmentLightPrePass():
     NiFragment(VERTEX_VERSION,GEOMETRY_VERSION,PIXEL_VERSION)

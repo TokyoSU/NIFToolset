@@ -18,7 +18,7 @@
 #include "NiDI8InputSystem.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiInputDI8Mouse, NiInputMouse);
+NiImplementRTTI(NiInputDI8Mouse, NiInputMouse, NiTypeMask::NiInputDI8Mouse);
 
 //--------------------------------------------------------------------------------------------------
 NiInputDI8Mouse::NiInputDI8Mouse(NiInputDevice::Description* pkDescription,

@@ -16,8 +16,7 @@
 
 #include "NiBSplineCompFloatInterpolator.h"
 
-NiImplementRTTI(NiBSplineCompFloatInterpolator,
-    NiBSplineFloatInterpolator);
+NiImplementRTTI(NiBSplineCompFloatInterpolator, NiBSplineFloatInterpolator, NiTypeMask::NiBSplineCompFloatInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineCompFloatInterpolator::NiBSplineCompFloatInterpolator() :

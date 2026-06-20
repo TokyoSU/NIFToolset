@@ -18,7 +18,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiConstBoolEvaluator, NiEvaluator);
+NiImplementRTTI(NiConstBoolEvaluator, NiEvaluator, NiTypeMask::NiConstBoolEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiConstBoolEvaluator::NiConstBoolEvaluator() :

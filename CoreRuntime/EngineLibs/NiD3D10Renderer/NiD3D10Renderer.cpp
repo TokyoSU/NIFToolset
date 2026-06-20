@@ -133,7 +133,7 @@ NiVisibleArray* NiD3D10Renderer::ms_pkDefaultVisibleArray = NULL;
 
 static NiD3D10RendererSDM NiD3D10RendererSDMObject;
 
-NiImplementRTTI(NiD3D10Renderer,NiRenderer);
+NiImplementRTTI(NiD3D10Renderer,NiRenderer, NiTypeMask::NiD3D10Renderer);
 
 NiAllocatorDeclareStatics(
     NiD3D10Renderer::PrePackMesh,

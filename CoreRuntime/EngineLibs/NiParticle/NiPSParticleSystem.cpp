@@ -26,7 +26,7 @@
 #include "NiPSFlagsHelpers.h"
 #include "NiPSMetrics.h"
 
-NiImplementRTTI(NiPSParticleSystem, NiMesh);
+NiImplementRTTI(NiPSParticleSystem, NiMesh, NiTypeMask::NiPSParticleSystem);
 
 const NiUInt32 NiPSParticleSystem::INVALID_PARTICLE = (NiUInt32) -1;
 

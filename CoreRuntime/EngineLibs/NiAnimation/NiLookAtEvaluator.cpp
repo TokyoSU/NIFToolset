@@ -22,7 +22,7 @@
 #include "NiEvaluatorSPData.h"
 #include "NiScratchPad.h"
 
-NiImplementRTTI(NiLookAtEvaluator, NiEvaluator);
+NiImplementRTTI(NiLookAtEvaluator, NiEvaluator, NiTypeMask::NiLookAtEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiLookAtEvaluator::NiLookAtEvaluator() :

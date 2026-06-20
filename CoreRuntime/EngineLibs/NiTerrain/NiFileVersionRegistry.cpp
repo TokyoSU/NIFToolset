@@ -15,7 +15,7 @@
 #include "NiFileVersionRegistry.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiFileInterface);
+NiImplementRootRTTI(NiFileInterface, NiTypeMask::NiFileInterface);
 //--------------------------------------------------------------------------------------------------
 NiFileInterface* NiFileInterface::AdaptToNextVersion()
 {

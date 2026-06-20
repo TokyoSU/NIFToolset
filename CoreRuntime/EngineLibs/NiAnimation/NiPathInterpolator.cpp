@@ -18,7 +18,7 @@
 #include "NiQuatTransform.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiPathInterpolator, NiKeyBasedInterpolator);
+NiImplementRTTI(NiPathInterpolator, NiKeyBasedInterpolator, NiTypeMask::NiPathInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiPathInterpolator::NiPathInterpolator() :

@@ -18,7 +18,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiStencilProperty,NiProperty);
+NiImplementRTTI(NiStencilProperty, NiProperty, NiTypeMask::NiStencilProperty);
 
 NiStencilPropertyPtr NiStencilProperty::ms_spDefault;
 

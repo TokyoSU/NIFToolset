@@ -16,7 +16,7 @@
 
 #include "NiLODData.h"
 
-NiImplementRTTI(NiLODData, NiObject);
+NiImplementRTTI(NiLODData, NiObject, NiTypeMask::NiLODData);
 
 //--------------------------------------------------------------------------------------------------
 NiLODData::NiLODData()

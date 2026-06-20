@@ -17,7 +17,7 @@
 #include "NiBSplineEvaluator.h"
 #include <NiMath.h>
 
-NiImplementRTTI(NiBSplineEvaluator, NiEvaluator);
+NiImplementRTTI(NiBSplineEvaluator, NiEvaluator, NiTypeMask::NiBSplineEvaluator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineEvaluator::NiBSplineEvaluator(NiBSplineData* pkData,

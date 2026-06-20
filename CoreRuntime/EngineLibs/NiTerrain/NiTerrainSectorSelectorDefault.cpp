@@ -16,7 +16,7 @@
 #include "NiTerrainSectorSelectorDefault.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainSectorSelectorDefault, NiTerrainSectorSelector);
+NiImplementRTTI(NiTerrainSectorSelectorDefault, NiTerrainSectorSelector, NiTypeMask::NiTerrainSectorSelectorDefault);
 //--------------------------------------------------------------------------------------------------
 NiTerrainSectorSelectorDefault::NiTerrainSectorSelectorDefault(NiTerrain* pkTerrain):
     NiTerrainSectorSelector(pkTerrain),

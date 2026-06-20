@@ -17,7 +17,7 @@
 
 #include "NiMeshCullingProcess.h"
 
-NiImplementRTTI(NiMeshCullingProcess, NiCullingProcess);
+NiImplementRTTI(NiMeshCullingProcess, NiCullingProcess, NiTypeMask::NiMeshCullingProcess);
 
 //--------------------------------------------------------------------------------------------------
 // Constructors and Destructors

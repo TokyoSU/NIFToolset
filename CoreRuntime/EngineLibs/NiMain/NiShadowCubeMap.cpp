@@ -19,7 +19,7 @@
 #include "NiRenderedCubeMap.h"
 #include "NiShadowManager.h"
 
-NiImplementRTTI(NiShadowCubeMap, NiShadowMap);
+NiImplementRTTI(NiShadowCubeMap, NiShadowMap, NiTypeMask::NiShadowCubeMap);
 
 NiFixedString NiShadowCubeMap::ms_kMapName;
 

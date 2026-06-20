@@ -18,7 +18,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiTextKeyExtraData,NiExtraData);
+NiImplementRTTI(NiTextKeyExtraData,NiExtraData, NiTypeMask::NiTextKeyExtraData);
 
 //--------------------------------------------------------------------------------------------------
 // cloning

@@ -18,7 +18,7 @@
 #include "NiRenderer.h"
 #include "NiRenderObject.h"
 
-NiImplementRTTI(NiShadowSortProcessor, NiMaterialSwapProcessor);
+NiImplementRTTI(NiShadowSortProcessor, NiMaterialSwapProcessor, NiTypeMask::NiShadowSortProcessor);
 
 //------------------------------------------------------------------------------------------------
 void NiShadowSortProcessor::PreRenderProcessList(

@@ -20,7 +20,7 @@
 #include "NiMultiTargetTransformController.h"
 #include <NiAVObject.h>
 
-NiImplementRTTI(NiMultiTargetTransformController, NiInterpController);
+NiImplementRTTI(NiMultiTargetTransformController, NiInterpController, NiTypeMask::NiMultiTargetTransformController);
 
 //--------------------------------------------------------------------------------------------------
 NiMultiTargetTransformController::~NiMultiTargetTransformController()

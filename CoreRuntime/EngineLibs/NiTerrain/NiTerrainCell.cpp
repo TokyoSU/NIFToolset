@@ -26,7 +26,7 @@
 #endif
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainCell, NiNode);
+NiImplementRTTI(NiTerrainCell, NiNode, NiTypeMask::NiTerrainCell);
 //--------------------------------------------------------------------------------------------------
 NiTerrainCell::NiTerrainCell(NiTerrainSector* pkSector, NiUInt32 uiLevel) : NiNode(NULL),
     m_kShaderData(pkSector->GetTerrain()),

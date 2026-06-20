@@ -18,7 +18,7 @@
 #include "NiInputXInputGamePad.h"
 #include "NiAction.h"
 
-NiImplementRTTI(NiInputXInputGamePad, NiInputGamePad);
+NiImplementRTTI(NiInputXInputGamePad, NiInputGamePad, NiTypeMask::NiInputXInputGamePad);
 
 //--------------------------------------------------------------------------------------------------
 NiInputXInputGamePad::NiInputXInputGamePad(NiDI8InputSystem* pkInputSystem,

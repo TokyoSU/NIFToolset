@@ -17,7 +17,7 @@
 #include "NiD3D10PixelShader.h"
 #include "NiD3D10ShaderProgramFactory.h"
 
-NiImplementRTTI(NiD3D10PixelShader, NiD3D10ShaderProgram);
+NiImplementRTTI(NiD3D10PixelShader, NiD3D10ShaderProgram, NiTypeMask::NiD3D10PixelShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10PixelShader::NiD3D10PixelShader() :

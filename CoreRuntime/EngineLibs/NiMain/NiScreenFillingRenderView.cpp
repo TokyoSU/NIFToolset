@@ -18,7 +18,7 @@
 #include "NiRenderer.h"
 #include "NiDynamicEffectState.h"
 
-NiImplementRTTI(NiScreenFillingRenderView, NiRenderView);
+NiImplementRTTI(NiScreenFillingRenderView, NiRenderView, NiTypeMask::NiScreenFillingRenderView);
 
 NiScreenFillingRenderView* (*NiScreenFillingRenderView::CreateFunc)() = NULL;
 

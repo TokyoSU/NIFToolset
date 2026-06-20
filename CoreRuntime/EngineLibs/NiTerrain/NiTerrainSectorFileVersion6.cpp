@@ -24,7 +24,7 @@
 //--------------------------------------------------------------------------------------------------
 const char* NiTerrainSectorFileVersion6::ms_pcSectorFilename = ".dof";
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiITerrainSectorFileVersion6, NiTerrainFileInterface);
+NiImplementRTTI(NiITerrainSectorFileVersion6, NiTerrainFileInterface, NiTypeMask::NiITerrainSectorFileVersion6);
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainSectorFileVersion6::DetectFileVersion(FileIdentifier kID)
 {

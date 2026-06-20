@@ -20,7 +20,7 @@
 #include "NiMath.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiScreenLODData, NiLODData);
+NiImplementRTTI(NiScreenLODData, NiLODData, NiTypeMask::NiScreenLODData);
 
 //--------------------------------------------------------------------------------------------------
 NiScreenLODData::NiScreenLODData()

@@ -20,7 +20,7 @@
 
 //------------------------------------------------------------------------------------------------
 
-NiImplementRootRTTI(NiDecorationGenerator);
+NiImplementRootRTTI(NiDecorationGenerator, NiTypeMask::NiDecorationGenerator);
 NiFixedString NiDecorationGenerator::DEFAULT_TEXTURING_PROPERTY_NAME = NULL;
 
 //------------------------------------------------------------------------------------------------

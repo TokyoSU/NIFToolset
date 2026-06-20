@@ -24,7 +24,7 @@
 using namespace Vectormath::Aos;
 #endif
 
-NiImplementRTTI(NiCamera,NiAVObject);
+NiImplementRTTI(NiCamera, NiAVObject, NiTypeMask::NiCamera);
 
 //--------------------------------------------------------------------------------------------------
 NiCamera::NiCamera()

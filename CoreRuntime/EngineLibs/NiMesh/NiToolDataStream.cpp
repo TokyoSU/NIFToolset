@@ -17,7 +17,7 @@
 #include "NiStream.h"
 #include <efd/OS.h>
 
-NiImplementRTTI(NiToolDataStream, NiDataStream);
+NiImplementRTTI(NiToolDataStream, NiDataStream, NiTypeMask::NiToolDataStream);
 
 //--------------------------------------------------------------------------------------------------
 NiToolDataStream::NiToolDataStream(const NiDataStreamElementSet& kElements,

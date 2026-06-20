@@ -18,7 +18,7 @@
 #include "NiShadowVisitor.h"
 #include "NiShadowGenerator.h"
 
-NiImplementRTTI(NiShadowVisitor, NiObject);
+NiImplementRTTI(NiShadowVisitor, NiObject, NiTypeMask::NiShadowVisitor);
 
 //--------------------------------------------------------------------------------------------------
 NiShadowVisitor::~NiShadowVisitor()

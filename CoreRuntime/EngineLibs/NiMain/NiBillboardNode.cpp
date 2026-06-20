@@ -22,7 +22,7 @@
 
 #include <NiTNodeTraversal.h>
 
-NiImplementRTTI(NiBillboardNode, NiNode);
+NiImplementRTTI(NiBillboardNode, NiNode, NiTypeMask::NiBillboardNode);
 
 //--------------------------------------------------------------------------------------------------
 bool NiBillboardNode::RotateToCenter(const NiCamera* pkCamera,

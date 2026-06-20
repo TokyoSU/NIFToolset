@@ -30,7 +30,7 @@
 #include <NiTextureEffect.h>
 #include <NiMesh.h>
 
-NiImplementRTTI(NiD3D10FragmentShader, NiD3D10Shader);
+NiImplementRTTI(NiD3D10FragmentShader, NiD3D10Shader, NiTypeMask::NiD3D10FragmentShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10FragmentShader::NiD3D10FragmentShader(NiMaterialDescriptor* pkDesc)

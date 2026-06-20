@@ -17,7 +17,7 @@
 #include "NiColorInterpolator.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiColorInterpolator, NiKeyBasedInterpolator);
+NiImplementRTTI(NiColorInterpolator, NiKeyBasedInterpolator, NiTypeMask::NiColorInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiColorInterpolator::NiColorInterpolator() :

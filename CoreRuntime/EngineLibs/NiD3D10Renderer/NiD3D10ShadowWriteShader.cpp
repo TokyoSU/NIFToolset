@@ -18,7 +18,7 @@
 #include "NiD3D10ShadowWriteShader.h"
 
 bool NiD3D10ShadowWriteShader::ms_bRenderBackfaces = true;
-NiImplementRTTI(NiD3D10ShadowWriteShader, NiD3D10FragmentShader);
+NiImplementRTTI(NiD3D10ShadowWriteShader, NiD3D10FragmentShader, NiTypeMask::NiD3D10ShadowWriteShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10ShadowWriteShader::NiD3D10ShadowWriteShader(

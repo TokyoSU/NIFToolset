@@ -20,7 +20,7 @@
 #include <NiAVObject.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysGravityModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysGravityModifier, NiPSysModifier, NiTypeMask::NiPSysGravityModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysGravityModifier::NiPSysGravityModifier() :

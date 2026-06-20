@@ -20,7 +20,7 @@
 #include <NiDrawSceneUtility.h>
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiCubeMapRenderStep, NiRenderStep);
+NiImplementRTTI(NiCubeMapRenderStep, NiRenderStep, NiTypeMask::NiCubeMapRenderStep);
 
 //---------------------------------------------------------------------------
 NiCubeMapRenderStep* NiCubeMapRenderStep::Create(NiRenderedCubeMap* pkMap, 

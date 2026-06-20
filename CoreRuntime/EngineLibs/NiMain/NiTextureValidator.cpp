@@ -17,7 +17,7 @@
 #include "NiTextureValidator.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiTextureValidator);
+NiImplementRootRTTI(NiTextureValidator, NiTypeMask::NiTextureValidator);
 //--------------------------------------------------------------------------------------------------
 NiTextureValidator::NiTextureValidator()
 {

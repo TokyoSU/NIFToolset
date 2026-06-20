@@ -16,7 +16,7 @@
 
 #include "NiPSEmitterRadiusCtlr.h"
 
-NiImplementRTTI(NiPSEmitterRadiusCtlr, NiPSEmitterFloatCtlr);
+NiImplementRTTI(NiPSEmitterRadiusCtlr, NiPSEmitterFloatCtlr, NiTypeMask::NiPSEmitterRadiusCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterRadiusCtlr::NiPSEmitterRadiusCtlr(

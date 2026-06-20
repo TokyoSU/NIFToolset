@@ -21,7 +21,7 @@
 
 #include <NiDepthStencilBuffer.h>
 
-NiImplementRootRTTI(NiD3D102DBufferData);
+NiImplementRootRTTI(NiD3D102DBufferData, NiTypeMask::NiD3D102DBufferData);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D102DBufferData::~NiD3D102DBufferData()
@@ -50,7 +50,7 @@ ID3D10Texture2D* NiD3D102DBufferData::GetTexture2D() const
 }
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiD3D10RenderTargetBufferData,NiD3D102DBufferData);
+NiImplementRTTI(NiD3D10RenderTargetBufferData,NiD3D102DBufferData, NiTypeMask::NiD3D10RenderTargetBufferData);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10RenderTargetBufferData::NiD3D10RenderTargetBufferData() :
@@ -138,7 +138,7 @@ NiD3D10RenderTargetBufferData* NiD3D10RenderTargetBufferData::Create(
 }
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiD3D10SwapChainBufferData,NiD3D10RenderTargetBufferData);
+NiImplementRTTI(NiD3D10SwapChainBufferData,NiD3D10RenderTargetBufferData, NiTypeMask::NiD3D10SwapChainBufferData);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10SwapChainBufferData::~NiD3D10SwapChainBufferData()
@@ -375,7 +375,7 @@ HRESULT NiD3D10SwapChainBufferData::DisplayFrame(unsigned int uiSyncInterval,
 }
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiD3D10DepthStencilBufferData,NiD3D102DBufferData);
+NiImplementRTTI(NiD3D10DepthStencilBufferData,NiD3D102DBufferData, NiTypeMask::NiD3D10DepthStencilBufferData);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10DepthStencilBufferData::NiD3D10DepthStencilBufferData() :

@@ -16,7 +16,7 @@
 #include "NiShadowGenerator.h"
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiSky, NiNode);
+NiImplementRTTI(NiSky, NiNode, NiTypeMask::NiSky);
 //---------------------------------------------------------------------------
 NiSky::NiSky():
     m_pkSun(0)

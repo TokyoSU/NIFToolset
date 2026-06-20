@@ -34,7 +34,7 @@ static char acGamebryoVersion[] EE_UNUSED =
     GAMEBRYO_MODULE_VERSION_STRING(NiMain);
 //--------------------------------------------------------------------------------------------------
 
-NiImplementRootRTTI(NiObject);
+NiImplementRootRTTI(NiObject, NiTypeMask::NiObject);
 
 //--------------------------------------------------------------------------------------------------
 NiObject::NiObject()

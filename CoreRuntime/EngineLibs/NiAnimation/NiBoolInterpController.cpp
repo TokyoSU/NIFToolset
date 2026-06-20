@@ -19,7 +19,7 @@
 #include "NiBoolInterpolator.h"
 #include "NiConstBoolEvaluator.h"
 
-NiImplementRTTI(NiBoolInterpController, NiSingleInterpController);
+NiImplementRTTI(NiBoolInterpController, NiSingleInterpController, NiTypeMask::NiBoolInterpController);
 
 //--------------------------------------------------------------------------------------------------
 NiBoolInterpController::NiBoolInterpController()

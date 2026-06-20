@@ -16,7 +16,7 @@
 
 #include "NiBlendQuaternionInterpolator.h"
 
-NiImplementRTTI(NiBlendQuaternionInterpolator, NiBlendInterpolator);
+NiImplementRTTI(NiBlendQuaternionInterpolator, NiBlendInterpolator, NiTypeMask::NiBlendQuaternionInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBlendQuaternionInterpolator::NiBlendQuaternionInterpolator(

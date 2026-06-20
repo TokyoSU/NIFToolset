@@ -18,7 +18,7 @@
 #include "NiRenderedTexture.h"
 #include "NiRenderer.h"
 
-NiImplementRTTI(NiRenderTargetGroup, NiObject);
+NiImplementRTTI(NiRenderTargetGroup, NiObject, NiTypeMask::NiRenderTargetGroup);
 
 //--------------------------------------------------------------------------------------------------
 NiRenderTargetGroup* NiRenderTargetGroup::Create(unsigned int uiNumBuffers,

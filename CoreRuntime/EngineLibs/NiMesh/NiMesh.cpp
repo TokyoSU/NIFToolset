@@ -32,7 +32,7 @@
 
 static NiMeshSDM NiMeshSDMObject;
 
-NiImplementRTTI(NiMesh, NiRenderObject);
+NiImplementRTTI(NiMesh, NiRenderObject, NiTypeMask::NiMesh);
 NiImplementCreateClone(NiMesh);
 NiImplementCreateObject(NiMesh);
 

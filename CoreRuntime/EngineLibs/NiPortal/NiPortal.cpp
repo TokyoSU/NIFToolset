@@ -29,7 +29,7 @@ static char acGamebryoVersion[] EE_UNUSED =
     GAMEBRYO_MODULE_VERSION_STRING(NiPortal);
 //--------------------------------------------------------------------------------------------------
 
-NiImplementRTTI(NiPortal, NiAVObject);
+NiImplementRTTI(NiPortal, NiAVObject, NiTypeMask::NiPortal);
 
 //--------------------------------------------------------------------------------------------------
 NiPortal::NiPortal(unsigned short usVertices, const NiPoint3* pkVertex,

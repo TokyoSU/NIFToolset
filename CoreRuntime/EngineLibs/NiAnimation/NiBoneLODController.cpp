@@ -24,7 +24,7 @@
 #include <NiStringExtraData.h>
 #include <NiSystem.h>
 
-NiImplementRTTI(NiBoneLODController, NiTimeController);
+NiImplementRTTI(NiBoneLODController, NiTimeController, NiTypeMask::NiBoneLODController);
 
 int NiBoneLODController::ms_iGlobalLOD = -1;
 

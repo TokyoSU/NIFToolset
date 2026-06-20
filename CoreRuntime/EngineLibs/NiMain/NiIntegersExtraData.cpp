@@ -18,7 +18,7 @@
 #include <NiBinaryStream.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiIntegersExtraData, NiExtraData);
+NiImplementRTTI(NiIntegersExtraData, NiExtraData, NiTypeMask::NiIntegerExtraData);
 
 //--------------------------------------------------------------------------------------------------
 NiIntegersExtraData::NiIntegersExtraData(const unsigned int uiSize,

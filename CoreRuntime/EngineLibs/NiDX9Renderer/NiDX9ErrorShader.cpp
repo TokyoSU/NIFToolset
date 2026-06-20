@@ -17,7 +17,7 @@
 #include <NiDX9Renderer.h>
 #include "NiDX9ErrorShader.h"
 
-NiImplementRTTI(NiDX9ErrorShader, NiD3DShader);
+NiImplementRTTI(NiDX9ErrorShader, NiD3DShader, NiTypeMask::NiDX9ErrorShader);
 
 //--------------------------------------------------------------------------------------------------
 NiDX9ErrorShader::NiDX9ErrorShader()

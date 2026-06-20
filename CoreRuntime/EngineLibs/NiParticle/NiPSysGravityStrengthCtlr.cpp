@@ -18,7 +18,7 @@
 
 #include "NiPSysGravityStrengthCtlr.h"
 
-NiImplementRTTI(NiPSysGravityStrengthCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysGravityStrengthCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysGravityStrengthCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr()

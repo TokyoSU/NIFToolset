@@ -30,7 +30,7 @@
 #include "NiGPUProgram.h"
 #include "NiRenderObject.h"
 
-NiImplementRTTI(NiFragmentMaterial, NiMaterial);
+NiImplementRTTI(NiFragmentMaterial, NiMaterial, NiTypeMask::NiFragmentMaterial);
 
 bool NiFragmentMaterial::ms_bLoadProgramCacheOnCreation = true;
 bool NiFragmentMaterial::ms_bAutoWriteProgramCache = true;

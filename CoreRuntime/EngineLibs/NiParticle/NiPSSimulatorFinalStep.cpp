@@ -19,7 +19,7 @@
 #include "NiPSKernelDefinitions.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSSimulatorFinalStep, NiPSSimulatorStep);
+NiImplementRTTI(NiPSSimulatorFinalStep, NiPSSimulatorStep, NiTypeMask::NiPSSimulatorFinalStep);
 
 //--------------------------------------------------------------------------------------------------
 NiPSSimulatorFinalStep::NiPSSimulatorFinalStep() :

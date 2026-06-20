@@ -30,7 +30,7 @@
 #include "NiTerrainCellShaderData.h"
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiLPPTerrainFinalMaterial, NiTerrainMaterial);
+NiImplementRTTI(NiLPPTerrainFinalMaterial, NiTerrainMaterial, NiTypeMask::NiLPPTerrainFinalMaterial);
 //------------------------------------------------------------------------------------------------
 NiLPPTerrainFinalMaterial* NiLPPTerrainFinalMaterial::Create()
 {

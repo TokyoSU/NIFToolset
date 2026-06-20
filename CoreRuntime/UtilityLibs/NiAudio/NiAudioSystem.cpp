@@ -23,7 +23,7 @@
 
 NiAudioSystem* NiAudioSystem::ms_pAudioSystem = NULL;
 
-NiImplementRTTI(NiAudioSystem, NiObject);
+NiImplementRTTI(NiAudioSystem, NiObject, NiTypeMask::NiAudioSystem);
 
 //--------------------------------------------------------------------------------------------------
 NiAudioSystem::NiAudioSystem()

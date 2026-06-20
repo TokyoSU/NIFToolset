@@ -19,7 +19,7 @@
 #include <efd/ecrLogIDs.h>
 #include <efd/ParseHelper.h>
 
-NiImplementRTTI(NiDecorationPlane, NiNode);
+NiImplementRTTI(NiDecorationPlane, NiNode, NiTypeMask::NiDecorationPlane);
 
 NiFixedString NiDecorationPlane::ms_kChildFieldName;
 

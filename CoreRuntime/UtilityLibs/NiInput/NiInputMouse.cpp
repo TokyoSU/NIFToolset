@@ -20,7 +20,7 @@
 #include <NiSystem.h>
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiInputMouse, NiInputDevice);
+NiImplementRTTI(NiInputMouse, NiInputDevice, NiTypeMask::NiInputMouse);
 
 //--------------------------------------------------------------------------------------------------
 NiInputMouse::NiInputMouse(NiInputDevice::Description* pkDescription) :

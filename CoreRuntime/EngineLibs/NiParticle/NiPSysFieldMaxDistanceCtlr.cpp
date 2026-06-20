@@ -18,7 +18,7 @@
 
 #include "NiPSysFieldMaxDistanceCtlr.h"
 
-NiImplementRTTI(NiPSysFieldMaxDistanceCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysFieldMaxDistanceCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysFieldMaxDistanceCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysFieldMaxDistanceCtlr::NiPSysFieldMaxDistanceCtlr()

@@ -21,7 +21,7 @@
 #include <NiBool.h>
 #include "NiPSysSpawnModifier.h"
 
-NiImplementRTTI(NiPSysAgeDeathModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysAgeDeathModifier, NiPSysModifier, NiTypeMask::NiPSysAgeDeathModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysAgeDeathModifier::NiPSysAgeDeathModifier() :

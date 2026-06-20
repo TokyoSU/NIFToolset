@@ -20,7 +20,7 @@
 #include <NiAVObject.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysDragModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysDragModifier, NiPSysModifier, NiTypeMask::NiPSysDragModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysDragModifier::NiPSysDragModifier() :

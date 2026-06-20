@@ -22,7 +22,7 @@
 #include "NiPixelData.h"
 #include <NiBool.h>
 
-NiImplementRTTI(NiSourceTexture, NiTexture);
+NiImplementRTTI(NiSourceTexture, NiTexture, NiTypeMask::NiSourceTexture);
 
 //--------------------------------------------------------------------------------------------------
 // Class static data members

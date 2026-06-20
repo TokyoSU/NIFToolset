@@ -20,7 +20,7 @@
 
 using namespace ecr;
 
-NiImplementRTTI(ecr::D3D11ShaderInterface, NiShader);
+NiImplementRTTI(ecr::D3D11ShaderInterface, NiShader, NiTypeMask::D3D11ShaderInterface);
 
 //------------------------------------------------------------------------------------------------
 D3D11ShaderInterface::D3D11ShaderInterface()

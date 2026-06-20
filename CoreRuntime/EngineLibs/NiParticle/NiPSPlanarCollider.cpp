@@ -17,7 +17,7 @@
 #include "NiPSPlanarCollider.h"
 #include "NiPSParticleSystem.h"
 
-NiImplementRTTI(NiPSPlanarCollider, NiPSCollider);
+NiImplementRTTI(NiPSPlanarCollider, NiPSCollider, NiTypeMask::NiPSPlanarCollider);
 
 //--------------------------------------------------------------------------------------------------
 NiPSPlanarCollider::NiPSPlanarCollider(

@@ -17,8 +17,8 @@
 #include "NiTerrain.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiTerrainResourceManager);
-NiImplementRTTI(NiTerrainStandardResourceManager, NiTerrainResourceManager);
+NiImplementRootRTTI(NiTerrainResourceManager, NiTypeMask::NiTerrainResourceManager);
+NiImplementRTTI(NiTerrainStandardResourceManager, NiTerrainResourceManager, NiTypeMask::NiTerrainStandardResourceManager);
 
 //--------------------------------------------------------------------------------------------------
 NiTerrainResourceManager::~NiTerrainResourceManager()   

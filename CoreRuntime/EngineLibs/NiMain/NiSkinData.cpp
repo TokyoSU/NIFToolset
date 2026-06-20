@@ -22,7 +22,7 @@
 #include "NiBool.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiSkinData, NiObject);
+NiImplementRTTI(NiSkinData, NiObject, NiTypeMask::NiSkinData);
 
 //--------------------------------------------------------------------------------------------------
 // NiSkinData::BoneData member functions

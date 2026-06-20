@@ -17,7 +17,7 @@
 #include "NiTask.h"
 #include "NiTaskManager.h"
 
-NiImplementRTTI(NiTaskManager, NiObject);
+NiImplementRTTI(NiTaskManager, NiObject, NiTypeMask::NiTaskManager);
 
 //--------------------------------------------------------------------------------------------------
 NiTaskManager::NiTaskManager() : m_eStatus(STOPPED)

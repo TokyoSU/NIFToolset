@@ -21,7 +21,7 @@
 #include "NiColorInterpolator.h"
 #include "NiConstColorEvaluator.h"
 
-NiImplementRTTI(NiColorExtraDataController, NiExtraDataController);
+NiImplementRTTI(NiColorExtraDataController, NiExtraDataController, NiTypeMask::NiColorExtraDataController);
 
 //------------------------------------------------------------------------------------------------
 NiColorExtraDataController::NiColorExtraDataController(

@@ -18,7 +18,7 @@
 #include "NiRenderObject.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiSortAdjustNode, NiNode);
+NiImplementRTTI(NiSortAdjustNode, NiNode, NiTypeMask::NiSortAdjustNode);
 
 //--------------------------------------------------------------------------------------------------
 NiSortAdjustNode::NiSortAdjustNode()

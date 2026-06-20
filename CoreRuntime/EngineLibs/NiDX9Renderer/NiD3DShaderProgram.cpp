@@ -17,7 +17,7 @@
 #include "NiD3DShaderProgram.h"
 #include "NiD3DRendererHeaders.h"
 
-NiImplementRTTI(NiD3DShaderProgram, NiGPUProgram);
+NiImplementRTTI(NiD3DShaderProgram, NiGPUProgram, NiTypeMask::NiD3DShaderProgram);
 
 //--------------------------------------------------------------------------------------------------
 void NiD3DShaderProgram::SetD3DDevice(D3DDevicePtr pkD3DDevice)

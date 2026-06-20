@@ -19,7 +19,7 @@
 #include <NiBool.h>
 #include "NiStream.h"
 
-NiImplementRTTI(NiBlendInterpolator, NiInterpolator);
+NiImplementRTTI(NiBlendInterpolator, NiInterpolator, NiTypeMask::NiBlendInterpolator);
 
 const unsigned char NiBlendInterpolator::INVALID_INDEX = (unsigned char)
     UCHAR_MAX;

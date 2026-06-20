@@ -29,7 +29,7 @@
 #include "NiFragmentLightPrePass.h"
 
 
-NiImplementRTTI(NiLPPDepthNormalMaterial, NiStandardMaterial);
+NiImplementRTTI(NiLPPDepthNormalMaterial, NiStandardMaterial, NiTypeMask::NiLPPDepthNormalMaterial);
 //------------------------------------------------------------------------------------------------
 NiLPPDepthNormalMaterial* NiLPPDepthNormalMaterial::Create()
 {

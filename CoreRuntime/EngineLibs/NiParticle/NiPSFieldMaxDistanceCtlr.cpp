@@ -19,7 +19,7 @@
 #include "NiPSSimulatorForcesStep.h"
 #include "NiPSFieldForce.h"
 
-NiImplementRTTI(NiPSFieldMaxDistanceCtlr, NiPSForceFloatCtlr);
+NiImplementRTTI(NiPSFieldMaxDistanceCtlr, NiPSForceFloatCtlr, NiTypeMask::NiPSFieldMaxDistanceCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSFieldMaxDistanceCtlr::NiPSFieldMaxDistanceCtlr(

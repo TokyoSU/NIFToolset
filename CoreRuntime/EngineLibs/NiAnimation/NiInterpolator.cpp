@@ -21,7 +21,7 @@
 #include <NiColor.h>
 #include "NiQuatTransform.h"
 
-NiImplementRTTI(NiInterpolator, NiObject);
+NiImplementRTTI(NiInterpolator, NiObject, NiTypeMask::NiInterpolator);
 
 const NiBool NiInterpolator::INVALID_BOOL = NiBool(2);
 const float NiInterpolator::INVALID_FLOAT = -FLT_MAX;

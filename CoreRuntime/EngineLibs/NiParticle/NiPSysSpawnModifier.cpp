@@ -19,7 +19,7 @@
 #include "NiPSysSpawnModifier.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysSpawnModifier, NiPSysModifier);
+NiImplementRTTI(NiPSysSpawnModifier, NiPSysModifier, NiTypeMask::NiPSysSpawnModifier);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysSpawnModifier::NiPSysSpawnModifier() :

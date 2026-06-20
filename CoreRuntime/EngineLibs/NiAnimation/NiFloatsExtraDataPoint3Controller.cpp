@@ -21,7 +21,7 @@
 #include "NiPoint3Interpolator.h"
 #include "NiConstPoint3Evaluator.h"
 
-NiImplementRTTI(NiFloatsExtraDataPoint3Controller, NiExtraDataController);
+NiImplementRTTI(NiFloatsExtraDataPoint3Controller, NiExtraDataController, NiTypeMask::NiFloatsExtraDataPoint3Controller);
 
 //------------------------------------------------------------------------------------------------
 NiFloatsExtraDataPoint3Controller::NiFloatsExtraDataPoint3Controller(

@@ -16,7 +16,7 @@
 
 #include "NiAccumulator.h"
 
-NiImplementRTTI(NiAccumulator,NiObject);
+NiImplementRTTI(NiAccumulator, NiObject, NiTypeMask::NiAccumulator);
 
 //--------------------------------------------------------------------------------------------------
 NiAccumulator::NiAccumulator()

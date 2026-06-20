@@ -17,7 +17,7 @@
 #include "NiBoolInterpolator.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiBoolInterpolator, NiKeyBasedInterpolator);
+NiImplementRTTI(NiBoolInterpolator, NiKeyBasedInterpolator, NiTypeMask::NiBoolInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBoolInterpolator::NiBoolInterpolator() :

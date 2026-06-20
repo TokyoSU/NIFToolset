@@ -19,7 +19,7 @@
 #include "NiSwitchNode.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiSwitchNode, NiNode);
+NiImplementRTTI(NiSwitchNode, NiNode, NiTypeMask::NiSwitchNode);
 
 //--------------------------------------------------------------------------------------------------
 NiSwitchNode::NiSwitchNode() :

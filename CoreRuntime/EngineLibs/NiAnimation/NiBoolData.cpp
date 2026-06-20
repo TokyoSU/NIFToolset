@@ -17,7 +17,7 @@
 #include "NiBoolData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiBoolData,NiObject);
+NiImplementRTTI(NiBoolData, NiObject, NiTypeMask::NiBoolData);
 
 //------------------------------------------------------------------------------------------------
 NiBoolData::~NiBoolData ()

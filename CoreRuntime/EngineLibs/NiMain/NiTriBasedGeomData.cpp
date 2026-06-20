@@ -19,7 +19,7 @@
 #include "NiTriBasedGeomData.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiTriBasedGeomData,NiGeometryData);
+NiImplementRTTI(NiTriBasedGeomData, NiGeometryData, NiTypeMask::NiTriBasedGeomData);
 
 //--------------------------------------------------------------------------------------------------
 NiTriBasedGeomData::NiTriBasedGeomData(unsigned short usVertices,

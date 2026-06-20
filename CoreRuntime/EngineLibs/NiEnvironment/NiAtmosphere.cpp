@@ -22,7 +22,7 @@
 #include "NiSkyMaterial.h"
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiAtmosphere, NiNode);
+NiImplementRTTI(NiAtmosphere, NiNode, NiTypeMask::NiAtmosphere);
 
 //---------------------------------------------------------------------------
 NiAtmosphere::NiAtmosphere()

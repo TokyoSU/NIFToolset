@@ -24,7 +24,7 @@
 #include <NiBlendBoolInterpolator.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysEmitterCtlr, NiPSysModifierCtlr);
+NiImplementRTTI(NiPSysEmitterCtlr, NiPSysModifierCtlr, NiTypeMask::NiPSysEmitterCtlr);
 
 #define BIRTH_RATE_INDEX 0
 #define EMITTER_ACTIVE_INDEX 1

@@ -16,7 +16,7 @@
 
 #include "NiMaterialResourceConsumerNode.h"
 
-NiImplementRTTI(NiMaterialResourceConsumerNode, NiMaterialNode);
+NiImplementRTTI(NiMaterialResourceConsumerNode, NiMaterialNode, NiTypeMask::NiMaterialResourceConsumerNode);
 
 //--------------------------------------------------------------------------------------------------
 NiMaterialResourceConsumerNode::NiMaterialResourceConsumerNode(

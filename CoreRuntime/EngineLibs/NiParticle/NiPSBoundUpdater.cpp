@@ -18,7 +18,7 @@
 #include "NiPSMeshParticleSystem.h"
 #include "NiPSCommonSemantics.h"
 
-NiImplementRTTI(NiPSBoundUpdater, NiObject);
+NiImplementRTTI(NiPSBoundUpdater, NiObject, NiTypeMask::NiPSBoundUpdater);
 
 //------------------------------------------------------------------------------------------------
 NiPSBoundUpdater::NiPSBoundUpdater(NiInt16 sUpdateSkip) :

@@ -16,7 +16,7 @@
 
 #include "NiBSplinePoint3Interpolator.h"
 
-NiImplementRTTI(NiBSplinePoint3Interpolator, NiBSplineInterpolator);
+NiImplementRTTI(NiBSplinePoint3Interpolator, NiBSplineInterpolator, NiTypeMask::NiBSplinePoint3Interpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplinePoint3Interpolator::NiBSplinePoint3Interpolator() :

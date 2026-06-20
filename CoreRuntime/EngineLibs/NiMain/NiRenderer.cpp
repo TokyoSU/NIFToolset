@@ -29,7 +29,7 @@
 #include "NiTextureValidator.h"
 #include <efd/Profiler.h>
 
-NiImplementRTTI(NiRenderer, NiObject);
+NiImplementRTTI(NiRenderer, NiObject, NiTypeMask::NiRenderer);
 
 char NiRenderer::ms_acErrorString[256] = "";
 NiRenderer* NiRenderer::ms_pkRenderer = NULL;

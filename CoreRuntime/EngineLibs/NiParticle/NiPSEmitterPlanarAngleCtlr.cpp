@@ -16,7 +16,7 @@
 
 #include "NiPSEmitterPlanarAngleCtlr.h"
 
-NiImplementRTTI(NiPSEmitterPlanarAngleCtlr, NiPSEmitterFloatCtlr);
+NiImplementRTTI(NiPSEmitterPlanarAngleCtlr, NiPSEmitterFloatCtlr, NiTypeMask::NiPSEmitterPlanarAngleCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSEmitterPlanarAngleCtlr::NiPSEmitterPlanarAngleCtlr(

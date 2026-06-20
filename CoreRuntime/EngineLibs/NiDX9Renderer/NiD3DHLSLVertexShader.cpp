@@ -17,7 +17,7 @@
 #include "NiD3DHLSLVertexShader.h"
 #include "NiShaderConstantMapEntry.h"
 
-NiImplementRTTI(NiD3DHLSLVertexShader, NiD3DVertexShader);
+NiImplementRTTI(NiD3DHLSLVertexShader, NiD3DVertexShader, NiTypeMask::NiD3DHLSLVertexShader);
 
 //--------------------------------------------------------------------------------------------------
 NiD3DHLSLVertexShader::~NiD3DHLSLVertexShader()

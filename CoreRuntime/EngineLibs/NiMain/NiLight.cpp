@@ -20,7 +20,7 @@
 #include "NiRenderer.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiLight,NiDynamicEffect);
+NiImplementRTTI(NiLight, NiDynamicEffect, NiTypeMask::NiLight);
 
 //--------------------------------------------------------------------------------------------------
 NiLight::NiLight()

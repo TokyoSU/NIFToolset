@@ -17,7 +17,7 @@
 #include "NiProperty.h"
 #include "NiTimeController.h"
 
-NiImplementRTTI(NiProperty,NiObjectNET);
+NiImplementRTTI(NiProperty, NiObjectNET, NiTypeMask::NiProperty);
 
 //--------------------------------------------------------------------------------------------------
 void NiProperty::Update(float fTime)

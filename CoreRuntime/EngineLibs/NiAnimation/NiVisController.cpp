@@ -19,7 +19,7 @@
 #include "NiBoolInterpolator.h"
 #include "NiBoolData.h"
 
-NiImplementRTTI(NiVisController, NiBoolInterpController);
+NiImplementRTTI(NiVisController, NiBoolInterpController, NiTypeMask::NiVisController);
 
 //--------------------------------------------------------------------------------------------------
 NiVisController::NiVisController()

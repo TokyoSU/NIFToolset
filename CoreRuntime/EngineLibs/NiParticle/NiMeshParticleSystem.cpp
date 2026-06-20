@@ -18,7 +18,7 @@
 
 #include "NiMeshParticleSystem.h"
 
-NiImplementRTTI(NiMeshParticleSystem, NiParticleSystem);
+NiImplementRTTI(NiMeshParticleSystem, NiParticleSystem, NiTypeMask::NiMeshParticleSystem);
 
 //--------------------------------------------------------------------------------------------------
 NiMeshParticleSystem::NiMeshParticleSystem()

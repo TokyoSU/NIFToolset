@@ -27,7 +27,7 @@
 #include "NiGeomMorpherController.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiGeomMorpherController, NiInterpController);
+NiImplementRTTI(NiGeomMorpherController, NiInterpController, NiTypeMask::NiGeomMorpherController);
 
 //--------------------------------------------------------------------------------------------------
 NiGeomMorpherController::NiGeomMorpherController(NiMorphData* pkData)

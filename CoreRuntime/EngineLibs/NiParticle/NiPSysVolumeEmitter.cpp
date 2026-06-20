@@ -20,7 +20,7 @@
 #include <NiAVObject.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysVolumeEmitter, NiPSysEmitter);
+NiImplementRTTI(NiPSysVolumeEmitter, NiPSysEmitter, NiTypeMask::NiPSysVolumeEmitter);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysVolumeEmitter::NiPSysVolumeEmitter() : m_pkEmitterObj(NULL)

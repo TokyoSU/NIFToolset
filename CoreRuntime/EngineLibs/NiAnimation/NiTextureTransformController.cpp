@@ -20,7 +20,7 @@
 #include "NiFloatInterpolator.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiTextureTransformController, NiFloatInterpController);
+NiImplementRTTI(NiTextureTransformController, NiFloatInterpController, NiTypeMask::NiTextureTransformController);
 
 //--------------------------------------------------------------------------------------------------
 NiTextureTransformController::NiTextureTransformController(

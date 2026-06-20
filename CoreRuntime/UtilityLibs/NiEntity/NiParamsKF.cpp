@@ -17,7 +17,7 @@
 #include <NiMain.h>
 
 //---------------------------------------------------------------------------
-NiImplementRTTI(NiParamsKF, NiExternalAssetParams);
+NiImplementRTTI(NiParamsKF, NiExternalAssetParams, NiTypeMask::NiParamsKF);
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------

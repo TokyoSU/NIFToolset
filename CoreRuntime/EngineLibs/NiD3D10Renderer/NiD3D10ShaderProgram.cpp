@@ -16,7 +16,7 @@
 
 #include "NiD3D10ShaderProgram.h"
 
-NiImplementRTTI(NiD3D10ShaderProgram, NiGPUProgram);
+NiImplementRTTI(NiD3D10ShaderProgram, NiGPUProgram, NiTypeMask::NiD3D10ShaderProgram);
 
 //--------------------------------------------------------------------------------------------------
 NiD3D10ShaderProgram::NiD3D10ShaderProgram(NiGPUProgram::ProgramType eType,

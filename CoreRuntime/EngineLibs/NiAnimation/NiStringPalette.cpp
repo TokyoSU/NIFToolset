@@ -18,7 +18,7 @@
 
 #include "NiStringPalette.h"
 
-NiImplementRTTI(NiStringPalette, NiObject);
+NiImplementRTTI(NiStringPalette, NiObject, NiTypeMask::NiStringPalette);
 
 //--------------------------------------------------------------------------------------------------
 // streaming

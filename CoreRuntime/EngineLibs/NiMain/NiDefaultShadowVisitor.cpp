@@ -17,7 +17,7 @@
 #include "NiSwitchNode.h"
 #include "NiDefaultShadowVisitor.h"
 
-NiImplementRTTI(NiDefaultShadowVisitor, NiShadowVisitor);
+NiImplementRTTI(NiDefaultShadowVisitor, NiShadowVisitor, NiTypeMask::NiDefaultShadowVisitor);
 
 //--------------------------------------------------------------------------------------------------
 NiDefaultShadowVisitor::~NiDefaultShadowVisitor()

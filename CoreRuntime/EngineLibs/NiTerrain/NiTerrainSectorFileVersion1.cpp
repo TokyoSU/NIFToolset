@@ -16,7 +16,7 @@
 #include "NiTerrainSectorFileVersion1.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiTerrainSectorFileVersion1, NiTerrainSectorFileVersion2);
+NiImplementRTTI(NiTerrainSectorFileVersion1, NiTerrainSectorFileVersion2, NiTypeMask::NiTerrainSectorFileVersion1);
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainSectorFileVersion1::DetectFileVersion(FileIdentifier kID)
 {

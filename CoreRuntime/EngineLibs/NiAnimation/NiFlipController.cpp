@@ -21,7 +21,7 @@
 #include "NiEvaluator.h"
 #include "NiControllerSequence.h"
 
-NiImplementRTTI(NiFlipController, NiFloatInterpController);
+NiImplementRTTI(NiFlipController, NiFloatInterpController, NiTypeMask::NiFlipController);
 #define SHADER_MAP_OFFSET 1024
 
 //--------------------------------------------------------------------------------------------------

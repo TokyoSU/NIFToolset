@@ -18,7 +18,7 @@
 
 #include "NiPSysFieldMagnitudeCtlr.h"
 
-NiImplementRTTI(NiPSysFieldMagnitudeCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysFieldMagnitudeCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysFieldMagnitudeCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysFieldMagnitudeCtlr::NiPSysFieldMagnitudeCtlr()

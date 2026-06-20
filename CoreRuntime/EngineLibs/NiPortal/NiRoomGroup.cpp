@@ -20,7 +20,7 @@
 #include "NiPortalMetrics.h"
 #include "NiRoomGroup.h"
 
-NiImplementRTTI(NiRoomGroup, NiNode);
+NiImplementRTTI(NiRoomGroup, NiNode, NiTypeMask::NiRoomGroup);
 
 bool NiRoomGroup::ms_bPortallingDisabled = false;
 

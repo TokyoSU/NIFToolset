@@ -24,7 +24,7 @@
 #include "NiSkinningLODController.h"
 
 
-NiImplementRTTI(NiControllerManager, NiTimeController);
+NiImplementRTTI(NiControllerManager, NiTimeController, NiTypeMask::NiControllerManager);
 
 const float NiControllerManager::SEQUENCE_DATA_FREQUENCY =
     NiControllerSequence::SEQUENCE_DATA_FREQUENCY;

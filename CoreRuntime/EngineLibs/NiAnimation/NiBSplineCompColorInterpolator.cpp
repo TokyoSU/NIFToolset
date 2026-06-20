@@ -16,8 +16,7 @@
 
 #include "NiBSplineCompColorInterpolator.h"
 
-NiImplementRTTI(NiBSplineCompColorInterpolator,
-    NiBSplineColorInterpolator);
+NiImplementRTTI(NiBSplineCompColorInterpolator, NiBSplineColorInterpolator, NiTypeMask::NiBSplineCompColorInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBSplineCompColorInterpolator::NiBSplineCompColorInterpolator() :

@@ -14,7 +14,7 @@
 #pragma once
 #ifndef NIDEBUGDEFINES_H
 #define NIDEBUGDEFINES_H
-
+/*
 #if !defined(_PS3)
 #if defined(NIDEBUG)
     #pragma message ("Defined NIDEBUG")
@@ -36,5 +36,5 @@
     #pragma message ("Defined NDEBUG")
 #endif
 #endif //_PS3
-
+*/
 #endif //NIDEBUGDEFINES_H

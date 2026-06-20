@@ -18,7 +18,7 @@
 #include <NiBool.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSForce, NiObject);
+NiImplementRTTI(NiPSForce, NiObject, NiTypeMask::NiPSForce);
 
 //--------------------------------------------------------------------------------------------------
 NiPSForce::NiPSForce(

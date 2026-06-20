@@ -18,7 +18,7 @@
 
 #include "NiPSysAirFieldInheritVelocityCtlr.h"
 
-NiImplementRTTI(NiPSysAirFieldInheritVelocityCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysAirFieldInheritVelocityCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysAirFieldInheritVelocityCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysAirFieldInheritVelocityCtlr::NiPSysAirFieldInheritVelocityCtlr()

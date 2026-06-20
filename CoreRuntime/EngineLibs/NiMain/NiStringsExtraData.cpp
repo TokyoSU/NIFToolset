@@ -17,7 +17,7 @@
 #include "NiStringsExtraData.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiStringsExtraData,NiExtraData);
+NiImplementRTTI(NiStringsExtraData, NiExtraData, NiTypeMask::NiStringsExtraData);
 
 //--------------------------------------------------------------------------------------------------
 NiStringsExtraData::NiStringsExtraData(const unsigned int uiSize,

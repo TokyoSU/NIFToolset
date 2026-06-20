@@ -17,8 +17,8 @@
 #include "NiParallelUpdateTaskManager.h"
 #include <NiMemoryDefines.h>
 
-NiImplementRTTI(NiParallelUpdateTaskManager, NiTaskManager);
-NiImplementRTTI(NiParallelUpdateTaskManager::SignalTask, NiTask);
+NiImplementRTTI(NiParallelUpdateTaskManager, NiTaskManager, NiTypeMask::NiParallelUpdateTaskManager);
+NiImplementRTTI(NiParallelUpdateTaskManager::SignalTask, NiTask, NiTypeMask::NiParallelUpdateTaskManager_SignalTask);
 
 NiParallelUpdateTaskManager*
     NiParallelUpdateTaskManager::ms_pkManager = NULL;

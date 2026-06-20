@@ -18,7 +18,7 @@
 
 #include "NiPSysEmitterLifeSpanCtlr.h"
 
-NiImplementRTTI(NiPSysEmitterLifeSpanCtlr, NiPSysModifierFloatCtlr);
+NiImplementRTTI(NiPSysEmitterLifeSpanCtlr, NiPSysModifierFloatCtlr, NiTypeMask::NiPSysEmitterLifeSpanCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr()

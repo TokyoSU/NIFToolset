@@ -17,7 +17,7 @@
 #include "NiAccumulatorProcessor.h"
 #include "NiRenderer.h"
 
-NiImplementRTTI(NiAccumulatorProcessor, NiRenderListProcessor);
+NiImplementRTTI(NiAccumulatorProcessor, NiRenderListProcessor, NiTypeMask::NiAccumulatorProcessor);
 
 //--------------------------------------------------------------------------------------------------
 void NiAccumulatorProcessor::PreRenderProcessList(

@@ -21,7 +21,7 @@
 #include <NiFloatInterpolator.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiPSysModifierFloatCtlr, NiPSysModifierCtlr);
+NiImplementRTTI(NiPSysModifierFloatCtlr, NiPSysModifierCtlr, NiTypeMask::NiPSysModifierFloatCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSysModifierFloatCtlr::NiPSysModifierFloatCtlr()

@@ -17,7 +17,7 @@
 #include "NiPSForceActiveCtlr.h"
 #include "NiPSForce.h"
 
-NiImplementRTTI(NiPSForceActiveCtlr, NiPSForceBoolCtlr);
+NiImplementRTTI(NiPSForceActiveCtlr, NiPSForceBoolCtlr, NiTypeMask::NiPSForceActiveCtlr);
 
 //--------------------------------------------------------------------------------------------------
 NiPSForceActiveCtlr::NiPSForceActiveCtlr(const NiFixedString& kForceName) :

@@ -19,7 +19,7 @@
 #include "NiPixelData.h"
 #include <NiBool.h>
 
-NiImplementRTTI(NiTexturingProperty, NiProperty);
+NiImplementRTTI(NiTexturingProperty, NiProperty, NiTypeMask::NiTexturingProperty);
 
 NiTexturingPropertyPtr NiTexturingProperty::ms_spDefault;
 NiFixedString NiTexturingProperty::ms_akMapIDtoNames[INDEX_MAX];

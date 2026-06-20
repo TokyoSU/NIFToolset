@@ -23,7 +23,7 @@
 #include "NiRenderer.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiInstancingMeshModifier, NiObject);
+NiImplementRTTI(NiInstancingMeshModifier, NiObject, NiTypeMask::NiInstancingMeshModifier);
 //--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------

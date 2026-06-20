@@ -19,7 +19,7 @@
 #include "NiCamera.h"
 #include "NiTriShape.h"
 
-NiImplementRTTI(NiTriShape,NiTriBasedGeom);
+NiImplementRTTI(NiTriShape, NiTriBasedGeom, NiTypeMask::NiTriShape);
 
 //------------------------------------------------------------------------------------------------
 NiTriShape::NiTriShape(unsigned short usVertices, NiPoint3* pkVertex,

@@ -16,7 +16,7 @@
 
 #include "NiMaterialFragmentNode.h"
 
-NiImplementRTTI(NiMaterialFragmentNode, NiMaterialNode);
+NiImplementRTTI(NiMaterialFragmentNode, NiMaterialNode, NiTypeMask::NiMaterialFragmentNode);
 
 //--------------------------------------------------------------------------------------------------
 unsigned int NiMaterialFragmentNode::GetCodeBlockCount()

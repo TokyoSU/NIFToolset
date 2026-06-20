@@ -18,7 +18,7 @@
 #include "NiCriticalSection.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiFragment, NiObject);
+NiImplementRTTI(NiFragment, NiObject, NiTypeMask::NiFragment);
 //--------------------------------------------------------------------------------------------------
 NiFragment::NiFragment(NiUInt16 usVertexVersion,
         NiUInt16 usGeometryVersion,

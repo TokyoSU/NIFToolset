@@ -18,7 +18,7 @@
 #include "NiEulerRotKey.h"
 #include "NiStream.h"
 
-NiImplementRTTI(NiTransformInterpolator, NiKeyBasedInterpolator);
+NiImplementRTTI(NiTransformInterpolator, NiKeyBasedInterpolator, NiTypeMask::NiTransformInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiTransformInterpolator::NiTransformInterpolator() :

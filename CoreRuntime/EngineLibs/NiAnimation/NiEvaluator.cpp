@@ -20,7 +20,7 @@
 #include <NiColor.h>
 #include "NiQuatTransform.h"
 
-NiImplementRTTI(NiEvaluator, NiObject);
+NiImplementRTTI(NiEvaluator, NiObject, NiTypeMask::NiEvaluator);
 
 const NiBool NiEvaluator::INVALID_BOOL = NiBool(2);
 const float NiEvaluator::INVALID_FLOAT = -FLT_MAX;

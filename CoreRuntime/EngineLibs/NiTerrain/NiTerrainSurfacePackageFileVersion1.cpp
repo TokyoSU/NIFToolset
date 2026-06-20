@@ -39,7 +39,7 @@ static const char* XML_ATTRIBUTE_LASTRELATIVEPATH = "lastRelativePath";
 static const char* BINARY_PACKAGE_FILE_EXT = ".tmpkgb";
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiITerrainSurfacePackageFileVersion1, NiTerrainFileInterface);
+NiImplementRTTI(NiITerrainSurfacePackageFileVersion1, NiTerrainFileInterface, NiTypeMask::NiITerrainSurfacePackageFileVersion1);
 //--------------------------------------------------------------------------------------------------
 bool NiTerrainSurfacePackageFileVersion1::DetectFileVersion(
     FileIdentifier kID)

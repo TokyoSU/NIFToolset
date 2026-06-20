@@ -18,7 +18,7 @@
 #include "NiFont.h"
 
 //--------------------------------------------------------------------------------------------------
-NiImplementRootRTTI(NiFontString);
+NiImplementRootRTTI(NiFontString, NiTypeMask::NiFontString);
 
 //--------------------------------------------------------------------------------------------------
 NiWChar NiFontString::ms_akWorkingString[NI_MAX_PATH] = { 0 };

@@ -16,8 +16,7 @@
 
 #include "NiFragmentShaderInstanceDescriptor.h"
 
-NiImplementRTTI(NiFragmentShaderInstanceDescriptor,
-    NiShader::NiShaderInstanceDescriptor);
+NiImplementRTTI(NiFragmentShaderInstanceDescriptor, NiShader::NiShaderInstanceDescriptor, NiTypeMask::NiFragmentShaderInstanceDescriptor);
 
 //--------------------------------------------------------------------------------------------------
 NiFragmentShaderInstanceDescriptor::NiFragmentShaderInstanceDescriptor() :

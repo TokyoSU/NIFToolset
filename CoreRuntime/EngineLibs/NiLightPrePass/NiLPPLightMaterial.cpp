@@ -29,7 +29,7 @@
 #include <NiPSSMShadowClickGenerator.h>
 
 //------------------------------------------------------------------------------------------------
-NiImplementRTTI(NiLPPLightMaterial, NiStandardMaterial);
+NiImplementRTTI(NiLPPLightMaterial, NiStandardMaterial, NiTypeMask::NiLPPLightMaterial);
 //------------------------------------------------------------------------------------------------
 // macros to reduce boilerplate
 

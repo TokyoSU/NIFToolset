@@ -29,7 +29,7 @@
 #include "NiFragmentLightPrePass.h"
 
 
-NiImplementRTTI(NiLPPTerrainDepthNormalMaterial, NiTerrainMaterial);
+NiImplementRTTI(NiLPPTerrainDepthNormalMaterial, NiTerrainMaterial, NiTypeMask::NiLPPTerrainDepthNormalMaterial);
 //------------------------------------------------------------------------------------------------
 NiLPPTerrainDepthNormalMaterial* NiLPPTerrainDepthNormalMaterial::Create()
 {

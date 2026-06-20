@@ -25,7 +25,7 @@
 #include <NiBoolEvaluator.h>
 #include <NiControllerSequence.h>
 
-NiImplementRTTI(NiPSEmitParticlesCtlr, NiPSEmitterCtlr);
+NiImplementRTTI(NiPSEmitParticlesCtlr, NiPSEmitterCtlr, NiTypeMask::NiPSEmitParticlesCtlr);
 
 const char* NiPSEmitParticlesCtlr::ms_pcBirthRate = "BirthRate";
 const char* NiPSEmitParticlesCtlr::ms_pcEmitterActive = "EmitterActive";

@@ -20,7 +20,7 @@
 #include <NiBool.h>
 #include <NiStream.h>
 
-NiImplementRTTI(NiMeshPSysData, NiPSysData);
+NiImplementRTTI(NiMeshPSysData, NiPSysData, NiTypeMask::NiMeshPSysData);
 
 //--------------------------------------------------------------------------------------------------
 NiMeshPSysData::NiMeshPSysData() :

@@ -16,7 +16,7 @@
 
 #include "NiBlendTransformInterpolator.h"
 
-NiImplementRTTI(NiBlendTransformInterpolator, NiBlendInterpolator);
+NiImplementRTTI(NiBlendTransformInterpolator, NiBlendInterpolator, NiTypeMask::NiBlendTransformInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBlendTransformInterpolator::NiBlendTransformInterpolator(

@@ -17,7 +17,7 @@
 #include "NiBlendBoolInterpolator.h"
 #include <NiStream.h>
 
-NiImplementRTTI(NiBlendBoolInterpolator, NiBlendInterpolator);
+NiImplementRTTI(NiBlendBoolInterpolator, NiBlendInterpolator, NiTypeMask::NiBlendBoolInterpolator);
 
 //--------------------------------------------------------------------------------------------------
 NiBlendBoolInterpolator::NiBlendBoolInterpolator(bool bManagerControlled,
