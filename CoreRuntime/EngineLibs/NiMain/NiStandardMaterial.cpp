@@ -843,17 +843,17 @@ bool NiStandardMaterial::SetupPackingRequirements(NiShader* pkShader,
     }
     else if (pkRealMaterialDesc->GetTRANSFORM() == TRANSFORM_INSTANCED)
     {
-        spShaderDecl->SetEntry(uiEntryCount++,
+        spShaderDecl->SetEntry(0,
             NiShaderDeclaration::SHADERPARAM_NI_TRANSFORM0,
             NiShaderDeclaration::SPTYPE_FLOAT4,
             uiStreamCount - 1);
 
-        spShaderDecl->SetEntry(uiEntryCount++,
+        spShaderDecl->SetEntry(1,
             NiShaderDeclaration::SHADERPARAM_NI_TRANSFORM1,
             NiShaderDeclaration::SPTYPE_FLOAT4,
             uiStreamCount - 1);
 
-        spShaderDecl->SetEntry(uiEntryCount++,
+        spShaderDecl->SetEntry(2,
             NiShaderDeclaration::SHADERPARAM_NI_TRANSFORM2,
             NiShaderDeclaration::SPTYPE_FLOAT4,
             uiStreamCount - 1);
