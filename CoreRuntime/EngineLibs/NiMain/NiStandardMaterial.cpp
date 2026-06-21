@@ -836,6 +836,7 @@ bool NiStandardMaterial::SetupPackingRequirements(NiShader* pkShader,
         spShaderDecl->SetEntry(uiEntryCount++,
             NiShaderDeclaration::SHADERPARAM_NI_BLENDWEIGHT,
             NiShaderDeclaration::SPTYPE_FLOAT3); // 3, 4th is implicit.
+
         spShaderDecl->SetEntry(uiEntryCount++,
             NiShaderDeclaration::SHADERPARAM_NI_BLENDINDICES,
             NiShaderDeclaration::SPTYPE_UBYTE4);
@@ -844,15 +845,18 @@ bool NiStandardMaterial::SetupPackingRequirements(NiShader* pkShader,
     {
         spShaderDecl->SetEntry(0,
             NiShaderDeclaration::SHADERPARAM_NI_TRANSFORM0,
-            NiShaderDeclaration::SPTYPE_FLOAT4, uiStreamCount-1);
+            NiShaderDeclaration::SPTYPE_FLOAT4,
+            uiStreamCount - 1);
 
         spShaderDecl->SetEntry(1,
             NiShaderDeclaration::SHADERPARAM_NI_TRANSFORM1,
-            NiShaderDeclaration::SPTYPE_FLOAT4, uiStreamCount-1);
+            NiShaderDeclaration::SPTYPE_FLOAT4,
+            uiStreamCount - 1);
 
         spShaderDecl->SetEntry(2,
             NiShaderDeclaration::SHADERPARAM_NI_TRANSFORM2,
-            NiShaderDeclaration::SPTYPE_FLOAT4, uiStreamCount-1);
+            NiShaderDeclaration::SPTYPE_FLOAT4,
+            uiStreamCount - 1);
     }
 
 

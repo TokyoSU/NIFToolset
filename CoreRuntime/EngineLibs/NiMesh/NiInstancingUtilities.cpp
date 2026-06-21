@@ -456,6 +456,8 @@ bool NiInstancingUtilities::EnableMeshInstancing(
     pkInstCullModifier->SetPerInstanceCulling(bCullPerInstance);
     pkInstCullModifier->SetStaticBounds(bStaticBounds);
     EE_VERIFY(pkMesh->AddModifier(pkInstCullModifier));
+    for (NiUInt32 uiMat = 0; uiMat < pkMesh->GetMaterialCount(); ++uiMat)
+        pkMesh->ClearCachedShaderAndSetNeedsUpdate(uiMat);
 
     if (bStaticBounds)
         ComputeWorldBound(pkMesh);

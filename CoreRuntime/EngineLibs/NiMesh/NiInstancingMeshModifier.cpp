@@ -85,19 +85,16 @@ void NiInstancingMeshModifier::AddMeshInstance(NiMeshHWInstance* pkHWInstance)
     if (!m_pkAffectedMesh || !pkHWInstance)
         return;
 
-    if (NiInstancingUtilities::GetActiveInstanceCount(m_pkAffectedMesh) >=
-        NiInstancingUtilities::GetMaxInstanceCount(m_pkAffectedMesh))
-    {
+    if (NiInstancingUtilities::GetActiveInstanceCount(m_pkAffectedMesh) >= NiInstancingUtilities::GetMaxInstanceCount(m_pkAffectedMesh))
         return;
-    }
 
     m_kInstanceNodes.Add(pkHWInstance);
     pkHWInstance->SetMesh(m_pkAffectedMesh);
     m_bInstanceNodes = true;
+    m_bDirtyNodeTransforms = true;
 
     // Update the region range with the new active count.
-    NiInstancingUtilities::SetActiveInstanceCount(m_pkAffectedMesh,
-        m_kInstanceNodes.GetSize());
+    NiInstancingUtilities::SetActiveInstanceCount(m_pkAffectedMesh, m_kInstanceNodes.GetSize());
 }
 //--------------------------------------------------------------------------------------------------
 void NiInstancingMeshModifier::RemoveMeshInstance(
