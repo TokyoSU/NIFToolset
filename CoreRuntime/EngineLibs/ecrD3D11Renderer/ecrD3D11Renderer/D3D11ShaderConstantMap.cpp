@@ -929,6 +929,15 @@ NiShaderError D3D11ShaderConstantMap::UpdateShaderConstants(
     const NiRenderCallContext& callContext, 
     efd::Bool isGlobal)
 {
+    if (GetEntryCount() == 0)
+        return NISHADERERR_OK;
+
+    // New fast reject.
+    // Do not lock/update this constant buffer if none of its entries
+    // belong to the currently active render phase.
+    if (!HasEntriesForActivePhases(callContext.m_uiActivePhases))
+        return NISHADERERR_OK;
+
     if (!m_externalStream && IsConstantBufferCurrent() == false)
     {
         D3D11Error::ReportWarning(
@@ -1308,6 +1317,19 @@ void D3D11ShaderConstantMap::SetShaderConstantDataStream(
 {
     m_spShaderConstantDataStream = pStream;
     m_externalStream = true;
+}
+
+//------------------------------------------------------------------------------------------------
+efd::Bool ecr::D3D11ShaderConstantMap::HasEntriesForActivePhases(efd::UInt32 uiActivePhases) const
+{
+    for (efd::UInt32 phase = 0; phase < NiRenderer::PHASE_COUNT; ++phase)
+    {
+        if ((ms_phaseMappingArray[phase] & uiActivePhases) == 0)
+            continue;
+        if (m_phaseEntryArray[phase].GetEffectiveSize() > 0)
+            return true;
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------------------------

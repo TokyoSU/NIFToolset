@@ -336,6 +336,9 @@ public:
     /// Set the D3D11DataStream that manages the constant buffer for this constant map.
     void SetShaderConstantDataStream(D3D11DataStream* pStream);
 
+
+    efd::Bool HasEntriesForActivePhases(efd::UInt32 uiActivePhases) const;
+
     /// Enumerations for encoding the register and register element into a 32 bit value.
     enum
     {

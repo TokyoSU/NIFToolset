@@ -58,9 +58,11 @@ void D3D11ShaderConstantManager::SetShaderConstantMap(
 
     D3D11DataStream* pDataStream =
         pConstantMap->GetShaderConstantDataStream();
+
     if (pDataStream == NULL)
         return;
 
+    // Upload only if the stream is dirty. UpdateD3D11Buffers already checks m_dirty.
     pDataStream->UpdateD3D11Buffers();
 
     ID3D11Buffer* pShaderConstantBuffer = pDataStream->GetBuffer();
@@ -69,10 +71,18 @@ void D3D11ShaderConstantManager::SetShaderConstantMap(
 
     EE_ASSERT(bufferIndex < D3D11_COMMONSHADER_CONSTANT_BUFFER_REGISTER_COUNT);
 
+    ID3D11Buffer*& pCurrent =
+        m_constantBufferArray[programType][bufferIndex];
+
+    // New fast path.
+    if (pCurrent == pShaderConstantBuffer)
+        return;
+
     pShaderConstantBuffer->AddRef();
-    if (m_constantBufferArray[programType][bufferIndex])
-        m_constantBufferArray[programType][bufferIndex]->Release();
-    m_constantBufferArray[programType][bufferIndex] = pShaderConstantBuffer;
+    if (pCurrent)
+        pCurrent->Release();
+
+    pCurrent = pShaderConstantBuffer;
 }
 
 //------------------------------------------------------------------------------------------------
