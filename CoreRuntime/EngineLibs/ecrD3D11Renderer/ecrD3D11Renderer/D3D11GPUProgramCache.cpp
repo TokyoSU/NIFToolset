@@ -345,13 +345,19 @@ efd::Bool D3D11GPUProgramCache::SaveGPUProgram(
     SaveString(stream, pRTTI->GetName());
 
     ID3DBlob* pShaderByteCode = pShader->GetShaderByteCode();
+    EE_ASSERT(pShaderByteCode);
 
-    SIZE_T stCodeSize = pShaderByteCode->GetBufferSize();
-    efd::StreamSaveBinary(stream, stCodeSize);
-    EE_ASSERT(stCodeSize > 0);
-    efd::StreamSaveBinary(stream,
-        (const efd::Char*)pShaderByteCode->GetBufferPointer(),
-        (efd::UInt32)stCodeSize);
+    const SIZE_T stBlobSize = pShaderByteCode->GetBufferSize();
+    EE_ASSERT(stBlobSize > 0);
+    EE_ASSERT(stBlobSize <= UINT_MAX);
+
+    efd::UInt32 uiCodeSize = static_cast<efd::UInt32>(stBlobSize);
+
+    efd::StreamSaveBinary(stream, uiCodeSize);
+    efd::StreamSaveBinary(
+        stream,
+        static_cast<const efd::Char*>(pShaderByteCode->GetBufferPointer()),
+        uiCodeSize);
 
     return true;
 }
