@@ -193,6 +193,14 @@ public:
 
     //@}
 
+    void InvalidateRenderBucketCache() const;
+    void UpdateRenderBucketCache() const;
+
+    bool RequiresAlphaSort(bool bObserveNoSortHint) const;
+
+    void SetRenderBucketDynamic(bool bDynamic);
+    bool GetRenderBucketDynamic() const;
+
     /**
     @name Public Static NiMaterial Helper Methods
     NiMaterial system helper methods
@@ -268,6 +276,14 @@ protected:
 
     // Temporary material stoarge during material swap rendering
     const NiMaterial* m_pkMaterialSwap;
+
+    mutable bool m_bRenderBucketDirty;
+    mutable bool m_bCachedAlphaBlending;
+    mutable bool m_bCachedAlphaNoSorter;
+
+    // If true, the cache is recomputed whenever queried.
+    // Useful for dynamic objects with property controllers.
+    bool m_bRenderBucketDynamic;
 
     /// Bit to determine whether the material always be considered dirty
     bool m_bMaterialNeedsUpdateDefault;

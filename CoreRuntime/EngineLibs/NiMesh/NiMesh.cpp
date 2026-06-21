@@ -215,6 +215,11 @@ void NiMesh::UpdateWorldBound()
 void NiMesh::UpdatePropertiesDownward(NiPropertyState* pkParentState)
 {
     m_spPropertyState = PushLocalProperties(pkParentState, true);
+
+    // Build cached alpha/render-pass classification at the same time
+    // as the inherited property state.
+    UpdateRenderBucketCache();
+
     SetMaterialNeedsUpdate(true);
 }
 //--------------------------------------------------------------------------------------------------

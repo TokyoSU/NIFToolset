@@ -27,6 +27,7 @@ inline NiDynamicEffectState* NiRenderObject::GetEffectState() const
 inline void NiRenderObject::SetPropertyState(NiPropertyState* pkState)
 {
     m_spPropertyState = pkState;
+    InvalidateRenderBucketCache();
 }
 
 //--------------------------------------------------------------------------------------------------

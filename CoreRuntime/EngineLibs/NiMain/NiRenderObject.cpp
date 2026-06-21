@@ -26,6 +26,7 @@
 #include <NiSystem.h>
 #include "NiStream.h"
 #include "NiShaderConstantMap.h"
+#include "NiAlphaProperty.h"
 
 bool NiRenderObject::ms_bStreamingAppliesDefaultMaterial = true;
 
@@ -37,7 +38,10 @@ NiRenderObject::NiRenderObject() :
     m_kMaterials(0),
     m_uiActiveMaterial((unsigned int) NO_MATERIAL),
     m_bMaterialNeedsUpdateDefault(false),
-    m_pkMaterialSwap(NULL)
+    m_pkMaterialSwap(NULL),
+    m_bCachedAlphaBlending(false),
+    m_bCachedAlphaNoSorter(false),
+    m_bRenderBucketDynamic(false)
 {
 }
 
@@ -280,6 +284,63 @@ public:
 protected:
     bool m_bDirty;
 };
+
+//--------------------------------------------------------------------------------------------------
+void NiRenderObject::InvalidateRenderBucketCache() const
+{
+    m_bRenderBucketDirty = true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiRenderObject::UpdateRenderBucketCache() const
+{
+    m_bCachedAlphaBlending = false;
+    m_bCachedAlphaNoSorter = false;
+
+    const NiPropertyState* pkState = GetPropertyState();
+    if (pkState)
+    {
+        const NiAlphaProperty* pkAlpha = pkState->GetAlpha();
+        if (pkAlpha)
+        {
+            m_bCachedAlphaBlending = pkAlpha->GetAlphaBlending();
+            m_bCachedAlphaNoSorter = pkAlpha->GetNoSorter();
+        }
+    }
+
+    m_bRenderBucketDirty = false;
+}
+
+//--------------------------------------------------------------------------------------------------
+bool NiRenderObject::RequiresAlphaSort(bool bObserveNoSortHint) const
+{
+    if (m_bRenderBucketDirty || m_bRenderBucketDynamic)
+        UpdateRenderBucketCache();
+
+    if (!m_bCachedAlphaBlending)
+        return false;
+
+    if (bObserveNoSortHint && m_bCachedAlphaNoSorter)
+        return false;
+
+    if (!GetSortObject())
+        return false;
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiRenderObject::SetRenderBucketDynamic(bool bDynamic)
+{
+    m_bRenderBucketDynamic = bDynamic;
+    m_bRenderBucketDirty = true;
+}
+
+//--------------------------------------------------------------------------------------------------
+bool NiRenderObject::GetRenderBucketDynamic() const
+{
+    return m_bRenderBucketDynamic;
+}
 
 //--------------------------------------------------------------------------------------------------
 void NiRenderObject::RecursiveSetMaterialNeedsUpdate(NiAVObject* pkObject,

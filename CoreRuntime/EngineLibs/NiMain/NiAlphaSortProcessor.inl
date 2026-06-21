@@ -34,24 +34,7 @@ inline bool NiAlphaSortProcessor::GetObserveNoSortHint() const
 //--------------------------------------------------------------------------------------------------
 inline bool NiAlphaSortProcessor::IsTransparent(const NiRenderObject& kObject)
 {
-    // Get property state.
-    const NiPropertyState* pkPropState = kObject.GetPropertyState();
-    EE_ASSERT(pkPropState);
-
-    // Get alpha property.
-    const NiAlphaProperty* pkAlphaProp = pkPropState->GetAlpha();
-    EE_ASSERT(pkAlphaProp);
-
-    // If alpha blending is turned on and the no sort hint is not specified
-    // (if observed), return true.
-    if (pkAlphaProp->GetAlphaBlending() &&
-        !(m_bObserveNoSortHint && pkAlphaProp->GetNoSorter()) &&
-        kObject.GetSortObject())
-    {
-        return true;
-    }
-
-    return false;
+    return kObject.RequiresAlphaSort(m_bObserveNoSortHint);
 }
 
 //--------------------------------------------------------------------------------------------------
