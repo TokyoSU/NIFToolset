@@ -20,9 +20,9 @@ using namespace ecr;
 
 //------------------------------------------------------------------------------------------------
 D3D11DeviceState::D3D11DeviceState(
-    ID3D11DeviceContext* pDeviceContext, 
-    efd::Bool isHSDSSupported, 
-    efd::Bool isGSSupported, 
+    ID3D11DeviceContext* pDeviceContext,
+    efd::Bool isHSDSSupported,
+    efd::Bool isGSSupported,
     efd::Bool isCSSupported,
     efd::Bool isCSDownLevel) :
     m_pDeviceContext(pDeviceContext),
@@ -42,7 +42,12 @@ D3D11DeviceState::D3D11DeviceState(
     m_isHSDSSupported(isHSDSSupported),
     m_isGSSupported(isGSSupported),
     m_isCSSupported(isCSSupported),
-    m_isCSDownLevel(isCSDownLevel)
+    m_isCSDownLevel(isCSDownLevel),
+    m_pInputLayout(NULL),
+    m_ePrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED),
+    m_pIndexBuffer(NULL),
+    m_eIndexFormat(DXGI_FORMAT_UNKNOWN),
+    m_uiIndexOffset(0)
 {
     EE_ASSERT(m_pDeviceContext);
     if (m_pDeviceContext)
@@ -59,11 +64,26 @@ D3D11DeviceState::D3D11DeviceState(
     memset(m_blendFactor, 0, sizeof(m_blendFactor));
     memset(m_csUnorderedAccessViews, 0, sizeof(m_csUnorderedAccessViews));
     memset(m_classInstanceCount, 0, sizeof(m_classInstanceCount));
+    memset(m_vertexBufferArray, 0, sizeof(m_vertexBufferArray));
+    memset(m_vertexStrideArray, 0, sizeof(m_vertexStrideArray));
+    memset(m_vertexOffsetArray, 0, sizeof(m_vertexOffsetArray));
 }
 
 //------------------------------------------------------------------------------------------------
 D3D11DeviceState::~D3D11DeviceState()
 {
+    if (m_pInputLayout)
+        m_pInputLayout->Release();
+
+    if (m_pIndexBuffer)
+        m_pIndexBuffer->Release();
+
+    for (efd::UInt32 i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (m_vertexBufferArray[i])
+            m_vertexBufferArray[i]->Release();
+    }
+
     if (m_pDeviceContext)
         m_pDeviceContext->Release();
 
@@ -2294,6 +2314,106 @@ void D3D11DeviceState::CSClearShader()
         }
 
         m_classInstanceCount[NiGPUProgram::PROGRAM_COMPUTE] = 0;
+    }
+}
+
+//------------------------------------------------------------------------------------------------
+void ecr::D3D11DeviceState::IASetInputLayout(ID3D11InputLayout* pInputLayout)
+{
+    if (m_pInputLayout == pInputLayout)
+        return;
+
+    m_pDeviceContext->IASetInputLayout(pInputLayout);
+    if (m_pInputLayout)
+        m_pInputLayout->Release();
+
+    m_pInputLayout = pInputLayout;
+    if (m_pInputLayout)
+        m_pInputLayout->AddRef();
+}
+
+//------------------------------------------------------------------------------------------------
+void ecr::D3D11DeviceState::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY eTopology)
+{
+    if (m_ePrimitiveTopology == eTopology)
+        return;
+    m_pDeviceContext->IASetPrimitiveTopology(eTopology);
+    m_ePrimitiveTopology = eTopology;
+}
+
+//------------------------------------------------------------------------------------------------
+void ecr::D3D11DeviceState::IASetIndexBuffer(ID3D11Buffer* pIndexBuffer, DXGI_FORMAT eFormat, efd::UInt32 uiOffset)
+{
+    if (m_pIndexBuffer == pIndexBuffer &&
+        m_eIndexFormat == eFormat &&
+        m_uiIndexOffset == uiOffset)
+    {
+        return;
+    }
+
+    m_pDeviceContext->IASetIndexBuffer(
+        pIndexBuffer,
+        eFormat,
+        uiOffset);
+
+    if (m_pIndexBuffer)
+        m_pIndexBuffer->Release();
+
+    m_pIndexBuffer = pIndexBuffer;
+    if (m_pIndexBuffer)
+        m_pIndexBuffer->AddRef();
+
+    m_eIndexFormat = eFormat;
+    m_uiIndexOffset = uiOffset;
+}
+
+//------------------------------------------------------------------------------------------------
+void ecr::D3D11DeviceState::IASetVertexBuffers(efd::UInt32 uiStartSlot, efd::UInt32 uiNumBuffers, ID3D11Buffer* const* ppVertexBuffers, const efd::UInt32* pStrides, const efd::UInt32* pOffsets)
+{
+    EE_ASSERT(uiStartSlot + uiNumBuffers <= D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT);
+
+    bool bChanged = false;
+
+    for (efd::UInt32 i = 0; i < uiNumBuffers; ++i)
+    {
+        const efd::UInt32 uiSlot = uiStartSlot + i;
+
+        if (m_vertexBufferArray[uiSlot] != ppVertexBuffers[i] ||
+            m_vertexStrideArray[uiSlot] != pStrides[i] ||
+            m_vertexOffsetArray[uiSlot] != pOffsets[i])
+        {
+            bChanged = true;
+            break;
+        }
+    }
+
+    if (!bChanged)
+        return;
+
+    m_pDeviceContext->IASetVertexBuffers(
+        uiStartSlot,
+        uiNumBuffers,
+        ppVertexBuffers,
+        pStrides,
+        pOffsets);
+
+    for (efd::UInt32 i = 0; i < uiNumBuffers; ++i)
+    {
+        const efd::UInt32 uiSlot = uiStartSlot + i;
+
+        if (m_vertexBufferArray[uiSlot] != ppVertexBuffers[i])
+        {
+            if (m_vertexBufferArray[uiSlot])
+                m_vertexBufferArray[uiSlot]->Release();
+
+            m_vertexBufferArray[uiSlot] = ppVertexBuffers[i];
+
+            if (m_vertexBufferArray[uiSlot])
+                m_vertexBufferArray[uiSlot]->AddRef();
+        }
+
+        m_vertexStrideArray[uiSlot] = pStrides[i];
+        m_vertexOffsetArray[uiSlot] = pOffsets[i];
     }
 }
 

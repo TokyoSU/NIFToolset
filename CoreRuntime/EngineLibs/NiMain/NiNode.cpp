@@ -191,42 +191,47 @@ bool NiNode::SameTopology(NiAVObject* pkObj0, NiAVObject* pkObj1)
 //--------------------------------------------------------------------------------------------------
 void NiNode::UpdateDownwardPass(NiUpdateProcess& kUpdate)
 {
-    // NOTE: When changing UpdateDownwardPass, UpdateSelectedDownwardPass,
-    // or UpdateRigidDownwardPass, remember to make equivalent changes
-    // the all of these functions.
-
     NIMETRICS_MAIN_INCREMENTUPDATES();
 
-    if (kUpdate.GetUpdateControllers())
+    const bool bUpdateControllers = kUpdate.GetUpdateControllers();
+
+    if (bUpdateControllers)
         UpdateObjectControllers(kUpdate.GetTime());
 
     UpdateWorldData();
 
-    m_kWorldBound.SetRadius(0.0f);
+    bool bHasBound = false;
+    NiBound kMergedBound;
 
-    // To avoid having to call UpdateWorldBound and therefore making another
-    // iteration through the node's children, the world bound is calculated
-    // during this loop.
-    for (unsigned int i = 0; i < m_kChildren.GetSize(); i++)
+    const unsigned int uiCount = m_kChildren.GetSize();
+
+    for (unsigned int i = 0; i < uiCount; ++i)
     {
         NiAVObject* pkChild = m_kChildren.GetAt(i);
-        if (pkChild)
-        {
-            pkChild->UpdateDownwardPass(kUpdate);
+        if (!pkChild)
+            continue;
 
-            if (pkChild->IsVisualObject())
-            {
-                if (m_kWorldBound.GetRadius() == 0.0f)
-                {
-                    m_kWorldBound = pkChild->GetWorldBound();
-                }
-                else
-                {
-                    m_kWorldBound.Merge(&pkChild->GetWorldBound());
-                }
-            }
+        pkChild->UpdateDownwardPass(kUpdate);
+        if (!pkChild->IsVisualObject())
+            continue;
+
+        const NiBound& kChildBound = pkChild->GetWorldBound();
+
+        if (!bHasBound)
+        {
+            kMergedBound = kChildBound;
+            bHasBound = true;
+        }
+        else
+        {
+            kMergedBound.Merge(&kChildBound);
         }
     }
+
+    if (bHasBound)
+        m_kWorldBound = kMergedBound;
+    else
+        m_kWorldBound.SetRadius(0.0f);
 }
 
 //--------------------------------------------------------------------------------------------------

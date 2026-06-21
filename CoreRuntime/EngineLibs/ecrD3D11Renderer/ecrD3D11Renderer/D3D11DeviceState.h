@@ -537,6 +537,19 @@ public:
     /// D3D11DeviceState and from the device context.
     void CSClearShader();
 
+    void IASetInputLayout(ID3D11InputLayout* pInputLayout);
+    void IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY eTopology);
+    void IASetIndexBuffer(
+        ID3D11Buffer* pIndexBuffer,
+        DXGI_FORMAT eFormat,
+        efd::UInt32 uiOffset);
+    void IASetVertexBuffers(
+        efd::UInt32 uiStartSlot,
+        efd::UInt32 uiNumBuffers,
+        ID3D11Buffer* const* ppVertexBuffers,
+        const efd::UInt32* pStrides,
+        const efd::UInt32* pOffsets);
+
     /// Sets the compute shader unordered access views on the D3D11DeviceState and the 
     /// device context.
     void CSSetUnorderedAccessViews(
@@ -590,6 +603,17 @@ protected:
     ID3D11GeometryShader* m_pGeometryShader;
     ID3D11PixelShader* m_pPixelShader;
     ID3D11ComputeShader* m_pComputeShader;
+    ID3D11InputLayout* m_pInputLayout;
+
+    D3D11_PRIMITIVE_TOPOLOGY m_ePrimitiveTopology;
+
+    ID3D11Buffer* m_pIndexBuffer;
+    DXGI_FORMAT m_eIndexFormat;
+    efd::UInt32 m_uiIndexOffset;
+
+    ID3D11Buffer* m_vertexBufferArray[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    efd::UInt32 m_vertexStrideArray[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    efd::UInt32 m_vertexOffsetArray[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 
     efd::Bool m_blendStateUnchanged;
     efd::Bool m_depthStencilStateUnchanged;

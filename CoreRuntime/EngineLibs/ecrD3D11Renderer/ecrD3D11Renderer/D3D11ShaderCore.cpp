@@ -903,9 +903,9 @@ efd::UInt32 D3D11ShaderCore::SetupShaderPrograms(const NiRenderCallContext& call
 efd::UInt32 D3D11ShaderCore::PreRenderSubmesh(const NiRenderCallContext& callContext)
 {
     NiMesh* pMesh = NiVerifyStaticCast(NiMesh, callContext.m_pkMesh);
-
     D3D11Renderer* pRenderer = D3D11Renderer::GetRenderer();
     ID3D11DeviceContext* pDeviceContext = pRenderer->GetCurrentD3D11DeviceContext();
+    D3D11DeviceState* pDeviceState = pRenderer->GetDeviceState();
 
     D3D11MeshMaterialBinding* pMMB = (D3D11MeshMaterialBinding*)callContext.m_pkMeshMaterialBinding;
 
@@ -966,7 +966,7 @@ efd::UInt32 D3D11ShaderCore::PreRenderSubmesh(const NiRenderCallContext& callCon
 
         const efd::UInt32 stride = pIndexStream->GetStride();
         const efd::UInt32 regionOffset = region.GetStartIndex() * stride;
-        pDeviceContext->IASetIndexBuffer(
+        pDeviceState->IASetIndexBuffer(
             pIndexStream->GetBuffer(),
             ibFormat,
             regionOffset);
@@ -1019,7 +1019,7 @@ efd::UInt32 D3D11ShaderCore::PreRenderSubmesh(const NiRenderCallContext& callCon
         numVertexStreams++;
     }
 
-    pDeviceContext->IASetVertexBuffers(0,
+    pDeviceState->IASetVertexBuffers(0,
         numVertexStreams,
         vertexBufferArray,
         vbStrideArray,
@@ -1048,7 +1048,7 @@ efd::UInt32 D3D11ShaderCore::PreRenderSubmesh(const NiRenderCallContext& callCon
 
         return EE_UINT32_MAX;
     }
-    pDeviceContext->IASetPrimitiveTopology(topology);
+    pDeviceState->IASetPrimitiveTopology(topology);
 
     //
     // Set input layout
@@ -1060,7 +1060,7 @@ efd::UInt32 D3D11ShaderCore::PreRenderSubmesh(const NiRenderCallContext& callCon
     pMMB->UpdateInputLayout(pByteCode->GetBufferPointer(),
         (efd::UInt32)pByteCode->GetBufferSize());
 
-    pDeviceContext->IASetInputLayout(pMMB->GetInputLayout());
+    pDeviceState->IASetInputLayout(pMMB->GetInputLayout());
 
     return 0;
 }

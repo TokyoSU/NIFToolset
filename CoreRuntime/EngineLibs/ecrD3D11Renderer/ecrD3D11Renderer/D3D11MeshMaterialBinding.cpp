@@ -46,7 +46,8 @@ D3D11MeshMaterialBinding::D3D11MeshMaterialBinding() :
     m_elementCount(0),
     m_inputLayoutArray(NULL),
     m_pCurrentInputLayout(NULL),
-    m_pIndexStreamRef(NULL)
+    m_pIndexStreamRef(NULL),
+    m_pCurrentInputSignature(NULL)
 {
     memset(m_streamsToSetArray, 0, sizeof(m_streamsToSetArray));
 }
@@ -77,6 +78,9 @@ void D3D11MeshMaterialBinding::UpdateInputLayout(
     void* pInputSignature,
     efd::UInt32 inputSignatureSize)
 {
+    if (m_pCurrentInputSignature == pInputSignature && m_pCurrentInputLayout)
+        return;
+
     InputLayoutEntry* pEntry = m_inputLayoutArray;
     while (pEntry)
     {
@@ -129,6 +133,7 @@ void D3D11MeshMaterialBinding::UpdateInputLayout(
     pEntry->m_pNext = m_inputLayoutArray;
     m_inputLayoutArray = pEntry;
 
+    m_pCurrentInputSignature = pInputSignature;
     m_pCurrentInputLayout = pEntry->m_pInputLayout;
 }
 

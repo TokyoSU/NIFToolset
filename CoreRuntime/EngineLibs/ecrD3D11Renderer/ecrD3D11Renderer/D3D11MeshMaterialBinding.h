@@ -133,6 +133,8 @@ protected:
 
     efd::UInt16 m_lastValidStream;
     efd::UInt16 m_elementCount;
+
+    void* m_pCurrentInputSignature;
 };
 
 }   // End namespace ecr.
