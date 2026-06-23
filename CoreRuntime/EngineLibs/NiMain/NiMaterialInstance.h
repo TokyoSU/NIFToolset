@@ -46,6 +46,9 @@ public:
         const NiPropertyState* pkState,
         const NiDynamicEffectState* pkEffects);
 
+    inline bool HasUsableCachedShaderAndVertexDecl(
+        const NiRenderObject* pkGeometry) const;
+
     inline void SetMaterialNeedsUpdate(bool bNeedsUpdate);
 
     inline const NiSemanticAdapterTable& GetSemanticAdapterTable() const;

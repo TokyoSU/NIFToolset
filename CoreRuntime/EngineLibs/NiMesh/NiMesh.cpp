@@ -40,6 +40,32 @@ bool NiMesh::ms_bPreload = true;
 bool NiMesh::ms_bDestroyAppData = true;
 
 //--------------------------------------------------------------------------------------------------
+static bool NiPropertyStatesEquivalentForShader(
+    const NiPropertyState* pkA,
+    const NiPropertyState* pkB)
+{
+    if (pkA == pkB)
+        return true;
+
+    if (!pkA || !pkB)
+        return false;
+
+    NiProperty* apkA[NiProperty::MAX_TYPES];
+    NiProperty* apkB[NiProperty::MAX_TYPES];
+
+    pkA->GetProperties(apkA);
+    pkB->GetProperties(apkB);
+
+    for (unsigned int i = 0; i < NiProperty::MAX_TYPES; ++i)
+    {
+        if (apkA[i] != apkB[i])
+            return false;
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
 NiMesh::NiMesh() :
     m_uiCurrentMaterialOutputDataStreamIndex(0xFFFFFFFF),
     m_pkBaseInstanceStream(NULL),
@@ -214,29 +240,32 @@ void NiMesh::UpdateWorldBound()
 //--------------------------------------------------------------------------------------------------
 void NiMesh::UpdatePropertiesDownward(NiPropertyState* pkParentState)
 {
-    m_spPropertyState = PushLocalProperties(pkParentState, true);
+    NiPropertyStatePtr spNewState = PushLocalProperties(pkParentState, true);
+    const bool bStateChanged = !NiPropertyStatesEquivalentForShader(m_spPropertyState, spNewState);
+    m_spPropertyState = spNewState;
 
-    // Build cached alpha/render-pass classification at the same time
-    // as the inherited property state.
-    UpdateRenderBucketCache();
+    // If the mesh or its local properties have property controllers,
+    // the property object values may change without the property pointer changing.
+    if (bStateChanged || HasPropertyController())
+    {
+        SetMaterialNeedsUpdate(true);
+    }
 
-    SetMaterialNeedsUpdate(true);
+    if (bStateChanged || HasPropertyController())
+        InvalidateRenderBucketCache();
 }
 //--------------------------------------------------------------------------------------------------
 void NiMesh::UpdateEffectsDownward(NiDynamicEffectState* pkParentState)
 {
-    if (pkParentState)
-    {
-        m_spEffectState = pkParentState;
-    }
-    else
-    {
-        // DO NOT change the cached effect state - there is no point in
-        // ever having this be NULL - all NULL's are the same as-is
-        m_spEffectState = NULL;
-    }
+    NiDynamicEffectState* pkNewState = pkParentState ? pkParentState : NULL;
 
-    SetMaterialNeedsUpdate(true);
+    const bool bChanged = (m_spEffectState != pkNewState);
+    m_spEffectState = pkNewState;
+
+    if (bChanged)
+    {
+        SetMaterialNeedsUpdate(true);
+    }
 }
 //--------------------------------------------------------------------------------------------------
 bool NiMesh::RequiresMaterialOption(const NiFixedString& kMaterialOption)
