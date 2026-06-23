@@ -226,7 +226,7 @@ void NiMaterialInstance::UpdateSemanticAdapterTable(NiRenderObject* pkMesh)
 }
 
 //--------------------------------------------------------------------------------------------------
-inline bool NiMaterialInstance::HasUsableCachedShaderAndVertexDecl(const NiRenderObject* pkGeometry) const
+bool NiMaterialInstance::HasUsableCachedShaderAndVertexDecl(const NiRenderObject* pkGeometry) const
 {
     if (!m_spCachedShader || !m_kVertexDeclarationCache)
         return false;
