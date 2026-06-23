@@ -1494,6 +1494,57 @@ NiShaderError D3D11ShaderConstantMap::SetupObjectEntry(NiShaderConstantMapEntry*
 }
 
 //------------------------------------------------------------------------------------------------
+struct D3D11DynamicEffectCacheEntry
+{
+    const NiDynamicEffectState* m_pkEffectState;
+    NiShaderAttributeDesc::ObjectType m_eObjectType;
+    unsigned int m_uiObjectIndex;
+    NiDynamicEffect* m_pkEffect;
+};
+
+static NiDynamicEffect* D3D11GetCachedDynamicEffectForEntry(
+    const NiRenderCallContext& callContext,
+    NiShaderConstantMapEntry* pEntry,
+    D3D11DynamicEffectCacheEntry* pCache,
+    efd::UInt32& uiCacheCount,
+    efd::UInt32 uiCacheCapacity)
+{
+    if (!pEntry)
+        return NULL;
+
+    const NiDynamicEffectState* pkEffectState = callContext.m_pkEffects;
+    NiShaderAttributeDesc::ObjectType eObjectType = pEntry->GetObjectType();
+    unsigned int uiObjectIndex = pEntry->GetExtra();
+
+    for (efd::UInt32 i = 0; i < uiCacheCount; ++i)
+    {
+        if (pCache[i].m_pkEffectState == pkEffectState &&
+            pCache[i].m_eObjectType == eObjectType &&
+            pCache[i].m_uiObjectIndex == uiObjectIndex)
+        {
+            return pCache[i].m_pkEffect;
+        }
+    }
+
+    NiDynamicEffect* pkEffect = NiShaderConstantMap::GetDynamicEffectForObject(
+        pkEffectState,
+        eObjectType,
+        uiObjectIndex);
+
+    // Cache both hits and misses.
+    // A NULL result is still useful because it avoids repeatedly scanning
+    // for a light/effect that does not exist.
+    if (uiCacheCount < uiCacheCapacity)
+    {
+        pCache[uiCacheCount].m_pkEffectState = pkEffectState;
+        pCache[uiCacheCount].m_eObjectType = eObjectType;
+        pCache[uiCacheCount].m_uiObjectIndex = uiObjectIndex;
+        pCache[uiCacheCount].m_pkEffect = pkEffect;
+        ++uiCacheCount;
+    }
+
+    return pkEffect;
+}
 NiShaderError D3D11ShaderConstantMap::UpdateShaderConstantValues(
     const NiRenderCallContext& callContext, 
     efd::Bool isGlobal)
@@ -1536,6 +1587,9 @@ NiShaderError D3D11ShaderConstantMap::UpdateShaderConstantValues(
     }
 #endif
     NiShaderConstantMapEntry* pEntry = NULL;
+    static const efd::UInt32 EFFECT_CACHE_CAPACITY = 32;
+    D3D11DynamicEffectCacheEntry kEffectCache[EFFECT_CACHE_CAPACITY] = {};
+    efd::UInt32 uiEffectCacheCount = 0;
 
     for (efd::UInt32 phase = 0; phase < NiRenderer::PHASE_COUNT; phase++)
     {
@@ -1593,7 +1647,18 @@ NiShaderError D3D11ShaderConstantMap::UpdateShaderConstantValues(
             }
             else if (pEntry->IsObject())
             {
-                shaderError = UpdateObjectConstantValue(pWriteData, pEntry, callContext);
+                NiDynamicEffect* pDynEffect = D3D11GetCachedDynamicEffectForEntry(
+                    callContext,
+                    pEntry,
+                    kEffectCache,
+                    uiEffectCacheCount,
+                    EFFECT_CACHE_CAPACITY);
+
+                shaderError = UpdateObjectConstantValue(
+                    pWriteData,
+                    pEntry,
+                    callContext,
+                    pDynEffect);
             }
             else
             {
@@ -2155,7 +2220,8 @@ NiShaderError D3D11ShaderConstantMap::UpdateOperatorConstantValue(
 NiShaderError D3D11ShaderConstantMap::UpdateObjectConstantValue(
     void* pShaderConstantBuffer, 
     NiShaderConstantMapEntry* pEntry,
-    const NiRenderCallContext& callContext)
+    const NiRenderCallContext& callContext,
+    NiDynamicEffect* pDynEffect)
 {
     efd::UInt32 encodedShaderRegister = pEntry->GetShaderRegister();
     efd::UInt32 encodedRegisterCount = pEntry->GetRegisterCount();
@@ -2190,16 +2256,25 @@ NiShaderError D3D11ShaderConstantMap::UpdateObjectConstantValue(
         return NISHADERERR_UNKNOWN;
     }
 
-    // Stack allocate enough aligned memory to write constants into.
-    // Note: EE_STACK_ALLOC does not (apparently) always return 16-byte
-    // aligned addresses in the same way that malloc does.
-    // The +16 in bufferSize provides headroom so we can round UP to the
-    // next 16-byte boundary without overflowing the allocation.
-    efd::UInt32 matrixRegisters = (registerCount + 3) & ~0x3;
-    efd::UInt32 bufferSize = matrixRegisters * 4 * sizeof(efd::Float32) + 16;
-    efd::UInt8* pInitialData = EE_STACK_ALLOC(efd::UInt8, bufferSize);
-    size_t pointerAsInt = (size_t)pInitialData;
-    XMMATRIX* pResult = (XMMATRIX*)((pointerAsInt + 15) & ~0xF);
+    // Most object constants are <= 4 registers:
+    // float4, matrix4x4, light color, light position, light direction, etc.
+    // Avoid _malloca/_freea for that common path.
+    EE_ALIGN_CLASS_BEGIN(16)
+        efd::UInt8 localResultData[sizeof(XMMATRIX)]{}
+    EE_ALIGN_CLASS_END(16);
+
+    efd::UInt8* pInitialData = NULL;
+    XMMATRIX* pResult = (XMMATRIX*)localResultData;
+
+    // Rare path: larger object constants, for example PSSM split arrays.
+    if (registerCount > 4)
+    {
+        efd::UInt32 matrixRegisters = (registerCount + 3) & ~0x3;
+        efd::UInt32 bufferSize = matrixRegisters * 4 * sizeof(efd::Float32) + 16;
+        pInitialData = EE_STACK_ALLOC(efd::UInt8, bufferSize);
+        size_t pointerAsInt = (size_t)pInitialData;
+        pResult = (XMMATRIX*)((pointerAsInt + 15) & ~0xF);
+    }
     
     efd::UInt32 dataSize = 0;
     efd::UInt32 dataStride = 0;
@@ -2208,7 +2283,8 @@ NiShaderError D3D11ShaderConstantMap::UpdateObjectConstantValue(
         callContext, 
         dataSize,
         dataStride,
-        pResult);
+        pResult,
+        pDynEffect);
     if (pDataSource == NULL)
     {
         D3D11Error::ReportWarning(
@@ -2218,7 +2294,8 @@ NiShaderError D3D11ShaderConstantMap::UpdateObjectConstantValue(
             pEntry->GetKey(),
             GetName());
 
-        EE_STACK_FREE(pInitialData);
+        if (pInitialData)
+            EE_STACK_FREE(pInitialData);
         return NISHADERERR_UNKNOWN;
     }
 
@@ -2242,7 +2319,9 @@ NiShaderError D3D11ShaderConstantMap::UpdateObjectConstantValue(
         arrayLength, 
         packRegisters, 
         NULL);
-    EE_STACK_FREE(pInitialData);
+
+    if (pInitialData)
+        EE_STACK_FREE(pInitialData);
     return eErr;
 }
 
@@ -4335,35 +4414,25 @@ const void* D3D11ShaderConstantMap::ObtainObjectConstantValue(
     const NiRenderCallContext& callContext,
     efd::UInt32& dataSize,
     efd::UInt32& dataStride,
-    XMMATRIX* pResult)
+    XMMATRIX* pResult,
+    NiDynamicEffect* pDynEffect)
 {
-    // Get NiDynamicEffect corresponding to this object type.
-    NiDynamicEffect* pDynEffect = GetDynamicEffectForObject(
-        callContext.m_pkEffects,
-        pEntry->GetObjectType(), 
-        pEntry->GetExtra());
-
     // Get the register count for the mapping type.
     ObjectMappings eMapping = (ObjectMappings)
         ((pEntry->GetInternal() &NiShaderConstantMapEntry::SCME_OBJECT_MAP_MASK) >>
         NiShaderConstantMapEntry::SCME_OBJECT_MAP_SHIFT);
-    efd::UInt32 registerCount;
-    efd::UInt32 floatCount;
-    NiShaderAttributeDesc::AttributeType attribType = LookUpObjectMappingType(
-        eMapping, 
-        registerCount, 
-        floatCount);
-    if (attribType == NiShaderAttributeDesc::ATTRIB_TYPE_UNDEFINED)
+    
+#if defined(EE_ASSERTS_ARE_ENABLED)
     {
-        D3D11Error::ReportWarning(
-            "Undefined attribute type found in "
-            __FUNCTION__
-            " for entry %s in shader constant map %s.",
-            pEntry->GetKey(),
-            GetName());
-
-        return NULL;
+        efd::UInt32 registerCount;
+        efd::UInt32 floatCount;
+        NiShaderAttributeDesc::AttributeType attribType = LookUpObjectMappingType(
+            eMapping,
+            registerCount,
+            floatCount);
+        EE_ASSERT(attribType != NiShaderAttributeDesc::ATTRIB_TYPE_UNDEFINED);
     }
+#endif
 
     // Get data to set.
     if (!ObtainDataFromDynamicEffect(

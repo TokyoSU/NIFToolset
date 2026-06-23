@@ -428,7 +428,8 @@ protected:
     NiShaderError UpdateObjectConstantValue(
         void* pShaderConstantBuffer,
         NiShaderConstantMapEntry* pEntry, 
-        const NiRenderCallContext& callContext);
+        const NiRenderCallContext& callContext,
+        NiDynamicEffect* pDynEffect);
     //@}
 
     /// Return the data that will be used to fill in the shader constant.
@@ -472,7 +473,8 @@ protected:
         const NiRenderCallContext& callContext, 
         efd::UInt32& dataSize,
         efd::UInt32& dataStride,
-        XMMATRIX* pResult);
+        XMMATRIX* pResult,
+        NiDynamicEffect* pDynEffect);
     //@}
 
     /// Return the requested data from a specific dynamic effect
