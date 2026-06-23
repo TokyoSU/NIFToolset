@@ -148,25 +148,6 @@ inline void NiMaterialInstance::Reinitialize()
 }
 
 //--------------------------------------------------------------------------------------------------
-inline bool NiMaterialInstance::HasUsableCachedShaderAndVertexDecl(const NiRenderObject* pkGeometry) const
-{
-    if (!m_spCachedShader || !m_kVertexDeclarationCache)
-        return false;
-
-    if (m_eNeedsUpdate == DIRTY)
-        return false;
-
-    if (m_eNeedsUpdate == UNKNOWN &&
-        pkGeometry &&
-        pkGeometry->GetMaterialNeedsUpdateDefault())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
 inline void NiMaterialInstance::SetMaterialNeedsUpdate(bool bNeedsUpdate)
 {
     m_eNeedsUpdate = (bNeedsUpdate ? DIRTY : CLEAN);
