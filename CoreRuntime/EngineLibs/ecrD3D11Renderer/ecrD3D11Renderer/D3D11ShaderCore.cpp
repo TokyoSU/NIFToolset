@@ -320,6 +320,29 @@ void D3D11ShaderCore::Do_RenderMeshes(NiVisibleArray* pVisibleArray)
                 continue;
             }
 
+            // Bind shader programs once per pass.
+            // These do not depend on the submesh.
+            EE_ASSERT(m_pCurrentPass);
+            returnVal = m_pCurrentPass->ApplyShaderPrograms(callContext);
+            if (returnVal != 0)
+            {
+                D3D11Error::ReportWarning(
+                    "D3D11Pass::ApplyShaderPrograms failed with return value %d in "
+                    __FUNCTION__
+                    " on pass %d of shader '%s', implementation %d on mesh '%s', pointer: 0x%08X; "
+                    "skipping pass.",
+                    returnVal,
+                    callContext.m_uiPass,
+                    GetName(),
+                    m_uiImplementation,
+                    pMesh->GetName(),
+                    pMesh);
+
+                remainingPasses = NextPass();
+                callContext.m_uiPass++;
+                continue;
+            }
+
             // Iterate over submesh regions
             for (efd::UInt32 submesh = 0; submesh < submeshCount; ++submesh)
             {
@@ -362,16 +385,19 @@ void D3D11ShaderCore::Do_RenderMeshes(NiVisibleArray* pVisibleArray)
                     continue;
                 }
 
-                // Set the shader programs
-                // This is to give the shader final 'override' authority
-                returnVal = SetupShaderPrograms(callContext);
+                // Update shader constants per submesh.
+                // Do NOT rebind shader programs here; they were already bound once per pass.
+                ResetSCMExtraData(callContext.m_pkMesh);
+
+                EE_ASSERT(m_pCurrentPass);
+                returnVal = m_pCurrentPass->ApplyShaderConstants(callContext);
                 if (returnVal != 0)
                 {
                     D3D11Error::ReportWarning(
-                        "D3D11ShaderCore::SetupShaderPrograms failed with return value %d in "
+                        "D3D11Pass::ApplyShaderConstants failed with return value %d in "
                         __FUNCTION__
                         " on pass %d of shader '%s', implementation %d on mesh '%s', "
-                        "pointer: 0x%08X, submesh %d; skipping pass.",
+                        "pointer: 0x%08X, submesh %d; skipping submesh.",
                         returnVal,
                         callContext.m_uiPass,
                         GetName(),
@@ -892,11 +918,9 @@ efd::UInt32 D3D11ShaderCore::SetupShaderPrograms(const NiRenderCallContext& call
     // and render states.
     // Set the shader constants
     EE_ASSERT(m_pCurrentPass);
-    efd::UInt32 returnVal = m_pCurrentPass->ApplyShaderPrograms(callContext);
 
-    returnVal = m_pCurrentPass->ApplyShaderConstants(callContext);
-
-    return returnVal;
+    m_pCurrentPass->ApplyShaderPrograms(callContext);
+    return m_pCurrentPass->ApplyShaderConstants(callContext);
 }
 
 //------------------------------------------------------------------------------------------------
