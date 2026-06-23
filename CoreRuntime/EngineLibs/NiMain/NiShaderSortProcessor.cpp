@@ -117,6 +117,9 @@ void NiShaderSortProcessor::PreRenderProcessList(
     {
         NiRenderObject& kMesh = pkInput->GetAt(ui);
 
+        if (!AcceptRenderObject(kMesh))
+            continue;
+
         if (!pkRenderer->PrecacheShader(&kMesh))
             continue;
 
@@ -351,3 +354,7 @@ void NiShaderSortProcessor::ReleaseCaches()
 }
 
 //--------------------------------------------------------------------------------------------------
+bool NiShaderSortProcessor::AcceptRenderObject(const NiRenderObject& kMesh) const
+{
+    return true;
+}

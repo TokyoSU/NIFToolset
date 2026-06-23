@@ -40,6 +40,7 @@ public:
     inline bool GetUseTransparentPass() const;
 
 protected:
+    virtual bool AcceptRenderObject(const NiRenderObject& kMesh) const;
 
     // Linked List node for storing NiRenderObjects a set of
     // NiRenderObjects in a way that allows for easy grouping.
