@@ -382,18 +382,13 @@ void D3D11DeviceState::VSGetSamplers(
 //------------------------------------------------------------------------------------------------
 void D3D11DeviceState::VSClearSamplers()
 {
-    ID3D11SamplerState* tempSamplerArray[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-    memset(tempSamplerArray, 0, sizeof(tempSamplerArray));
-    m_pDeviceContext->VSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tempSamplerArray);
+    ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    memset(tempResourceArray, 0, sizeof(tempResourceArray));
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; i++)
-    {
-        if (m_samplerArray[NiGPUProgram::PROGRAM_VERTEX][i])
-        {
-            m_samplerArray[NiGPUProgram::PROGRAM_VERTEX][i]->Release();
-            m_samplerArray[NiGPUProgram::PROGRAM_VERTEX][i] = NULL;
-        }
-    }
+    VSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -482,18 +477,13 @@ void D3D11DeviceState::HSClearSamplers()
     if (!m_isHSDSSupported)
         return;
 
-    ID3D11SamplerState* tempSamplerArray[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-    memset(tempSamplerArray, 0, sizeof(tempSamplerArray));
-    m_pDeviceContext->HSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tempSamplerArray);
+    ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    memset(tempResourceArray, 0, sizeof(tempResourceArray));
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; i++)
-    {
-        if (m_samplerArray[NiGPUProgram::PROGRAM_HULL][i])
-        {
-            m_samplerArray[NiGPUProgram::PROGRAM_HULL][i]->Release();
-            m_samplerArray[NiGPUProgram::PROGRAM_HULL][i] = NULL;
-        }
-    }
+    HSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -582,18 +572,13 @@ void D3D11DeviceState::DSClearSamplers()
     if (!m_isHSDSSupported)
         return;
 
-    ID3D11SamplerState* tempSamplerArray[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-    memset(tempSamplerArray, 0, sizeof(tempSamplerArray));
-    m_pDeviceContext->DSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tempSamplerArray);
+    ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    memset(tempResourceArray, 0, sizeof(tempResourceArray));
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; i++)
-    {
-        if (m_samplerArray[NiGPUProgram::PROGRAM_DOMAIN][i])
-        {
-            m_samplerArray[NiGPUProgram::PROGRAM_DOMAIN][i]->Release();
-            m_samplerArray[NiGPUProgram::PROGRAM_DOMAIN][i] = NULL;
-        }
-    }
+    DSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -683,18 +668,13 @@ void D3D11DeviceState::GSClearSamplers()
     if (!m_isGSSupported)
         return;
 
-    ID3D11SamplerState* tempSamplerArray[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-    memset(tempSamplerArray, 0, sizeof(tempSamplerArray));
-    m_pDeviceContext->GSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tempSamplerArray);
+    ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    memset(tempResourceArray, 0, sizeof(tempResourceArray));
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; i++)
-    {
-        if (m_samplerArray[NiGPUProgram::PROGRAM_GEOMETRY][i])
-        {
-            m_samplerArray[NiGPUProgram::PROGRAM_GEOMETRY][i]->Release();
-            m_samplerArray[NiGPUProgram::PROGRAM_GEOMETRY][i] = NULL;
-        }
-    }
+    GSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -774,18 +754,13 @@ void D3D11DeviceState::PSGetSamplers(
 //------------------------------------------------------------------------------------------------
 void D3D11DeviceState::PSClearSamplers()
 {
-    ID3D11SamplerState* tempSamplerArray[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-    memset(tempSamplerArray, 0, sizeof(tempSamplerArray));
-    m_pDeviceContext->PSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tempSamplerArray);
+    ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    memset(tempResourceArray, 0, sizeof(tempResourceArray));
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; i++)
-    {
-        if (m_samplerArray[NiGPUProgram::PROGRAM_PIXEL][i])
-        {
-            m_samplerArray[NiGPUProgram::PROGRAM_PIXEL][i]->Release();
-            m_samplerArray[NiGPUProgram::PROGRAM_PIXEL][i] = NULL;
-        }
-    }
+    PSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -874,18 +849,13 @@ void D3D11DeviceState::CSClearSamplers()
     if (!m_isCSSupported)
         return;
 
-    ID3D11SamplerState* tempSamplerArray[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-    memset(tempSamplerArray, 0, sizeof(tempSamplerArray));
-    m_pDeviceContext->CSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tempSamplerArray);
+    ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    memset(tempResourceArray, 0, sizeof(tempResourceArray));
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; i++)
-    {
-        if (m_samplerArray[NiGPUProgram::PROGRAM_COMPUTE][i])
-        {
-            m_samplerArray[NiGPUProgram::PROGRAM_COMPUTE][i]->Release();
-            m_samplerArray[NiGPUProgram::PROGRAM_COMPUTE][i] = NULL;
-        }
-    }
+    CSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -975,19 +945,11 @@ void D3D11DeviceState::VSClearShaderResources()
 {
     ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
     memset(tempResourceArray, 0, sizeof(tempResourceArray));
-    m_pDeviceContext->VSSetShaderResources(
-        0, 
-        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, 
-        tempResourceArray);
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; i++)
-    {
-        if (m_resourceArray[NiGPUProgram::PROGRAM_VERTEX][i])
-        {
-            m_resourceArray[NiGPUProgram::PROGRAM_VERTEX][i]->Release();
-            m_resourceArray[NiGPUProgram::PROGRAM_VERTEX][i] = NULL;
-        }
-    }
+    VSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1086,19 +1048,11 @@ void D3D11DeviceState::HSClearShaderResources()
 
     ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
     memset(tempResourceArray, 0, sizeof(tempResourceArray));
-    m_pDeviceContext->HSSetShaderResources(
-        0, 
-        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, 
-        tempResourceArray);
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; i++)
-    {
-        if (m_resourceArray[NiGPUProgram::PROGRAM_HULL][i])
-        {
-            m_resourceArray[NiGPUProgram::PROGRAM_HULL][i]->Release();
-            m_resourceArray[NiGPUProgram::PROGRAM_HULL][i] = NULL;
-        }
-    }
+    HSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1197,19 +1151,11 @@ void D3D11DeviceState::DSClearShaderResources()
 
     ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
     memset(tempResourceArray, 0, sizeof(tempResourceArray));
-    m_pDeviceContext->DSSetShaderResources(
-        0, 
-        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, 
-        tempResourceArray);
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; i++)
-    {
-        if (m_resourceArray[NiGPUProgram::PROGRAM_DOMAIN][i])
-        {
-            m_resourceArray[NiGPUProgram::PROGRAM_DOMAIN][i]->Release();
-            m_resourceArray[NiGPUProgram::PROGRAM_DOMAIN][i] = NULL;
-        }
-    }
+    DSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1308,19 +1254,11 @@ void D3D11DeviceState::GSClearShaderResources()
 
     ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
     memset(tempResourceArray, 0, sizeof(tempResourceArray));
-    m_pDeviceContext->GSSetShaderResources(
-        0, 
-        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, 
-        tempResourceArray);
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; i++)
-    {
-        if (m_resourceArray[NiGPUProgram::PROGRAM_GEOMETRY][i])
-        {
-            m_resourceArray[NiGPUProgram::PROGRAM_GEOMETRY][i]->Release();
-            m_resourceArray[NiGPUProgram::PROGRAM_GEOMETRY][i] = NULL;
-        }
-    }
+    GSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1410,19 +1348,11 @@ void D3D11DeviceState::PSClearShaderResources()
 {
     ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
     memset(tempResourceArray, 0, sizeof(tempResourceArray));
-    m_pDeviceContext->PSSetShaderResources(
-        0, 
-        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, 
-        tempResourceArray);
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; i++)
-    {
-        if (m_resourceArray[NiGPUProgram::PROGRAM_PIXEL][i])
-        {
-            m_resourceArray[NiGPUProgram::PROGRAM_PIXEL][i]->Release();
-            m_resourceArray[NiGPUProgram::PROGRAM_PIXEL][i] = NULL;
-        }
-    }
+    PSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1521,19 +1451,11 @@ void D3D11DeviceState::CSClearShaderResources()
 
     ID3D11ShaderResourceView* tempResourceArray[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
     memset(tempResourceArray, 0, sizeof(tempResourceArray));
-    m_pDeviceContext->CSSetShaderResources(
-        0, 
-        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, 
-        tempResourceArray);
 
-    for (efd::UInt32 i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; i++)
-    {
-        if (m_resourceArray[NiGPUProgram::PROGRAM_COMPUTE][i])
-        {
-            m_resourceArray[NiGPUProgram::PROGRAM_COMPUTE][i]->Release();
-            m_resourceArray[NiGPUProgram::PROGRAM_COMPUTE][i] = NULL;
-        }
-    }
+    CSSetShaderResources(
+        0,
+        D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+        tempResourceArray);
 }
 
 //------------------------------------------------------------------------------------------------

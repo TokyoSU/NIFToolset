@@ -181,7 +181,7 @@ inline efd::Bool D3D11ShaderProgramData::GetShaderResourceIndex(
     efd::UInt8 shaderIndex, 
     efd::UInt8& shaderResourceSourceIndex) const
 {
-    if (shaderIndex > m_shaderResourceCount)
+    if (shaderIndex >= m_shaderResourceCount)
         return false;
 
     shaderResourceSourceIndex = m_shaderResourceIndices[shaderIndex];
