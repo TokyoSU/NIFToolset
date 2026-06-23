@@ -469,6 +469,18 @@ efd::UInt32 D3D11Pass::UpdateShaderConstants(const NiRenderCallContext& callCont
 }
 
 //------------------------------------------------------------------------------------------------
+void ecr::D3D11Pass::InvalidateShaderConstantUpdateCaches()
+{
+    const efd::UInt32 uiMapCount = m_shaderConstantMapArray.GetSize();
+    for (efd::UInt32 i = 0; i < uiMapCount; ++i)
+    {
+        D3D11ShaderConstantMap* pMap = m_shaderConstantMapArray.GetAt(i);
+        if (pMap)
+            pMap->InvalidateUpdateCache();
+    }
+}
+
+//------------------------------------------------------------------------------------------------
 efd::UInt32 D3D11Pass::ApplyShaderConstants(const NiRenderCallContext& callContext)
 {
     // Update the constants first
@@ -753,6 +765,11 @@ efd::UInt32 D3D11Pass::SetupRenderingPass(const D3D11ShaderCore* pShader)
 
     ApplyTextures();
     ApplyUAVs();
+
+    // A new mesh/pass is about to begin. The first submesh should rebuild
+    // constants normally; later submeshes can skip maps that do not depend
+    // on callContext.m_uiSubmesh.
+    InvalidateShaderConstantUpdateCaches();
 
     return NULL;
 }

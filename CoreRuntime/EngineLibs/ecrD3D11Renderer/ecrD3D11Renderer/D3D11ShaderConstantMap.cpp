@@ -72,7 +72,12 @@ D3D11ShaderConstantMap::D3D11ShaderConstantMap(
     NiGPUProgram::ProgramType shaderType) :
     NiShaderConstantMap(shaderType),
     m_constantBufferCurrent(false),
-    m_externalStream(false)
+    m_externalStream(false),
+    m_bHasSubmeshDependentEntries(false),
+    m_bUpdateCacheValid(false),
+    m_uiLastUpdatePass(EE_UINT32_MAX),
+    m_uiLastUpdateSubmesh(EE_UINT32_MAX),
+    m_uiLastUpdateActivePhases(0)
 {
     ms_phaseMappingArray[0] = NiRenderer::PHASE_PER_SHADER;
     ms_phaseMappingArray[1] = NiRenderer::PHASE_PER_LIGHTSTATE;
@@ -949,7 +954,32 @@ NiShaderError D3D11ShaderConstantMap::UpdateShaderConstants(
 
     EE_ASSERT(m_spShaderConstantDataStream || GetEntryCount() == 0);
 
-    return UpdateShaderConstantValues(callContext, isGlobal);
+    // If this constant map has already been updated for the current pass,
+    // and it does not depend on the submesh, skip rebuilding it.
+    //
+    // This avoids Lock() + UpdateShaderConstantValues() + FillShaderConstantBuffer()
+    // for submesh 1, 2, 3... when the constants are identical to submesh 0.
+    if (m_bUpdateCacheValid &&
+        m_uiLastUpdatePass == callContext.m_uiPass &&
+        m_uiLastUpdateActivePhases == callContext.m_uiActivePhases)
+    {
+        if (!m_bHasSubmeshDependentEntries ||
+            m_uiLastUpdateSubmesh == callContext.m_uiSubmesh)
+        {
+            return NISHADERERR_OK;
+        }
+    }
+
+    NiShaderError eErr = UpdateShaderConstantValues(callContext, isGlobal);
+    if (eErr == NISHADERERR_OK)
+    {
+        m_bUpdateCacheValid = true;
+        m_uiLastUpdatePass = callContext.m_uiPass;
+        m_uiLastUpdateSubmesh = callContext.m_uiSubmesh;
+        m_uiLastUpdateActivePhases = callContext.m_uiActivePhases;
+    }
+
+    return eErr;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1058,6 +1088,15 @@ void D3D11ShaderConstantMap::ReleaseShaderConstantDataStream()
     m_externalStream = false;
 
     SetConstantBufferObsolete();
+}
+
+//------------------------------------------------------------------------------------------------
+void ecr::D3D11ShaderConstantMap::InvalidateUpdateCache()
+{
+    m_bUpdateCacheValid = false;
+    m_uiLastUpdatePass = EE_UINT32_MAX;
+    m_uiLastUpdateSubmesh = EE_UINT32_MAX;
+    m_uiLastUpdateActivePhases = 0;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1406,6 +1445,18 @@ NiShaderError D3D11ShaderConstantMap::InsertEntry(
             GetName());
 
         shaderError = NISHADERERR_ENTRYNOTADDED;
+    }
+    else
+    {
+        // In this D3D11 constant map, the only known supported predefined
+        // mapping that directly depends on callContext.m_uiSubmesh is the
+        // skin bone palette.
+        if (pEntry &&
+            pEntry->IsDefined() &&
+            pEntry->GetInternal() == SCM_DEF_SKINBONE_MATRIX_3)
+        {
+            m_bHasSubmeshDependentEntries = true;
+        }
     }
 
     return shaderError;

@@ -417,6 +417,8 @@ protected:
     /// Update the shader constant maps.
     efd::UInt32 UpdateShaderConstants(const NiRenderCallContext& callContext);
 
+    void InvalidateShaderConstantUpdateCaches();
+
     /// Update the list of the D3D11RenderStateGroup::Sampler objects that the shaders in the pass 
     /// will use based on the names of the samplers that the shaders expect.
     void UpdateSamplers();

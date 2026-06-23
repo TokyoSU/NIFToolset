@@ -307,6 +307,8 @@ public:
     /// Release the D3D11DataStream for this constant map's buffer.
     void ReleaseShaderConstantDataStream();
 
+    void InvalidateUpdateCache();
+
     /// Return the string "$Globals", which D3D11 uses for the globnal unnamed constant buffer.
     static const efd::FixedString& GetGlobalConstantBufferString();
 
@@ -575,6 +577,12 @@ protected:
 
     efd::Bool m_constantBufferCurrent;
     efd::Bool m_externalStream;
+
+    efd::Bool m_bHasSubmeshDependentEntries;
+    efd::Bool m_bUpdateCacheValid;
+    efd::UInt32 m_uiLastUpdatePass;
+    efd::UInt32 m_uiLastUpdateSubmesh;
+    efd::UInt32 m_uiLastUpdateActivePhases;
 
     static efd::FixedString ms_globalConstantBufferString;
 
