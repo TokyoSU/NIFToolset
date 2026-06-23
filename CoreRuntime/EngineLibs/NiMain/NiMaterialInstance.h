@@ -18,6 +18,7 @@
 #include "NiMaterial.h"
 #include "NiShader.h"
 #include "NiSCMExtraData.h"
+#include "NiRenderObject.h"
 
 class NiDynamicEffectState;
 class NiRenderObject;
