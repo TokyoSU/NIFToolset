@@ -896,26 +896,56 @@ void D3D11DeviceState::VSSetShaderResources(
 {
     if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
         return;
+
     if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
         numViews = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot;
 
-    m_pDeviceContext->VSSetShaderResources(startSlot, numViews, pResourceViews);
+    ID3D11ShaderResourceView** pCache = m_resourceArray[NiGPUProgram::PROGRAM_VERTEX] + startSlot;
 
-    ID3D11ShaderResourceView** pIterator = 
-        m_resourceArray[NiGPUProgram::PROGRAM_VERTEX] + startSlot;
+    efd::SInt32 lowerBound = (efd::SInt32)numViews;
+    efd::SInt32 upperBound = -1;
 
-    for (efd::UInt32 i = 0; i < numViews; i++)
+    for (efd::SInt32 i = 0; i < (efd::SInt32)numViews; ++i)
     {
-        EE_ASSERT(i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
+        if (pCache[i] != pResourceViews[i])
+        {
+            lowerBound = efd::Min(lowerBound, i);
+            upperBound = efd::Max(upperBound, i);
+        }
+    }
+
+    // Nothing changed. Avoid the D3D11 runtime call completely.
+    if (upperBound < lowerBound)
+        return;
+
+    // Only bind the changed range.
+    m_pDeviceContext->VSSetShaderResources(
+        startSlot + lowerBound,
+        upperBound - lowerBound + 1,
+        pResourceViews + lowerBound);
+
+    // Update our cached references only for the changed range.
+    ID3D11ShaderResourceView** pIterator =
+        m_resourceArray[NiGPUProgram::PROGRAM_VERTEX] + startSlot + lowerBound;
+
+    for (efd::SInt32 i = lowerBound; i <= upperBound; ++i)
+    {
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
         if (*pIterator != pResourceViews[i])
         {
             if (*pIterator)
                 (*pIterator)->Release();
+
             *pIterator = pResourceViews[i];
+
             if (*pIterator)
                 (*pIterator)->AddRef();
         }
-        pIterator++;
+
+        ++pIterator;
     }
 }
 
@@ -971,26 +1001,56 @@ void D3D11DeviceState::HSSetShaderResources(
 
     if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
         return;
+
     if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
         numViews = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot;
 
-    m_pDeviceContext->HSSetShaderResources(startSlot, numViews, pResourceViews);
+    ID3D11ShaderResourceView** pCache = m_resourceArray[NiGPUProgram::PROGRAM_HULL] + startSlot;
 
-    ID3D11ShaderResourceView** pIterator = 
-        m_resourceArray[NiGPUProgram::PROGRAM_HULL] + startSlot;
+    efd::SInt32 lowerBound = (efd::SInt32)numViews;
+    efd::SInt32 upperBound = -1;
 
-    for (efd::UInt32 i = 0; i < numViews; i++)
+    for (efd::SInt32 i = 0; i < (efd::SInt32)numViews; ++i)
     {
-        EE_ASSERT(i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
+        if (pCache[i] != pResourceViews[i])
+        {
+            lowerBound = efd::Min(lowerBound, i);
+            upperBound = efd::Max(upperBound, i);
+        }
+    }
+
+    // Nothing changed. Avoid the D3D11 runtime call completely.
+    if (upperBound < lowerBound)
+        return;
+
+    // Only bind the changed range.
+    m_pDeviceContext->HSSetShaderResources(
+        startSlot + lowerBound,
+        upperBound - lowerBound + 1,
+        pResourceViews + lowerBound);
+
+    // Update our cached references only for the changed range.
+    ID3D11ShaderResourceView** pIterator =
+        m_resourceArray[NiGPUProgram::PROGRAM_HULL] + startSlot + lowerBound;
+
+    for (efd::SInt32 i = lowerBound; i <= upperBound; ++i)
+    {
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
         if (*pIterator != pResourceViews[i])
         {
             if (*pIterator)
                 (*pIterator)->Release();
+
             *pIterator = pResourceViews[i];
+
             if (*pIterator)
                 (*pIterator)->AddRef();
         }
-        pIterator++;
+
+        ++pIterator;
     }
 }
 
@@ -1052,26 +1112,56 @@ void D3D11DeviceState::DSSetShaderResources(
 
     if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
         return;
+
     if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
         numViews = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot;
 
-    m_pDeviceContext->DSSetShaderResources(startSlot, numViews, pResourceViews);
+    ID3D11ShaderResourceView** pCache = m_resourceArray[NiGPUProgram::PROGRAM_DOMAIN] + startSlot;
 
-    ID3D11ShaderResourceView** pIterator = 
-        m_resourceArray[NiGPUProgram::PROGRAM_DOMAIN] + startSlot;
+    efd::SInt32 lowerBound = (efd::SInt32)numViews;
+    efd::SInt32 upperBound = -1;
 
-    for (efd::UInt32 i = 0; i < numViews; i++)
+    for (efd::SInt32 i = 0; i < (efd::SInt32)numViews; ++i)
     {
-        EE_ASSERT(i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
+        if (pCache[i] != pResourceViews[i])
+        {
+            lowerBound = efd::Min(lowerBound, i);
+            upperBound = efd::Max(upperBound, i);
+        }
+    }
+
+    // Nothing changed. Avoid the D3D11 runtime call completely.
+    if (upperBound < lowerBound)
+        return;
+
+    // Only bind the changed range.
+    m_pDeviceContext->DSSetShaderResources(
+        startSlot + lowerBound,
+        upperBound - lowerBound + 1,
+        pResourceViews + lowerBound);
+
+    // Update our cached references only for the changed range.
+    ID3D11ShaderResourceView** pIterator =
+        m_resourceArray[NiGPUProgram::PROGRAM_DOMAIN] + startSlot + lowerBound;
+
+    for (efd::SInt32 i = lowerBound; i <= upperBound; ++i)
+    {
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
         if (*pIterator != pResourceViews[i])
         {
             if (*pIterator)
                 (*pIterator)->Release();
+
             *pIterator = pResourceViews[i];
+
             if (*pIterator)
                 (*pIterator)->AddRef();
         }
-        pIterator++;
+
+        ++pIterator;
     }
 }
 
@@ -1133,26 +1223,56 @@ void D3D11DeviceState::GSSetShaderResources(
 
     if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
         return;
+
     if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
         numViews = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot;
 
-    m_pDeviceContext->GSSetShaderResources(startSlot, numViews, pResourceViews);
+    ID3D11ShaderResourceView** pCache = m_resourceArray[NiGPUProgram::PROGRAM_GEOMETRY] + startSlot;
 
-    ID3D11ShaderResourceView** pIterator = 
-        m_resourceArray[NiGPUProgram::PROGRAM_GEOMETRY] + startSlot;
+    efd::SInt32 lowerBound = (efd::SInt32)numViews;
+    efd::SInt32 upperBound = -1;
 
-    for (efd::UInt32 i = 0; i < numViews; i++)
+    for (efd::SInt32 i = 0; i < (efd::SInt32)numViews; ++i)
     {
-        EE_ASSERT(i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
+        if (pCache[i] != pResourceViews[i])
+        {
+            lowerBound = efd::Min(lowerBound, i);
+            upperBound = efd::Max(upperBound, i);
+        }
+    }
+
+    // Nothing changed. Avoid the D3D11 runtime call completely.
+    if (upperBound < lowerBound)
+        return;
+
+    // Only bind the changed range.
+    m_pDeviceContext->GSSetShaderResources(
+        startSlot + lowerBound,
+        upperBound - lowerBound + 1,
+        pResourceViews + lowerBound);
+
+    // Update our cached references only for the changed range.
+    ID3D11ShaderResourceView** pIterator =
+        m_resourceArray[NiGPUProgram::PROGRAM_GEOMETRY] + startSlot + lowerBound;
+
+    for (efd::SInt32 i = lowerBound; i <= upperBound; ++i)
+    {
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
         if (*pIterator != pResourceViews[i])
         {
             if (*pIterator)
                 (*pIterator)->Release();
+
             *pIterator = pResourceViews[i];
+
             if (*pIterator)
                 (*pIterator)->AddRef();
         }
-        pIterator++;
+
+        ++pIterator;
     }
 }
 
@@ -1211,26 +1331,56 @@ void D3D11DeviceState::PSSetShaderResources(
 {
     if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
         return;
+
     if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
         numViews = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot;
 
-    m_pDeviceContext->PSSetShaderResources(startSlot, numViews, pResourceViews);
+    ID3D11ShaderResourceView** pCache = m_resourceArray[NiGPUProgram::PROGRAM_PIXEL] + startSlot;
 
-    ID3D11ShaderResourceView** pIterator = 
-        m_resourceArray[NiGPUProgram::PROGRAM_PIXEL] + startSlot;
+    efd::SInt32 lowerBound = (efd::SInt32)numViews;
+    efd::SInt32 upperBound = -1;
 
-    for (efd::UInt32 i = 0; i < numViews; i++)
+    for (efd::SInt32 i = 0; i < (efd::SInt32)numViews; ++i)
     {
-        EE_ASSERT(i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
+        if (pCache[i] != pResourceViews[i])
+        {
+            lowerBound = efd::Min(lowerBound, i);
+            upperBound = efd::Max(upperBound, i);
+        }
+    }
+
+    // Nothing changed. Avoid the D3D11 runtime call completely.
+    if (upperBound < lowerBound)
+        return;
+
+    // Only bind the changed range.
+    m_pDeviceContext->PSSetShaderResources(
+        startSlot + lowerBound,
+        upperBound - lowerBound + 1,
+        pResourceViews + lowerBound);
+
+    // Update our cached references only for the changed range.
+    ID3D11ShaderResourceView** pIterator =
+        m_resourceArray[NiGPUProgram::PROGRAM_PIXEL] + startSlot + lowerBound;
+
+    for (efd::SInt32 i = lowerBound; i <= upperBound; ++i)
+    {
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
         if (*pIterator != pResourceViews[i])
         {
             if (*pIterator)
                 (*pIterator)->Release();
+
             *pIterator = pResourceViews[i];
+
             if (*pIterator)
                 (*pIterator)->AddRef();
         }
-        pIterator++;
+
+        ++pIterator;
     }
 }
 
@@ -1286,26 +1436,56 @@ void D3D11DeviceState::CSSetShaderResources(
 
     if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
         return;
+
     if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
         numViews = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot;
 
-    m_pDeviceContext->CSSetShaderResources(startSlot, numViews, pResourceViews);
+    ID3D11ShaderResourceView** pCache = m_resourceArray[NiGPUProgram::PROGRAM_COMPUTE] + startSlot;
 
-    ID3D11ShaderResourceView** pIterator = 
-        m_resourceArray[NiGPUProgram::PROGRAM_COMPUTE] + startSlot;
+    efd::SInt32 lowerBound = (efd::SInt32)numViews;
+    efd::SInt32 upperBound = -1;
 
-    for (efd::UInt32 i = 0; i < numViews; i++)
+    for (efd::SInt32 i = 0; i < (efd::SInt32)numViews; ++i)
     {
-        EE_ASSERT(i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
+        if (pCache[i] != pResourceViews[i])
+        {
+            lowerBound = efd::Min(lowerBound, i);
+            upperBound = efd::Max(upperBound, i);
+        }
+    }
+
+    // Nothing changed. Avoid the D3D11 runtime call completely.
+    if (upperBound < lowerBound)
+        return;
+
+    // Only bind the changed range.
+    m_pDeviceContext->CSSetShaderResources(
+        startSlot + lowerBound,
+        upperBound - lowerBound + 1,
+        pResourceViews + lowerBound);
+
+    // Update our cached references only for the changed range.
+    ID3D11ShaderResourceView** pIterator =
+        m_resourceArray[NiGPUProgram::PROGRAM_COMPUTE] + startSlot + lowerBound;
+
+    for (efd::SInt32 i = lowerBound; i <= upperBound; ++i)
+    {
+        EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+
         if (*pIterator != pResourceViews[i])
         {
             if (*pIterator)
                 (*pIterator)->Release();
+
             *pIterator = pResourceViews[i];
+
             if (*pIterator)
                 (*pIterator)->AddRef();
         }
-        pIterator++;
+
+        ++pIterator;
     }
 }
 
