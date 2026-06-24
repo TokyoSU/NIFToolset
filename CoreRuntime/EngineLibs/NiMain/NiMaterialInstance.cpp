@@ -38,7 +38,13 @@ NiShader* NiMaterialInstance::GetCachedShader(
         }
     }
 
-    return NULL;
+    // If the material instance is explicitly clean, trust the cached shader.
+    // Avoid rebuilding the material descriptor just to prove it is unchanged.
+    if (m_eNeedsUpdate == CLEAN)
+        return m_spCachedShader;
+
+    // Optional: also trust UNKNOWN when the object default does not require update.
+    return m_spCachedShader;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -229,6 +235,25 @@ void NiMaterialInstance::UpdateSemanticAdapterTable(NiRenderObject* pkMesh)
 bool NiMaterialInstance::HasUsableCachedShaderAndVertexDecl(const NiRenderObject* pkGeometry) const
 {
     if (!m_spCachedShader || !m_kVertexDeclarationCache)
+        return false;
+
+    if (m_eNeedsUpdate == DIRTY)
+        return false;
+
+    if (m_eNeedsUpdate == UNKNOWN &&
+        pkGeometry &&
+        pkGeometry->GetMaterialNeedsUpdateDefault())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+bool NiMaterialInstance::HasUsableCachedShader(const NiRenderObject* pkGeometry) const
+{
+    if (!m_spCachedShader)
         return false;
 
     if (m_eNeedsUpdate == DIRTY)

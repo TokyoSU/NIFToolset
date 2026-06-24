@@ -4748,15 +4748,41 @@ D3D11ShaderInterface* D3D11Renderer::GetShaderAndVertexDecl_NoErrorShader(
     if (!pMatInst)
         return NULL;
 
-    // Fast path: shader and vertex declaration are already valid.
+    // Fast path 1: shader and vertex declaration are already valid.
     if (pMatInst->HasUsableCachedShaderAndVertexDecl(pMesh))
     {
         spMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
         return NiVerifyStaticCast(D3D11ShaderInterface, pMatInst->GetCachedShader());
     }
 
-    // Slow path: material really needs resolution/update.
-    D3D11ShaderInterface* pShader = NiVerifyStaticCast(D3D11ShaderInterface, pMesh->GetShaderFromMaterial());
+    // Fast path 2: shader is valid, but vertex declaration cache is missing.
+    // Do not regenerate the material descriptor just to build the input layout.
+    if (pMatInst->HasUsableCachedShader(pMesh))
+    {
+        D3D11ShaderInterface* pCachedShader =
+            NiVerifyStaticCast(D3D11ShaderInterface, pMatInst->GetCachedShader());
+
+        if (pCachedShader)
+        {
+            spMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
+            if (spMMB == NULL)
+            {
+                if (pCachedShader->SetupGeometry(pMesh, pMatInst))
+                {
+                    spMMB = (D3D11MeshMaterialBinding*)
+                        pMatInst->GetVertexDeclarationCache();
+                }
+            }
+
+            if (spMMB)
+                return pCachedShader;
+        }
+    }
+
+    // Slow path: material really needs shader resolution.
+    D3D11ShaderInterface* pShader =
+        NiVerifyStaticCast(D3D11ShaderInterface, pMesh->GetShaderFromMaterial());
+
     spMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
     return pShader;
 }

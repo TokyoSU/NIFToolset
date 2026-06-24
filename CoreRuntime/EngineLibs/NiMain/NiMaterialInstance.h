@@ -47,6 +47,7 @@ public:
         const NiDynamicEffectState* pkEffects);
 
     bool HasUsableCachedShaderAndVertexDecl(const NiRenderObject* pkGeometry) const;
+    bool HasUsableCachedShader(const NiRenderObject* pkGeometry) const;;
 
     inline void SetMaterialNeedsUpdate(bool bNeedsUpdate);
 
