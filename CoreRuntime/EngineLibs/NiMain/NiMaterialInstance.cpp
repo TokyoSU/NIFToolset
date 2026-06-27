@@ -23,7 +23,7 @@ NiShader* NiMaterialInstance::GetCachedShader(
     const NiPropertyState* pkState,
     const NiDynamicEffectState* pkEffects) const
 {
-    /*if (m_spCachedShader)
+    if (m_spCachedShader)
     {
         if (m_eNeedsUpdate == DIRTY || (m_eNeedsUpdate == UNKNOWN &&
             pkGeometry->GetMaterialNeedsUpdateDefault()))
@@ -44,33 +44,6 @@ NiShader* NiMaterialInstance::GetCachedShader(
         return m_spCachedShader;
 
     // Optional: also trust UNKNOWN when the object default does not require update.
-    return m_spCachedShader;*/
-    if (!m_spCachedShader)
-        return NULL;
-
-    if (m_eNeedsUpdate == DIRTY)
-        return NULL;
-
-    if (m_eNeedsUpdate == UNKNOWN &&
-        pkGeometry &&
-        pkGeometry->GetMaterialNeedsUpdateDefault())
-    {
-        return NULL;
-    }
-
-    if (!m_spMaterial)
-        return m_spCachedShader;
-
-    if (m_spMaterial->IsShaderCurrent(
-        m_spCachedShader,
-        pkGeometry,
-        pkState,
-        pkEffects,
-        m_uiMaterialExtraData))
-    {
-        return m_spCachedShader;
-    }
-
     return NULL;
 }
 
