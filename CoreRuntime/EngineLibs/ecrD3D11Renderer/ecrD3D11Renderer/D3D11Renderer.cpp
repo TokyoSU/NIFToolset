@@ -4769,7 +4769,7 @@ D3D11ShaderInterface* D3D11Renderer::GetShaderAndVertexDecl_NoErrorShader(
     // Shader is valid, but the vertex declaration cache is missing or belongs
     // to a different mesh. Rebuild geometry binding only; do not regenerate
     // the material descriptor.
-    /*if (pMatInst->HasUsableCachedShader(pMesh))
+    if (pMatInst->HasUsableCachedShader(pMesh))
     {
         D3D11ShaderInterface* pCachedShader = NiVerifyStaticCast(D3D11ShaderInterface, pMatInst->GetCachedShader());
         if (pCachedShader)
@@ -4798,7 +4798,7 @@ D3D11ShaderInterface* D3D11Renderer::GetShaderAndVertexDecl_NoErrorShader(
                 return pCachedShader;
             }
         }
-    }*/
+    }
 
     // Slow path:
     // The material really needs shader resolution.

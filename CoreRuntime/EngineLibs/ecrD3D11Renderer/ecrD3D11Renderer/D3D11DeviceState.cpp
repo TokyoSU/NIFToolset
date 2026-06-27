@@ -1267,7 +1267,7 @@ void D3D11DeviceState::PSSetShaderResources(
     efd::UInt32 numViews, 
     ID3D11ShaderResourceView*const* pResourceViews)
 {
-    if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
+    /*if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || pResourceViews == NULL)
         return;
 
     if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
@@ -1307,6 +1307,33 @@ void D3D11DeviceState::PSSetShaderResources(
     {
         EE_ASSERT((efd::UInt32)i + startSlot < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
 
+        if (*pIterator != pResourceViews[i])
+        {
+            if (*pIterator)
+                (*pIterator)->Release();
+
+            *pIterator = pResourceViews[i];
+
+            if (*pIterator)
+                (*pIterator)->AddRef();
+        }
+
+        ++pIterator;
+    }*/
+
+    if (startSlot >= D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT || !pResourceViews)
+        return;
+
+    if (numViews > D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot)
+        numViews = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - startSlot;
+
+    // TEMP TEST: always bind.
+    m_pDeviceContext->PSSetShaderResources(startSlot, numViews, pResourceViews);
+
+    ID3D11ShaderResourceView** pIterator = m_resourceArray[NiGPUProgram::PROGRAM_PIXEL] + startSlot;
+
+    for (efd::UInt32 i = 0; i < numViews; ++i)
+    {
         if (*pIterator != pResourceViews[i])
         {
             if (*pIterator)
