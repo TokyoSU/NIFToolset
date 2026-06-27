@@ -4661,6 +4661,8 @@ D3D11ShaderInterface* D3D11Renderer::GetShaderAndVertexDecl(
     D3D11MeshMaterialBindingPtr& spMMB)
 {
     D3D11ShaderInterface* pShader = GetShaderAndVertexDecl_NoErrorShader(pRenderObject, spMMB);
+    if (pShader && spMMB)
+        return pShader;
 
     NiMesh* pMesh = NiVerifyStaticCast(NiMesh, pRenderObject);
     EE_ASSERT(pMesh);
@@ -4717,8 +4719,7 @@ D3D11ShaderInterface* D3D11Renderer::GetShaderAndVertexDecl(
                 pShader->GetSemanticAdapterTable());
         }
 
-        NiMaterialInstance* pMatInst =
-            (NiMaterialInstance*)pMesh->GetActiveMaterialInstance();
+        NiMaterialInstance* pMatInst = (NiMaterialInstance*)pMesh->GetActiveMaterialInstance();
         EE_ASSERT(pMatInst);
 
         // Update the material instance's cache with the error shader and
@@ -4737,10 +4738,12 @@ D3D11ShaderInterface* D3D11Renderer::GetShaderAndVertexDecl_NoErrorShader(
     NiRenderObject* pRenderObject,
     D3D11MeshMaterialBindingPtr& spMMB)
 {
+    spMMB = NULL;
+
     NiMesh* pMesh = NiVerifyStaticCast(NiMesh, pRenderObject);
     EE_ASSERT(pMesh);
 
-    efd::Bool noActiveMaterial_UseDefault = pMesh->GetActiveMaterial() == NULL;
+    const efd::Bool noActiveMaterial_UseDefault = pMesh->GetActiveMaterial() == NULL;
     if (noActiveMaterial_UseDefault)
         pMesh->ApplyAndSetActiveMaterial(m_spCurrentDefaultMaterial);
 
@@ -4748,42 +4751,68 @@ D3D11ShaderInterface* D3D11Renderer::GetShaderAndVertexDecl_NoErrorShader(
     if (!pMatInst)
         return NULL;
 
-    // Fast path 1: shader and vertex declaration are already valid.
-    if (pMatInst->HasUsableCachedShaderAndVertexDecl(pMesh))
+    D3D11MeshMaterialBinding* pCachedMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
+
+    // Fast path 1:
+    // Cached shader + cached binding are both valid for this exact mesh.
+    if (pMatInst->HasUsableCachedShaderAndVertexDecl(pMesh) &&
+        pCachedMMB &&
+        pCachedMMB->IsCompatibleWith(pMesh))
     {
-        spMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
+        spMMB = pCachedMMB;
         return NiVerifyStaticCast(D3D11ShaderInterface, pMatInst->GetCachedShader());
     }
 
-    // Fast path 2: shader is valid, but vertex declaration cache is missing.
-    // Do not regenerate the material descriptor just to build the input layout.
+    // Fast path 2:
+    // Shader is valid, but the vertex declaration cache is missing or belongs
+    // to a different mesh. Rebuild geometry binding only; do not regenerate
+    // the material descriptor.
     if (pMatInst->HasUsableCachedShader(pMesh))
     {
-        D3D11ShaderInterface* pCachedShader =
-            NiVerifyStaticCast(D3D11ShaderInterface, pMatInst->GetCachedShader());
-
+        D3D11ShaderInterface* pCachedShader = NiVerifyStaticCast(D3D11ShaderInterface, pMatInst->GetCachedShader());
         if (pCachedShader)
         {
-            spMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
-            if (spMMB == NULL)
+            if (pCachedMMB && !pCachedMMB->IsCompatibleWith(pMesh))
             {
-                if (pCachedShader->SetupGeometry(pMesh, pMatInst))
-                {
-                    spMMB = (D3D11MeshMaterialBinding*)
-                        pMatInst->GetVertexDeclarationCache();
-                }
+                // Important:
+                // The cached binding belongs to another mesh/stream layout.
+                // Do not let SetupGeometry reuse it.
+                pMatInst->SetVertexDeclarationCache(NULL);
+                pCachedMMB = NULL;
             }
 
-            if (spMMB)
+            if (!pCachedMMB)
+            {
+                pCachedShader->SetupGeometry(pMesh, pMatInst);
+
+                pCachedMMB =
+                    (D3D11MeshMaterialBinding*)
+                    pMatInst->GetVertexDeclarationCache();
+            }
+
+            if (pCachedMMB && pCachedMMB->IsCompatibleWith(pMesh))
+            {
+                spMMB = pCachedMMB;
                 return pCachedShader;
+            }
         }
     }
 
-    // Slow path: material really needs shader resolution.
-    D3D11ShaderInterface* pShader =
-        NiVerifyStaticCast(D3D11ShaderInterface, pMesh->GetShaderFromMaterial());
+    // Slow path:
+    // The material really needs shader resolution.
+    //
+    // If there is an incompatible binding still cached, clear it first.
+    pCachedMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
+    if (pCachedMMB && !pCachedMMB->IsCompatibleWith(pMesh))
+        pMatInst->SetVertexDeclarationCache(NULL);
 
-    spMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
+    D3D11ShaderInterface* pShader = NiVerifyStaticCast(D3D11ShaderInterface, pMesh->GetShaderFromMaterial());
+    pCachedMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
+    if (pCachedMMB && pCachedMMB->IsCompatibleWith(pMesh))
+        spMMB = pCachedMMB;
+    else
+        spMMB = NULL;
+
     return pShader;
 }
 

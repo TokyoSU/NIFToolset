@@ -101,6 +101,11 @@ public:
     /// Returns the index of the highest-numbered stream that will be set.
     inline efd::UInt16 GetLastValidStream() const;
 
+public:
+    void SetSourceRenderObject(const NiRenderObject* pkObject);
+    const NiRenderObject* GetSourceRenderObject() const;
+    bool IsCompatibleWith(const NiRenderObject* pkObject) const;
+
 protected:
     /// Hidden Constructor
     D3D11MeshMaterialBinding();
@@ -120,21 +125,23 @@ protected:
         InputLayoutEntry();
         ~InputLayoutEntry();
 
-        ID3D11InputLayout* m_pInputLayout;
-        void* m_pInputSignature;
-        InputLayoutEntry* m_pNext;
+        ID3D11InputLayout* m_pInputLayout = NULL;
+        void* m_pInputSignature = NULL;
+        InputLayoutEntry* m_pNext = NULL;
     };
 
-    InputLayoutEntry* m_inputLayoutArray;
-    ID3D11InputLayout* m_pCurrentInputLayout;
+    const NiRenderObject* m_pkSourceRenderObject = NULL;
 
-    const NiDataStreamRef* m_pIndexStreamRef;
-    efd::UInt16 m_streamsToSetArray[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    InputLayoutEntry* m_inputLayoutArray = NULL;
+    ID3D11InputLayout* m_pCurrentInputLayout = NULL;
 
-    efd::UInt16 m_lastValidStream;
-    efd::UInt16 m_elementCount;
+    const NiDataStreamRef* m_pIndexStreamRef = NULL;
+    efd::UInt16 m_streamsToSetArray[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT] = {0};
 
-    void* m_pCurrentInputSignature;
+    efd::UInt16 m_lastValidStream = 0;
+    efd::UInt16 m_elementCount = 0;
+
+    void* m_pCurrentInputSignature = NULL;
 };
 
 }   // End namespace ecr.

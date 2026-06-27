@@ -80,7 +80,6 @@ inline bool NiShader::IsInitialized()
 bool NiShader::Initialize()
 {
     m_bInitialized = true;
-
     return true;
 }
 

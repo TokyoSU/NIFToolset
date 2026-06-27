@@ -24,10 +24,7 @@
 using namespace ecr;
 
 //------------------------------------------------------------------------------------------------
-D3D11MeshMaterialBinding::InputLayoutEntry::InputLayoutEntry() :
-    m_pInputLayout(NULL),
-    m_pInputSignature(NULL),
-    m_pNext(NULL)
+D3D11MeshMaterialBinding::InputLayoutEntry::InputLayoutEntry()
 {
     /* */
 }
@@ -38,6 +35,24 @@ D3D11MeshMaterialBinding::InputLayoutEntry::~InputLayoutEntry()
     if (m_pInputLayout)
         m_pInputLayout->Release();
     EE_DELETE m_pNext;
+}
+
+//------------------------------------------------------------------------------------------------
+void D3D11MeshMaterialBinding::SetSourceRenderObject(const NiRenderObject* pkObject)
+{
+    m_pkSourceRenderObject = pkObject;
+}
+
+//------------------------------------------------------------------------------------------------
+const NiRenderObject* D3D11MeshMaterialBinding::GetSourceRenderObject() const
+{
+    return m_pkSourceRenderObject;
+}
+
+//------------------------------------------------------------------------------------------------
+bool D3D11MeshMaterialBinding::IsCompatibleWith(const NiRenderObject* pkObject) const
+{
+    return m_pkSourceRenderObject == pkObject;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -65,11 +80,9 @@ D3D11MeshMaterialBindingPtr D3D11MeshMaterialBinding::Create(
     const NiSemanticAdapterTable& adapterTable)
 {
     D3D11MeshMaterialBindingPtr spMMB = EE_NEW D3D11MeshMaterialBinding;
-
+    spMMB->SetSourceRenderObject(pMesh);
     if (!spMMB->FillElementDescArray(pMesh, adapterTable))
-    {
         spMMB = NULL;
-    }
     return spMMB;
 }
 

@@ -162,27 +162,30 @@ void D3D11ShaderCore::Do_RenderMeshes(NiVisibleArray* pVisibleArray)
 
         const NiMaterialInstance* pMatInst = pMesh->GetActiveMaterialInstance();
         D3D11MeshMaterialBindingPtr spMMB;
-        if (!pMatInst)
+
+        if (pMatInst)
+        {
+            D3D11MeshMaterialBinding* pCachedMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
+            if (pCachedMMB && pCachedMMB->IsCompatibleWith(pMesh))
+                spMMB = pCachedMMB;
+        }
+        if (!spMMB)
         {
             pRenderer->GetShaderAndVertexDecl(pMesh, spMMB);
+
             if (!spMMB)
             {
-                // GetShaderAndVertexDecl failed - skipping render
                 D3D11Error::ReportWarning(
                     "GetShaderAndVertexDecl failed in "
                     __FUNCTION__
                     " on shader '%s', implementation %d on mesh '%s, pointer: 0x%08X; "
-                    "skipping render", 
+                    "skipping render",
                     GetName(),
                     m_uiImplementation,
                     pMesh->GetName(),
                     pMesh);
                 continue;
             }
-        }
-        else
-        {
-            spMMB = (D3D11MeshMaterialBinding*)pMatInst->GetVertexDeclarationCache();
         }
 
         worldTransform = pMesh->GetWorldTransform();
