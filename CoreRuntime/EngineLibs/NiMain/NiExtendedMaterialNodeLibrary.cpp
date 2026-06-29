@@ -15,7 +15,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
     pkFrag->SetType("Pixel");
     pkFrag->SetName("TerrainSplatTextureArray");
     pkFrag->SetDescription(
-        "Samples GrandFantasia terrain diffuse/alpha texture arrays and "
+        "Samples terrain diffuse/alpha texture arrays and "
         "returns the final terrain diffuse color before standard lighting.");
 
     // float2 UV
