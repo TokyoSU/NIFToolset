@@ -292,12 +292,12 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
         pkTerrainNode->GetInputResourceByVariableName("DiffuseArray"));
 
     bSuccess &= kContext.m_spConfigurator->AddBinding(
-        pkDiffuseSampler,
-        pkTerrainNode->GetInputResourceByVariableName("DiffuseArraySampler"));
-
-    bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkAlphaArray,
         pkTerrainNode->GetInputResourceByVariableName("AlphaArray"));
+
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
+        pkDiffuseSampler,
+        pkTerrainNode->GetInputResourceByVariableName("DiffuseArraySampler"));
 
     bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkAlphaSampler,
