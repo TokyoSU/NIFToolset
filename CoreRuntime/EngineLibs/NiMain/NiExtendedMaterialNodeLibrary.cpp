@@ -9,46 +9,82 @@
 #include <NiStandardMaterialNodeLibrary.h>
 
 static const char* TERRAIN_SPLAT_TEXTURE_ARRAY_HLSL = R"(
-    int layerCount = min((int)TerrainInfo.x, 32);
+float SampleSmoothedAlpha(int layerIndex, float2 uv, float blurRadius)
+{
+    uint width;
+    uint height;
+    uint elements;
+    AlphaArray.GetDimensions(width, height, elements);
 
-    if (layerCount <= 0)
-    {
-        ColorOut = float3(1.0f, 1.0f, 1.0f);
-    }
-    else
-    {
-        float4 baseData = LayerData[0];
+    float2 texel = blurRadius / float2(width, height);
+    float z = (float)layerIndex;
 
-        float3 color = DiffuseArray.Sample(
+    float a = 0.0f;
+
+    // 3x3 gaussian-ish blur.
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2(-1.0f, -1.0f), z)).r * 1.0f;
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2( 0.0f, -1.0f), z)).r * 2.0f;
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2( 1.0f, -1.0f), z)).r * 1.0f;
+
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2(-1.0f,  0.0f), z)).r * 2.0f;
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv, z)).r * 4.0f;
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2( 1.0f,  0.0f), z)).r * 2.0f;
+
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2(-1.0f,  1.0f), z)).r * 1.0f;
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2( 0.0f,  1.0f), z)).r * 2.0f;
+    a += AlphaArray.Sample(AlphaArraySampler, float3(uv + texel * float2( 1.0f,  1.0f), z)).r * 1.0f;
+
+    return a / 16.0f;
+}
+
+int layerCount = min((int)TerrainInfo.x, 32);
+
+if (layerCount <= 0)
+{
+    ColorOut = float3(1.0f, 1.0f, 1.0f);
+}
+else
+{
+    float4 baseData = LayerData[0];
+
+    float3 color = DiffuseArray.Sample(
+        DiffuseArraySampler,
+        float3(frac(UV * baseData.xy), 0.0f)).rgb;
+
+    // TerrainInfo.y = alpha blur radius in alpha-map texels.
+    float alphaBlurRadius = max(TerrainInfo.y, 0.0f);
+
+    // TerrainInfo.z = edge softness.
+    // Good values: 0.10 to 0.30.
+    float edgeSoftness = max(TerrainInfo.z, 0.001f);
+
+    [loop]
+    for (int i = 1; i < 32; ++i)
+    {
+        if (i >= layerCount)
+            break;
+
+        float4 data = LayerData[i];
+
+        float alpha = SampleSmoothedAlpha(i, UV, alphaBlurRadius);
+
+        if (data.w > 0.5f)
+            alpha = 1.0f - alpha;
+
+        // Smooth the mask edge to hide low-res alpha pixels.
+        alpha = smoothstep(0.5f - edgeSoftness, 0.5f + edgeSoftness, alpha);
+
+        float coverage = saturate(alpha * data.z);
+
+        float3 layerColor = DiffuseArray.Sample(
             DiffuseArraySampler,
-            float3(frac(UV * baseData.xy), 0.0f)).rgb;
+            float3(frac(UV * data.xy), (float)i)).rgb;
 
-        [loop]
-        for (int i = 1; i < 32; ++i)
-        {
-            if (i >= layerCount)
-                break;
-
-            float4 data = LayerData[i];
-
-            float alpha = AlphaArray.Sample(
-                AlphaArraySampler,
-                float3(UV, (float)i)).r;
-
-            if (data.w > 0.5f)
-                alpha = 1.0f - alpha;
-
-            float coverage = saturate(alpha * data.z);
-
-            float3 layerColor = DiffuseArray.Sample(
-                DiffuseArraySampler,
-                float3(frac(UV * data.xy), (float)i)).rgb;
-
-            color = lerp(color, layerColor, coverage);
-        }
-
-        ColorOut = color;
+        color = lerp(color, layerColor, coverage);
     }
+
+    ColorOut = color;
+}
 )";
 
 static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
