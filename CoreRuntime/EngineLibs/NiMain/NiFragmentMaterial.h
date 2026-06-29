@@ -56,6 +56,8 @@ public:
         TEXTURE_SAMPLER_2D = 0,
         // Sample a cube map texture
         TEXTURE_SAMPLER_CUBE,
+		// Sample a 2D texture array
+        TEXTURE_SAMPLER_2D_ARRAY,
         // Maximum enum value
         TEXTURE_SAMPLER_MAX
     };

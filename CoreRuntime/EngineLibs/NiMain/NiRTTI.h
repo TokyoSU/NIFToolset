@@ -582,7 +582,7 @@ enum class NiTypeMask : unsigned short
     NiInputSystemCreateParams,
     NiInputXInputGamePad,
     RenderSurfaceStep,
-
+    NiExtendedMaterial
 };
 
 class NIMAIN_ENTRY NiRTTI : public NiMemObject
