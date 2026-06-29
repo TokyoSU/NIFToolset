@@ -96,6 +96,37 @@ protected:
 private:
     bool m_bTerrainEnabled;
 
+    NiMaterialResource* AddTerrainTextureArrayResource(
+        Context& kContext,
+        const char* pcVariable,
+        unsigned int uiShaderMapIndex)
+    {
+        return kContext.m_spUniforms->AddOutputResource(
+            "Texture2DArray",
+            "Shader",
+            "",
+            pcVariable,
+            1,
+            NiMaterialResource::SOURCE_PREDEFINED,
+            NiShaderAttributeDesc::OT_UNDEFINED,
+            uiShaderMapIndex);
+    }
+
+    NiMaterialResource* AddTerrainSamplerStateResource(
+        Context& kContext,
+        const char* pcVariable)
+    {
+        return kContext.m_spUniforms->AddOutputResource(
+            "SamplerState",
+            "",
+            "",
+            pcVariable,
+            1,
+            NiMaterialResource::SOURCE_PREDEFINED,
+            NiShaderAttributeDesc::OT_UNDEFINED,
+            0);
+    }
+
     NiSourceTexturePtr m_spTerrainTextureArray;
     NiSourceTexturePtr m_spTerrainAlphaArray;
 

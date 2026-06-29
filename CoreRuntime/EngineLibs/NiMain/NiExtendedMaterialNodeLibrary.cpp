@@ -27,23 +27,41 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
         pkFrag->AddInputResource(pkRes);
     }
 
-    // sampler2DArray DiffuseArray
+    // Texture2DArray DiffuseArray
     {
         NiMaterialResource* pkRes = NiNew NiMaterialResource();
-        pkRes->SetType("sampler2DArray");
+        pkRes->SetType("Texture2DArray");
         pkRes->SetSemantic("Texture");
         pkRes->SetVariable("DiffuseArray");
         pkFrag->AddInputResource(pkRes);
     }
 
-    // sampler2DArray AlphaArray
+	// SamplerState DiffuseSampler
+	{
+		NiMaterialResource* pkRes = NiNew NiMaterialResource();
+		pkRes->SetType("SamplerState");
+		pkRes->SetSemantic("Sampler");
+		pkRes->SetVariable("DiffuseSampler");
+		pkFrag->AddInputResource(pkRes);
+	}
+
+    // Texture2DArray AlphaArray
     {
         NiMaterialResource* pkRes = NiNew NiMaterialResource();
-        pkRes->SetType("sampler2DArray");
+        pkRes->SetType("Texture2DArray");
         pkRes->SetSemantic("Texture");
         pkRes->SetVariable("AlphaArray");
         pkFrag->AddInputResource(pkRes);
     }
+
+	// SamplerState AlphaSampler
+	{
+		NiMaterialResource* pkRes = NiNew NiMaterialResource();
+		pkRes->SetType("SamplerState");
+		pkRes->SetSemantic("Sampler");
+		pkRes->SetVariable("AlphaSampler");
+		pkFrag->AddInputResource(pkRes);
+	}
 
     // float4 TerrainInfo
     // x = layer count
@@ -84,43 +102,42 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
         pkBlock->SetTarget("ps_4_0/ps_5_0");
 
         /*pkBlock->SetText(
-            "\n"
-            "    int layerCount = min((int)TerrainInfo.x, 32);\n"
-            "\n"
-            "    float3 color = float3(0.0f, 0.0f, 0.0f);\n"
-            "\n"
-            "    [loop]\n"
-            "    for (int i = 0; i < 32; ++i)\n"
-            "    {\n"
-            "        if (i >= layerCount)\n"
-            "            break;\n"
-            "\n"
-            "        float4 data = LayerData[i];\n"
-            "\n"
-            "        float2 layerUV = UV * data.xy;\n"
-            "\n"
-            "        float alpha = tex2DArray(\n"
-            "            AlphaArray,\n"
-            "            float3(UV, (float)i)).r;\n"
-            "\n"
-            "        if (data.w > 0.5f)\n"
-            "            alpha = 1.0f - alpha;\n"
-            "\n"
-            "        float coverage = saturate(alpha * data.z);\n"
-            "\n"
-            "        if (coverage > 0.001f)\n"
-            "        {\n"
-            "            float3 layerColor = tex2DArray(\n"
-            "                DiffuseArray,\n"
-            "                float3(layerUV, (float)i)).rgb;\n"
-            "\n"
-            "            color = lerp(color, layerColor, coverage);\n"
-            "        }\n"
-            "    }\n"
-            "\n"
-            "    ColorOut = color;\n"
-            "    "
-        );*/
+        "\n"
+        "    int layerCount = min((int)TerrainInfo.x, 32);\n"
+        "\n"
+        "    float3 color = float3(0.0f, 0.0f, 0.0f);\n"
+        "\n"
+        "    [loop]\n"
+        "    for (int i = 0; i < 32; ++i)\n"
+        "    {\n"
+        "        if (i >= layerCount)\n"
+        "            break;\n"
+        "\n"
+        "        float4 data = LayerData[i];\n"
+        "\n"
+        "        float2 layerUV = UV * data.xy;\n"
+        "\n"
+        "        float alpha = AlphaArray.Sample(\n"
+        "            AlphaArraySampler,\n"
+        "            float3(UV, (float)i)).r;\n"
+        "\n"
+        "        if (data.w > 0.5f)\n"
+        "            alpha = 1.0f - alpha;\n"
+        "\n"
+        "        float coverage = saturate(alpha * data.z);\n"
+        "\n"
+        "        if (coverage > 0.001f)\n"
+        "        {\n"
+        "            float3 layerColor = DiffuseArray.Sample(\n"
+        "                DiffuseArraySampler,\n"
+        "                float3(layerUV, (float)i)).rgb;\n"
+        "\n"
+        "            color = lerp(color, layerColor, coverage);\n"
+        "        }\n"
+        "    }\n"
+        "\n"
+        "    ColorOut = color;\n"
+        "    ");*/
         pkBlock->SetText(
             "\n"
             "    ColorOut = float3(1.0f, 0.0f, 0.0f);\n"

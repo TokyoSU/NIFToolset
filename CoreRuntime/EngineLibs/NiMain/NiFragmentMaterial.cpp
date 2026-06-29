@@ -1027,6 +1027,7 @@ bool NiFragmentMaterial::AddResourceToShaderConstantMap(NiShader* pkShader,
     case NiMaterialResource::SOURCE_PREDEFINED:
         if (pkRes->GetType().EqualsNoCase("sampler2D") ||
             pkRes->GetType().EqualsNoCase("sampler2DArray") ||
+            pkRes->GetType().EqualsNoCase("Texture2DArray") ||
             pkRes->GetType().EqualsNoCase("samplerCUBE"))
         {
             unsigned int uiSamplerId = UINT_MAX;
@@ -1283,7 +1284,7 @@ NiMaterialResource* NiFragmentMaterial::InsertTextureSampler(
         break;
 
     case TEXTURE_SAMPLER_2D_ARRAY:
-        kSamplerType = "sampler2DArray";
+        kSamplerType = "Texture2DArray";
         break;
 
     case TEXTURE_SAMPLER_2D:

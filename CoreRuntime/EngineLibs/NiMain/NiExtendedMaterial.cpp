@@ -13,6 +13,8 @@
 
 NiImplementRTTI(NiExtendedMaterial, NiStandardMaterial, NiTypeMask::NiExtendedMaterial);
 
+
+
 NiExtendedMaterial* NiExtendedMaterial::Create()
 {
     NiMaterial* pkExisting = NiMaterial::GetMaterial("NiExtendedMaterial");
@@ -249,17 +251,17 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
 
     NiMaterialResource* pkUV = apkUVSets[0];
 
-    NiMaterialResource* pkDiffuseArray = InsertTextureSampler(
-        kContext,
-        "Shader",
-        TEXTURE_SAMPLER_2D_ARRAY,
-        0);
+    NiMaterialResource* pkDiffuseArray =
+        AddTerrainTextureArrayResource(kContext, "DiffuseArray", 0);
 
-    NiMaterialResource* pkAlphaArray = InsertTextureSampler(
-        kContext,
-        "Shader",
-        TEXTURE_SAMPLER_2D_ARRAY,
-        1);
+    NiMaterialResource* pkAlphaArray =
+        AddTerrainTextureArrayResource(kContext, "AlphaArray", 1);
+
+    NiMaterialResource* pkDiffuseSampler =
+        AddTerrainSamplerStateResource(kContext, "DiffuseArraySampler");
+
+    NiMaterialResource* pkAlphaSampler =
+        AddTerrainSamplerStateResource(kContext, "AlphaArraySampler");
 
     NiMaterialResource* pkTerrainInfo = AddOutputAttribute(
         kContext.m_spUniforms,
@@ -272,8 +274,12 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
         NiShaderAttributeDesc::ATTRIB_TYPE_POINT4,
         MAX_TERRAIN_LAYERS);
 
-    if (!pkDiffuseArray || !pkAlphaArray || !pkTerrainInfo || !pkLayerData)
+    if (!pkDiffuseArray || !pkAlphaArray ||
+        !pkDiffuseSampler || !pkAlphaSampler ||
+        !pkTerrainInfo || !pkLayerData)
+    {
         return false;
+    }
 
     bool bSuccess = true;
 
@@ -286,8 +292,16 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
         pkTerrainNode->GetInputResourceByVariableName("DiffuseArray"));
 
     bSuccess &= kContext.m_spConfigurator->AddBinding(
+        pkDiffuseSampler,
+        pkTerrainNode->GetInputResourceByVariableName("DiffuseArraySampler"));
+
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkAlphaArray,
         pkTerrainNode->GetInputResourceByVariableName("AlphaArray"));
+
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
+        pkAlphaSampler,
+        pkTerrainNode->GetInputResourceByVariableName("AlphaArraySampler"));
 
     bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkTerrainInfo,
