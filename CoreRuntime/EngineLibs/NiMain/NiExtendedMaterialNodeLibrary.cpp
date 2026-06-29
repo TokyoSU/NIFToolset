@@ -48,7 +48,10 @@ static const char* TERRAIN_SPLAT_TEXTURE_ARRAY_HLSL = R"(
         }
 
         ColorOut = color;
-        ColorOut = float3(saturate(layerCount / 32.0f), 0.0f, 0.0f);
+        ColorOut = float3(
+            saturate(LayerData[0].x / 64.0f),
+            saturate(LayerData[0].y / 64.0f),
+            0.0f);
     }
 )";
 
