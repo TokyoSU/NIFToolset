@@ -192,7 +192,7 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
     unsigned int& uiTexturesApplied,
     NiMaterialResource** apkUVSets,
     unsigned int uiNumStandardUVs,
-    unsigned int uiNumTexEffectUVs) override
+    unsigned int uiNumTexEffectUVs)
 {
     if (!NiStandardMaterial::HandlePreLightTextureApplication(
         kContext,
