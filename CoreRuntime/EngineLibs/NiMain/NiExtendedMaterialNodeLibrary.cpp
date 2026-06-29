@@ -31,7 +31,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
     {
         NiMaterialResource* pkRes = NiNew NiMaterialResource();
         pkRes->SetType("Texture2DArray");
-        pkRes->SetSemantic("Texture");
+        pkRes->SetSemantic("DiffuseTexture");
         pkRes->SetVariable("DiffuseArray");
         pkFrag->AddInputResource(pkRes);
     }
@@ -40,7 +40,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
 	{
 		NiMaterialResource* pkRes = NiNew NiMaterialResource();
 		pkRes->SetType("SamplerState");
-		pkRes->SetSemantic("Sampler");
+		pkRes->SetSemantic("DiffuseSampler");
 		pkRes->SetVariable("DiffuseArraySampler");
 		pkFrag->AddInputResource(pkRes);
 	}
@@ -49,7 +49,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
     {
         NiMaterialResource* pkRes = NiNew NiMaterialResource();
         pkRes->SetType("Texture2DArray");
-        pkRes->SetSemantic("Texture");
+        pkRes->SetSemantic("AlphaTexture");
         pkRes->SetVariable("AlphaArray");
         pkFrag->AddInputResource(pkRes);
     }
@@ -58,7 +58,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
 	{
 		NiMaterialResource* pkRes = NiNew NiMaterialResource();
 		pkRes->SetType("SamplerState");
-		pkRes->SetSemantic("Sampler");
+		pkRes->SetSemantic("AlphaSampler");
 		pkRes->SetVariable("AlphaArraySampler");
 		pkFrag->AddInputResource(pkRes);
 	}
