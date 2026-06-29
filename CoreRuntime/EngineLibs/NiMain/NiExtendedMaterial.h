@@ -31,7 +31,7 @@ public:
         MAX_TERRAIN_LAYERS = 32,
         EXTENDED_VERTEX_VERSION = NiStandardMaterial::VERTEX_VERSION,
         EXTENDED_GEOMETRY_VERSION = NiStandardMaterial::GEOMETRY_VERSION,
-        EXTENDED_PIXEL_VERSION = NiStandardMaterial::PIXEL_VERSION + 10
+        EXTENDED_PIXEL_VERSION = NiStandardMaterial::PIXEL_VERSION + 1000
     };
 
     static NiExtendedMaterial* Create();
@@ -90,6 +90,8 @@ protected:
         NiMaterialResource** apkUVSets,
         unsigned int uiNumStandardUVs,
         unsigned int uiNumTexEffectUVs) override;
+
+    virtual void AddReplacementShaders() override;
 
 private:
     bool m_bTerrainEnabled;

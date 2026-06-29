@@ -119,8 +119,8 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
             "    }\n"
             "\n"
             "    ColorOut = color;\n"
-            "    ");*/
-
+            "    "
+        );*/
         pkBlock->SetText(
             "\n"
             "    ColorOut = float3(1.0f, 0.0f, 0.0f);\n"

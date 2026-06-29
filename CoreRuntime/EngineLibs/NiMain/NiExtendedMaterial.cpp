@@ -194,6 +194,7 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
     unsigned int uiNumStandardUVs,
     unsigned int uiNumTexEffectUVs)
 {
+    NiOutputDebugString("NiExtendedMaterial::HandlePreLightTextureApplication entered\n");
     if (!NiStandardMaterial::HandlePreLightTextureApplication(
         kContext,
         pkPixelDesc,
@@ -223,18 +224,27 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
         return false;
     }
 
-    if (!m_bTerrainEnabled)
+    if (!m_bTerrainEnabled) {
+        NiOutputDebugString("NiExtendedMaterial: terrain disabled\n");
         return true;
+    }
 
     if (!apkUVSets || uiNumStandardUVs == 0 || !apkUVSets[0])
+    {
+        NiOutputDebugString("NiExtendedMaterial: missing UVSet0\n");
         return false;
+    }
 
     NiMaterialNode* pkTerrainNode =
         GetAttachableNodeFromLibrary("TerrainSplatTextureArray");
 
     if (!pkTerrainNode)
+    {
+        NiOutputDebugString("NiExtendedMaterial: TerrainSplatTextureArray node not found\n");
         return false;
+    }
 
+    NiOutputDebugString("NiExtendedMaterial: TerrainSplatTextureArray node found\n");
     kContext.m_spConfigurator->AddNode(pkTerrainNode);
 
     NiMaterialResource* pkUV = apkUVSets[0];
@@ -299,5 +309,11 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
     pkDiffuseTexAccum = pkTerrainColor;
     uiTexturesApplied += 2;
 
+    NiOutputDebugString("NiExtendedMaterial: terrain diffuse override applied\n");
     return true;
+}
+
+void NiExtendedMaterial::AddReplacementShaders()
+{
+	// No replacement shaders are added for this material.
 }
