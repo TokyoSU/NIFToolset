@@ -19,11 +19,9 @@ static const char* TERRAIN_SPLAT_TEXTURE_ARRAY_HLSL = R"(
     {
         float4 baseData = LayerData[0];
 
-        float2 layerUV = frac(UV * data.xy);
-
-        float3 layerColor = DiffuseArray.Sample(
+        float3 color = DiffuseArray.Sample(
             DiffuseArraySampler,
-            float3(layerUV, (float)i)).rgb;
+            float3(UV * baseData.xy, 0.0f)).rgb;
 
         [loop]
         for (int i = 1; i < 32; ++i)
@@ -50,6 +48,7 @@ static const char* TERRAIN_SPLAT_TEXTURE_ARRAY_HLSL = R"(
         }
 
         ColorOut = color;
+        ColorOut = float3(saturate(layerCount / 32.0f), 0.0f, 0.0f);
     }
 )";
 
