@@ -101,7 +101,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
         pkBlock->SetPlatform("D3D11/D3D10");
         pkBlock->SetTarget("ps_4_0/ps_5_0");
 
-        /*pkBlock->SetText(
+        pkBlock->SetText(
         "\n"
         "    int layerCount = min((int)TerrainInfo.x, 32);\n"
         "\n"
@@ -137,11 +137,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
         "    }\n"
         "\n"
         "    ColorOut = color;\n"
-        "    ");*/
-        pkBlock->SetText(
-            "\n"
-            "    ColorOut = float3(1.0f, 0.0f, 0.0f);\n"
-            "    ");
+        "    ");
 
         pkFrag->AddCodeBlock(pkBlock);
     }
