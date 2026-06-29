@@ -1,9 +1,12 @@
 #include "NiMainPCH.h"
 #include "NiExtendedMaterial.h"
 #include "NiExtendedMaterialNodeLibrary.h"
-
-#include <NiStandardMaterialDescriptor.h>
+#include <NiMaterialNode.h>
+#include <NiMaterialResource.h>
+#include <NiMaterialConfigurator.h>
+#include <NiShaderAttributeDesc.h>
 #include <NiStandardPixelProgramDescriptor.h>
+#include <NiStandardMaterialDescriptor.h>
 #include <NiStandardMaterialNodeLibrary.h>
 #include <NiTexturingProperty.h>
 #include <NiFloatsExtraData.h>
@@ -184,36 +187,13 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
     NiMaterialResource*& pkAmbientLightAccum,
     NiMaterialResource*& pkDiffuseLightAccum,
     NiMaterialResource*& pkSpecularLightAccum,
-    NiMaterialResource*& pkTexDiffuseAccum,
-    NiMaterialResource*& pkTexSpecularAccum)
+    NiMaterialResource*& pkDiffuseTexAccum,
+    NiMaterialResource*& pkSpecularTexAccum,
+    unsigned int& uiTexturesApplied,
+    NiMaterialResource** apkUVSets,
+    unsigned int uiNumStandardUVs,
+    unsigned int uiNumTexEffectUVs) override
 {
-    if (!m_bTerrainEnabled)
-    {
-        return NiStandardMaterial::HandlePreLightTextureApplication(
-            kContext,
-            pkPixelDesc,
-            pkWorldPos,
-            pkWorldNormal,
-            pkWorldBinormal,
-            pkWorldTangent,
-            pkWorldViewVector,
-            pkTangentViewVector,
-            pkMatDiffuseColor,
-            pkMatSpecularColor,
-            pkMatSpecularPower,
-            pkMatGlossiness,
-            pkMatAmbientColor,
-            pkMatEmissiveColor,
-            pkOpacityAccum,
-            pkAmbientLightAccum,
-            pkDiffuseLightAccum,
-            pkSpecularLightAccum,
-            pkTexDiffuseAccum,
-            pkTexSpecularAccum);
-    }
-
-    // First let the standard material handle normal maps, gloss, projected
-    // lights, projected shadows, alpha test, etc.
     if (!NiStandardMaterial::HandlePreLightTextureApplication(
         kContext,
         pkPixelDesc,
@@ -233,13 +213,22 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
         pkAmbientLightAccum,
         pkDiffuseLightAccum,
         pkSpecularLightAccum,
-        pkTexDiffuseAccum,
-        pkTexSpecularAccum))
+        pkDiffuseTexAccum,
+        pkSpecularTexAccum,
+        uiTexturesApplied,
+        apkUVSets,
+        uiNumStandardUVs,
+        uiNumTexEffectUVs))
     {
         return false;
     }
 
-    // Then replace the diffuse texture contribution with terrain splatting.
+    if (!m_bTerrainEnabled)
+        return true;
+
+    if (!apkUVSets || uiNumStandardUVs == 0 || !apkUVSets[0])
+        return false;
+
     NiMaterialNode* pkTerrainNode =
         GetAttachableNodeFromLibrary("TerrainSplatTextureArray");
 
@@ -271,33 +260,35 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
         kContext.m_spUniforms,
         "TerrainLayerData",
         NiShaderAttributeDesc::ATTRIB_TYPE_POINT4,
-        32);
+        MAX_TERRAIN_LAYERS);
 
-    if (!pkUV || !pkDiffuseArray || !pkAlphaArray ||
-        !pkTerrainInfo || !pkLayerData)
-    {
+    if (!pkDiffuseArray || !pkAlphaArray || !pkTerrainInfo || !pkLayerData)
         return false;
-    }
 
-    kContext.m_spConfigurator->AddBinding(
+    bool bSuccess = true;
+
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkUV,
         pkTerrainNode->GetInputResourceByVariableName("UV"));
 
-    kContext.m_spConfigurator->AddBinding(
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkDiffuseArray,
         pkTerrainNode->GetInputResourceByVariableName("DiffuseArray"));
 
-    kContext.m_spConfigurator->AddBinding(
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkAlphaArray,
         pkTerrainNode->GetInputResourceByVariableName("AlphaArray"));
 
-    kContext.m_spConfigurator->AddBinding(
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkTerrainInfo,
         pkTerrainNode->GetInputResourceByVariableName("TerrainInfo"));
 
-    kContext.m_spConfigurator->AddBinding(
+    bSuccess &= kContext.m_spConfigurator->AddBinding(
         pkLayerData,
         pkTerrainNode->GetInputResourceByVariableName("LayerData"));
+
+    if (!bSuccess)
+        return false;
 
     NiMaterialResource* pkTerrainColor =
         pkTerrainNode->GetOutputResourceByVariableName("ColorOut");
@@ -306,7 +297,7 @@ bool NiExtendedMaterial::HandlePreLightTextureApplication(
         return false;
 
     pkDiffuseTexAccum = pkTerrainColor;
-    pkOpacityAccum = NULL;
+    uiTexturesApplied += 2;
 
     return true;
 }

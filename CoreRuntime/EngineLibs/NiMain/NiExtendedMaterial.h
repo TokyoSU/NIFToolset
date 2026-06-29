@@ -65,10 +65,6 @@ protected:
         const NiDynamicEffectState* pkEffects,
         NiMaterialDescriptor& kMaterialDesc) override;
 
-    virtual bool GeneratePixelShadeTree(
-        Context& kContext,
-        NiGPUProgramDescriptor* pkDesc) override;
-
     virtual bool HandlePreLightTextureApplication(
         Context& kContext,
         NiStandardPixelProgramDescriptor* pkPixelDesc,
@@ -88,8 +84,12 @@ protected:
         NiMaterialResource*& pkAmbientLightAccum,
         NiMaterialResource*& pkDiffuseLightAccum,
         NiMaterialResource*& pkSpecularLightAccum,
-        NiMaterialResource*& pkTexDiffuseAccum,
-        NiMaterialResource*& pkTexSpecularAccum) override;
+        NiMaterialResource*& pkDiffuseTexAccum,
+        NiMaterialResource*& pkSpecularTexAccum,
+        unsigned int& uiTexturesApplied,
+        NiMaterialResource** apkUVSets,
+        unsigned int uiNumStandardUVs,
+        unsigned int uiNumTexEffectUVs) override;
 
 private:
     bool m_bTerrainEnabled;
