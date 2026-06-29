@@ -8,6 +8,49 @@
 #include <NiCodeBlock.h>
 #include <NiStandardMaterialNodeLibrary.h>
 
+static const char* TERRAIN_SPLAT_TEXTURE_ARRAY_HLSL = R"(
+    int layerCount = min((int)TerrainInfo.x, 32);
+
+    if (layerCount <= 0)
+    {
+        ColorOut = float3(1.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+        float4 baseData = LayerData[0];
+
+        float3 color = DiffuseArray.Sample(
+            DiffuseArraySampler,
+            float3(UV * baseData.xy, 0.0f)).rgb;
+
+        [loop]
+        for (int i = 1; i < 32; ++i)
+        {
+            if (i >= layerCount)
+                break;
+
+            float4 data = LayerData[i];
+
+            float alpha = AlphaArray.Sample(
+                AlphaArraySampler,
+                float3(UV, (float)i)).r;
+
+            if (data.w > 0.5f)
+                alpha = 1.0f - alpha;
+
+            float coverage = saturate(alpha * data.z);
+
+            float3 layerColor = DiffuseArray.Sample(
+                DiffuseArraySampler,
+                float3(UV * data.xy, (float)i)).rgb;
+
+            color = lerp(color, layerColor, coverage);
+        }
+
+        ColorOut = color;
+    }
+)";
+
 static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
 {
     NiMaterialFragmentNode* pkFrag = NiNew NiMaterialFragmentNode();
@@ -96,49 +139,10 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
 
     {
         NiCodeBlock* pkBlock = NiNew NiCodeBlock();
-
         pkBlock->SetLanguage("hlsl/Cg");
         pkBlock->SetPlatform("D3D11/D3D10");
         pkBlock->SetTarget("ps_4_0/ps_5_0");
-
-        pkBlock->SetText(
-        "\n"
-        "    int layerCount = min((int)TerrainInfo.x, 32);\n"
-        "\n"
-        "    float3 color = float3(0.0f, 0.0f, 0.0f);\n"
-        "\n"
-        "    [loop]\n"
-        "    for (int i = 0; i < 32; ++i)\n"
-        "    {\n"
-        "        if (i >= layerCount)\n"
-        "            break;\n"
-        "\n"
-        "        float4 data = LayerData[i];\n"
-        "\n"
-        "        float2 layerUV = UV * data.xy;\n"
-        "\n"
-        "        float alpha = AlphaArray.Sample(\n"
-        "            AlphaArraySampler,\n"
-        "            float3(UV, (float)i)).r;\n"
-        "\n"
-        "        if (data.w > 0.5f)\n"
-        "            alpha = 1.0f - alpha;\n"
-        "\n"
-        "        float coverage = saturate(alpha * data.z);\n"
-        "\n"
-        "        if (coverage > 0.001f)\n"
-        "        {\n"
-        "            float3 layerColor = DiffuseArray.Sample(\n"
-        "                DiffuseArraySampler,\n"
-        "                float3(layerUV, (float)i)).rgb;\n"
-        "\n"
-        "            color = lerp(color, layerColor, coverage);\n"
-        "        }\n"
-        "    }\n"
-        "\n"
-        "    ColorOut = color;\n"
-        "    ");
-
+        pkBlock->SetText(TERRAIN_SPLAT_TEXTURE_ARRAY_HLSL);
         pkFrag->AddCodeBlock(pkBlock);
     }
 
