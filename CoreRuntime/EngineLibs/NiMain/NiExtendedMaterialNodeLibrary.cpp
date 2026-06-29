@@ -41,7 +41,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
 		NiMaterialResource* pkRes = NiNew NiMaterialResource();
 		pkRes->SetType("SamplerState");
 		pkRes->SetSemantic("Sampler");
-		pkRes->SetVariable("DiffuseSampler");
+		pkRes->SetVariable("DiffuseArraySampler");
 		pkFrag->AddInputResource(pkRes);
 	}
 
@@ -59,7 +59,7 @@ static void AddTerrainSplatTextureArrayNode(NiMaterialNodeLibrary* pkLib)
 		NiMaterialResource* pkRes = NiNew NiMaterialResource();
 		pkRes->SetType("SamplerState");
 		pkRes->SetSemantic("Sampler");
-		pkRes->SetVariable("AlphaSampler");
+		pkRes->SetVariable("AlphaArraySampler");
 		pkFrag->AddInputResource(pkRes);
 	}
 
