@@ -124,38 +124,12 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera,
     float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) *
         pkCamera->GetLODAdjust());
 
-    // Gamebryo's normal assumption is:
-    //   range[0] -> child 0 -> highest/detail/near LOD
-    //   range[N] -> child N -> lowest/detail/far LOD
-    //
-    // Some older assets store the range table in the opposite order:
-    //   range[0] is the farthest interval and range[N] is the nearest.
-    // If we return uiIndex directly for those files, the model shows the
-    // detailed child when far away and the lowest child when near.
-    int iAscendingPairs = 0;
-    int iDescendingPairs = 0;
-    for (unsigned int uiOrder = 1; uiOrder < m_uiNumRanges; ++uiOrder)
-    {
-        const float fPrevNear = m_pkRanges[uiOrder - 1].m_fWorldNear;
-        const float fCurrNear = m_pkRanges[uiOrder].m_fWorldNear;
-
-        if (fCurrNear > fPrevNear)
-            ++iAscendingPairs;
-        else if (fCurrNear < fPrevNear)
-            ++iDescendingPairs;
-    }
-
-    const bool bFarToNearRangeOrder = iDescendingPairs > iAscendingPairs;
-
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
         if ((fDist >= m_pkRanges[uiIndex].m_fWorldNear) &&
             (fDist < m_pkRanges[uiIndex].m_fWorldFar))
         {
-            if (bFarToNearRangeOrder)
-                return (int)((m_uiNumRanges - 1) - uiIndex);
-            else
-                return (int)uiIndex;
+            return uiIndex;
         }
     }
 
