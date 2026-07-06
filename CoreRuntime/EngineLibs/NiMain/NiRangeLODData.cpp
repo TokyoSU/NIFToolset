@@ -108,18 +108,25 @@ void NiRangeLODData::SetNumRanges(unsigned int uiNumRanges)
 //--------------------------------------------------------------------------------------------------
 int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) const
 {
-    EE_UNUSED_ARG(pkLOD);
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
-    NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
-    float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
+    NiPoint3 kWorldCenter = m_kWorldCenter;
 
-    for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
+    // Safer fallback: if the LOD data center is zero, use the node/world bound center.
+    if (kWorldCenter == NiPoint3::ZERO && pkLOD)
+        kWorldCenter = pkLOD->GetWorldBound().GetCenter();
+
+    NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
+
+    // Real distance, not projected distance.
+    float fDist = kDiff.Length() * pkCamera->GetLODAdjust();
+
+    for (unsigned int iLODLevel = 0; iLODLevel < m_uiNumRanges; iLODLevel++)
     {
-        auto& kRange = m_pkRanges[uiIndex];
+        auto& kRange = m_pkRanges[iLODLevel];
         if ((fDist >= kRange.m_fWorldNear) && (fDist <= kRange.m_fWorldFar))
-            return GetLODIndex(uiIndex);
+            return iLODLevel;
     }
 
     return -1;
