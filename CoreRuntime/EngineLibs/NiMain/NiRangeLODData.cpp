@@ -118,7 +118,7 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
         auto& kRange = m_pkRanges[uiIndex];
-        if ((fDist >= kRange.m_fWorldNear) && (fDist < kRange.m_fWorldFar))
+        if ((fDist >= kRange.m_fWorldNear) && (fDist <= kRange.m_fWorldFar))
             return GetLODIndex(uiIndex);
     }
 
