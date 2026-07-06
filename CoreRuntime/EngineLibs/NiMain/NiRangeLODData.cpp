@@ -154,15 +154,8 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
-    NiPoint3 kWorldCenter = m_kWorldCenter;
-
-    if (m_kCenter == NiPoint3::ZERO)
-        GetAggregateChildBoundCenter(pkLOD, kWorldCenter);
-
-    NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
-
-    // Real distance, not projected distance.
-    float fDist = kDiff.Length() * pkCamera->GetLODAdjust();
+    NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
+    float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
 
     for (unsigned int iLODLevel = 0; iLODLevel < m_uiNumRanges; iLODLevel++)
     {
