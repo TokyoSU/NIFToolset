@@ -33,7 +33,11 @@ NiRangeLODData::NiRangeLODData()
 //--------------------------------------------------------------------------------------------------
 NiRangeLODData::~NiRangeLODData()
 {
-    NiFree(m_pkRanges);
+	if (m_pkRanges)
+	{
+		NiFree(m_pkRanges);
+		m_pkRanges = nullptr;
+	}
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -42,18 +46,13 @@ void NiRangeLODData::UpdateWorldData(NiLODNode* pkLOD)
     EE_ASSERT(pkLOD);
 
     const NiTransform& kWorld = pkLOD->GetWorldTransform();
-
-    // Update the World Center
-    m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) +
-        kWorld.m_Translate;
+    m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) + kWorld.m_Translate; // Update the World Center
 
     for (unsigned int i = 0; i < m_uiNumRanges; i++)
     {
-        m_pkRanges[i].m_fWorldNear = kWorld.m_fScale *
-            m_pkRanges[i].m_fNear;
-
-        m_pkRanges[i].m_fWorldFar = kWorld.m_fScale *
-            m_pkRanges[i].m_fFar;
+		auto& kRange = m_pkRanges[i];
+        kRange.m_fWorldNear = kWorld.m_fScale * kRange.m_fNear;
+        kRange.m_fWorldFar = kWorld.m_fScale * kRange.m_fFar;
     }
 }
 
@@ -64,13 +63,12 @@ NiLODData* NiRangeLODData::Duplicate()
     EE_ASSERT(pkData);
 
     pkData->SetCenter(m_kCenter);
-
     pkData->SetNumRanges(m_uiNumRanges);
 
     unsigned int uiDestSize = sizeof(m_pkRanges[0]) * m_uiNumRanges;
     NiMemcpy(pkData->m_pkRanges, m_pkRanges, uiDestSize);
 
-    return (NiLODData*)pkData;
+    return NiStaticCast(NiLODData, pkData);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -91,15 +89,12 @@ void NiRangeLODData::SetNumRanges(unsigned int uiNumRanges)
 
     // Allocate the new ranges
     Range* pkNewRanges = NiAlloc(Range, uiNumRanges);
-
-
     EE_ASSERT(pkNewRanges);
 
     // Copy over the old range Values
     if (m_pkRanges)
     {
-        unsigned int uiDestSize = sizeof(pkNewRanges[0]) * NiMin(
-            (int)m_uiNumRanges, (int)uiNumRanges);
+        unsigned int uiDestSize = sizeof(pkNewRanges[0]) * NiMin((int)m_uiNumRanges, (int)uiNumRanges);
         NiMemcpy(pkNewRanges, m_pkRanges, uiDestSize);
     }
 
@@ -111,26 +106,20 @@ void NiRangeLODData::SetNumRanges(unsigned int uiNumRanges)
 }
 
 //--------------------------------------------------------------------------------------------------
-int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera,
-    NiLODNode* pkLOD) const
+int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) const
 {
     EE_UNUSED_ARG(pkLOD);
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
-
     NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
-
-    float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) *
-        pkCamera->GetLODAdjust());
+    float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
 
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
-        if ((fDist >= m_pkRanges[uiIndex].m_fWorldNear) &&
-            (fDist < m_pkRanges[uiIndex].m_fWorldFar))
-        {
-            return uiIndex;
-        }
+        auto& kRange = m_pkRanges[uiIndex];
+        if ((fDist >= kRange.m_fWorldNear) && (fDist < kRange.m_fWorldFar))
+            return GetLODIndex(uiIndex);
     }
 
     return -1;
@@ -139,7 +128,14 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera,
 //--------------------------------------------------------------------------------------------------
 int NiRangeLODData::GetLODIndex(int iLODLevel) const
 {
-    return NiClamp(iLODLevel, -1, m_uiNumRanges - 1);
+    if (iLODLevel < 0 || m_uiNumRanges == 0)
+        return -1;
+
+    const int iMax = static_cast<int>(m_uiNumRanges) - 1;
+
+    // Grand Fantasia RangeLOD levels are stored far -> near,
+    // while LOD children are quality ordered high -> low.
+    return NiClamp(iMax - iLODLevel, -1, iMax);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -223,18 +219,19 @@ void NiRangeLODData::SaveBinary(NiStream& kStream)
 //--------------------------------------------------------------------------------------------------
 bool NiRangeLODData::IsEqual(NiObject* pkObject)
 {
-    NiRangeLODData* pkLOD = (NiRangeLODData*) pkObject;
+    NiRangeLODData* pkLOD = NiStaticCast(NiRangeLODData, pkObject);
+    if (!pkLOD)
+        return false;
 
     if (m_uiNumRanges != pkLOD->m_uiNumRanges)
         return false;
 
     for (unsigned int i = 0; i < m_uiNumRanges; i++)
     {
-        if ((pkLOD->m_pkRanges[i].m_fNear != m_pkRanges[i].m_fNear) ||
-            (pkLOD->m_pkRanges[i].m_fFar != m_pkRanges[i].m_fFar))
-        {
+		auto& kRange1 = m_pkRanges[i];
+		auto& kRange2 = pkLOD->m_pkRanges[i];
+        if ((kRange2.m_fNear != kRange1.m_fNear) || (kRange2.m_fFar != kRange1.m_fFar))
             return false;
-        }
     }
 
     return true;
@@ -244,17 +241,13 @@ bool NiRangeLODData::IsEqual(NiObject* pkObject)
 void NiRangeLODData::GetViewerStrings(NiViewerStringsArray* pkStrings)
 {
     pkStrings->Add(NiGetViewerString(NiRangeLODData::ms_RTTI.GetName()));
-
     pkStrings->Add(m_kCenter.GetViewerString("m_kCenter"));
-
     pkStrings->Add(m_kWorldCenter.GetViewerString("m_kWorldCenter"));
 
     for (unsigned int i = 0; i < m_uiNumRanges; i++)
     {
         char* pcString = NiAlloc(char, 128);
-
-        NiSprintf(pcString, 128, "range[%d] = %g   %g", i,
-            m_pkRanges[i].m_fNear, m_pkRanges[i].m_fFar);
+        NiSprintf(pcString, 128, "range[%d] = %g   %g", i, m_pkRanges[i].m_fNear, m_pkRanges[i].m_fFar);
         pkStrings->Add(pcString);
     }
 }

@@ -66,8 +66,7 @@ void NiLODNode::OnVisible(NiCullingProcess& kCuller)
 
             // Scan backwards to make sure we aren't selecting past the end
             // of our children.
-            while ((m_iIndex >= 0) && ((m_iIndex >= (int)m_kChildren.GetSize())
-                || (m_kChildren.GetAt(m_iIndex) == NULL)))
+            while ((m_iIndex >= 0) && ((m_iIndex >= (int)m_kChildren.GetSize()) || (m_kChildren.GetAt(m_iIndex) == NULL)))
             {
                 m_iIndex--;
             }
@@ -148,16 +147,12 @@ bool NiLODNode::IsEqual(NiObject* pkObject)
     if (!NiSwitchNode::IsEqual(pkObject))
         return false;
 
-    NiLODNode* pkLOD = (NiLODNode*) pkObject;
-
+    NiLODNode* pkLOD = NiStaticCast(NiLODNode, pkObject);
     NiLODData* pkObjectData = pkLOD->GetLODData();
 
     // Check that both have LOD data
-    if ((m_spLODData && !pkObjectData) ||
-        (!m_spLODData && pkObjectData))
-    {
+    if ((m_spLODData && !pkObjectData) || (!m_spLODData && pkObjectData))
         return false;
-    }
 
     // Both have LOD data of the correct type and they are
     // not equal
@@ -175,7 +170,6 @@ bool NiLODNode::IsEqual(NiObject* pkObject)
 void NiLODNode::GetViewerStrings(NiViewerStringsArray* pkStrings)
 {
     NiSwitchNode::GetViewerStrings(pkStrings);
-
     pkStrings->Add(NiGetViewerString(NiLODNode::ms_RTTI.GetName()));
 
     if (m_spLODData)
