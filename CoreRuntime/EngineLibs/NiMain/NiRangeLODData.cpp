@@ -22,40 +22,6 @@
 
 NiImplementRTTI(NiRangeLODData, NiLODData, NiTypeMask::NiRangeLODData);
 
-namespace
-{
-    bool GetAggregateChildBoundCenter(NiLODNode* pkLOD, NiPoint3& kCenter)
-    {
-        EE_ASSERT(pkLOD);
-
-        NiBound kMergedBound;
-        bool bHasBound = false;
-
-        for (unsigned int i = 0; i < pkLOD->GetArrayCount(); i++)
-        {
-            NiAVObject* pkChild = pkLOD->GetAt(i);
-            if (!pkChild || !pkChild->IsVisualObject())
-                continue;
-
-            if (!bHasBound)
-            {
-                kMergedBound = pkChild->GetWorldBound();
-                bHasBound = true;
-            }
-            else
-            {
-                kMergedBound.Merge(&pkChild->GetWorldBound());
-            }
-        }
-
-        if (!bHasBound)
-            return false;
-
-        kCenter = kMergedBound.GetCenter();
-        return true;
-    }
-}
-
 //--------------------------------------------------------------------------------------------------
 NiRangeLODData::NiRangeLODData()
 {
@@ -80,16 +46,7 @@ void NiRangeLODData::UpdateWorldData(NiLODNode* pkLOD)
     EE_ASSERT(pkLOD);
 
     const NiTransform& kWorld = pkLOD->GetWorldTransform();
-
-    if (m_kCenter == NiPoint3::ZERO && GetAggregateChildBoundCenter(pkLOD,
-        m_kWorldCenter))
-    {
-    }
-    else
-    {
-        m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) +
-            kWorld.m_Translate;
-    }
+    m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) + kWorld.m_Translate; // Update the World Center
 
     for (unsigned int i = 0; i < m_uiNumRanges; i++)
     {

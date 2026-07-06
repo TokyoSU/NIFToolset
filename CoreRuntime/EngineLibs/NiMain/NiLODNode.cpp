@@ -21,38 +21,6 @@
 
 NiImplementRTTI(NiLODNode, NiSwitchNode, NiTypeMask::NiLODNode);
 
-namespace
-{
-    bool GetNamedLODChildIndex(const NiLODNode* pkLOD, int iLODLevel,
-        int& iChildIndex)
-    {
-        EE_ASSERT(pkLOD);
-
-        if (iLODLevel < 0)
-            return false;
-
-        char acExpectedName[32];
-        NiSprintf(acExpectedName, sizeof(acExpectedName), "lodobj%d",
-            iLODLevel);
-
-        for (unsigned int i = 0; i < pkLOD->GetArrayCount(); i++)
-        {
-            NiAVObject* pkChild = pkLOD->GetAt(i);
-            if (!pkChild)
-                continue;
-
-            const char* pcChildName = pkChild->GetName();
-            if (pcChildName && NiStricmp(pcChildName, acExpectedName) == 0)
-            {
-                iChildIndex = (int)i;
-                return true;
-            }
-        }
-
-        return false;
-    }
-}
-
 int  NiLODNode::ms_iGlobalLOD = -1;
 
 //--------------------------------------------------------------------------------------------------
@@ -85,25 +53,16 @@ void NiLODNode::OnVisible(NiCullingProcess& kCuller)
     {
         if (m_spLODData)
         {
-            int iLODLevel;
-
             // Check to see if there is a global LOD setting. If this is used
             // then override what the LOD Data has indicated.
             if (ms_iGlobalLOD >= 0)
             {
-                iLODLevel = m_spLODData->GetLODIndex(ms_iGlobalLOD);
+                m_iIndex = m_spLODData->GetLODIndex(ms_iGlobalLOD);
             }
             else
             {
-                iLODLevel = m_spLODData->GetLODLevel(kCuller.GetLODCamera(),
-                    this);
+                m_iIndex = m_spLODData->GetLODLevel(kCuller.GetLODCamera(), this);
             }
-
-            m_iIndex = iLODLevel;
-
-            int iNamedChildIndex;
-            if (GetNamedLODChildIndex(this, iLODLevel, iNamedChildIndex))
-                m_iIndex = iNamedChildIndex;
 
             // Scan backwards to make sure we aren't selecting past the end
             // of our children.
