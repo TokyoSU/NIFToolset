@@ -22,6 +22,40 @@
 
 NiImplementRTTI(NiRangeLODData, NiLODData, NiTypeMask::NiRangeLODData);
 
+namespace
+{
+    bool GetAggregateChildBoundCenter(NiLODNode* pkLOD, NiPoint3& kCenter)
+    {
+        EE_ASSERT(pkLOD);
+
+        NiBound kMergedBound;
+        bool bHasBound = false;
+
+        for (unsigned int i = 0; i < pkLOD->GetArrayCount(); i++)
+        {
+            NiAVObject* pkChild = pkLOD->GetAt(i);
+            if (!pkChild || !pkChild->IsVisualObject())
+                continue;
+
+            if (!bHasBound)
+            {
+                kMergedBound = pkChild->GetWorldBound();
+                bHasBound = true;
+            }
+            else
+            {
+                kMergedBound.Merge(&pkChild->GetWorldBound());
+            }
+        }
+
+        if (!bHasBound)
+            return false;
+
+        kCenter = kMergedBound.GetCenter();
+        return true;
+    }
+}
+
 //--------------------------------------------------------------------------------------------------
 NiRangeLODData::NiRangeLODData()
 {
@@ -46,7 +80,16 @@ void NiRangeLODData::UpdateWorldData(NiLODNode* pkLOD)
     EE_ASSERT(pkLOD);
 
     const NiTransform& kWorld = pkLOD->GetWorldTransform();
-    m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) + kWorld.m_Translate; // Update the World Center
+
+    if (m_kCenter == NiPoint3::ZERO && GetAggregateChildBoundCenter(pkLOD,
+        m_kWorldCenter))
+    {
+    }
+    else
+    {
+        m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) +
+            kWorld.m_Translate;
+    }
 
     for (unsigned int i = 0; i < m_uiNumRanges; i++)
     {
@@ -113,11 +156,8 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
 
     NiPoint3 kWorldCenter = m_kWorldCenter;
 
-    // If the authored center was left at the default origin, fall back to the
-    // world bound center instead of the node pivot. Using the pivot can make
-    // the measured distance vary as the camera orbits an off-center object.
-    if (m_kCenter == NiPoint3::ZERO && pkLOD)
-        kWorldCenter = pkLOD->GetWorldBound().GetCenter();
+    if (m_kCenter == NiPoint3::ZERO)
+        GetAggregateChildBoundCenter(pkLOD, kWorldCenter);
 
     NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
 
