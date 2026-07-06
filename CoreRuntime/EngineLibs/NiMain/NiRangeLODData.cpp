@@ -113,8 +113,10 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
 
     NiPoint3 kWorldCenter = m_kWorldCenter;
 
-    // Safer fallback: if the LOD data center is zero, use the node/world bound center.
-    if (kWorldCenter == NiPoint3::ZERO && pkLOD)
+    // If the authored center was left at the default origin, fall back to the
+    // world bound center instead of the node pivot. Using the pivot can make
+    // the measured distance vary as the camera orbits an off-center object.
+    if (m_kCenter == NiPoint3::ZERO && pkLOD)
         kWorldCenter = pkLOD->GetWorldBound().GetCenter();
 
     NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
