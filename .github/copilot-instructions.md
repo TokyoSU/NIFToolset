@@ -7,3 +7,4 @@
 - Prioritize NIFToolset-native API compatibility in the C bridge to improve C# compatibility.
 - Use Build\x86-debug (local) for compiling the native bridge when a DLL output is desired.
 - For this codebase, avoid wrapping NiApplication directly; expose lower-level rendering pieces so the application flow can be reproduced later in C#.
+- For this codebase, LOD0 should be treated as the highest-quality LOD when diagnosing NiRangeLODData behavior.

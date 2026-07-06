@@ -44,6 +44,7 @@ protected:
 
     // update during scene tree traversal
     virtual void UpdateWorldData();
+    virtual void PostLinkObject(NiStream& kStream);
 
     // culling (separate from drawing)
     virtual void OnVisible(NiCullingProcess& kCuller);

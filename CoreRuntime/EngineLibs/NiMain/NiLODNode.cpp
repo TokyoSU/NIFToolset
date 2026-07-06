@@ -21,6 +21,101 @@
 
 NiImplementRTTI(NiLODNode, NiSwitchNode, NiTypeMask::NiLODNode);
 
+namespace
+{
+    bool GetOrderedLODChildren(const NiLODNode* pkLOD, unsigned int uiCount,
+        NiAVObject** ppkOrderedChildren)
+    {
+        EE_ASSERT(pkLOD);
+        EE_ASSERT(ppkOrderedChildren);
+
+        if (pkLOD->GetArrayCount() != uiCount)
+            return false;
+
+        for (unsigned int i = 0; i < uiCount; i++)
+        {
+            char acExpectedName[32];
+            NiSprintf(acExpectedName, sizeof(acExpectedName), "lodobj%d", i);
+
+            NiAVObject* pkMatchedChild = NULL;
+            for (unsigned int j = 0; j < uiCount; j++)
+            {
+                NiAVObject* pkChild = pkLOD->GetAt(j);
+                if (!pkChild)
+                    return false;
+
+                const char* pcChildName = pkChild->GetName();
+                if (pcChildName && NiStricmp(pcChildName, acExpectedName) == 0)
+                {
+                    if (pkMatchedChild)
+                        return false;
+
+                    pkMatchedChild = pkChild;
+                }
+            }
+
+            if (!pkMatchedChild)
+                return false;
+
+            ppkOrderedChildren[i] = pkMatchedChild;
+        }
+
+        return true;
+    }
+
+    bool IsStoredFarToNear(const NiRangeLODData* pkRangeData)
+    {
+        EE_ASSERT(pkRangeData);
+
+        const unsigned int uiRangeCount = pkRangeData->GetNumRanges();
+        if (uiRangeCount < 2)
+            return false;
+
+        float fPrevNear;
+        float fPrevFar;
+        pkRangeData->GetRange(0, fPrevNear, fPrevFar);
+
+        bool bSawDecrease = false;
+        for (unsigned int i = 1; i < uiRangeCount; i++)
+        {
+            float fNear;
+            float fFar;
+            pkRangeData->GetRange(i, fNear, fFar);
+
+            if (fNear > fPrevNear)
+                return false;
+
+            if (fNear < fPrevNear)
+                bSawDecrease = true;
+
+            fPrevNear = fNear;
+        }
+
+        return bSawDecrease;
+    }
+
+    void ReverseRangeOrder(NiRangeLODData* pkRangeData)
+    {
+        EE_ASSERT(pkRangeData);
+
+        const unsigned int uiRangeCount = pkRangeData->GetNumRanges();
+        for (unsigned int i = 0; i < uiRangeCount / 2; i++)
+        {
+            float fNearA;
+            float fFarA;
+            float fNearB;
+            float fFarB;
+            const unsigned int uiOther = uiRangeCount - 1 - i;
+
+            pkRangeData->GetRange(i, fNearA, fFarA);
+            pkRangeData->GetRange(uiOther, fNearB, fFarB);
+
+            pkRangeData->SetRange(i, fNearB, fFarB);
+            pkRangeData->SetRange(uiOther, fNearA, fFarA);
+        }
+    }
+}
+
 int  NiLODNode::ms_iGlobalLOD = -1;
 
 //--------------------------------------------------------------------------------------------------
@@ -44,6 +139,34 @@ void NiLODNode::UpdateWorldData()
     {
         m_spLODData->UpdateWorldData(this);
     }
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiLODNode::PostLinkObject(NiStream& kStream)
+{
+    NiSwitchNode::PostLinkObject(kStream);
+
+    NiRangeLODData* pkRangeData = NiDynamicCast(NiRangeLODData, m_spLODData);
+    if (!pkRangeData)
+        return;
+
+    const unsigned int uiRangeCount = pkRangeData->GetNumRanges();
+    if (uiRangeCount == 0 || uiRangeCount != GetArrayCount())
+        return;
+
+    NiAVObject** ppkOrderedChildren = NiAlloc(NiAVObject*, uiRangeCount);
+    EE_ASSERT(ppkOrderedChildren);
+
+    if (GetOrderedLODChildren(this, uiRangeCount, ppkOrderedChildren))
+    {
+        for (unsigned int i = 0; i < uiRangeCount; i++)
+            m_kChildren.SetAt(i, ppkOrderedChildren[i]);
+    }
+
+    NiFree(ppkOrderedChildren);
+
+    if (IsStoredFarToNear(pkRangeData))
+        ReverseRangeOrder(pkRangeData);
 }
 
 //--------------------------------------------------------------------------------------------------
