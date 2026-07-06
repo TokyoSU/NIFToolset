@@ -137,12 +137,7 @@ int NiRangeLODData::GetLODIndex(int iLODLevel) const
 {
     if (iLODLevel < 0 || m_uiNumRanges == 0)
         return -1;
-
-    const int iMax = static_cast<int>(m_uiNumRanges) - 1;
-
-    // Grand Fantasia RangeLOD levels are stored far -> near,
-    // while LOD children are quality ordered high -> low.
-    return NiClamp(iMax - iLODLevel, -1, iMax);
+    return NiClamp(iLODLevel, -1, m_uiNumRanges - 1);
 }
 
 //--------------------------------------------------------------------------------------------------
