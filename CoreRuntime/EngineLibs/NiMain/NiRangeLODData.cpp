@@ -22,6 +22,40 @@
 
 NiImplementRTTI(NiRangeLODData, NiLODData, NiTypeMask::NiRangeLODData);
 
+namespace
+{
+    bool GetAggregateChildBoundCenter(NiLODNode* pkLOD, NiPoint3& kCenter)
+    {
+        EE_ASSERT(pkLOD);
+
+        NiBound kMergedBound;
+        bool bHasBound = false;
+
+        for (unsigned int i = 0; i < pkLOD->GetArrayCount(); i++)
+        {
+            NiAVObject* pkChild = pkLOD->GetAt(i);
+            if (!pkChild || !pkChild->IsVisualObject())
+                continue;
+
+            if (!bHasBound)
+            {
+                kMergedBound = pkChild->GetWorldBound();
+                bHasBound = true;
+            }
+            else
+            {
+                kMergedBound.Merge(&pkChild->GetWorldBound());
+            }
+        }
+
+        if (!bHasBound)
+            return false;
+
+        kCenter = kMergedBound.GetCenter();
+        return true;
+    }
+}
+
 //--------------------------------------------------------------------------------------------------
 NiRangeLODData::NiRangeLODData()
 {
@@ -46,7 +80,16 @@ void NiRangeLODData::UpdateWorldData(NiLODNode* pkLOD)
     EE_ASSERT(pkLOD);
 
     const NiTransform& kWorld = pkLOD->GetWorldTransform();
-    m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) + kWorld.m_Translate; // Update the World Center
+
+    if (m_kCenter == NiPoint3::ZERO &&
+        GetAggregateChildBoundCenter(pkLOD, m_kWorldCenter))
+    {
+    }
+    else
+    {
+        m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) +
+            kWorld.m_Translate;
+    }
 
     for (unsigned int i = 0; i < m_uiNumRanges; i++)
     {
@@ -111,8 +154,12 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
-    NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
-    float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
+    NiPoint3 kWorldCenter = m_kWorldCenter;
+    if (m_kCenter == NiPoint3::ZERO)
+        GetAggregateChildBoundCenter(pkLOD, kWorldCenter);
+
+    NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
+    float fDist = kDiff.Length() * pkCamera->GetLODAdjust();
 
     for (unsigned int iLODLevel = 0; iLODLevel < m_uiNumRanges; iLODLevel++)
     {
