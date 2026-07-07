@@ -54,6 +54,37 @@ namespace
         kBound = kMergedBound;
         return true;
     }
+
+    float GetAggregateChildPlanarSupport(const NiLODNode* pkLOD,
+        const NiPoint3& kCenter, const NiPoint3& kDirection)
+    {
+        EE_ASSERT(pkLOD);
+
+        float fSupport = 0.0f;
+        bool bHasSupport = false;
+
+        for (unsigned int i = 0; i < pkLOD->GetArrayCount(); i++)
+        {
+            NiAVObject* pkChild = pkLOD->GetAt(i);
+            if (!pkChild || !pkChild->IsVisualObject())
+                continue;
+
+            const NiBound& kChildBound = pkChild->GetWorldBound();
+            NiPoint3 kOffset = kChildBound.GetCenter() - kCenter;
+            kOffset.y = 0.0f;
+
+            const float fChildSupport = kOffset.Dot(kDirection) +
+                kChildBound.GetRadius();
+
+            if (!bHasSupport || fChildSupport > fSupport)
+            {
+                fSupport = fChildSupport;
+                bHasSupport = true;
+            }
+        }
+
+        return bHasSupport ? fSupport : 0.0f;
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -157,14 +188,14 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkLOD);
 
     NiPoint3 kWorldCenter = m_kWorldCenter;
-    float fBoundRadius = 0.0f;
+    bool bUsePlanarSupport = false;
     if (m_kCenter == NiPoint3::ZERO)
     {
         NiBound kAggregateBound;
         if (GetAggregateChildBound(pkLOD, kAggregateBound))
         {
             kWorldCenter = kAggregateBound.GetCenter();
-            fBoundRadius = kAggregateBound.GetRadius();
+            bUsePlanarSupport = true;
         }
     }
 
@@ -172,8 +203,15 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     kDiff.y = 0.0f;
     float fDist = kDiff.Length();
 
-    if (fBoundRadius > 0.0f)
-        fDist = NiMax(0.0f, fDist - fBoundRadius);
+    if (bUsePlanarSupport && fDist > 0.000001f)
+    {
+        NiPoint3 kDirection = kDiff;
+        kDirection *= 1.0f / fDist;
+
+        const float fSupport = GetAggregateChildPlanarSupport(pkLOD,
+            kWorldCenter, kDirection);
+        fDist = NiMax(0.0f, fDist - fSupport);
+    }
 
     fDist *= pkCamera->GetLODAdjust();
 
