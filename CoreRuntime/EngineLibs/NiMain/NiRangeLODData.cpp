@@ -159,41 +159,65 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     if (!pkCamera || !pkLOD || m_uiNumRanges == 0 || !m_pkRanges)
         return -1;
 
-    NiPoint3 kWorldCenter = m_kWorldCenter;
+    const NiBound& kWorldBound = pkLOD->GetWorldBound();
 
-    if (m_kCenter == NiPoint3::ZERO)
-    {
-        NiBound kAggregateBound;
-        if (GetAggregateChildBound(pkLOD, kAggregateBound))
-            kWorldCenter = kAggregateBound.GetCenter();
-    }
+    NiPoint3 kCenter = kWorldBound.GetCenter();
+    float fRadius = kWorldBound.GetRadius();
+
+    // Fallback if bound is invalid.
+    if (fRadius <= 0.0f)
+        kCenter = m_kWorldCenter;
 
     const NiPoint3& kCameraPos = pkCamera->GetWorldLocation();
+    NiPoint3 kDiff = kCenter - kCameraPos;
 
-    const float fDX = kWorldCenter.x - kCameraPos.x;
-    const float fDY = kWorldCenter.y - kCameraPos.y;
+    // Z-up world: ignore vertical height.
+    kDiff.z = 0.0f;
 
-    // Z-up world: use horizontal X/Y distance.
-    // Do not use camera direction, and do not include height.
-    const float fLODAdjust = NiAbs(pkCamera->GetLODAdjust());
-    const float fDist = NiSqrt(fDX * fDX + fDY * fDY) * fLODAdjust;
+    // Distance to the LOD node center.
+    float fCenterDist = kDiff.Length();
+
+    // Important part:
+    // Use distance to the object's bounding sphere surface, not its center.
+    float fDist = fCenterDist - fRadius;
+    if (fDist < 0.0f)
+        fDist = 0.0f;
+    
+    fDist *= NiAbs(pkCamera->GetLODAdjust());
+
+#if defined(_DEBUG)
+    {
+        const NiFixedString& kName = pkLOD->GetName();
+        const char* pcName = kName.Exists() ? (const char*)kName : "unnamed";
+
+        char acBuffer[768];
+
+        NiSprintf(
+            acBuffer,
+            sizeof(acBuffer),
+            "LOD '%s': centerDist=%.3f radius=%.3f dist=%.3f "
+            "cam=(%.3f %.3f %.3f) center=(%.3f %.3f %.3f)\n",
+            pcName,
+            fCenterDist,
+            fRadius,
+            fDist,
+            kCameraPos.x,
+            kCameraPos.y,
+            kCameraPos.z,
+            kCenter.x,
+            kCenter.y,
+            kCenter.z);
+
+        NiOutputDebugString(acBuffer);
+    }
+#endif
 
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
         const Range& kRange = m_pkRanges[uiIndex];
 
-        const bool bLastRange = uiIndex + 1 == m_uiNumRanges;
-
-        if (bLastRange)
-        {
-            if (fDist >= kRange.m_fWorldNear && fDist <= kRange.m_fWorldFar)
-                return GetLODIndex(uiIndex);
-        }
-        else
-        {
-            if (fDist >= kRange.m_fWorldNear && fDist < kRange.m_fWorldFar)
-                return GetLODIndex(uiIndex);
-        }
+        if (fDist >= kRange.m_fWorldNear && fDist < kRange.m_fWorldFar)
+            return GetLODIndex(uiIndex);
     }
 
     return -1;
