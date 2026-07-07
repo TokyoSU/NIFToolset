@@ -159,7 +159,7 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
         GetAggregateChildBoundCenter(pkLOD, kWorldCenter);
 
     NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
-    kDiff.z = 0.0f;
+    kDiff.y = 0.0f;
     float fDist = NiAbs(kDiff.Length() * pkCamera->GetLODAdjust());
 
     for (unsigned int iLODLevel = 0; iLODLevel < m_uiNumRanges; iLODLevel++)
