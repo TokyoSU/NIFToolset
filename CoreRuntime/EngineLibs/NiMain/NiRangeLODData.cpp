@@ -54,37 +54,6 @@ namespace
         kBound = kMergedBound;
         return true;
     }
-
-    float GetAggregateChildPlanarSupport(const NiLODNode* pkLOD,
-        const NiPoint3& kCenter, const NiPoint3& kDirection)
-    {
-        EE_ASSERT(pkLOD);
-
-        float fSupport = 0.0f;
-        bool bHasSupport = false;
-
-        for (unsigned int i = 0; i < pkLOD->GetArrayCount(); i++)
-        {
-            NiAVObject* pkChild = pkLOD->GetAt(i);
-            if (!pkChild || !pkChild->IsVisualObject())
-                continue;
-
-            const NiBound& kChildBound = pkChild->GetWorldBound();
-            NiPoint3 kOffset = kChildBound.GetCenter() - kCenter;
-            kOffset.y = 0.0f;
-
-            const float fChildSupport = kOffset.Dot(kDirection) +
-                kChildBound.GetRadius();
-
-            if (!bHasSupport || fChildSupport > fSupport)
-            {
-                fSupport = fChildSupport;
-                bHasSupport = true;
-            }
-        }
-
-        return bHasSupport ? fSupport : 0.0f;
-    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -187,39 +156,40 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
+    if (m_uiNumRanges == 0)
+        return -1;
+
     NiPoint3 kWorldCenter = m_kWorldCenter;
-    bool bUsePlanarSupport = false;
+
     if (m_kCenter == NiPoint3::ZERO)
     {
         NiBound kAggregateBound;
         if (GetAggregateChildBound(pkLOD, kAggregateBound))
-        {
             kWorldCenter = kAggregateBound.GetCenter();
-            bUsePlanarSupport = true;
-        }
     }
 
     NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
-    kDiff.y = 0.0f;
-    float fDist = kDiff.Length();
 
-    if (bUsePlanarSupport && fDist > 0.000001f)
+    // True distance, independent of camera angle.
+    const float fLODAdjust = NiAbs(pkCamera->GetLODAdjust());
+    const float fDist = kDiff.Length() * fLODAdjust;
+
+    for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
-        NiPoint3 kDirection = kDiff;
-        kDirection *= 1.0f / fDist;
+        const Range& kRange = m_pkRanges[uiIndex];
 
-        const float fSupport = GetAggregateChildPlanarSupport(pkLOD,
-            kWorldCenter, kDirection);
-        fDist = NiMax(0.0f, fDist - fSupport);
-    }
+        const bool bLastRange = (uiIndex + 1 == m_uiNumRanges);
 
-    fDist *= pkCamera->GetLODAdjust();
-
-    for (unsigned int iLODLevel = 0; iLODLevel < m_uiNumRanges; iLODLevel++)
-    {
-        auto& kRange = m_pkRanges[iLODLevel];
-        if ((fDist >= kRange.m_fWorldNear) && (fDist <= kRange.m_fWorldFar))
-            return GetLODIndex(iLODLevel);
+        if (bLastRange)
+        {
+            if (fDist >= kRange.m_fWorldNear && fDist <= kRange.m_fWorldFar)
+                return GetLODIndex(uiIndex);
+        }
+        else
+        {
+            if (fDist >= kRange.m_fWorldNear && fDist < kRange.m_fWorldFar)
+                return GetLODIndex(uiIndex);
+        }
     }
 
     return -1;
