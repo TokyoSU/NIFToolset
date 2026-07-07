@@ -24,7 +24,7 @@ NiImplementRTTI(NiRangeLODData, NiLODData, NiTypeMask::NiRangeLODData);
 
 namespace
 {
-    bool GetAggregateChildBoundCenter(NiLODNode* pkLOD, NiPoint3& kCenter)
+    bool GetAggregateChildBound(NiLODNode* pkLOD, NiBound& kBound)
     {
         EE_ASSERT(pkLOD);
 
@@ -51,7 +51,7 @@ namespace
         if (!bHasBound)
             return false;
 
-        kCenter = kMergedBound.GetCenter();
+        kBound = kMergedBound;
         return true;
     }
 }
@@ -80,10 +80,12 @@ void NiRangeLODData::UpdateWorldData(NiLODNode* pkLOD)
     EE_ASSERT(pkLOD);
 
     const NiTransform& kWorld = pkLOD->GetWorldTransform();
+    NiBound kAggregateBound;
 
     if (m_kCenter == NiPoint3::ZERO &&
-        GetAggregateChildBoundCenter(pkLOD, m_kWorldCenter))
+        GetAggregateChildBound(pkLOD, kAggregateBound))
     {
+        m_kWorldCenter = kAggregateBound.GetCenter();
     }
     else
     {
@@ -155,12 +157,25 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkLOD);
 
     NiPoint3 kWorldCenter = m_kWorldCenter;
+    float fBoundRadius = 0.0f;
     if (m_kCenter == NiPoint3::ZERO)
-        GetAggregateChildBoundCenter(pkLOD, kWorldCenter);
+    {
+        NiBound kAggregateBound;
+        if (GetAggregateChildBound(pkLOD, kAggregateBound))
+        {
+            kWorldCenter = kAggregateBound.GetCenter();
+            fBoundRadius = kAggregateBound.GetRadius();
+        }
+    }
 
     NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
     kDiff.y = 0.0f;
-    float fDist = NiAbs(kDiff.Length() * pkCamera->GetLODAdjust());
+    float fDist = kDiff.Length();
+
+    if (fBoundRadius > 0.0f)
+        fDist = NiMax(0.0f, fDist - fBoundRadius);
+
+    fDist *= pkCamera->GetLODAdjust();
 
     for (unsigned int iLODLevel = 0; iLODLevel < m_uiNumRanges; iLODLevel++)
     {
