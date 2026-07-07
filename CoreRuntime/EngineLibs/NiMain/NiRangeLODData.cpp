@@ -156,7 +156,7 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
-    if (m_uiNumRanges == 0)
+    if (!pkCamera || !pkLOD || m_uiNumRanges == 0 || !m_pkRanges)
         return -1;
 
     NiPoint3 kWorldCenter = m_kWorldCenter;
@@ -168,17 +168,21 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
             kWorldCenter = kAggregateBound.GetCenter();
     }
 
-    NiPoint3 kDiff = kWorldCenter - pkCamera->GetWorldLocation();
+    const NiPoint3& kCameraPos = pkCamera->GetWorldLocation();
 
-    // True distance, independent of camera angle.
+    const float fDX = kWorldCenter.x - kCameraPos.x;
+    const float fDY = kWorldCenter.y - kCameraPos.y;
+
+    // Z-up world: use horizontal X/Y distance.
+    // Do not use camera direction, and do not include height.
     const float fLODAdjust = NiAbs(pkCamera->GetLODAdjust());
-    const float fDist = kDiff.Length() * fLODAdjust;
+    const float fDist = NiSqrt(fDX * fDX + fDY * fDY) * fLODAdjust;
 
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
         const Range& kRange = m_pkRanges[uiIndex];
 
-        const bool bLastRange = (uiIndex + 1 == m_uiNumRanges);
+        const bool bLastRange = uiIndex + 1 == m_uiNumRanges;
 
         if (bLastRange)
         {
