@@ -124,13 +124,13 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
         if ((fDist >= kRange.m_fWorldNear) && (fDist < kRange.m_fWorldFar))
         {
 			char buffer[256];
-			NiSprintf(buffer, 256, "LOD Level %d: Distance %f, Range Near %f, Range Far %f", uiIndex, fDist, kRange.m_fWorldNear, kRange.m_fWorldFar);
+			NiSprintf(buffer, 256, "LOD Level %d: Distance %f, Range Near %f, Range Far %f\n", uiIndex, fDist, kRange.m_fWorldNear, kRange.m_fWorldFar);
 			NiOutputDebugString(buffer);
             return uiIndex;
         }
 
 		char buffer2[256];
-		NiSprintf(buffer2, 256, "Distance %f is not in range %f - %f for LOD Level %d", fDist, kRange.m_fWorldNear, kRange.m_fWorldFar, uiIndex);
+		NiSprintf(buffer2, 256, "Distance %f is not in range %f - %f for LOD Level %d\n", fDist, kRange.m_fWorldNear, kRange.m_fWorldFar, uiIndex);
 		NiOutputDebugString(buffer2);
     }
 
