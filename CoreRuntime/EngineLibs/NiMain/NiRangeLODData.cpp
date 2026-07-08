@@ -22,40 +22,6 @@
 
 NiImplementRTTI(NiRangeLODData, NiLODData, NiTypeMask::NiRangeLODData);
 
-namespace
-{
-    bool GetAggregateChildBound(NiLODNode* pkLOD, NiBound& kBound)
-    {
-        EE_ASSERT(pkLOD);
-
-        NiBound kMergedBound;
-        bool bHasBound = false;
-
-        for (unsigned int i = 0; i < pkLOD->GetArrayCount(); i++)
-        {
-            NiAVObject* pkChild = pkLOD->GetAt(i);
-            if (!pkChild || !pkChild->IsVisualObject())
-                continue;
-
-            if (!bHasBound)
-            {
-                kMergedBound = pkChild->GetWorldBound();
-                bHasBound = true;
-            }
-            else
-            {
-                kMergedBound.Merge(&pkChild->GetWorldBound());
-            }
-        }
-
-        if (!bHasBound)
-            return false;
-
-        kBound = kMergedBound;
-        return true;
-    }
-}
-
 //--------------------------------------------------------------------------------------------------
 NiRangeLODData::NiRangeLODData()
 {
@@ -80,22 +46,11 @@ void NiRangeLODData::UpdateWorldData(NiLODNode* pkLOD)
     EE_ASSERT(pkLOD);
 
     const NiTransform& kWorld = pkLOD->GetWorldTransform();
-    NiBound kAggregateBound;
-
-    if (m_kCenter == NiPoint3::ZERO &&
-        GetAggregateChildBound(pkLOD, kAggregateBound))
-    {
-        m_kWorldCenter = kAggregateBound.GetCenter();
-    }
-    else
-    {
-        m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) +
-            kWorld.m_Translate;
-    }
+    m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) + kWorld.m_Translate; // Update the World Center
 
     for (unsigned int i = 0; i < m_uiNumRanges; i++)
     {
-		auto& kRange = m_pkRanges[i];
+        auto& kRange = m_pkRanges[i];
         kRange.m_fWorldNear = kWorld.m_fScale * kRange.m_fNear;
         kRange.m_fWorldFar = kWorld.m_fScale * kRange.m_fFar;
     }
@@ -153,71 +108,20 @@ void NiRangeLODData::SetNumRanges(unsigned int uiNumRanges)
 //--------------------------------------------------------------------------------------------------
 int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) const
 {
+    EE_UNUSED_ARG(pkLOD);
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
     if (!pkCamera || !pkLOD || m_uiNumRanges == 0 || !m_pkRanges)
         return -1;
 
-    const NiBound& kWorldBound = pkLOD->GetWorldBound();
-
-    NiPoint3 kCenter = kWorldBound.GetCenter();
-    float fRadius = kWorldBound.GetRadius();
-
-    // Fallback if bound is invalid.
-    if (fRadius <= 0.0f)
-        kCenter = m_kWorldCenter;
-
-    const NiPoint3& kCameraPos = pkCamera->GetWorldLocation();
-    NiPoint3 kDiff = kCenter - kCameraPos;
-
-    // Z-up world: ignore vertical height.
-    kDiff.z = 0.0f;
-
-    // Distance to the LOD node center.
-    float fCenterDist = kDiff.Length();
-
-    // Important part:
-    // Use distance to the object's bounding sphere surface, not its center.
-    float fDist = fCenterDist - fRadius;
-    if (fDist < 0.0f)
-        fDist = 0.0f;
-    
-    fDist *= NiAbs(pkCamera->GetLODAdjust());
-
-#if defined(_DEBUG)
-    {
-        const NiFixedString& kName = pkLOD->GetName();
-        const char* pcName = kName.Exists() ? (const char*)kName : "unnamed";
-
-        char acBuffer[768];
-
-        NiSprintf(
-            acBuffer,
-            sizeof(acBuffer),
-            "LOD '%s': centerDist=%.3f radius=%.3f dist=%.3f "
-            "cam=(%.3f %.3f %.3f) center=(%.3f %.3f %.3f)\n",
-            pcName,
-            fCenterDist,
-            fRadius,
-            fDist,
-            kCameraPos.x,
-            kCameraPos.y,
-            kCameraPos.z,
-            kCenter.x,
-            kCenter.y,
-            kCenter.z);
-
-        NiOutputDebugString(acBuffer);
-    }
-#endif
-
+    NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
+    float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
-        const Range& kRange = m_pkRanges[uiIndex];
-
-        if (fDist >= kRange.m_fWorldNear && fDist < kRange.m_fWorldFar)
-            return GetLODIndex(uiIndex);
+        auto& kRange = m_pkRanges[uiIndex];
+        if ((fDist >= kRange.m_fWorldNear) && (fDist < kRange.m_fWorldFar))
+            return uiIndex;
     }
 
     return -1;
@@ -226,8 +130,6 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
 //--------------------------------------------------------------------------------------------------
 int NiRangeLODData::GetLODIndex(int iLODLevel) const
 {
-    if (iLODLevel < 0 || m_uiNumRanges == 0)
-        return -1;
     return NiClamp(iLODLevel, -1, m_uiNumRanges - 1);
 }
 
@@ -237,14 +139,14 @@ int NiRangeLODData::GetLODIndex(int iLODLevel) const
 NiImplementCreateClone(NiRangeLODData);
 
 //--------------------------------------------------------------------------------------------------
-void NiRangeLODData::CopyMembers(NiRangeLODData* pkDest,
-    NiCloningProcess&)
+void NiRangeLODData::CopyMembers(NiRangeLODData* pkDest, NiCloningProcess&)
 {
-    EE_ASSERT(pkDest);
+    if (pkDest == nullptr) {
+        return;
+    }
 
     // Set the Center use for all LOD Levels
     pkDest->m_kCenter = m_kCenter;
-
     pkDest->m_kWorldCenter = m_kWorldCenter;
 
     // Duplicate the Ranges
@@ -252,7 +154,6 @@ void NiRangeLODData::CopyMembers(NiRangeLODData* pkDest,
 
     unsigned int uiDestSize = sizeof(m_pkRanges[0]) * m_uiNumRanges;
     NiMemcpy(pkDest->m_pkRanges, m_pkRanges, uiDestSize);
-
 }
 
 //--------------------------------------------------------------------------------------------------
