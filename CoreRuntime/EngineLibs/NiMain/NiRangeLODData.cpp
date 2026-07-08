@@ -113,10 +113,11 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkLOD);
 
     if (!pkCamera || !pkLOD || m_uiNumRanges == 0 || !m_pkRanges)
-        return -1;
+        return 0;
 
     NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
     float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
+
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
         auto& kRange = m_pkRanges[uiIndex];
