@@ -123,13 +123,20 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
         auto& kRange = m_pkRanges[uiIndex];
         if ((fDist >= kRange.m_fWorldNear) && (fDist < kRange.m_fWorldFar))
         {
-			NiOutputDebugString("LOD Level %d selected for distance %f\n", uiIndex, fDist);
+			char buffer[256];
+			NiSprintf(buffer, 256, "LOD Level %d: Distance %f, Range Near %f, Range Far %f", uiIndex, fDist, kRange.m_fWorldNear, kRange.m_fWorldFar);
+			NiOutputDebugString(buffer);
             return uiIndex;
         }
-		NiOutputDebugString("LOD Level %d not selected for distance %f (range: %f - %f)\n", uiIndex, fDist, kRange.m_fWorldNear, kRange.m_fWorldFar);
+
+		char buffer2[256];
+		NiSprintf(buffer2, 256, "Distance %f is not in range %f - %f for LOD Level %d", fDist, kRange.m_fWorldNear, kRange.m_fWorldFar, uiIndex);
+		NiOutputDebugString(buffer2);
     }
 
-	NiOutputDebugString("NiRangeLODData::GetLODLevel: No LOD level found for distance %f\n", fDist);
+	char buffer3[256];
+	NiSprintf(buffer3, 256, "NiRangeLODData::GetLODLevel: No LOD level found for distance %f\n", fDist);
+	NiOutputDebugString(buffer3);
     return -1;
 }
 
@@ -137,7 +144,9 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
 int NiRangeLODData::GetLODIndex(int iLODLevel) const
 {
 	int index = NiClamp(iLODLevel, -1, m_uiNumRanges - 1);
-	NiOutputDebugString("NiRangeLODData::GetLODIndex: LOD level %d, clamped index %d\n", iLODLevel, index);
+	char buffer[256];
+	NiSprintf(buffer, 256, "NiRangeLODData::GetLODIndex: LOD level %d, clamped index %d\n", iLODLevel, index);
+	NiOutputDebugString(buffer);
     return index;
 }
 
