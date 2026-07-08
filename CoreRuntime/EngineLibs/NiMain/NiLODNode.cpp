@@ -66,8 +66,7 @@ void NiLODNode::OnVisible(NiCullingProcess& kCuller)
 
             // Scan backwards to make sure we aren't selecting past the end
             // of our children.
-            while ((m_iIndex >= 0) && ((m_iIndex >= (int)m_kChildren.GetSize())
-                || (m_kChildren.GetAt(m_iIndex) == NULL)))
+            while ((m_iIndex >= 0) && ((m_iIndex >= (int)m_kChildren.GetSize()) || (m_kChildren.GetAt(m_iIndex) == NULL)))
             {
                 m_iIndex--;
             }

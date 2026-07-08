@@ -43,7 +43,9 @@ NiRangeLODData::~NiRangeLODData()
 //--------------------------------------------------------------------------------------------------
 void NiRangeLODData::UpdateWorldData(NiLODNode* pkLOD)
 {
-    EE_ASSERT(pkLOD);
+    if (pkLOD == nullptr) {
+        return;
+    }
 
     const NiTransform& kWorld = pkLOD->GetWorldTransform();
     m_kWorldCenter = kWorld.m_Rotate * (kWorld.m_fScale * m_kCenter) + kWorld.m_Translate; // Update the World Center
@@ -112,42 +114,30 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
     EE_ASSERT(pkCamera);
     EE_ASSERT(pkLOD);
 
-    if (!pkCamera || !pkLOD || m_uiNumRanges == 0 || !m_pkRanges)
+    if (pkCamera == nullptr || pkLOD == nullptr || m_uiNumRanges <= 0 || m_pkRanges == nullptr)
         return 0;
 
     NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
     float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
+    char buffer[256];
+    NiSprintf(buffer, 256, "LOD Distance: %f\n", fDist);
+    NiOutputDebugString(buffer);
 
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
         auto& kRange = m_pkRanges[uiIndex];
         if ((fDist >= kRange.m_fWorldNear) && (fDist < kRange.m_fWorldFar))
         {
-			char buffer[256];
-			NiSprintf(buffer, 256, "LOD Level %d: Distance %f, Range Near %f, Range Far %f\n", uiIndex, fDist, kRange.m_fWorldNear, kRange.m_fWorldFar);
-			NiOutputDebugString(buffer);
             return uiIndex;
         }
-
-		char buffer2[256];
-		NiSprintf(buffer2, 256, "Distance %f is not in range %f - %f for LOD Level %d\n", fDist, kRange.m_fWorldNear, kRange.m_fWorldFar, uiIndex);
-		NiOutputDebugString(buffer2);
     }
-
-	char buffer3[256];
-	NiSprintf(buffer3, 256, "NiRangeLODData::GetLODLevel: No LOD level found for distance %f\n", fDist);
-	NiOutputDebugString(buffer3);
     return -1;
 }
 
 //--------------------------------------------------------------------------------------------------
 int NiRangeLODData::GetLODIndex(int iLODLevel) const
 {
-	int index = NiClamp(iLODLevel, -1, m_uiNumRanges - 1);
-	char buffer[256];
-	NiSprintf(buffer, 256, "NiRangeLODData::GetLODIndex: LOD level %d, clamped index %d\n", iLODLevel, index);
-	NiOutputDebugString(buffer);
-    return index;
+    return NiClamp(iLODLevel, -1, m_uiNumRanges - 1);
 }
 
 //--------------------------------------------------------------------------------------------------
