@@ -105,6 +105,10 @@ void NiRangeLODData::SetNumRanges(unsigned int uiNumRanges)
 
     m_pkRanges = pkNewRanges;
     m_uiNumRanges = uiNumRanges;
+
+	char acBuffer[512];
+	NiSprintf(acBuffer, 512, "NiRangeLODData::SetNumRanges: %d ranges allocated.", m_uiNumRanges);
+	NiOutputDebugString(acBuffer);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -119,9 +123,6 @@ int NiRangeLODData::GetLODLevel(const NiCamera* pkCamera, NiLODNode* pkLOD) cons
 
     NiPoint3 kDiff = m_kWorldCenter - pkCamera->GetWorldLocation();
     float fDist = NiAbs(pkCamera->GetWorldDirection().Dot(kDiff) * pkCamera->GetLODAdjust());
-    char buffer[256];
-    NiSprintf(buffer, 256, "LOD Distance: %f\n", fDist);
-    NiOutputDebugString(buffer);
 
     for (unsigned int uiIndex = 0; uiIndex < m_uiNumRanges; uiIndex++)
     {
