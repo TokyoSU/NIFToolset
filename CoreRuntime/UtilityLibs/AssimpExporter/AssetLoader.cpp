@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <set>
 #include <sstream>
 
@@ -24,6 +26,52 @@ namespace
 		std::ostringstream kStream;
 		kStream << kPrefix << ": " << kPath;
 		return kStream.str();
+	}
+
+	const char* GetNiStreamErrorName(unsigned int uiError)
+	{
+		switch (uiError)
+		{
+		case NiStream::STREAM_OKAY:
+			return "STREAM_OKAY";
+		case NiStream::FILE_NOT_LOADED:
+			return "FILE_NOT_LOADED";
+		case NiStream::NOT_NIF_FILE:
+			return "NOT_NIF_FILE";
+		case NiStream::OLDER_VERSION:
+			return "OLDER_VERSION";
+		case NiStream::LATER_VERSION:
+			return "LATER_VERSION";
+		case NiStream::NO_CREATE_FUNCTION:
+			return "NO_CREATE_FUNCTION";
+		case NiStream::ENDIAN_MISMATCH:
+			return "ENDIAN_MISMATCH";
+		default:
+			return "UNKNOWN_ERROR";
+		}
+	}
+
+	std::string ReadFileHeader(const std::string& kPath, std::size_t uiMaxBytes)
+	{
+		std::ifstream kFile(kPath, std::ios::binary);
+		if (!kFile)
+			return std::string();
+
+		std::string kHeader(uiMaxBytes, '\0');
+		kFile.read(&kHeader[0], static_cast<std::streamsize>(uiMaxBytes));
+		kHeader.resize(static_cast<std::size_t>(kFile.gcount()));
+
+		for (char& c : kHeader)
+		{
+			const unsigned char uc = static_cast<unsigned char>(c);
+			if (uc < 32 && c != '\t')
+				c = ' ';
+		}
+
+		while (!kHeader.empty() && kHeader.back() == ' ')
+			kHeader.pop_back();
+
+		return kHeader;
 	}
 }
 
@@ -77,9 +125,53 @@ bool AssetLoader::LoadNifAsset(const std::string& kPath, LoadedNifAsset& kAsset,
 	std::string& kError) const
 {
 	kAsset.pStream = NiNew NiStream();
+	if (!kAsset.pStream)
+	{
+		kError = MakeError("Failed to allocate NiStream for NIF", kPath);
+		return false;
+	}
+
+	kAsset.pStream->ResetLastErrorInfo();
 	if (!kAsset.pStream->Load(kPath.c_str()))
 	{
-		kError = MakeError("Failed to load NIF", kPath);
+		const unsigned int uiErrorCode = kAsset.pStream->GetLastError();
+		const char* pcErrorMessage = kAsset.pStream->GetLastErrorMessage();
+		const char* pcLastLoadedRTTI = kAsset.pStream->GetLastLoadedRTTI();
+
+		std::ostringstream kStream;
+		kStream << "Failed to load NIF: " << kPath
+			<< "\n    NiStream error code: " << uiErrorCode
+			<< " (" << GetNiStreamErrorName(uiErrorCode) << ")"
+			<< "\n    NiStream message: "
+			<< ((pcErrorMessage && pcErrorMessage[0] != '\0')
+				? pcErrorMessage : "<no message>");
+
+		if (uiErrorCode == NiStream::NO_CREATE_FUNCTION &&
+			pcLastLoadedRTTI && pcLastLoadedRTTI[0] != '\0')
+		{
+			kStream << "\n    Last/unsupported RTTI: " << pcLastLoadedRTTI;
+		}
+
+		std::error_code kFsError;
+		const fs::path kFilePath(kPath);
+		const bool bExists = fs::exists(kFilePath, kFsError);
+		kStream << "\n    File exists: " << (bExists ? "yes" : "no");
+
+		if (!kFsError && bExists)
+		{
+			const std::uintmax_t uiFileSize = fs::file_size(kFilePath, kFsError);
+			if (!kFsError)
+				kStream << "\n    File size: " << uiFileSize << " bytes";
+
+			const std::string kHeader = ReadFileHeader(kPath, 128);
+			if (!kHeader.empty())
+				kStream << "\n    File header: " << kHeader;
+		}
+
+		if (kFsError)
+			kStream << "\n    Filesystem error: " << kFsError.message();
+
+		kError = kStream.str();
 		return false;
 	}
 

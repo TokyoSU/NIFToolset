@@ -12,7 +12,8 @@
 class FbxWriter
 {
 public:
-	FbxWriter(const TextureExporter& kTexExporter);
+	FbxWriter(const TextureExporter& kTexExporter, float fUnitScale,
+		bool bConvertToUnrealAxes = true);
 
 	// Write a complete FBX for one input asset.
 	// kOutputPath: path of the output .fbx file (directory must exist).
@@ -30,4 +31,6 @@ private:
 	aiMesh* BuildAiMesh(const IntermediateMesh& kMesh) const;
 
 	const TextureExporter& m_kTexExporter;
+	float m_fUnitScale;
+	bool m_bConvertToUnrealAxes;
 };

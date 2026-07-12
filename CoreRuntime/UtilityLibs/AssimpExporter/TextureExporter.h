@@ -22,6 +22,11 @@ public:
 	// Returns empty string on failure.
 	std::string ExportTexture(const std::string& kSourcePath) const;
 
+	// Export an FBX TransparentColor map derived from the source texture alpha.
+	// FBX transparency uses black=opaque and white=transparent, so this writes
+	// RGB = 1-alpha rather than reusing the diffuse color image directly.
+	std::string ExportTransparencyTexture(const std::string& kSourcePath) const;
+
 	// Build an aiMaterial from an IntermediateMaterial.
 	// Calls ExportTexture internally to resolve the diffuse PNG path.
 	// Any embedded aiTexture created for the diffuse map (referenced from the
@@ -37,6 +42,8 @@ public:
 private:
 	std::string FindSourceFile(const std::string& kRawPath) const;
 	bool ConvertToPng(const std::string& kSrcPath, const std::string& kDstPath) const;
+	bool ConvertAlphaToTransparencyPng(const std::string& kSrcPath,
+		const std::string& kDstPath) const;
 	bool CopyAsPng(const std::string& kSrcPath, const std::string& kDstPath) const;
 	std::string GetFallbackTexturePath() const;
 	aiTexture* LoadEmbeddedPngTexture(const std::string& kPngPath) const;

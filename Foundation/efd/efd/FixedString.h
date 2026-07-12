@@ -82,6 +82,12 @@ public:
     bool Exists() const;
 
     /**
+        Access the internal efd::Character data of this string.
+        The return value is constant to prevent data manipulation.
+    */
+    const efd::Char* c_str() const;
+
+    /**
         Create a string pointing to the same data as string and incrementing
         its reference count. Decrement the current value of the string,
         deleting it if the reference count equals zero.

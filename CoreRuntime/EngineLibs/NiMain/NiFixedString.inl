@@ -63,12 +63,6 @@ inline NiFixedString& NiFixedString::operator=(const char* pkString)
 }
 
 //--------------------------------------------------------------------------------------------------
-inline const efd::Char* NiFixedString::C_Str() const
-{
-    return efd::GlobalStringTable::GetString(m_handle);
-}
-
-//--------------------------------------------------------------------------------------------------
 inline bool operator==(const NiFixedString& s1,
     const NiFixedString& s2)
 {

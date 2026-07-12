@@ -18,8 +18,17 @@ public:
 	// position, rotation, or scale instead of all three components.
 	static std::vector<aiAnimation*> BuildFromSequenceDatas(
 		const std::vector<NiSequenceDataPtr>& kSeqDatas,
-		NiAVObject* pkNifRoot);
+		NiAVObject* pkNifRoot,
+		float fUnitScale,
+		float fSampleRate,
+		bool bConvertToUnrealAxes = true);
 
-	// NIF fallback: scan the NIF scene graph for NiTransformControllers
-	static std::vector<aiAnimation*> BuildFromNifControllers(NiAVObject* pkRoot);
+	// NIF fallback: scan the NIF scene graph for NiTransformControllers.
+	// Curves are sampled through Gamebryo's interpolator implementation so
+	// Bezier/Euler interpolation is baked correctly for FBX/Unreal.
+	static std::vector<aiAnimation*> BuildFromNifControllers(
+		NiAVObject* pkRoot,
+		float fUnitScale,
+		float fSampleRate,
+		bool bConvertToUnrealAxes = true);
 };

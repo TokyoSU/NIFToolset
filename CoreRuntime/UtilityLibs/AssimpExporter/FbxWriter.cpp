@@ -1,8 +1,10 @@
 #include "FbxWriter.h"
+#include "AxisConversion.h"
 
 #include <assimp/scene.h>
 #include <assimp/Exporter.hpp>
 #include <assimp/postprocess.h>
+#include <assimp/metadata.h>
 
 #include <NiNode.h>
 #include <NiMesh.h>
@@ -11,12 +13,18 @@
 #include <filesystem>
 #include <cstring>
 #include <iostream>
+#include <cmath>
+#include <cstdint>
 
 namespace fs = std::filesystem;
 
 //--------------------------------------------------------------------------------------------------
-FbxWriter::FbxWriter(const TextureExporter& kTexExporter)
+FbxWriter::FbxWriter(const TextureExporter& kTexExporter, float fUnitScale,
+	bool bConvertToUnrealAxes)
 	: m_kTexExporter(kTexExporter)
+	, m_fUnitScale(std::isfinite(fUnitScale) && fUnitScale > 0.0f
+		? fUnitScale : 1.0f)
+	, m_bConvertToUnrealAxes(bConvertToUnrealAxes)
 {
 }
 
@@ -36,14 +44,24 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 	pkMesh->mNumVertices = uiVertCount;
 	pkMesh->mVertices = new aiVector3D[uiVertCount];
 	for (unsigned int i = 0; i < uiVertCount; ++i)
-		pkMesh->mVertices[i] = kIn.positions[i];
+	{
+		const aiVector3D kScaledPosition(
+			kIn.positions[i].x * m_fUnitScale,
+			kIn.positions[i].y * m_fUnitScale,
+			kIn.positions[i].z * m_fUnitScale);
+		pkMesh->mVertices[i] = AxisConversion::ToUnrealVector(
+			kScaledPosition, m_bConvertToUnrealAxes);
+	}
 
 	// ---- Normals ----
 	if (kIn.normals.size() == uiVertCount)
 	{
 		pkMesh->mNormals = new aiVector3D[uiVertCount];
 		for (unsigned int i = 0; i < uiVertCount; ++i)
-			pkMesh->mNormals[i] = kIn.normals[i];
+		{
+			pkMesh->mNormals[i] = AxisConversion::ToUnrealVector(
+				kIn.normals[i], m_bConvertToUnrealAxes);
+		}
 	}
 
 	// ---- UVs ----
@@ -97,6 +115,9 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 
 			aiBone* pkBone = new aiBone();
 			pkBone->mName = kIn.boneNames[b].c_str();
+			// MeshExtractor already applies both the unit conversion and the
+			// Unreal basis change to skin-to-bone matrices. Scaling the offset
+			// translation again here would apply the unit scale twice.
 			pkBone->mOffsetMatrix = (b < kIn.boneOffsetMatrices.size())
 				? kIn.boneOffsetMatrices[b] : aiMatrix4x4();
 			pkBone->mNumWeights = static_cast<unsigned int>(kBoneAccum[b].weights.size());
@@ -142,6 +163,36 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 
 	aiScene* pkScene = new aiScene();
 	pkScene->mFlags = 0;
+
+	// Assimp's FBX exporter reads these exact aiScene metadata keys when
+	// writing GlobalSettings. Without them it defaults to Y-up/Z-front,
+	// causing Blender/Unreal to add an unwanted X=90 degree conversion.
+	pkScene->mMetaData = new aiMetadata();
+	if (m_bConvertToUnrealAxes)
+	{
+		// Blender's FBX axis table for Up=Z, Forward=X:
+		// Up (2,+1), Front (0,-1), Coord (1,-1).
+		pkScene->mMetaData->Add("UpAxis", int32_t(2));
+		pkScene->mMetaData->Add("UpAxisSign", int32_t(1));
+		pkScene->mMetaData->Add("FrontAxis", int32_t(0));
+		pkScene->mMetaData->Add("FrontAxisSign", int32_t(-1));
+		pkScene->mMetaData->Add("CoordAxis", int32_t(1));
+		pkScene->mMetaData->Add("CoordAxisSign", int32_t(-1));
+	}
+	else
+	{
+		// Native NIF convention used by these assets: Up=Z, Forward=Y.
+		pkScene->mMetaData->Add("UpAxis", int32_t(2));
+		pkScene->mMetaData->Add("UpAxisSign", int32_t(1));
+		pkScene->mMetaData->Add("FrontAxis", int32_t(1));
+		pkScene->mMetaData->Add("FrontAxisSign", int32_t(-1));
+		pkScene->mMetaData->Add("CoordAxis", int32_t(0));
+		pkScene->mMetaData->Add("CoordAxisSign", int32_t(1));
+	}
+	pkScene->mMetaData->Add("OriginalUpAxis", int32_t(2));
+	pkScene->mMetaData->Add("OriginalUpAxisSign", int32_t(1));
+	pkScene->mMetaData->Add("UnitScaleFactor", 1.0);
+	pkScene->mMetaData->Add("OriginalUnitScaleFactor", 1.0);
 
 	// ---- Materials ----
 	// Textures embedded by BuildAiMaterial (referenced from materials via "*N")
@@ -224,7 +275,8 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 	// skeleton lookup, and animation channel lookup.
 	if (pkRoot)
 	{
-		MeshExtractor kDummy("", false);
+		MeshExtractor kDummy("", false, m_fUnitScale,
+			true, true, 80.0f, m_bConvertToUnrealAxes);
 		aiNode* pkHierarchy = kDummy.BuildNodeHierarchy(pkRoot, kMeshAssignments);
 		if (pkHierarchy)
 		{
@@ -252,10 +304,10 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 
 	pkScene->mRootNode = pkRootNode;
 
+
 	// ---- Export via Assimp ----
 	Assimp::Exporter kExporter;
-	aiReturn eResult = kExporter.Export(pkScene, "fbx", kOutputPath.c_str(),
-		aiProcess_ValidateDataStructure);
+	aiReturn eResult = kExporter.Export(pkScene, "fbx", kOutputPath.c_str(), aiProcess_ValidateDataStructure|aiProcess_FixInfacingNormals|aiProcess_ForceGenNormals);
 
 	// Assimp takes ownership of the scene? No — we must delete it.
 	// Actually Assimp::Exporter::Export does NOT delete the scene.

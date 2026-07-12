@@ -198,6 +198,55 @@ bool TextureExporter::ConvertToPng(const std::string& kSrcPath,
 }
 
 //--------------------------------------------------------------------------------------------------
+bool TextureExporter::ConvertAlphaToTransparencyPng(
+	const std::string& kSrcPath, const std::string& kDstPath) const
+{
+	NiImageConverter* pkConv = NiImageConverter::GetImageConverter();
+	if (!pkConv || !pkConv->CanReadImageFile(kSrcPath.c_str()))
+		return false;
+
+	NiPixelData* pkPixels = pkConv->ReadImageFile(kSrcPath.c_str(), nullptr);
+	if (!pkPixels)
+		return false;
+
+	NiPixelDataPtr spPixels(pkPixels);
+	if (pkPixels->GetPixelFormat() != NiPixelFormat::RGBA32)
+	{
+		NiPixelData* pkConverted = pkConv->ConvertPixelData(
+			*pkPixels, NiPixelFormat::RGBA32, nullptr, false);
+		if (!pkConverted)
+			return false;
+		spPixels = pkConverted;
+	}
+
+	const unsigned int uiWidth = spPixels->GetWidth();
+	const unsigned int uiHeight = spPixels->GetHeight();
+	const unsigned char* pSource = spPixels->GetPixels();
+	if (!pSource || uiWidth == 0 || uiHeight == 0)
+		return false;
+
+	const size_t stPixelCount = static_cast<size_t>(uiWidth) * uiHeight;
+	if (stPixelCount > std::numeric_limits<size_t>::max() / 4u)
+		return false;
+
+	std::vector<unsigned char> kTransparency(stPixelCount * 4u);
+	for (size_t i = 0; i < stPixelCount; ++i)
+	{
+		// FBX's TransparentColor convention is black=opaque and
+		// white=transparent, which is the inverse of texture alpha.
+		const unsigned char ucTransparency =
+			static_cast<unsigned char>(255u - pSource[i * 4u + 3u]);
+		kTransparency[i * 4u + 0u] = ucTransparency;
+		kTransparency[i * 4u + 1u] = ucTransparency;
+		kTransparency[i * 4u + 2u] = ucTransparency;
+		kTransparency[i * 4u + 3u] = 255u;
+	}
+
+	return WritePngWIC(kDstPath, uiWidth, uiHeight,
+		kTransparency.data(), uiWidth * 4u);
+}
+
+//--------------------------------------------------------------------------------------------------
 bool TextureExporter::CopyAsPng(const std::string& kSrcPath,
 	const std::string& kDstPath) const
 {
@@ -281,6 +330,33 @@ std::string TextureExporter::ExportTexture(const std::string& kSourcePath) const
 }
 
 //--------------------------------------------------------------------------------------------------
+std::string TextureExporter::ExportTransparencyTexture(
+	const std::string& kSourcePath) const
+{
+	if (kSourcePath.empty())
+		return std::string();
+
+	const std::string kSrcFile = FindSourceFile(kSourcePath);
+	if (kSrcFile.empty())
+		return std::string();
+
+	std::error_code ec;
+	if (!m_kOutputFolder.empty())
+		fs::create_directories(m_kOutputFolder, ec);
+
+	const fs::path kSrcFsPath(kSrcFile);
+	const std::string kDstPath = (fs::path(m_kOutputFolder) /
+		(kSrcFsPath.stem().string() + "_transparency.png")).string();
+
+	// Always regenerate this map because it is derived from the source alpha
+	// and older exporter builds did not create it at all.
+	if (ConvertAlphaToTransparencyPng(kSrcFile, kDstPath))
+		return kDstPath;
+
+	return std::string();
+}
+
+//--------------------------------------------------------------------------------------------------
 // Read a PNG file from disk and wrap its raw bytes in an aiTexture as a
 // compressed ("png") embedded texture. Returns nullptr on failure.
 aiTexture* TextureExporter::LoadEmbeddedPngTexture(const std::string& kPngPath) const
@@ -338,26 +414,56 @@ aiMaterial* TextureExporter::BuildAiMaterial(const IntermediateMaterial& kMat,
 	}
 
 	// Assimp 6.0.4's FBX exporter correlates material texture references
-	// against aiScene::mTextures (embedded textures) internally; if that
-	// array never contains a matching entry, it dereferences an end()
-	// iterator and crashes. Embed the PNG data as an aiTexture and reference
-	// it via the "*N" convention instead of an external file path so the
-	// exporter's internal lookup always succeeds.
-	aiTexture* pkEmbedded = kPngPath.empty() ? nullptr : LoadEmbeddedPngTexture(kPngPath);
-	if (pkEmbedded)
+	// against aiScene::mTextures internally. Keep every referenced image in
+	// that array and use the "*N" embedded-texture convention.
+	auto AddEmbeddedTexture = [&](const std::string& kPath,
+		aiTextureType eType) -> bool
 	{
-		kEmbeddedTextures.push_back(pkEmbedded);
-		int iTexIndex = static_cast<int>(kEmbeddedTextures.size() - 1);
-		aiString kTexRef("*" + std::to_string(iTexIndex));
-		pkMat->AddProperty(&kTexRef, AI_MATKEY_TEXTURE_DIFFUSE(0));
+		if (kPath.empty())
+			return false;
+
+		aiTexture* pkEmbedded = LoadEmbeddedPngTexture(kPath);
+		if (pkEmbedded)
+		{
+			kEmbeddedTextures.push_back(pkEmbedded);
+			const int iTexIndex =
+				static_cast<int>(kEmbeddedTextures.size() - 1);
+			aiString kTexRef("*" + std::to_string(iTexIndex));
+			pkMat->AddProperty(&kTexRef, "$tex.file",
+				static_cast<unsigned int>(eType), 0);
+			return true;
+		}
+
+		aiString kTexPath(kPath.c_str());
+		pkMat->AddProperty(&kTexPath, "$tex.file",
+			static_cast<unsigned int>(eType), 0);
+		return true;
+	};
+
+	AddEmbeddedTexture(kPngPath, aiTextureType_DIFFUSE);
+
+	if (kMat.useTextureAlpha)
+	{
+		const int iUseAlpha = aiTextureFlags_UseAlpha;
+		pkMat->AddProperty(&iUseAlpha, 1, "$tex.flags",
+			static_cast<unsigned int>(aiTextureType_DIFFUSE), 0);
 	}
-	else if (!kPngPath.empty())
+
+	const float fOpacity = std::clamp(kMat.opacity, 0.0f, 1.0f);
+	pkMat->AddProperty(&fOpacity, 1, AI_MATKEY_OPACITY);
+
+	if (kMat.useTextureAlpha && !kMat.diffuseTexturePath.empty())
 	{
-		// Could not read the PNG back from disk; fall back to referencing it
-		// by external path (may still hit the Assimp bug for untextured
-		// materials, but keeps the export from failing outright).
-		aiString kTexPath(kPngPath.c_str());
-		pkMat->AddProperty(&kTexPath, AI_MATKEY_TEXTURE_DIFFUSE(0));
+		const std::string kTransparencyPath =
+			ExportTransparencyTexture(kMat.diffuseTexturePath);
+		if (AddEmbeddedTexture(kTransparencyPath, aiTextureType_OPACITY))
+		{
+			// The FBX exporter connects aiTextureType_OPACITY to
+			// TransparentColor. White therefore means transparent.
+			const aiColor3D kTransparentColor(1.0f, 1.0f, 1.0f);
+			pkMat->AddProperty(&kTransparentColor, 1,
+				AI_MATKEY_COLOR_TRANSPARENT);
+		}
 	}
 
 	return pkMat;

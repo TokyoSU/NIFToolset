@@ -1,5 +1,6 @@
 #include "AnimationExporter.h"
 #include "ExportNaming.h"
+#include "AxisConversion.h"
 
 #include <NiNode.h>
 #include <NiTimeController.h>
@@ -7,570 +8,821 @@
 #include <NiTransformInterpolator.h>
 #include <NiTransformEvaluator.h>
 #include <NiConstTransformEvaluator.h>
+#include <NiBSplineTransformEvaluator.h>
 #include <NiSequenceData.h>
-#include <NiPosKey.h>
-#include <NiRotKey.h>
-#include <NiFloatKey.h>
+#include <NiScratchPad.h>
+#include <NiEvaluatorSPData.h>
+#include <NiQuatTransform.h>
 #include <NiQuaternion.h>
 
 #include <assimp/scene.h>
 #include <assimp/anim.h>
 
-#include <cstring>
-#include <iostream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-//--------------------------------------------------------------------------------------------------
-// Internal helpers
-//--------------------------------------------------------------------------------------------------
-
-// Convert NiQuaternion (w,x,y,z) to aiQuaternion (w,x,y,z) — same layout
-static aiQuaternion ToAiQuat(const NiQuaternion& q)
+namespace
 {
-	return aiQuaternion(q.GetW(), q.GetX(), q.GetY(), q.GetZ());
-}
+    constexpr float DEFAULT_SAMPLE_RATE = 30.0f;
+    constexpr float MIN_POSITIVE = 0.000001f;
+    constexpr unsigned int MAX_BAKED_SAMPLES = 1000000u;
 
-// Forward declaration: fills any position/rotation/scaling component that has
-// zero keys with a two-key default (rest pose from pkObj if given, else
-// identity), so Assimp never writes an empty curve node. See definition
-// below CollectTransformControllers for full rationale.
-static void FillMissingKeysWithRestPose(aiNodeAnim* pkChan, NiAVObject* pkObj,
-	double dStartTime, double dEndTime);
+    using NodeByNameMap = std::unordered_map<std::string, NiAVObject*>;
 
-// Build a node channel from NiTransformEvaluator key data
-static aiNodeAnim* BuildChannelFromTransformEvaluator(
-	const std::string& kNodeName,
-	NiTransformEvaluator* pkEval,
-	float fTicksPerSecond,
-	NiAVObject* pkRestObject,
-	double dSequenceEndTime)
-{
-	if (!pkEval)
-		return nullptr;
+    struct SampleGrid
+    {
+        float sampleRate = DEFAULT_SAMPLE_RATE;
+        float durationSeconds = 0.0f;
+        std::vector<float> localTimes;
+        std::vector<double> ticks;
+    };
 
-	aiNodeAnim* pkChan = new aiNodeAnim();
-	pkChan->mNodeName = kNodeName.c_str();
+    struct BakedNodeTrack
+    {
+        std::string name;
+        NiAVObject* restObject = nullptr;
+        std::vector<aiVectorKey> positions;
+        std::vector<aiQuatKey> rotations;
+        std::vector<aiVectorKey> scales;
+        bool hasAnimationData = false;
+        bool hasPositionSource = false;
+        bool hasRotationSource = false;
+        bool hasScaleSource = false;
+    };
 
-	// -- Position keys --
-	{
-		unsigned int uiNumKeys = 0;
-		NiPosKey::KeyType eType = NiPosKey::NOINTERP;
-		unsigned char ucSize = 0;
-		NiPosKey* pkKeys = pkEval->GetPosData(uiNumKeys, eType, ucSize);
-		if (pkKeys && uiNumKeys > 0)
-		{
-			pkChan->mNumPositionKeys = uiNumKeys;
-			pkChan->mPositionKeys = new aiVectorKey[uiNumKeys];
-			for (unsigned int k = 0; k < uiNumKeys; ++k)
-			{
-				NiPosKey* pkKey = pkKeys->GetKeyAt(k, ucSize);
-				double dTime = static_cast<double>(pkKey->GetTime()) * fTicksPerSecond;
-				const NiPoint3& p = pkKey->GetPos();
-				pkChan->mPositionKeys[k] = aiVectorKey(dTime, aiVector3D(p.x, p.y, p.z));
-			}
-		}
-	}
+    //----------------------------------------------------------------------------------------------
+    aiQuaternion ToAiQuat(const NiQuaternion& kQuat)
+    {
+        return aiQuaternion(kQuat.GetW(), kQuat.GetX(), kQuat.GetY(), kQuat.GetZ());
+    }
 
-	// -- Rotation keys --
-	{
-		unsigned int uiNumKeys = 0;
-		NiRotKey::KeyType eType = NiRotKey::NOINTERP;
-		unsigned char ucSize = 0;
-		NiRotKey* pkKeys = pkEval->GetRotData(uiNumKeys, eType, ucSize);
-		if (pkKeys && uiNumKeys > 0)
-		{
-			pkChan->mNumRotationKeys = uiNumKeys;
-			pkChan->mRotationKeys = new aiQuatKey[uiNumKeys];
-			for (unsigned int k = 0; k < uiNumKeys; ++k)
-			{
-				NiRotKey* pkKey = pkKeys->GetKeyAt(k, ucSize);
-				double dTime = static_cast<double>(pkKey->GetTime()) * fTicksPerSecond;
-				pkChan->mRotationKeys[k] = aiQuatKey(dTime, ToAiQuat(pkKey->GetQuaternion()));
-			}
-		}
-	}
+    //----------------------------------------------------------------------------------------------
+    aiQuaternion NormalizeQuaternion(aiQuaternion kQuat)
+    {
+        const double dLengthSq =
+            static_cast<double>(kQuat.w) * kQuat.w +
+            static_cast<double>(kQuat.x) * kQuat.x +
+            static_cast<double>(kQuat.y) * kQuat.y +
+            static_cast<double>(kQuat.z) * kQuat.z;
 
-	// -- Scale keys --
-	{
-		unsigned int uiNumKeys = 0;
-		NiFloatKey::KeyType eType = NiFloatKey::NOINTERP;
-		unsigned char ucSize = 0;
-		NiFloatKey* pkKeys = pkEval->GetScaleData(uiNumKeys, eType, ucSize);
-		if (pkKeys && uiNumKeys > 0)
-		{
-			pkChan->mNumScalingKeys = uiNumKeys;
-			pkChan->mScalingKeys = new aiVectorKey[uiNumKeys];
-			for (unsigned int k = 0; k < uiNumKeys; ++k)
-			{
-				NiFloatKey* pkKey = pkKeys->GetKeyAt(k, ucSize);
-				double dTime = static_cast<double>(pkKey->GetTime()) * fTicksPerSecond;
-				float fS = pkKey->GetValue();
-				pkChan->mScalingKeys[k] = aiVectorKey(dTime, aiVector3D(fS, fS, fS));
-			}
-		}
-	}
+        if (dLengthSq <= 1.0e-20)
+            return aiQuaternion(1.0f, 0.0f, 0.0f, 0.0f);
 
-	// Discard channels with no keys at all
-	if (pkChan->mNumPositionKeys == 0 &&
-		pkChan->mNumRotationKeys == 0 &&
-		pkChan->mNumScalingKeys == 0)
-	{
-		delete pkChan;
-		return nullptr;
-	}
+        const float fInvLength = static_cast<float>(1.0 / std::sqrt(dLengthSq));
+        kQuat.w *= fInvLength;
+        kQuat.x *= fInvLength;
+        kQuat.y *= fInvLength;
+        kQuat.z *= fInvLength;
+        return kQuat;
+    }
 
-	// Any component left with zero keys (e.g. only rotation was animated)
-	// must still be filled in; otherwise Assimp writes an empty curve node
-	// that breaks FBX consumers like three.js's FBXLoader
-	// ("no keyframes in track named X.position"). Use the matching NIF
-	// node's local bind/rest transform for every missing component.
-	double dLastTime = 0.0;
-	if (pkChan->mNumPositionKeys > 0)
-		dLastTime = std::max(dLastTime, pkChan->mPositionKeys[pkChan->mNumPositionKeys - 1].mTime);
-	if (pkChan->mNumRotationKeys > 0)
-		dLastTime = std::max(dLastTime, pkChan->mRotationKeys[pkChan->mNumRotationKeys - 1].mTime);
-	if (pkChan->mNumScalingKeys > 0)
-		dLastTime = std::max(dLastTime, pkChan->mScalingKeys[pkChan->mNumScalingKeys - 1].mTime);
-	FillMissingKeysWithRestPose(pkChan, pkRestObject, 0.0,
-		std::max(dLastTime, dSequenceEndTime));
+    //----------------------------------------------------------------------------------------------
+    void MakeQuaternionTrackContinuous(std::vector<aiQuatKey>& kKeys)
+    {
+        if (kKeys.empty())
+            return;
 
-	return pkChan;
-}
+        kKeys[0].mValue = NormalizeQuaternion(kKeys[0].mValue);
+        for (size_t i = 1; i < kKeys.size(); ++i)
+        {
+            aiQuaternion kCurrent = NormalizeQuaternion(kKeys[i].mValue);
+            const aiQuaternion& kPrevious = kKeys[i - 1].mValue;
+            const float fDot =
+                kPrevious.w * kCurrent.w +
+                kPrevious.x * kCurrent.x +
+                kPrevious.y * kCurrent.y +
+                kPrevious.z * kCurrent.z;
 
-// Build a node channel from NiConstTransformEvaluator (single posed value)
-static aiNodeAnim* BuildChannelFromConstEvaluator(
-	const std::string& kNodeName,
-	NiConstTransformEvaluator* pkEval,
-	float fStartTime,
-	float fEndTime,
-	float fTicksPerSecond,
-	NiAVObject* pkRestObject)
-{
-	bool bHasPos = !pkEval->IsEvalChannelInvalid(NiEvaluator::EVALPOSINDEX);
-	bool bHasRot = !pkEval->IsEvalChannelInvalid(NiEvaluator::EVALROTINDEX);
-	bool bHasScale = !pkEval->IsEvalChannelInvalid(NiEvaluator::EVALSCALEINDEX);
+            // q and -q represent the same rotation. Keep neighboring samples
+            // in the same hemisphere so the FBX exporter's quaternion-to-Euler
+            // conversion does not create avoidable 360-degree jumps.
+            if (fDot < 0.0f)
+            {
+                kCurrent.w = -kCurrent.w;
+                kCurrent.x = -kCurrent.x;
+                kCurrent.y = -kCurrent.y;
+                kCurrent.z = -kCurrent.z;
+            }
+            kKeys[i].mValue = kCurrent;
+        }
+    }
 
-	if (!bHasPos && !bHasRot && !bHasScale)
-		return nullptr;
+    //----------------------------------------------------------------------------------------------
+    void CollectNodesByName(NiAVObject* pkObject, NodeByNameMap& kOut)
+    {
+        if (!pkObject)
+            return;
 
-	NiPoint3 kPos(0, 0, 0);
-	NiQuaternion kRot(1, 0, 0, 0);
-	float fScale = 1.0f;
+        const char* pcName = pkObject->GetName().c_str();
+        if (pcName && pcName[0] != '\0')
+            kOut.emplace(pcName, pkObject);
 
-	// GetChannelPosedValue to read constant values
-	if (bHasPos)
-		pkEval->GetChannelPosedValue(NiEvaluator::EVALPOSINDEX, &kPos);
-	if (bHasRot)
-		pkEval->GetChannelPosedValue(NiEvaluator::EVALROTINDEX, &kRot);
-	if (bHasScale)
-		pkEval->GetChannelPosedValue(NiEvaluator::EVALSCALEINDEX, &fScale);
+        if (NiIsKindOf(NiNode, pkObject))
+        {
+            NiNode* pkNode = NiStaticCast(NiNode, pkObject);
+            for (unsigned int i = 0; i < pkNode->GetArrayCount(); ++i)
+                CollectNodesByName(pkNode->GetAt(i), kOut);
+        }
+    }
 
-	aiNodeAnim* pkChan = new aiNodeAnim();
-	pkChan->mNodeName = kNodeName.c_str();
+    //----------------------------------------------------------------------------------------------
+    bool IsLikelyAccumulationRoot(NiAVObject* pkObject,
+        const std::string& kNodeName)
+    {
+        if (!pkObject || kNodeName.empty() || !NiIsKindOf(NiNode, pkObject))
+            return false;
 
-	double dStart = static_cast<double>(fStartTime) * fTicksPerSecond;
-	double dEnd = static_cast<double>(fEndTime) * fTicksPerSecond;
+        NiNode* pkNode = NiStaticCast(NiNode, pkObject);
+        const std::string kExpectedNonAccum = kNodeName + " NonAccum";
+        for (unsigned int i = 0; i < pkNode->GetArrayCount(); ++i)
+        {
+            NiAVObject* pkChild = pkNode->GetAt(i);
+            if (!pkChild || !pkChild->GetName().c_str())
+                continue;
 
-	if (bHasPos)
-	{
-		pkChan->mNumPositionKeys = 2;
-		pkChan->mPositionKeys = new aiVectorKey[2];
-		pkChan->mPositionKeys[0] = aiVectorKey(dStart, aiVector3D(kPos.x, kPos.y, kPos.z));
-		pkChan->mPositionKeys[1] = aiVectorKey(dEnd,   aiVector3D(kPos.x, kPos.y, kPos.z));
-	}
-	if (bHasRot)
-	{
-		pkChan->mNumRotationKeys = 2;
-		pkChan->mRotationKeys = new aiQuatKey[2];
-		pkChan->mRotationKeys[0] = aiQuatKey(dStart, ToAiQuat(kRot));
-		pkChan->mRotationKeys[1] = aiQuatKey(dEnd,   ToAiQuat(kRot));
-	}
-	if (bHasScale)
-	{
-		pkChan->mNumScalingKeys = 2;
-		pkChan->mScalingKeys = new aiVectorKey[2];
-		pkChan->mScalingKeys[0] = aiVectorKey(dStart, aiVector3D(fScale, fScale, fScale));
-		pkChan->mScalingKeys[1] = aiVectorKey(dEnd,   aiVector3D(fScale, fScale, fScale));
-	}
+            const std::string kChildName(pkChild->GetName().c_str());
+            if (kChildName == kExpectedNonAccum ||
+                kChildName.find("NonAccum") != std::string::npos)
+            {
+                return true;
+            }
+        }
 
-	// A constant evaluator may only provide one component. Preserve the NIF
-	// node's bind/rest values for the other components instead of writing
-	// identity curves, which would move a rotating bone to the origin.
-	FillMissingKeysWithRestPose(pkChan, pkRestObject, dStart, dEnd);
-	return pkChan;
-}
+        return false;
+    }
 
-//--------------------------------------------------------------------------------------------------
-using NodeByNameMap = std::unordered_map<std::string, NiAVObject*>;
+    //----------------------------------------------------------------------------------------------
+    float SanitizeUnitScale(float fUnitScale)
+    {
+        return std::isfinite(fUnitScale) && fUnitScale > 0.0f
+            ? fUnitScale : 1.0f;
+    }
 
-static void CollectNodesByName(NiAVObject* pkObject, NodeByNameMap& kOut)
-{
-	if (!pkObject)
-		return;
+    //----------------------------------------------------------------------------------------------
+    float SanitizeSampleRate(float fSampleRate)
+    {
+        return std::isfinite(fSampleRate) && fSampleRate > 0.0f
+            ? fSampleRate : DEFAULT_SAMPLE_RATE;
+    }
 
-	const char* pcName = pkObject->GetName();
-	if (pcName && pcName[0] != '\0')
-	{
-		// Evaluator ID tags address AVObjects by name. Keep the first match,
-		// matching Gamebryo's normal palette lookup behavior for valid assets.
-		kOut.emplace(pcName, pkObject);
-	}
+    //----------------------------------------------------------------------------------------------
+    SampleGrid BuildSequenceSampleGrid(float fDuration, float fFrequency,
+        float fSampleRate)
+    {
+        SampleGrid kGrid;
+        kGrid.sampleRate = SanitizeSampleRate(fSampleRate);
 
-	if (NiIsKindOf(NiNode, pkObject))
-	{
-		NiNode* pkNode = NiStaticCast(NiNode, pkObject);
-		for (unsigned int i = 0; i < pkNode->GetArrayCount(); ++i)
-			CollectNodesByName(pkNode->GetAt(i), kOut);
-	}
+        const float fSafeFrequency =
+            std::isfinite(fFrequency) && std::abs(fFrequency) > MIN_POSITIVE
+            ? std::abs(fFrequency) : 1.0f;
+        const float fSafeDuration =
+            std::isfinite(fDuration) && fDuration > 0.0f ? fDuration : 0.0f;
+
+        kGrid.durationSeconds = fSafeDuration / fSafeFrequency;
+        if (kGrid.durationSeconds <= 0.0f)
+            return kGrid;
+
+        double dRequestedSamples =
+            std::ceil(static_cast<double>(kGrid.durationSeconds) * kGrid.sampleRate) + 1.0;
+        unsigned int uiSampleCount = static_cast<unsigned int>(
+            std::clamp(dRequestedSamples, 2.0,
+                static_cast<double>(MAX_BAKED_SAMPLES)));
+
+        if (dRequestedSamples > MAX_BAKED_SAMPLES)
+        {
+            std::cerr << "  Warning: animation requested "
+                << static_cast<unsigned long long>(dRequestedSamples)
+                << " samples; capped to " << MAX_BAKED_SAMPLES << "." << std::endl;
+        }
+
+        kGrid.localTimes.resize(uiSampleCount);
+        kGrid.ticks.resize(uiSampleCount);
+        for (unsigned int i = 0; i < uiSampleCount; ++i)
+        {
+            const float fPlaybackSeconds = (i + 1u == uiSampleCount)
+                ? kGrid.durationSeconds
+                : std::min(static_cast<float>(i) / kGrid.sampleRate,
+                    kGrid.durationSeconds);
+
+            kGrid.localTimes[i] = std::min(
+                fPlaybackSeconds * fSafeFrequency, fSafeDuration);
+            kGrid.ticks[i] = static_cast<double>(fPlaybackSeconds) * kGrid.sampleRate;
+        }
+
+        return kGrid;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    void GetRestTransform(NiAVObject* pkObject, float fUnitScale,
+        bool bConvertToUnrealAxes, aiVector3D& kPosition,
+        aiQuaternion& kRotation, aiVector3D& kScale)
+    {
+        if (!pkObject)
+        {
+            kPosition = aiVector3D(0.0f, 0.0f, 0.0f);
+            kRotation = aiQuaternion(1.0f, 0.0f, 0.0f, 0.0f);
+            kScale = aiVector3D(1.0f, 1.0f, 1.0f);
+            return;
+        }
+
+        const NiPoint3& kTranslate = pkObject->GetTranslate();
+        NiQuaternion kRotate(1.0f, 0.0f, 0.0f, 0.0f);
+        pkObject->GetRotate(kRotate);
+        const float fScale = pkObject->GetScale();
+
+        const aiVector3D kSourcePosition(
+            kTranslate.x * fUnitScale,
+            kTranslate.y * fUnitScale,
+            kTranslate.z * fUnitScale);
+        kPosition = AxisConversion::ToUnrealVector(kSourcePosition,
+            bConvertToUnrealAxes);
+        kRotation = NormalizeQuaternion(AxisConversion::ToUnrealQuaternion(
+            ToAiQuat(kRotate), bConvertToUnrealAxes));
+        kScale = aiVector3D(fScale, fScale, fScale);
+    }
+
+    //----------------------------------------------------------------------------------------------
+    BakedNodeTrack& GetOrCreateTrack(
+        const std::string& kNodeName,
+        NiAVObject* pkRestObject,
+        const SampleGrid& kGrid,
+        float fUnitScale,
+        bool bConvertToUnrealAxes,
+        std::vector<BakedNodeTrack>& kTracks,
+        std::unordered_map<std::string, size_t>& kTrackByName)
+    {
+        auto kFound = kTrackByName.find(kNodeName);
+        if (kFound != kTrackByName.end())
+        {
+            BakedNodeTrack& kTrack = kTracks[kFound->second];
+            if (!kTrack.restObject && pkRestObject)
+                kTrack.restObject = pkRestObject;
+            return kTrack;
+        }
+
+        aiVector3D kRestPosition;
+        aiQuaternion kRestRotation;
+        aiVector3D kRestScale;
+        GetRestTransform(pkRestObject, fUnitScale,
+            bConvertToUnrealAxes, kRestPosition, kRestRotation, kRestScale);
+
+        BakedNodeTrack kTrack;
+        kTrack.name = kNodeName;
+        kTrack.restObject = pkRestObject;
+        kTrack.positions.resize(kGrid.ticks.size());
+        kTrack.rotations.resize(kGrid.ticks.size());
+        kTrack.scales.resize(kGrid.ticks.size());
+
+        for (size_t i = 0; i < kGrid.ticks.size(); ++i)
+        {
+            kTrack.positions[i] = aiVectorKey(kGrid.ticks[i], kRestPosition);
+            kTrack.rotations[i] = aiQuatKey(kGrid.ticks[i], kRestRotation);
+            kTrack.scales[i] = aiVectorKey(kGrid.ticks[i], kRestScale);
+        }
+
+        const size_t stIndex = kTracks.size();
+        kTracks.push_back(std::move(kTrack));
+        kTrackByName.emplace(kNodeName, stIndex);
+        return kTracks.back();
+    }
+
+    //----------------------------------------------------------------------------------------------
+    NiEvaluatorSPData* FindScratchPadChannel(NiScratchPad& kScratch,
+        unsigned int uiChannel)
+    {
+        NiEvaluatorSPData* pkEntries = static_cast<NiEvaluatorSPData*>(
+            kScratch.GetDataBlock(SPBEVALUATORSPDATA));
+        const unsigned int uiEntryCount =
+            kScratch.GetNumBlockItems(SPBEVALUATORSPDATA);
+
+        for (unsigned int i = 0; i < uiEntryCount; ++i)
+        {
+            if (static_cast<unsigned int>(pkEntries[i].GetEvalChannelIndex()) == uiChannel)
+                return &pkEntries[i];
+        }
+        return nullptr;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    bool IsBakeableTransformEvaluator(NiEvaluator* pkEvaluator)
+    {
+        return pkEvaluator &&
+            (NiIsKindOf(NiTransformEvaluator, pkEvaluator) ||
+             NiIsKindOf(NiConstTransformEvaluator, pkEvaluator) ||
+             NiIsKindOf(NiBSplineTransformEvaluator, pkEvaluator));
+    }
+
+    //----------------------------------------------------------------------------------------------
+    bool BakeEvaluatorIntoTrack(NiEvaluator* pkEvaluator,
+        const SampleGrid& kGrid, float fUnitScale,
+        bool bConvertToUnrealAxes, BakedNodeTrack& kTrack)
+    {
+        if (!IsBakeableTransformEvaluator(pkEvaluator) || kGrid.ticks.empty())
+            return false;
+
+        // A transform evaluator can expose a channel in two different ways:
+        //
+        //  1. Animated channel: evaluated through NiScratchPad/UpdateChannel.
+        //  2. Posed channel: a constant value stored directly in the evaluator.
+        //
+        // Posed channels commonly do not allocate scratch-pad data. Falling
+        // back to the model NIF rest transform for such a channel is incorrect:
+        // the pose embedded in the KF/KFM sequence is authoritative and can be
+        // different for each sequence. Mixing animated components with model
+        // rest components causes bones to detach or stretch in affected clips.
+        NiScratchPad kScratch(pkEvaluator);
+
+        NiEvaluatorSPData* pkPosSP = nullptr;
+        NiEvaluatorSPData* pkRotSP = nullptr;
+        NiEvaluatorSPData* pkScaleSP = nullptr;
+
+        if (!pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALPOSINDEX))
+            pkPosSP = FindScratchPadChannel(kScratch, NiEvaluator::EVALPOSINDEX);
+        if (!pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALROTINDEX))
+            pkRotSP = FindScratchPadChannel(kScratch, NiEvaluator::EVALROTINDEX);
+        if (!pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALSCALEINDEX))
+            pkScaleSP = FindScratchPadChannel(kScratch, NiEvaluator::EVALSCALEINDEX);
+
+        NiPoint3 kPosedPosition;
+        NiQuaternion kPosedRotation;
+        float fPosedScale = 1.0f;
+
+        const bool bPosPosed =
+            !pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALPOSINDEX) &&
+            pkEvaluator->GetChannelPosedValue(
+                NiEvaluator::EVALPOSINDEX, &kPosedPosition);
+        const bool bRotPosed =
+            !pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALROTINDEX) &&
+            pkEvaluator->GetChannelPosedValue(
+                NiEvaluator::EVALROTINDEX, &kPosedRotation);
+        const bool bScalePosed =
+            !pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALSCALEINDEX) &&
+            pkEvaluator->GetChannelPosedValue(
+                NiEvaluator::EVALSCALEINDEX, &fPosedScale);
+
+        bool bAnySuccess = false;
+        for (size_t i = 0; i < kGrid.localTimes.size(); ++i)
+        {
+            const float fLocalTime = kGrid.localTimes[i];
+
+            if (bPosPosed)
+            {
+                const aiVector3D kSourcePosition(
+                    kPosedPosition.x * fUnitScale,
+                    kPosedPosition.y * fUnitScale,
+                    kPosedPosition.z * fUnitScale);
+                kTrack.positions[i].mValue = AxisConversion::ToUnrealVector(
+                    kSourcePosition, bConvertToUnrealAxes);
+                kTrack.hasPositionSource = true;
+                bAnySuccess = true;
+            }
+            else if (pkPosSP)
+            {
+                NiPoint3 kPosition;
+                if (pkEvaluator->UpdateChannel(fLocalTime,
+                    NiEvaluator::EVALPOSINDEX, pkPosSP, &kPosition))
+                {
+                    const aiVector3D kSourcePosition(
+                        kPosition.x * fUnitScale,
+                        kPosition.y * fUnitScale,
+                        kPosition.z * fUnitScale);
+                    kTrack.positions[i].mValue = AxisConversion::ToUnrealVector(
+                        kSourcePosition, bConvertToUnrealAxes);
+                    kTrack.hasPositionSource = true;
+                    bAnySuccess = true;
+                }
+            }
+
+            if (bRotPosed)
+            {
+                kTrack.rotations[i].mValue = NormalizeQuaternion(
+                    AxisConversion::ToUnrealQuaternion(ToAiQuat(kPosedRotation),
+                        bConvertToUnrealAxes));
+                kTrack.hasRotationSource = true;
+                bAnySuccess = true;
+            }
+            else if (pkRotSP)
+            {
+                NiQuaternion kRotation;
+                if (pkEvaluator->UpdateChannel(fLocalTime,
+                    NiEvaluator::EVALROTINDEX, pkRotSP, &kRotation))
+                {
+                    kTrack.rotations[i].mValue = NormalizeQuaternion(
+                        AxisConversion::ToUnrealQuaternion(ToAiQuat(kRotation),
+                            bConvertToUnrealAxes));
+                    kTrack.hasRotationSource = true;
+                    bAnySuccess = true;
+                }
+            }
+
+            if (bScalePosed)
+            {
+                kTrack.scales[i].mValue = aiVector3D(
+                    fPosedScale, fPosedScale, fPosedScale);
+                kTrack.hasScaleSource = true;
+                bAnySuccess = true;
+            }
+            else if (pkScaleSP)
+            {
+                float fScale = 1.0f;
+                if (pkEvaluator->UpdateChannel(fLocalTime,
+                    NiEvaluator::EVALSCALEINDEX, pkScaleSP, &fScale))
+                {
+                    kTrack.scales[i].mValue = aiVector3D(fScale, fScale, fScale);
+                    kTrack.hasScaleSource = true;
+                    bAnySuccess = true;
+                }
+            }
+        }
+
+        kTrack.hasAnimationData |= bAnySuccess;
+        return bAnySuccess;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    aiNodeAnim* BuildAiNodeAnim(BakedNodeTrack& kTrack)
+    {
+        if (!kTrack.hasAnimationData || kTrack.positions.empty())
+            return nullptr;
+
+        MakeQuaternionTrackContinuous(kTrack.rotations);
+
+        aiNodeAnim* pkChannel = new aiNodeAnim();
+        pkChannel->mNodeName = kTrack.name.c_str();
+
+        pkChannel->mNumPositionKeys = static_cast<unsigned int>(kTrack.positions.size());
+        pkChannel->mPositionKeys = new aiVectorKey[pkChannel->mNumPositionKeys];
+        std::copy(kTrack.positions.begin(), kTrack.positions.end(),
+            pkChannel->mPositionKeys);
+
+        pkChannel->mNumRotationKeys = static_cast<unsigned int>(kTrack.rotations.size());
+        pkChannel->mRotationKeys = new aiQuatKey[pkChannel->mNumRotationKeys];
+        std::copy(kTrack.rotations.begin(), kTrack.rotations.end(),
+            pkChannel->mRotationKeys);
+
+        pkChannel->mNumScalingKeys = static_cast<unsigned int>(kTrack.scales.size());
+        pkChannel->mScalingKeys = new aiVectorKey[pkChannel->mNumScalingKeys];
+        std::copy(kTrack.scales.begin(), kTrack.scales.end(),
+            pkChannel->mScalingKeys);
+
+        return pkChannel;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    aiAnimation* BuildAiAnimation(const std::string& kName,
+        const SampleGrid& kGrid, std::vector<BakedNodeTrack>& kTracks)
+    {
+        std::vector<aiNodeAnim*> kChannels;
+        kChannels.reserve(kTracks.size());
+        for (BakedNodeTrack& kTrack : kTracks)
+        {
+            aiNodeAnim* pkChannel = BuildAiNodeAnim(kTrack);
+            if (pkChannel)
+                kChannels.push_back(pkChannel);
+        }
+
+        if (kChannels.empty())
+            return nullptr;
+
+        aiAnimation* pkAnimation = new aiAnimation();
+        pkAnimation->mName = kName.c_str();
+        pkAnimation->mTicksPerSecond = kGrid.sampleRate;
+        pkAnimation->mDuration =
+            static_cast<double>(kGrid.durationSeconds) * kGrid.sampleRate;
+        pkAnimation->mNumChannels = static_cast<unsigned int>(kChannels.size());
+        pkAnimation->mChannels = new aiNodeAnim*[kChannels.size()];
+        for (size_t i = 0; i < kChannels.size(); ++i)
+            pkAnimation->mChannels[i] = kChannels[i];
+
+        pkAnimation->mNumMeshChannels = 0;
+        pkAnimation->mMeshChannels = nullptr;
+        pkAnimation->mNumMorphMeshChannels = 0;
+        pkAnimation->mMorphMeshChannels = nullptr;
+        return pkAnimation;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    struct NifControllerEntry
+    {
+        std::string name;
+        NiTransformController* controller = nullptr;
+        NiAVObject* object = nullptr;
+        NiTransformInterpolator* interpolator = nullptr;
+        float beginTime = 0.0f;
+        float endTime = 0.0f;
+        float frequency = 1.0f;
+        float durationSeconds = 0.0f;
+    };
+
+    //----------------------------------------------------------------------------------------------
+    void CollectTransformControllers(NiAVObject* pkObject,
+        std::vector<NifControllerEntry>& kOut)
+    {
+        if (!pkObject)
+            return;
+
+        NiTimeController* pkController = pkObject->GetControllers();
+        while (pkController)
+        {
+            if (NiIsKindOf(NiTransformController, pkController))
+            {
+                NiTransformController* pkTransformController =
+                    NiStaticCast(NiTransformController, pkController);
+                NiInterpolator* pkInterpolator =
+                    pkTransformController->GetInterpolator(0);
+
+                if (pkInterpolator &&
+                    NiIsKindOf(NiTransformInterpolator, pkInterpolator))
+                {
+                    NiTransformInterpolator* pkTransformInterpolator =
+                        NiStaticCast(NiTransformInterpolator, pkInterpolator);
+
+                    float fBegin = pkTransformController->GetBeginKeyTime();
+                    float fEnd = pkTransformController->GetEndKeyTime();
+                    if (!std::isfinite(fBegin) || !std::isfinite(fEnd) || fEnd <= fBegin)
+                        pkTransformInterpolator->GetActiveTimeRange(fBegin, fEnd);
+
+                    const float fFrequency =
+                        std::isfinite(pkTransformController->GetFrequency()) &&
+                        std::abs(pkTransformController->GetFrequency()) > MIN_POSITIVE
+                        ? std::abs(pkTransformController->GetFrequency()) : 1.0f;
+
+                    if (std::isfinite(fBegin) && std::isfinite(fEnd) && fEnd > fBegin)
+                    {
+                        NifControllerEntry kEntry;
+                        kEntry.name = GetExportNodeName(pkObject);
+                        kEntry.controller = pkTransformController;
+                        kEntry.object = pkObject;
+                        kEntry.interpolator = pkTransformInterpolator;
+                        kEntry.beginTime = fBegin;
+                        kEntry.endTime = fEnd;
+                        kEntry.frequency = fFrequency;
+                        kEntry.durationSeconds = (fEnd - fBegin) / fFrequency;
+                        kOut.push_back(kEntry);
+                    }
+                }
+            }
+            pkController = pkController->GetNext();
+        }
+
+        if (NiIsKindOf(NiNode, pkObject))
+        {
+            NiNode* pkNode = NiStaticCast(NiNode, pkObject);
+            for (unsigned int i = 0; i < pkNode->GetArrayCount(); ++i)
+                CollectTransformControllers(pkNode->GetAt(i), kOut);
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
 std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
-	const std::vector<NiSequenceDataPtr>& kSeqDatas,
-	NiAVObject* pkNifRoot)
+    const std::vector<NiSequenceDataPtr>& kSequenceDatas,
+    NiAVObject* pkNifRoot,
+    float fUnitScale,
+    float fSampleRate,
+    bool bConvertToUnrealAxes)
 {
-	std::vector<aiAnimation*> kResult;
+    std::vector<aiAnimation*> kResult;
+    const float fSafeUnitScale = SanitizeUnitScale(fUnitScale);
+    const float fSafeSampleRate = SanitizeSampleRate(fSampleRate);
 
-	NodeByNameMap kNodesByName;
-	CollectNodesByName(pkNifRoot, kNodesByName);
+    NodeByNameMap kNodesByName;
+    CollectNodesByName(pkNifRoot, kNodesByName);
 
-	const float fTicksPerSecond = 24.0f;
+    for (size_t s = 0; s < kSequenceDatas.size(); ++s)
+    {
+        NiSequenceData* pkSequence = kSequenceDatas[s];
+        if (!pkSequence || pkSequence->GetNumEvaluators() == 0)
+            continue;
 
-	for (unsigned int s = 0; s < static_cast<unsigned int>(kSeqDatas.size()); ++s)
-	{
-		NiSequenceData* pkSeq = kSeqDatas[s];
-		if (!pkSeq)
-			continue;
+        const SampleGrid kGrid = BuildSequenceSampleGrid(
+            pkSequence->GetDuration(), pkSequence->GetFrequency(),
+            fSafeSampleRate);
+        if (kGrid.ticks.empty())
+            continue;
 
-		const char* pcName = pkSeq->GetName();
-		const float fDuration = pkSeq->GetDuration();
-		const float fFrequency = pkSeq->GetFrequency();
-		const float fSafeFrequency = std::abs(fFrequency) > 0.000001f
-			? std::abs(fFrequency) : 1.0f;
-		const float fKeyTimeScale = fTicksPerSecond / fSafeFrequency;
-		const double dDurationTicks =
-			static_cast<double>(fDuration) * fKeyTimeScale;
-		unsigned int uiNumEval = pkSeq->GetNumEvaluators();
+        std::vector<BakedNodeTrack> kTracks;
+        std::unordered_map<std::string, size_t> kTrackByName;
+        unsigned int uiUnsupportedEvaluators = 0;
+        unsigned int uiMissingRestNodes = 0;
+        unsigned int uiDuplicateComponentSources = 0;
+        unsigned int uiSkippedAccumulationRoots = 0;
 
-		if (uiNumEval == 0 || fDuration <= 0.0f)
-			continue;
+        for (unsigned int e = 0; e < pkSequence->GetNumEvaluators(); ++e)
+        {
+            NiEvaluator* pkEvaluator = pkSequence->GetEvaluatorAt(e);
+            if (!pkEvaluator)
+                continue;
 
-		std::vector<aiNodeAnim*> kChannels;
-		kChannels.reserve(uiNumEval);
-		unsigned int uiUnsupportedEvaluators = 0;
-		unsigned int uiMissingRestNodes = 0;
+            const char* pcNodeName = pkEvaluator->GetAVObjectName();
+            if (!pcNodeName || pcNodeName[0] == '\0')
+                continue;
 
-		for (unsigned int e = 0; e < uiNumEval; ++e)
-		{
-			NiEvaluator* pkEval = pkSeq->GetEvaluatorAt(e);
-			if (!pkEval)
-				continue;
+            if (!IsBakeableTransformEvaluator(pkEvaluator))
+            {
+                // Non-transform evaluators can drive material, visibility,
+                // morph, look-at, or path-controller data. Do not reinterpret
+                // those channels as skeletal transforms.
+                ++uiUnsupportedEvaluators;
+                continue;
+            }
 
-			const char* pcNodeName = pkEval->GetAVObjectName();
-			if (!pcNodeName)
-				continue;
-			std::string kNodeName(pcNodeName);
-			NiAVObject* pkRestObject = nullptr;
-			auto kNodeIt = kNodesByName.find(kNodeName);
-			if (kNodeIt != kNodesByName.end())
-				pkRestObject = kNodeIt->second;
-			else
-				++uiMissingRestNodes;
+            const std::string kNodeName(pcNodeName);
+            NiAVObject* pkRestObject = nullptr;
+            auto kRestNode = kNodesByName.find(kNodeName);
+            if (kRestNode != kNodesByName.end())
+                pkRestObject = kRestNode->second;
+            else
+                ++uiMissingRestNodes;
 
-			aiNodeAnim* pkChan = nullptr;
+            // KFM/Gamebryo often uses a node such as "Bip01" as the
+            // accumulation/root-motion node and keeps the actual skeleton under
+            // "Bip01 NonAccum". Exporting the accumulation node as a normal
+            // bone animation overwrites the model bind transform with identity
+            // or root-motion values, which makes skinned limbs stretch in FBX.
+            // Keep the accumulation node in its NIF bind transform and export
+            // the NonAccum/skeletal children instead.
+            if (IsLikelyAccumulationRoot(pkRestObject, kNodeName))
+            {
+                ++uiSkippedAccumulationRoots;
+                continue;
+            }
 
-			if (NiIsKindOf(NiTransformEvaluator, pkEval))
-			{
-				pkChan = BuildChannelFromTransformEvaluator(kNodeName,
-					NiStaticCast(NiTransformEvaluator, pkEval),
-					fKeyTimeScale, pkRestObject, dDurationTicks);
-			}
-			else if (NiIsKindOf(NiConstTransformEvaluator, pkEval))
-			{
-				pkChan = BuildChannelFromConstEvaluator(kNodeName,
-					NiStaticCast(NiConstTransformEvaluator, pkEval),
-					0.0f, fDuration, fKeyTimeScale, pkRestObject);
-			}
-			else
-			{
-				// Compressed/B-spline evaluators need scratch-pad evaluation and
-				// are not converted by this direct-key path yet.
-				++uiUnsupportedEvaluators;
-			}
+            BakedNodeTrack& kTrack = GetOrCreateTrack(kNodeName,
+                pkRestObject, kGrid, fSafeUnitScale,
+                bConvertToUnrealAxes, kTracks, kTrackByName);
 
-			if (pkChan)
-				kChannels.push_back(pkChan);
-		}
+            const bool bHadPosition = kTrack.hasPositionSource;
+            const bool bHadRotation = kTrack.hasRotationSource;
+            const bool bHadScale = kTrack.hasScaleSource;
 
-		if (uiUnsupportedEvaluators > 0)
-		{
-			std::cerr << "  Warning: animation '"
-				<< (pcName ? pcName : "<unnamed>") << "' skipped "
-				<< uiUnsupportedEvaluators
-				<< " unsupported evaluator(s), such as compressed B-splines."
-				<< std::endl;
-		}
-		if (uiMissingRestNodes > 0)
-		{
-			std::cerr << "  Warning: animation '"
-				<< (pcName ? pcName : "<unnamed>") << "' referenced "
-				<< uiMissingRestNodes
-				<< " node name(s) not present in the model NIF."
-				<< std::endl;
-		}
+            BakeEvaluatorIntoTrack(pkEvaluator, kGrid,
+                fSafeUnitScale, bConvertToUnrealAxes, kTrack);
 
-		if (kChannels.empty())
-			continue;
+            if ((bHadPosition && kTrack.hasPositionSource &&
+                    !pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALPOSINDEX)) ||
+                (bHadRotation && kTrack.hasRotationSource &&
+                    !pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALROTINDEX)) ||
+                (bHadScale && kTrack.hasScaleSource &&
+                    !pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALSCALEINDEX)))
+            {
+                ++uiDuplicateComponentSources;
+            }
+        }
 
-		aiAnimation* pkAnim = new aiAnimation();
-		pkAnim->mName = pcName ? std::string(pcName).c_str() : ("anim_" + std::to_string(s)).c_str();
-		pkAnim->mTicksPerSecond = fTicksPerSecond;
-		pkAnim->mDuration = dDurationTicks;
-		pkAnim->mNumChannels = static_cast<unsigned int>(kChannels.size());
-		pkAnim->mChannels = new aiNodeAnim*[kChannels.size()];
-		for (unsigned int c = 0; c < kChannels.size(); ++c)
-			pkAnim->mChannels[c] = kChannels[c];
-		pkAnim->mNumMeshChannels = 0;
-		pkAnim->mMeshChannels = nullptr;
-		pkAnim->mNumMorphMeshChannels = 0;
-		pkAnim->mMorphMeshChannels = nullptr;
+        const char* pcSequenceName = pkSequence->GetName().c_str();
+        const std::string kAnimationName =
+            (pcSequenceName && pcSequenceName[0] != '\0')
+            ? pcSequenceName : ("anim_" + std::to_string(s));
 
-		kResult.push_back(pkAnim);
-	}
+        aiAnimation* pkAnimation = BuildAiAnimation(
+            kAnimationName, kGrid, kTracks);
+        if (!pkAnimation)
+            continue;
 
-	return kResult;
+        std::cout << "  Baked animation '" << kAnimationName << "': "
+            << pkAnimation->mNumChannels << " node channels, "
+            << kGrid.ticks.size() << " samples at "
+            << kGrid.sampleRate << " fps" << std::endl;
+
+        if (uiUnsupportedEvaluators > 0)
+        {
+            std::cerr << "  Warning: animation '" << kAnimationName
+                << "' skipped " << uiUnsupportedEvaluators
+                << " non-transform evaluator(s)." << std::endl;
+        }
+        if (uiMissingRestNodes > 0)
+        {
+            std::cerr << "  Warning: animation '" << kAnimationName
+                << "' referenced " << uiMissingRestNodes
+                << " node name(s) absent from the model NIF; identity was used "
+                << "for missing components." << std::endl;
+        }
+        if (uiDuplicateComponentSources > 0)
+        {
+            std::cerr << "  Warning: animation '" << kAnimationName
+                << "' had " << uiDuplicateComponentSources
+                << " duplicate transform component source(s); the later evaluator "
+                << "was merged into the same node channel." << std::endl;
+        }
+        if (uiSkippedAccumulationRoots > 0)
+        {
+            std::cerr << "  Animation '" << kAnimationName
+                << "' skipped " << uiSkippedAccumulationRoots
+                << " accumulation root channel(s) and kept their NIF bind pose."
+                << std::endl;
+        }
+
+        kResult.push_back(pkAnimation);
+    }
+
+    return kResult;
 }
 
 //--------------------------------------------------------------------------------------------------
-// NIF fallback: traverse the NIF graph collecting NiTransformControllers
-//--------------------------------------------------------------------------------------------------
-
-struct NifControllerEntry
+std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(
+    NiAVObject* pkRoot,
+    float fUnitScale,
+    float fSampleRate,
+    bool bConvertToUnrealAxes)
 {
-	std::string kName;
-	NiTransformController* pkCtrl;
-	NiAVObject* pkObj; // owning object, used to fill in a rest-pose default for any
-					   // position/rotation/scale component that has no keys of its own
-};
+    if (!pkRoot)
+        return {};
 
-static void CollectTransformControllers(NiAVObject* pkObj,
-	std::vector<NifControllerEntry>& kOut)
-{
-	if (!pkObj)
-		return;
+    std::vector<NifControllerEntry> kControllers;
+    CollectTransformControllers(pkRoot, kControllers);
+    if (kControllers.empty())
+        return {};
 
-	std::string kName = GetExportNodeName(pkObj);
+    const float fSafeUnitScale = SanitizeUnitScale(fUnitScale);
+    const float fSafeSampleRate = SanitizeSampleRate(fSampleRate);
 
-	// Walk the time controller chain
-	NiTimeController* pkCtrl = pkObj->GetControllers();
-	while (pkCtrl)
-	{
-		if (NiIsKindOf(NiTransformController, pkCtrl))
-		{
-			kOut.push_back({ kName, NiStaticCast(NiTransformController, pkCtrl), pkObj });
-		}
-		pkCtrl = pkCtrl->GetNext();
-	}
+    float fMaxDurationSeconds = 0.0f;
+    for (const NifControllerEntry& kEntry : kControllers)
+        fMaxDurationSeconds = std::max(fMaxDurationSeconds, kEntry.durationSeconds);
+    if (fMaxDurationSeconds <= 0.0f)
+        return {};
 
-	// Recurse
-	if (NiIsKindOf(NiNode, pkObj))
-	{
-		NiNode* pkNode = NiStaticCast(NiNode, pkObj);
-		for (unsigned int i = 0; i < pkNode->GetArrayCount(); ++i)
-		{
-			NiAVObject* pkChild = pkNode->GetAt(i);
-			if (pkChild)
-				CollectTransformControllers(pkChild, kOut);
-		}
-	}
-}
+    SampleGrid kGrid;
+    kGrid.sampleRate = fSafeSampleRate;
+    kGrid.durationSeconds = fMaxDurationSeconds;
+    const unsigned int uiSampleCount = static_cast<unsigned int>(std::clamp(
+        std::ceil(static_cast<double>(fMaxDurationSeconds) * fSafeSampleRate) + 1.0,
+        2.0, static_cast<double>(MAX_BAKED_SAMPLES)));
+    kGrid.ticks.resize(uiSampleCount);
+    kGrid.localTimes.resize(uiSampleCount);
+    for (unsigned int i = 0; i < uiSampleCount; ++i)
+    {
+        const float fSeconds = (i + 1u == uiSampleCount)
+            ? fMaxDurationSeconds
+            : std::min(static_cast<float>(i) / fSafeSampleRate,
+                fMaxDurationSeconds);
+        kGrid.localTimes[i] = fSeconds;
+        kGrid.ticks[i] = static_cast<double>(fSeconds) * fSafeSampleRate;
+    }
 
-// Assimp's FBX exporter (and downstream consumers such as three.js's
-// FBXLoader) require every animated component (position/rotation/scaling)
-// that is written out to have at least one keyframe. A NIF bone controller
-// commonly only animates rotation (e.g. Bip01_Pelvis), leaving position and
-// scaling with zero keys; Assimp still emits a curve node for those missing
-// components, which three.js then rejects with
-// "THREE.KeyframeTrack: no keyframes in track named X.position".
-// Fill any empty component with two keys (start/end) holding the node's rest
-// pose value so a valid, non-empty curve is always written.
-static void FillMissingKeysWithRestPose(aiNodeAnim* pkChan, NiAVObject* pkObj,
-	double dStartTime, double dEndTime)
-{
-	if (pkChan->mNumPositionKeys == 0)
-	{
-		NiPoint3 kPos = pkObj ? pkObj->GetTranslate() : NiPoint3(0.0f, 0.0f, 0.0f);
-		pkChan->mNumPositionKeys = 2;
-		pkChan->mPositionKeys = new aiVectorKey[2];
-		aiVector3D kV(kPos.x, kPos.y, kPos.z);
-		pkChan->mPositionKeys[0] = aiVectorKey(dStartTime, kV);
-		pkChan->mPositionKeys[1] = aiVectorKey(dEndTime, kV);
-	}
+    std::vector<BakedNodeTrack> kTracks;
+    std::unordered_map<std::string, size_t> kTrackByName;
 
-	if (pkChan->mNumRotationKeys == 0)
-	{
-		NiQuaternion kRot(1.0f, 0.0f, 0.0f, 0.0f);
-		if (pkObj)
-			pkObj->GetRotate(kRot);
-		pkChan->mNumRotationKeys = 2;
-		pkChan->mRotationKeys = new aiQuatKey[2];
-		aiQuaternion kQ = ToAiQuat(kRot);
-		pkChan->mRotationKeys[0] = aiQuatKey(dStartTime, kQ);
-		pkChan->mRotationKeys[1] = aiQuatKey(dEndTime, kQ);
-	}
+    for (NifControllerEntry& kEntry : kControllers)
+    {
+        BakedNodeTrack& kTrack = GetOrCreateTrack(kEntry.name,
+            kEntry.object, kGrid, fSafeUnitScale,
+            bConvertToUnrealAxes, kTracks, kTrackByName);
 
-	if (pkChan->mNumScalingKeys == 0)
-	{
-		float fScale = pkObj ? pkObj->GetScale() : 1.0f;
-		pkChan->mNumScalingKeys = 2;
-		pkChan->mScalingKeys = new aiVectorKey[2];
-		aiVector3D kV(fScale, fScale, fScale);
-		pkChan->mScalingKeys[0] = aiVectorKey(dStartTime, kV);
-		pkChan->mScalingKeys[1] = aiVectorKey(dEndTime, kV);
-	}
-}
+        for (size_t i = 0; i < kGrid.localTimes.size(); ++i)
+        {
+            const float fControllerSeconds = std::min(
+                kGrid.localTimes[i], kEntry.durationSeconds);
+            const float fLocalTime = std::min(
+                kEntry.beginTime + fControllerSeconds * kEntry.frequency,
+                kEntry.endTime);
 
-//--------------------------------------------------------------------------------------------------
-std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(NiAVObject* pkRoot)
-{
-	if (!pkRoot)
-		return {};
+            NiQuatTransform kValue;
+            kEntry.interpolator->Update(fLocalTime, kEntry.object, kValue);
 
-	std::vector<NifControllerEntry> kControllers;
-	CollectTransformControllers(pkRoot, kControllers);
-	if (kControllers.empty())
-		return {};
+            if (kValue.IsTranslateValid())
+            {
+                const NiPoint3& kPosition = kValue.GetTranslate();
+                const aiVector3D kSourcePosition(
+                    kPosition.x * fSafeUnitScale,
+                    kPosition.y * fSafeUnitScale,
+                    kPosition.z * fSafeUnitScale);
+                kTrack.positions[i].mValue = AxisConversion::ToUnrealVector(
+                    kSourcePosition, bConvertToUnrealAxes);
+                kTrack.hasPositionSource = true;
+                kTrack.hasAnimationData = true;
+            }
+            if (kValue.IsRotateValid())
+            {
+                kTrack.rotations[i].mValue = NormalizeQuaternion(
+                    AxisConversion::ToUnrealQuaternion(
+                        ToAiQuat(kValue.GetRotate()), bConvertToUnrealAxes));
+                kTrack.hasRotationSource = true;
+                kTrack.hasAnimationData = true;
+            }
+            if (kValue.IsScaleValid())
+            {
+                const float fScale = kValue.GetScale();
+                kTrack.scales[i].mValue = aiVector3D(fScale, fScale, fScale);
+                kTrack.hasScaleSource = true;
+                kTrack.hasAnimationData = true;
+            }
+        }
+    }
 
-	const float fTicksPerSecond = 24.0f;
+    aiAnimation* pkAnimation = BuildAiAnimation("NifAnimation", kGrid, kTracks);
+    if (!pkAnimation)
+        return {};
 
-	// Determine overall duration from the max EndTime across controllers
-	float fMaxTime = 0.0f;
-	for (auto& kEntry : kControllers)
-	{
-		NiTransformController* pkCtrl = kEntry.pkCtrl;
-		float fEnd = pkCtrl->GetLastTime();
-		if (fEnd > fMaxTime)
-			fMaxTime = fEnd;
-	}
-	if (fMaxTime <= 0.0f)
-		return {};
-
-	std::vector<aiNodeAnim*> kChannels;
-	kChannels.reserve(kControllers.size());
-
-	for (auto& kEntry : kControllers)
-	{
-		const std::string& kNodeName = kEntry.kName;
-		NiTransformController* pkCtrl = kEntry.pkCtrl;
-
-		NiInterpolator* pkInterp = pkCtrl->GetInterpolator(0);
-		if (!pkInterp)
-			continue;
-
-		if (!NiIsKindOf(NiTransformInterpolator, pkInterp))
-			continue;
-
-		NiTransformInterpolator* pkTI = NiStaticCast(NiTransformInterpolator, pkInterp);
-
-		aiNodeAnim* pkChan = new aiNodeAnim();
-		pkChan->mNodeName = kNodeName.c_str();
-
-		// -- Position keys --
-		{
-			unsigned int uiNumKeys = 0;
-			NiPosKey::KeyType eType = NiPosKey::NOINTERP;
-			unsigned char ucSize = 0;
-			NiPosKey* pkKeys = pkTI->GetPosData(uiNumKeys, eType, ucSize);
-			if (pkKeys && uiNumKeys > 0)
-			{
-				pkChan->mNumPositionKeys = uiNumKeys;
-				pkChan->mPositionKeys = new aiVectorKey[uiNumKeys];
-				for (unsigned int k = 0; k < uiNumKeys; ++k)
-				{
-					NiPosKey* pkKey = pkKeys->GetKeyAt(k, ucSize);
-					double dTime = static_cast<double>(pkKey->GetTime()) * fTicksPerSecond;
-					const NiPoint3& p = pkKey->GetPos();
-					pkChan->mPositionKeys[k] = aiVectorKey(dTime, aiVector3D(p.x, p.y, p.z));
-				}
-			}
-		}
-
-		// -- Rotation keys --
-		{
-			unsigned int uiNumKeys = 0;
-			NiRotKey::KeyType eType = NiRotKey::NOINTERP;
-			unsigned char ucSize = 0;
-			NiRotKey* pkKeys = pkTI->GetRotData(uiNumKeys, eType, ucSize);
-			if (pkKeys && uiNumKeys > 0)
-			{
-				pkChan->mNumRotationKeys = uiNumKeys;
-				pkChan->mRotationKeys = new aiQuatKey[uiNumKeys];
-				for (unsigned int k = 0; k < uiNumKeys; ++k)
-				{
-					NiRotKey* pkKey = pkKeys->GetKeyAt(k, ucSize);
-					double dTime = static_cast<double>(pkKey->GetTime()) * fTicksPerSecond;
-					pkChan->mRotationKeys[k] = aiQuatKey(dTime, ToAiQuat(pkKey->GetQuaternion()));
-				}
-			}
-		}
-
-		// -- Scale keys --
-		{
-			unsigned int uiNumKeys = 0;
-			NiFloatKey::KeyType eType = NiFloatKey::NOINTERP;
-			unsigned char ucSize = 0;
-			NiFloatKey* pkKeys = pkTI->GetScaleData(uiNumKeys, eType, ucSize);
-			if (pkKeys && uiNumKeys > 0)
-			{
-				pkChan->mNumScalingKeys = uiNumKeys;
-				pkChan->mScalingKeys = new aiVectorKey[uiNumKeys];
-				for (unsigned int k = 0; k < uiNumKeys; ++k)
-				{
-					NiFloatKey* pkKey = pkKeys->GetKeyAt(k, ucSize);
-					double dTime = static_cast<double>(pkKey->GetTime()) * fTicksPerSecond;
-					float fS = pkKey->GetValue();
-					pkChan->mScalingKeys[k] = aiVectorKey(dTime, aiVector3D(fS, fS, fS));
-				}
-			}
-		}
-
-		if (pkChan->mNumPositionKeys == 0 &&
-			pkChan->mNumRotationKeys == 0 &&
-			pkChan->mNumScalingKeys == 0)
-		{
-			delete pkChan;
-			continue;
-		}
-
-		// Any component left with zero keys (e.g. a bone that only animates
-		// rotation) must be filled in with a rest-pose default; otherwise
-		// Assimp writes an empty curve node that breaks FBX consumers like
-		// three.js's FBXLoader ("no keyframes in track named X.position").
-		FillMissingKeysWithRestPose(pkChan, kEntry.pkObj, 0.0,
-			static_cast<double>(fMaxTime) * fTicksPerSecond);
-
-		kChannels.push_back(pkChan);
-	}
-
-	if (kChannels.empty())
-		return {};
-
-	aiAnimation* pkAnim = new aiAnimation();
-	pkAnim->mName = "NifAnimation";
-	pkAnim->mTicksPerSecond = fTicksPerSecond;
-	pkAnim->mDuration = static_cast<double>(fMaxTime) * fTicksPerSecond;
-	pkAnim->mNumChannels = static_cast<unsigned int>(kChannels.size());
-	pkAnim->mChannels = new aiNodeAnim*[kChannels.size()];
-	for (unsigned int c = 0; c < kChannels.size(); ++c)
-		pkAnim->mChannels[c] = kChannels[c];
-	pkAnim->mNumMeshChannels = 0;
-	pkAnim->mMeshChannels = nullptr;
-	pkAnim->mNumMorphMeshChannels = 0;
-	pkAnim->mMorphMeshChannels = nullptr;
-
-	return {pkAnim};
+    std::cout << "  Baked NIF controller animation: "
+        << pkAnimation->mNumChannels << " node channels, "
+        << kGrid.ticks.size() << " samples at "
+        << kGrid.sampleRate << " fps" << std::endl;
+    return {pkAnimation};
 }

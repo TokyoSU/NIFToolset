@@ -7,8 +7,11 @@
 #include "FbxWriter.h"
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <iostream>
+#include <stdexcept>
+#include <cmath>
 
 namespace fs = std::filesystem;
 
@@ -51,12 +54,25 @@ int AssimpExporterApp::Run(int argc, char** argv)
     for (const ResolvedInputAsset& kAsset : kResolvedAssets)
     {
         std::cout << "Exporting: " << kAsset.modelNifPath << std::endl;
+        std::cout << "  Unit scale: " << kOptions.unitScale
+            << " (NIF unit -> FBX cm), animation sample rate: "
+            << kOptions.sampleRate << " fps, UV V flip: "
+            << (kOptions.flipUvV ? "enabled" : "disabled")
+            << ", smooth normals: "
+            << (kOptions.smoothNormals ? "enabled" : "disabled")
+            << ", axes: "
+            << (kOptions.unrealAxes
+                ? "Unreal (+X forward, +Z up)"
+                : "native NIF (+Y forward, +Z up)");
+        if (kOptions.smoothNormals)
+            std::cout << " (angle " << kOptions.smoothNormalAngle << " degrees)";
+        std::cout << std::endl;
 
         // Load NIF
         LoadedNifAsset kNifAsset;
         if (!kAssetLoader.LoadNifAsset(kAsset.modelNifPath, kNifAsset, kError))
         {
-            std::cerr << "  Failed to load NIF: " << kError << std::endl;
+            std::cerr << "  " << kError << std::endl;
             ++iFailures;
             continue;
         }
@@ -76,7 +92,10 @@ int AssimpExporterApp::Run(int argc, char** argv)
                                        : !kOptions.textureFolder.empty() ? kOptions.textureFolder
                                        : kNifDir;
 
-        MeshExtractor kMeshEx(kTexOutputFolder, true);
+        MeshExtractor kMeshEx(kTexOutputFolder, true,
+            kOptions.unitScale, kOptions.flipUvV,
+            kOptions.smoothNormals, kOptions.smoothNormalAngle,
+            kOptions.unrealAxes);
         TextureExporter kTexEx(kTexSearchFolder, kTexOutputFolder);
 
         std::vector<IntermediateMesh> kMeshes;
@@ -120,7 +139,9 @@ int AssimpExporterApp::Run(int argc, char** argv)
                     std::vector<NiSequenceDataPtr> kSeqDatas;
                     if (kAssetLoader.LoadKfSequences(kKfPath, kSeqDatas, kError))
                     {
-                        auto kNew = AnimationExporter::BuildFromSequenceDatas(kSeqDatas, pkRoot);
+                        auto kNew = AnimationExporter::BuildFromSequenceDatas(
+                            kSeqDatas, pkRoot, kOptions.unitScale,
+                            kOptions.sampleRate, kOptions.unrealAxes);
                         kAnimations.insert(kAnimations.end(), kNew.begin(), kNew.end());
                     }
                     else
@@ -143,7 +164,9 @@ int AssimpExporterApp::Run(int argc, char** argv)
                 std::vector<NiSequenceDataPtr> kSeqDatas;
                 if (kAssetLoader.LoadKfSequences(kKfPath, kSeqDatas, kError))
                 {
-                    auto kNew = AnimationExporter::BuildFromSequenceDatas(kSeqDatas, pkRoot);
+                    auto kNew = AnimationExporter::BuildFromSequenceDatas(
+                        kSeqDatas, pkRoot, kOptions.unitScale,
+                        kOptions.sampleRate, kOptions.unrealAxes);
                     kAnimations.insert(kAnimations.end(), kNew.begin(), kNew.end());
                 }
             }
@@ -152,7 +175,9 @@ int AssimpExporterApp::Run(int argc, char** argv)
         // NIF fallback if still no animations
         if (kAnimations.empty())
         {
-            kAnimations = AnimationExporter::BuildFromNifControllers(pkRoot);
+            kAnimations = AnimationExporter::BuildFromNifControllers(
+                pkRoot, kOptions.unitScale, kOptions.sampleRate,
+                kOptions.unrealAxes);
         }
 
         if (!kAnimations.empty())
@@ -160,7 +185,8 @@ int AssimpExporterApp::Run(int argc, char** argv)
 
         // Write FBX
         std::string kOutputPath = BuildOutputFbxPath(kAsset, kOptions);
-        FbxWriter kWriter(kTexEx);
+        FbxWriter kWriter(kTexEx, kOptions.unitScale,
+            kOptions.unrealAxes);
         if (!kWriter.Write(kOutputPath, pkRoot, kMeshes, kMaterials, kAnimations, kError))
         {
             std::cerr << "  Export failed: " << kError << std::endl;
@@ -217,6 +243,46 @@ bool AssimpExporterApp::ParseCommandLine(int argc, char** argv,
     {
         const std::string kArg = argv[iArg] ? argv[iArg] : "";
 
+        if (kArg == "-scale" || kArg == "-sample_rate" || kArg == "-smooth_angle")
+        {
+            if (iArg + 1 >= argc)
+            {
+                kError = "Missing value for argument: " + kArg;
+                return false;
+            }
+
+            const std::string kValue = argv[++iArg] ? argv[iArg] : "";
+            try
+            {
+                size_t stParsed = 0;
+                const float fValue = std::stof(kValue, &stParsed);
+                if (stParsed != kValue.size() || !std::isfinite(fValue))
+                    throw std::invalid_argument("not a finite number");
+
+                if (kArg == "-smooth_angle")
+                {
+                    if (fValue < 0.0f || fValue > 180.0f)
+                        throw std::invalid_argument("angle outside 0..180");
+                    kOptions.smoothNormalAngle = fValue;
+                }
+                else
+                {
+                    if (fValue <= 0.0f)
+                        throw std::invalid_argument("not a positive number");
+                    if (kArg == "-scale")
+                        kOptions.unitScale = fValue;
+                    else
+                        kOptions.sampleRate = fValue;
+                }
+            }
+            catch (const std::exception&)
+            {
+                kError = "Invalid numeric value for " + kArg + ": \"" + kValue + "\"";
+                return false;
+            }
+            continue;
+        }
+
         if (kArg == "-anim_folder"    ||
             kArg == "-nif_folder"     ||
             kArg == "-texture_folder" ||
@@ -240,6 +306,42 @@ bool AssimpExporterApp::ParseCommandLine(int argc, char** argv,
         if (kArg == "-all")
         {
             kOptions.exportAll = true;
+            continue;
+        }
+
+        if (kArg == "-flip_uv_v")
+        {
+            kOptions.flipUvV = true;
+            continue;
+        }
+
+        if (kArg == "-no_flip_uv_v")
+        {
+            kOptions.flipUvV = false;
+            continue;
+        }
+
+        if (kArg == "-smooth_normals")
+        {
+            kOptions.smoothNormals = true;
+            continue;
+        }
+
+        if (kArg == "-no_smooth_normals")
+        {
+            kOptions.smoothNormals = false;
+            continue;
+        }
+
+        if (kArg == "-unreal_axes")
+        {
+            kOptions.unrealAxes = true;
+            continue;
+        }
+
+        if (kArg == "-no_unreal_axes")
+        {
+            kOptions.unrealAxes = false;
             continue;
         }
 
@@ -342,6 +444,15 @@ void AssimpExporterApp::PrintUsage() const
         << "  -texture_folder  <dir>  Search/output folder for textures (PNG)\n"
         << "  -kfm_folder      <dir>  Search folder for KFM files\n"
         << "  -output          <dir>  Destination folder for exported FBX and PNG files\n"
+        << "  -scale           <num>  Coordinate scale; default 100 for UE centimeters\n"
+        << "  -sample_rate     <fps>  Bake animation curves at this rate; default 30\n"
+        << "  -flip_uv_v              Flip V for D3D/Gamebryo -> FBX (default)\n"
+        << "  -no_flip_uv_v           Preserve source V coordinates\n"
+        << "  -smooth_normals         Rebuild smooth normals (default)\n"
+        << "  -no_smooth_normals      Preserve normals stored in the NIF\n"
+        << "  -smooth_angle    <deg>  Smoothing threshold from 0 to 180; default 80\n"
+        << "  -unreal_axes            Export +X forward, +Z up (default)\n"
+        << "  -no_unreal_axes         Preserve native +Y forward, +Z up axes\n"
         << "  -all                    Auto-discover all assets in the scan folders\n"
         << "\nSingle file example:\n"
         << "  AssimpExporter"

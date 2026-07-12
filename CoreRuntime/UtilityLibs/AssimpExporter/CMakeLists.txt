@@ -21,6 +21,8 @@ target_link_libraries(AssimpExporter
 		NiMain
 		NiMesh
 		NiAnimation
+		NiParticle
+		NiPortal
 		assimp::assimp
 		windowscodecs
 		ole32

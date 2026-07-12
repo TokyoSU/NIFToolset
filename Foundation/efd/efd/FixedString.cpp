@@ -114,6 +114,12 @@ bool FixedString::Exists() const
 }
 
 //------------------------------------------------------------------------------------------------
+const efd::Char* FixedString::c_str() const
+{
+	return GlobalStringTable::GetString(m_handle);
+}
+
+//------------------------------------------------------------------------------------------------
 size_t FixedString::GetLength() const
 {
     return GlobalStringTable::GetLength(m_handle);

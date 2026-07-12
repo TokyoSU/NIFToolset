@@ -40,8 +40,6 @@ public:
     friend bool operator==(const char* s1, const NiFixedString& s2);
     friend bool operator!=(const char* s1, const NiFixedString& s2);
 
-	const efd::Char* C_Str() const;
-
     // *** begin Emergent internal use only ***
     static void LoadCStringAsFixedString(efd::BinaryStream& kStream,
         NiFixedString& kString);

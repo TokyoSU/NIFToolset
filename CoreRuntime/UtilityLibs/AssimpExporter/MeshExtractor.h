@@ -7,6 +7,9 @@
 #include <NiSkinInstance.h>
 #include <NiTexturingProperty.h>
 #include <NiSourceTexture.h>
+#include <NiAlphaProperty.h>
+#include <NiMaterialProperty.h>
+#include <NiTransform.h>
 
 #include <assimp/scene.h>
 
@@ -22,6 +25,10 @@ using NodeIndexMap = std::unordered_map<NiAVObject*, unsigned int>;
 // required for both static local transforms and skeletal bind-space math.
 using MeshNodeAssignmentMap =
 	std::unordered_map<NiAVObject*, std::vector<unsigned int>>;
+
+// Local bind-pose overrides derived from NiSkinInstance/NiSkinningMeshModifier.
+// They keep the exported FBX skeleton bind pose consistent with aiBone offset matrices.
+using BindPoseOverrideMap = std::unordered_map<NiAVObject*, NiTransform>;
 
 // An intermediate description of a bone influence (bone index + weight per vertex)
 struct VertexBoneWeight
@@ -57,13 +64,23 @@ struct IntermediateMaterial
 {
 	std::string diffuseTexturePath; // empty = no texture
 	std::string name;
+	bool useTextureAlpha = false;   // Preserve the diffuse texture alpha channel
+	bool alphaBlend = false;        // NIF alpha blending was enabled
+	bool alphaTest = false;         // NIF alpha testing/cutout was enabled
+	float opacity = 1.0f;           // NiMaterialProperty scalar alpha
+	float alphaCutoff = 0.5f;       // NiAlphaProperty test reference (0..1)
 };
 
 class MeshExtractor
 {
 public:
 	MeshExtractor(const std::string& kTextureOutputFolder,
-		bool bConvertTexturesToPng = true);
+		bool bConvertTexturesToPng = true,
+		float fTransformUnitScale = 1.0f,
+		bool bFlipUvV = true,
+		bool bSmoothNormals = true,
+		float fSmoothNormalAngle = 80.0f,
+		bool bConvertToUnrealAxes = true);
 
 	// Recursively traverse the NIF scene graph and extract all geometry.
 	// Fills kMeshes and kMaterials; builds kNodeIndexMap for later animation use.
@@ -94,6 +111,8 @@ private:
 
 	unsigned int FindOrAddMaterial(const std::string& kTexturePath,
 		const std::string& kMeshName,
+		const NiAlphaProperty* pkAlphaProperty,
+		const NiMaterialProperty* pkMaterialProperty,
 		std::vector<IntermediateMaterial>& kMaterials) const;
 
 	// Extract bone data from NiMesh skinning modifier
@@ -115,12 +134,25 @@ private:
 		NiSkinData* pkSkinData, IntermediateMesh& kOut,
 		unsigned int uiVertCount) const;
 
+	void BuildSkinBindPoseOverrides(NiAVObject* pkRoot,
+		BindPoseOverrideMap& kOut) const;
+	void CollectLegacySkinBindPose(NiGeometry* pkGeom,
+		BindPoseOverrideMap& kOut) const;
+	void CollectModernSkinBindPose(NiMesh* pkMesh,
+		BindPoseOverrideMap& kOut) const;
+
 	aiMatrix4x4 MakeAiMatrix(const NiTransform& kTransform) const;
 	aiNode* BuildNodeRecursive(NiAVObject* pkObject,
-		const MeshNodeAssignmentMap& kMeshNodeAssignments) const;
+		const MeshNodeAssignmentMap& kMeshNodeAssignments,
+		const BindPoseOverrideMap& kBindPoseOverrides) const;
 
 	std::string ResolveTexturePath(NiTexturingProperty* pkTexProp) const;
 
 	std::string m_kTextureOutputFolder;
 	bool m_bConvertTexturesToPng;
+	float m_fTransformUnitScale;
+	bool m_bFlipUvV;
+	bool m_bSmoothNormals;
+	float m_fSmoothNormalAngle;
+	bool m_bConvertToUnrealAxes;
 };
