@@ -13,6 +13,8 @@
 #include <cstring>
 #include <cstdio>
 #include <string>
+#include <limits>
+#include <vector>
 
 // Windows Imaging Component for PNG write
 #define WIN32_LEAN_AND_MEAN
@@ -69,12 +71,26 @@ std::string TextureExporter::FindSourceFile(const std::string& kRawPath) const
 }
 
 //--------------------------------------------------------------------------------------------------
-// Write NiPixelData (any format, converted to RGBA8 first) as PNG using WIC
+// Write RGBA8 NiPixelData as PNG using WIC.
+//
+// NiPixelFormat::RGBA32 is byte ordered R, G, B, A. The Windows PNG encoder,
+// however, normally accepts 32bpp BGRA. IWICBitmapFrameEncode::SetPixelFormat
+// is an in/out operation and may silently replace a requested RGBA format with
+// BGRA. The old exporter ignored that negotiated format and then supplied RGBA
+// memory, swapping red and blue in the generated PNG.
 static bool WritePngWIC(const std::string& kDstPath,
 	unsigned int uiWidth, unsigned int uiHeight,
-	const unsigned char* pPixels, unsigned int uiStride)
+	const unsigned char* pRgbaPixels, unsigned int uiRgbaStride)
 {
-	CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	if (!pRgbaPixels || uiWidth == 0 || uiHeight == 0 ||
+		uiRgbaStride < uiWidth * 4u)
+	{
+		return false;
+	}
+
+	const HRESULT hrCom = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	if (FAILED(hrCom) && hrCom != RPC_E_CHANGED_MODE)
+		return false;
 
 	ComPtr<IWICImagingFactory> pFactory;
 	HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr,
@@ -105,12 +121,41 @@ static bool WritePngWIC(const std::string& kDstPath,
 	hr = pFrame->SetSize(uiWidth, uiHeight);
 	if (FAILED(hr)) return false;
 
-	WICPixelFormatGUID pixFmt = GUID_WICPixelFormat32bppRGBA;
-	hr = pFrame->SetPixelFormat(&pixFmt);
-	if (FAILED(hr)) return false;
+	// Use the PNG encoder's native 32-bit byte layout explicitly instead of
+	// relying on WIC to negotiate RGBA into another format behind our back.
+	WICPixelFormatGUID kPixelFormat = GUID_WICPixelFormat32bppBGRA;
+	hr = pFrame->SetPixelFormat(&kPixelFormat);
+	if (FAILED(hr) || !IsEqualGUID(kPixelFormat, GUID_WICPixelFormat32bppBGRA))
+		return false;
 
-	hr = pFrame->WritePixels(uiHeight, uiStride, uiHeight * uiStride,
-		const_cast<BYTE*>(pPixels));
+	const unsigned int uiBgraStride = uiWidth * 4u;
+	std::vector<unsigned char> kBgraPixels(
+		static_cast<size_t>(uiBgraStride) * uiHeight);
+
+	for (unsigned int y = 0; y < uiHeight; ++y)
+	{
+		const unsigned char* pSrc = pRgbaPixels +
+			static_cast<size_t>(y) * uiRgbaStride;
+		unsigned char* pDst = kBgraPixels.data() +
+			static_cast<size_t>(y) * uiBgraStride;
+
+		for (unsigned int x = 0; x < uiWidth; ++x)
+		{
+			pDst[0] = pSrc[2]; // B
+			pDst[1] = pSrc[1]; // G
+			pDst[2] = pSrc[0]; // R
+			pDst[3] = pSrc[3]; // A
+			pSrc += 4;
+			pDst += 4;
+		}
+	}
+
+	const size_t stBufferSize = kBgraPixels.size();
+	if (stBufferSize > static_cast<size_t>(std::numeric_limits<UINT>::max()))
+		return false;
+
+	hr = pFrame->WritePixels(uiHeight, uiBgraStride,
+		static_cast<UINT>(stBufferSize), kBgraPixels.data());
 	if (FAILED(hr)) return false;
 
 	hr = pFrame->Commit();
@@ -204,15 +249,25 @@ std::string TextureExporter::ExportTexture(const std::string& kSourcePath) const
 	std::string kStem = kSrcFsPath.stem().string();
 	std::string kDstPath = (fs::path(m_kOutputFolder) / (kStem + ".png")).string();
 
-	// Already converted: skip
-	if (fs::exists(kDstPath))
-		return kDstPath;
+	// Always regenerate converted files. Older exporter builds could have
+	// produced red/blue-swapped PNGs at this same path, so reusing an existing
+	// file would preserve the bad result after upgrading the executable.
 
 	std::string kExt = kSrcFsPath.extension().string();
 	std::transform(kExt.begin(), kExt.end(), kExt.begin(), ::tolower);
 
 	if (kExt == ".png")
 	{
+		// The source may already be the destination file when the texture
+		// folder also serves as the exporter output folder.
+		std::error_code kEquivalentError;
+		if (fs::exists(kDstPath) &&
+			fs::equivalent(kSrcFile, kDstPath, kEquivalentError) &&
+			!kEquivalentError)
+		{
+			return kDstPath;
+		}
+
 		if (CopyAsPng(kSrcFile, kDstPath))
 			return kDstPath;
 	}
