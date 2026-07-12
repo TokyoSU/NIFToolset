@@ -11,3 +11,8 @@ vcpkg install dxsdk-d3dx:x64-windows-static
 vcpkg install SDL3:x64-windows-static
 
 depending on the build you choose.
+
+vcpkg install assimp:x86-windows
+vcpkg install assimp:x86-windows-static
+vcpkg install assimp:x64-windows
+vcpkg install assimp:x64-windows-static

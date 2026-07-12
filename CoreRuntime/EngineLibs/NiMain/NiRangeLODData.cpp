@@ -102,13 +102,8 @@ void NiRangeLODData::SetNumRanges(unsigned int uiNumRanges)
 
     // Delete the old ranges
     NiFree(m_pkRanges);
-
     m_pkRanges = pkNewRanges;
     m_uiNumRanges = uiNumRanges;
-
-	char acBuffer[512];
-	NiSprintf(acBuffer, 512, "NiRangeLODData::SetNumRanges: %d ranges allocated.", m_uiNumRanges);
-	NiOutputDebugString(acBuffer);
 }
 
 //--------------------------------------------------------------------------------------------------
