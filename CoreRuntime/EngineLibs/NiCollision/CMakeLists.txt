@@ -28,6 +28,12 @@ target_compile_definitions(NiCollision
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NICOLLISION_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiCollision
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiCollisionPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiCollision
     PUBLIC

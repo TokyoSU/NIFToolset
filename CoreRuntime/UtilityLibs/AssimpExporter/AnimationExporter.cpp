@@ -4,8 +4,13 @@
 
 #include <NiNode.h>
 #include <NiTimeController.h>
+#include <NiControllerManager.h>
+#ifndef EE_REMOVE_BACK_COMPAT_STREAMING
+#include <NiMultiTargetTransformController.h>
+#endif
 #include <NiTransformController.h>
 #include <NiTransformInterpolator.h>
+#include <NiInterpolator.h>
 #include <NiTransformEvaluator.h>
 #include <NiConstTransformEvaluator.h>
 #include <NiBSplineTransformEvaluator.h>
@@ -24,6 +29,8 @@
 #include <limits>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace
@@ -53,6 +60,23 @@ namespace
         bool hasPositionSource = false;
         bool hasRotationSource = false;
         bool hasScaleSource = false;
+    };
+
+    struct TransformComponentMask
+    {
+        bool position = false;
+        bool rotation = false;
+        bool scale = false;
+    };
+
+    struct ControllerBakeStats
+    {
+        unsigned int controllersBaked = 0;
+        unsigned int controllerSamplesFailed = 0;
+        unsigned int skippedAccumulationRoots = 0;
+        unsigned int protectedPositionComponents = 0;
+        unsigned int protectedRotationComponents = 0;
+        unsigned int protectedScaleComponents = 0;
     };
 
     //----------------------------------------------------------------------------------------------
@@ -118,9 +142,7 @@ namespace
         if (!pkObject)
             return;
 
-        const char* pcName = pkObject->GetName().c_str();
-        if (pcName && pcName[0] != '\0')
-            kOut.emplace(pcName, pkObject);
+        kOut.emplace(GetExportNodeName(pkObject), pkObject);
 
         if (NiIsKindOf(NiNode, pkObject))
         {
@@ -129,6 +151,252 @@ namespace
                 CollectNodesByName(pkNode->GetAt(i), kOut);
         }
     }
+
+    //----------------------------------------------------------------------------------------------
+    struct ControllerManagerEntry
+    {
+        NiControllerManager* manager = nullptr;
+        NiAVObject* target = nullptr;
+    };
+
+#ifndef EE_REMOVE_BACK_COMPAT_STREAMING
+    struct LegacyMultiTargetEntry
+    {
+        NiAVObject* rootTarget = nullptr;
+        std::vector<NiAVObject*> extraTargets;
+        std::unordered_map<std::string, NiAVObject*> uniqueTargetsByName;
+        std::unordered_set<std::string> duplicateTargetNames;
+    };
+
+    struct LegacyTargetSelection
+    {
+        const LegacyMultiTargetEntry* controller = nullptr;
+        std::vector<NiAVObject*> ordinalTargets;
+        bool ambiguousController = false;
+    };
+
+    using SequenceOwnerMap =
+        std::unordered_map<const NiSequenceData*, NiAVObject*>;
+#endif
+
+    //----------------------------------------------------------------------------------------------
+    void CollectControllerManagers(NiAVObject* pkObject,
+        std::vector<ControllerManagerEntry>& kOut,
+        std::unordered_set<NiControllerManager*>& kSeenManagers)
+    {
+        if (!pkObject)
+            return;
+
+        for (NiTimeController* pkController = pkObject->GetControllers();
+            pkController; pkController = pkController->GetNext())
+        {
+            if (!NiIsKindOf(NiControllerManager, pkController))
+                continue;
+
+            NiControllerManager* pkManager =
+                NiStaticCast(NiControllerManager, pkController);
+            if (kSeenManagers.insert(pkManager).second)
+                kOut.push_back({pkManager, pkObject});
+        }
+
+        if (NiIsKindOf(NiNode, pkObject))
+        {
+            NiNode* pkNode = NiStaticCast(NiNode, pkObject);
+            for (unsigned int i = 0; i < pkNode->GetArrayCount(); ++i)
+            {
+                CollectControllerManagers(pkNode->GetAt(i), kOut,
+                    kSeenManagers);
+            }
+        }
+    }
+
+#ifndef EE_REMOVE_BACK_COMPAT_STREAMING
+    //----------------------------------------------------------------------------------------------
+    void AddLegacyTargetByName(LegacyMultiTargetEntry& kEntry,
+        NiAVObject* pkTarget)
+    {
+        if (!pkTarget)
+            return;
+
+        const std::string kName = GetExportNodeName(pkTarget);
+        if (kName.empty() || kEntry.duplicateTargetNames.count(kName) != 0)
+            return;
+
+        auto kExisting = kEntry.uniqueTargetsByName.find(kName);
+        if (kExisting == kEntry.uniqueTargetsByName.end())
+        {
+            kEntry.uniqueTargetsByName.emplace(kName, pkTarget);
+            return;
+        }
+
+        if (kExisting->second != pkTarget)
+        {
+            kEntry.uniqueTargetsByName.erase(kExisting);
+            kEntry.duplicateTargetNames.insert(kName);
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------
+    void CollectSequenceOwners(NiAVObject* pkRoot, SequenceOwnerMap& kOut)
+    {
+        std::vector<ControllerManagerEntry> kManagers;
+        std::unordered_set<NiControllerManager*> kSeenManagers;
+        CollectControllerManagers(pkRoot, kManagers, kSeenManagers);
+
+        for (const ControllerManagerEntry& kEntry : kManagers)
+        {
+            if (!kEntry.manager)
+                continue;
+
+            const unsigned int uiSequenceCount =
+                kEntry.manager->GetSequenceDataCount();
+            for (unsigned int i = 0; i < uiSequenceCount; ++i)
+            {
+                NiSequenceData* pkSequence =
+                    kEntry.manager->GetSequenceDataAt(i);
+                if (pkSequence)
+                    kOut.emplace(pkSequence, kEntry.target);
+            }
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------
+    void CollectLegacyMultiTargetControllers(const NiStream* pkStream,
+        std::vector<LegacyMultiTargetEntry>& kOut)
+    {
+        if (!pkStream)
+            return;
+
+        std::unordered_set<NiMultiTargetTransformController*> kSeen;
+        for (unsigned int i = 0; i < pkStream->GetObjectCount(); ++i)
+        {
+            NiMultiTargetTransformController* pkController =
+                NiDynamicCast(NiMultiTargetTransformController,
+                    pkStream->GetObjectAt(i));
+            if (!pkController || !kSeen.insert(pkController).second)
+                continue;
+
+            LegacyMultiTargetEntry kEntry;
+            kEntry.rootTarget = NiDynamicCast(NiAVObject,
+                pkController->GetTarget());
+            AddLegacyTargetByName(kEntry, kEntry.rootTarget);
+
+            const unsigned short usExtraTargetCount =
+                pkController->GetLegacyExtraTargetCount();
+            kEntry.extraTargets.reserve(usExtraTargetCount);
+            for (unsigned short us = 0; us < usExtraTargetCount; ++us)
+            {
+                NiAVObject* pkTarget =
+                    pkController->GetLegacyExtraTargetAt(us);
+                kEntry.extraTargets.push_back(pkTarget);
+                AddLegacyTargetByName(kEntry, pkTarget);
+            }
+
+            kOut.push_back(std::move(kEntry));
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------
+    unsigned int CountBakeableTransformEvaluators(
+        const NiSequenceData* pkSequence)
+    {
+        if (!pkSequence)
+            return 0;
+
+        unsigned int uiCount = 0;
+        for (unsigned int i = 0; i < pkSequence->GetNumEvaluators(); ++i)
+        {
+            NiEvaluator* pkEvaluator = pkSequence->GetEvaluatorAt(i);
+            if (pkEvaluator &&
+                (NiIsKindOf(NiTransformEvaluator, pkEvaluator) ||
+                 NiIsKindOf(NiConstTransformEvaluator, pkEvaluator) ||
+                 NiIsKindOf(NiBSplineTransformEvaluator, pkEvaluator)))
+            {
+                ++uiCount;
+            }
+        }
+        return uiCount;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    LegacyTargetSelection SelectLegacyTargetHints(
+        const NiSequenceData* pkSequence,
+        unsigned int uiTransformEvaluatorCount,
+        const SequenceOwnerMap& kSequenceOwners,
+        const std::vector<LegacyMultiTargetEntry>& kControllers)
+    {
+        LegacyTargetSelection kSelection;
+        if (!pkSequence || kControllers.empty())
+            return kSelection;
+
+        NiAVObject* pkExpectedRoot = nullptr;
+        auto kOwner = kSequenceOwners.find(pkSequence);
+        if (kOwner != kSequenceOwners.end())
+            pkExpectedRoot = kOwner->second;
+
+        for (const LegacyMultiTargetEntry& kEntry : kControllers)
+        {
+            if (pkExpectedRoot && kEntry.rootTarget != pkExpectedRoot)
+                continue;
+
+            if (kSelection.controller)
+            {
+                // More than one controller can target the same root. Do not
+                // guess which target list belongs to this sequence.
+                kSelection.controller = nullptr;
+                kSelection.ambiguousController = true;
+                return kSelection;
+            }
+            kSelection.controller = &kEntry;
+        }
+
+        if (!pkExpectedRoot && kControllers.size() != 1)
+        {
+            // External KF/KFM data does not identify its owning manager. It is
+            // safe to use target hints only when the model has one controller.
+            kSelection.controller = nullptr;
+            kSelection.ambiguousController = true;
+            return kSelection;
+        }
+
+        if (!kSelection.controller || uiTransformEvaluatorCount == 0)
+            return kSelection;
+
+        const LegacyMultiTargetEntry& kEntry = *kSelection.controller;
+        if (uiTransformEvaluatorCount == kEntry.extraTargets.size())
+        {
+            // Some exporters store the manager/root target separately and put
+            // only the remaining controlled nodes in Extra Targets.
+            kSelection.ordinalTargets = kEntry.extraTargets;
+        }
+        else if (kEntry.rootTarget &&
+            uiTransformEvaluatorCount == kEntry.extraTargets.size() + 1)
+        {
+            // Other exporters emit one controlled block for the inherited
+            // Target followed by one block for each Extra Target.
+            kSelection.ordinalTargets.reserve(uiTransformEvaluatorCount);
+            kSelection.ordinalTargets.push_back(kEntry.rootTarget);
+            kSelection.ordinalTargets.insert(
+                kSelection.ordinalTargets.end(),
+                kEntry.extraTargets.begin(), kEntry.extraTargets.end());
+        }
+
+        return kSelection;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    NiAVObject* FindUniqueLegacyTargetByName(
+        const LegacyMultiTargetEntry* pkController,
+        const std::string& kNodeName)
+    {
+        if (!pkController || kNodeName.empty())
+            return nullptr;
+
+        auto kTarget = pkController->uniqueTargetsByName.find(kNodeName);
+        return kTarget != pkController->uniqueTargetsByName.end()
+            ? kTarget->second : nullptr;
+    }
+#endif
 
     //----------------------------------------------------------------------------------------------
     bool IsLikelyAccumulationRoot(NiAVObject* pkObject,
@@ -512,12 +780,96 @@ namespace
         std::string name;
         NiTransformController* controller = nullptr;
         NiAVObject* object = nullptr;
-        NiTransformInterpolator* interpolator = nullptr;
+        NiInterpolator* interpolator = nullptr;
         float beginTime = 0.0f;
         float endTime = 0.0f;
         float frequency = 1.0f;
+        float phase = 0.0f;
         float durationSeconds = 0.0f;
+        NiTimeController::CycleType cycleType = NiTimeController::CLAMP;
+        bool playBackwards = false;
+        bool active = true;
     };
+
+    //----------------------------------------------------------------------------------------------
+    const char* GetCycleTypeName(NiTimeController::CycleType eCycleType)
+    {
+        switch (eCycleType)
+        {
+        case NiTimeController::LOOP:
+            return "LOOP";
+        case NiTimeController::REVERSE:
+            return "REVERSE";
+        case NiTimeController::CLAMP:
+            return "CLAMP";
+        default:
+            return "UNKNOWN";
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------
+    float ComputeControllerKeyTime(const NifControllerEntry& kEntry,
+        float fPlaybackSeconds)
+    {
+        const float fLo = kEntry.beginTime;
+        const float fHi = kEntry.endTime;
+        const float fSpan = fHi - fLo;
+        if (!std::isfinite(fSpan) || fSpan <= 0.0f)
+            return fLo;
+
+        float fScaledTime =
+            fPlaybackSeconds * kEntry.frequency + kEntry.phase;
+
+        switch (kEntry.cycleType)
+        {
+        case NiTimeController::LOOP:
+        {
+            float fRelative = std::fmod(fScaledTime - fLo, fSpan);
+            if (fRelative < 0.0f)
+                fRelative += fSpan;
+            fScaledTime = fLo + fRelative;
+            break;
+        }
+        case NiTimeController::REVERSE:
+        {
+            // Match NiTimeController::ComputeScaledTime exactly: unlike LOOP,
+            // REVERSE folds the unshifted scaled time over a double span and
+            // adds the low key time after the fold.
+            const float fDoubleSpan = 2.0f * fSpan;
+            float fRelative = std::fmod(fScaledTime, fDoubleSpan);
+            if (fRelative < 0.0f)
+                fRelative += fDoubleSpan;
+            if (fRelative > fSpan)
+                fRelative = fDoubleSpan - fRelative;
+            fScaledTime = fLo + fRelative;
+            break;
+        }
+        case NiTimeController::CLAMP:
+        default:
+            fScaledTime = std::clamp(fScaledTime, fLo, fHi);
+            break;
+        }
+
+        fScaledTime = std::clamp(fScaledTime, fLo, fHi);
+        if (kEntry.playBackwards)
+            fScaledTime = fHi - (fScaledTime - fLo);
+
+        return std::clamp(fScaledTime, fLo, fHi);
+    }
+
+    //----------------------------------------------------------------------------------------------
+    float GetPlaybackSeconds(const SampleGrid& kGrid, size_t stSampleIndex)
+    {
+        if (stSampleIndex >= kGrid.ticks.size() ||
+            !std::isfinite(kGrid.sampleRate) ||
+            kGrid.sampleRate <= MIN_POSITIVE)
+        {
+            return 0.0f;
+        }
+
+        return static_cast<float>(
+            kGrid.ticks[stSampleIndex] / kGrid.sampleRate);
+    }
 
     //----------------------------------------------------------------------------------------------
     void CollectTransformControllers(NiAVObject* pkObject,
@@ -536,35 +888,67 @@ namespace
                 NiInterpolator* pkInterpolator =
                     pkTransformController->GetInterpolator(0);
 
-                if (pkInterpolator &&
-                    NiIsKindOf(NiTransformInterpolator, pkInterpolator))
+                // NiTransformController can use NiTransformInterpolator,
+                // NiBSplineTransformInterpolator, compressed B-spline
+                // interpolators, or another transform-valued interpolator.
+                // Restricting this to NiTransformInterpolator silently omitted
+                // animated effect nodes in models such as M329.
+                if (pkInterpolator && pkInterpolator->IsTransformValueSupported())
                 {
-                    NiTransformInterpolator* pkTransformInterpolator =
-                        NiStaticCast(NiTransformInterpolator, pkInterpolator);
-
                     float fBegin = pkTransformController->GetBeginKeyTime();
                     float fEnd = pkTransformController->GetEndKeyTime();
-                    if (!std::isfinite(fBegin) || !std::isfinite(fEnd) || fEnd <= fBegin)
-                        pkTransformInterpolator->GetActiveTimeRange(fBegin, fEnd);
+                    if (!std::isfinite(fBegin) || !std::isfinite(fEnd) ||
+                        fEnd <= fBegin)
+                    {
+                        pkInterpolator->GetActiveTimeRange(fBegin, fEnd);
+                    }
 
-                    const float fFrequency =
-                        std::isfinite(pkTransformController->GetFrequency()) &&
-                        std::abs(pkTransformController->GetFrequency()) > MIN_POSITIVE
-                        ? std::abs(pkTransformController->GetFrequency()) : 1.0f;
+                    float fFrequency = pkTransformController->GetFrequency();
+                    if (!std::isfinite(fFrequency))
+                        fFrequency = 1.0f;
 
-                    if (std::isfinite(fBegin) && std::isfinite(fEnd) && fEnd > fBegin)
+                    float fPhase = pkTransformController->GetPhase();
+                    if (!std::isfinite(fPhase))
+                        fPhase = 0.0f;
+
+                    if (std::isfinite(fBegin) && std::isfinite(fEnd) &&
+                        fEnd > fBegin)
                     {
                         NifControllerEntry kEntry;
                         kEntry.name = GetExportNodeName(pkObject);
                         kEntry.controller = pkTransformController;
                         kEntry.object = pkObject;
-                        kEntry.interpolator = pkTransformInterpolator;
+                        kEntry.interpolator = pkInterpolator;
                         kEntry.beginTime = fBegin;
                         kEntry.endTime = fEnd;
                         kEntry.frequency = fFrequency;
-                        kEntry.durationSeconds = (fEnd - fBegin) / fFrequency;
+                        kEntry.phase = fPhase;
+                        const float fAbsFrequency = std::abs(fFrequency);
+                        kEntry.durationSeconds =
+                            fAbsFrequency > MIN_POSITIVE
+                            ? (fEnd - fBegin) / fAbsFrequency
+                            : 0.0f;
+                        kEntry.cycleType = pkTransformController->GetCycleType();
+                        kEntry.playBackwards =
+                            pkTransformController->GetPlayBackwards();
+                        kEntry.active = pkTransformController->GetActive();
                         kOut.push_back(kEntry);
                     }
+                    else
+                    {
+                        std::cerr << "  Warning: NiTransformController on node '"
+                            << GetExportNodeName(pkObject)
+                            << "' has no usable active time range; interpolator="
+                            << pkInterpolator->GetRTTI()->GetName() << "."
+                            << std::endl;
+                    }
+                }
+                else
+                {
+                    std::cerr << "  Warning: NiTransformController on node '"
+                        << GetExportNodeName(pkObject)
+                        << "' has no transform-valued interpolator."
+                        << std::endl;
                 }
             }
             pkController = pkController->GetNext();
@@ -577,6 +961,227 @@ namespace
                 CollectTransformControllers(pkNode->GetAt(i), kOut);
         }
     }
+
+    //----------------------------------------------------------------------------------------------
+    ControllerBakeStats BakeNifControllersIntoTracks(
+        const std::vector<NifControllerEntry>& kControllers,
+        const SampleGrid& kGrid,
+        float fUnitScale,
+        bool bConvertToUnrealAxes,
+        const std::unordered_map<std::string, TransformComponentMask>&
+            kProtectedComponents,
+        std::vector<BakedNodeTrack>& kTracks,
+        std::unordered_map<std::string, size_t>& kTrackByName)
+    {
+        ControllerBakeStats kStats;
+
+        for (const NifControllerEntry& kEntry : kControllers)
+        {
+            if (!kEntry.object || !kEntry.interpolator)
+                continue;
+
+            // Preserve the same accumulation-root rule used for KF/KFM
+            // evaluators. Effect children such as Bip01 NonAccum are not
+            // filtered; only the actual accumulation node is skipped.
+            if (IsLikelyAccumulationRoot(kEntry.object, kEntry.name))
+            {
+                ++kStats.skippedAccumulationRoots;
+                continue;
+            }
+
+            TransformComponentMask kProtected;
+            auto kProtectedIt = kProtectedComponents.find(kEntry.name);
+            if (kProtectedIt != kProtectedComponents.end())
+                kProtected = kProtectedIt->second;
+
+            BakedNodeTrack& kTrack = GetOrCreateTrack(kEntry.name,
+                kEntry.object, kGrid, fUnitScale,
+                bConvertToUnrealAxes, kTracks, kTrackByName);
+
+            bool bWroteController = false;
+            bool bSawPosition = false;
+            bool bSawRotation = false;
+            bool bSawScale = false;
+
+            // Interpolators cache their last sample time. Force the first
+            // sample when the same NIF controller is baked into several KF
+            // clips, each of which starts again at time zero.
+            kEntry.interpolator->ForceNextUpdate();
+
+            for (size_t i = 0; i < kGrid.ticks.size(); ++i)
+            {
+                const float fPlaybackSeconds = GetPlaybackSeconds(kGrid, i);
+                const float fControllerTime =
+                    ComputeControllerKeyTime(kEntry, fPlaybackSeconds);
+
+                NiQuatTransform kValue;
+                if (!kEntry.interpolator->Update(
+                    fControllerTime, kEntry.object, kValue))
+                {
+                    ++kStats.controllerSamplesFailed;
+                    continue;
+                }
+
+                if (kValue.IsTranslateValid())
+                {
+                    bSawPosition = true;
+                    if (!kProtected.position)
+                    {
+                        const NiPoint3& kPosition = kValue.GetTranslate();
+                        const aiVector3D kSourcePosition(
+                            kPosition.x * fUnitScale,
+                            kPosition.y * fUnitScale,
+                            kPosition.z * fUnitScale);
+                        kTrack.positions[i].mValue =
+                            AxisConversion::ToUnrealVector(
+                                kSourcePosition, bConvertToUnrealAxes);
+                        kTrack.hasPositionSource = true;
+                        kTrack.hasAnimationData = true;
+                        bWroteController = true;
+                    }
+                }
+
+                if (kValue.IsRotateValid())
+                {
+                    bSawRotation = true;
+                    if (!kProtected.rotation)
+                    {
+                        kTrack.rotations[i].mValue = NormalizeQuaternion(
+                            AxisConversion::ToUnrealQuaternion(
+                                ToAiQuat(kValue.GetRotate()),
+                                bConvertToUnrealAxes));
+                        kTrack.hasRotationSource = true;
+                        kTrack.hasAnimationData = true;
+                        bWroteController = true;
+                    }
+                }
+
+                if (kValue.IsScaleValid())
+                {
+                    bSawScale = true;
+                    if (!kProtected.scale)
+                    {
+                        const float fScale = kValue.GetScale();
+                        kTrack.scales[i].mValue = aiVector3D(
+                            fScale, fScale, fScale);
+                        kTrack.hasScaleSource = true;
+                        kTrack.hasAnimationData = true;
+                        bWroteController = true;
+                    }
+                }
+            }
+
+            if (bSawPosition && kProtected.position)
+                ++kStats.protectedPositionComponents;
+            if (bSawRotation && kProtected.rotation)
+                ++kStats.protectedRotationComponents;
+            if (bSawScale && kProtected.scale)
+                ++kStats.protectedScaleComponents;
+            if (bWroteController)
+                ++kStats.controllersBaked;
+        }
+
+        return kStats;
+    }
+
+}
+
+//--------------------------------------------------------------------------------------------------
+unsigned int AnimationExporter::AppendFromControllerManagers(
+    NiAVObject* pkRoot,
+    std::vector<NiSequenceDataPtr>& kSequenceDatas)
+{
+    if (!pkRoot)
+        return 0;
+
+    // External KFM/KF sequences are already present in kSequenceDatas and
+    // intentionally win name collisions. This matters for older assets that
+    // embed a mostly duplicate sequence set but also contain one or more
+    // model-specific clips (for example, a weapon/effect animation).
+    std::unordered_set<const NiSequenceData*> kKnownPointers;
+    std::unordered_set<std::string> kKnownNames;
+    for (NiSequenceData* pkSequence : kSequenceDatas)
+    {
+        if (!pkSequence)
+            continue;
+
+        kKnownPointers.insert(pkSequence);
+        const char* pcName = pkSequence->GetName().c_str();
+        if (pcName && pcName[0] != '\0')
+            kKnownNames.emplace(pcName);
+    }
+
+    std::vector<ControllerManagerEntry> kManagers;
+    std::unordered_set<NiControllerManager*> kSeenManagers;
+    CollectControllerManagers(pkRoot, kManagers, kSeenManagers);
+
+    unsigned int uiAdded = 0;
+    unsigned int uiDuplicateNames = 0;
+    unsigned int uiDuplicatePointers = 0;
+
+    for (const ControllerManagerEntry& kEntry : kManagers)
+    {
+        NiControllerManager* pkManager = kEntry.manager;
+        if (!pkManager)
+            continue;
+
+        const std::string kTargetName = kEntry.target
+            ? GetExportNodeName(kEntry.target) : std::string("<unknown>");
+        const unsigned int uiSequenceCount =
+            pkManager->GetSequenceDataCount();
+
+        std::cout << "  Found NiControllerManager on node '"
+            << kTargetName << "' with " << uiSequenceCount
+            << " embedded sequence(s)." << std::endl;
+
+        for (unsigned int i = 0; i < uiSequenceCount; ++i)
+        {
+            NiSequenceData* pkSequence = pkManager->GetSequenceDataAt(i);
+            if (!pkSequence)
+                continue;
+
+            if (!kKnownPointers.insert(pkSequence).second)
+            {
+                ++uiDuplicatePointers;
+                continue;
+            }
+
+            const char* pcName = pkSequence->GetName().c_str();
+            const std::string kName =
+                (pcName && pcName[0] != '\0') ? pcName : std::string();
+
+            if (!kName.empty() && !kKnownNames.insert(kName).second)
+            {
+                // Keep the external/first copy. Legacy embedded sequences
+                // commonly duplicate the normal KFM set.
+                ++uiDuplicateNames;
+                continue;
+            }
+
+            kSequenceDatas.push_back(pkSequence);
+            ++uiAdded;
+
+            std::cout << "    Added embedded sequence '"
+                << (kName.empty() ? "<unnamed>" : kName) << "' ("
+                << pkSequence->GetNumEvaluators() << " evaluator(s))."
+                << std::endl;
+        }
+    }
+
+    if (!kManagers.empty())
+    {
+        std::cout << "  Embedded controller-manager sequences added: "
+            << uiAdded;
+        if (uiDuplicateNames > 0 || uiDuplicatePointers > 0)
+        {
+            std::cout << " (skipped " << uiDuplicateNames
+                << " duplicate name(s) and " << uiDuplicatePointers
+                << " duplicate object reference(s))";
+        }
+        std::cout << "." << std::endl;
+    }
+
+    return uiAdded;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -585,7 +1190,8 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
     NiAVObject* pkNifRoot,
     float fUnitScale,
     float fSampleRate,
-    bool bConvertToUnrealAxes)
+    bool bConvertToUnrealAxes,
+    const NiStream* pkNifStream)
 {
     std::vector<aiAnimation*> kResult;
     const float fSafeUnitScale = SanitizeUnitScale(fUnitScale);
@@ -593,6 +1199,60 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
 
     NodeByNameMap kNodesByName;
     CollectNodesByName(pkNifRoot, kNodesByName);
+
+#ifndef EE_REMOVE_BACK_COMPAT_STREAMING
+    SequenceOwnerMap kSequenceOwners;
+    CollectSequenceOwners(pkNifRoot, kSequenceOwners);
+
+    std::vector<LegacyMultiTargetEntry> kLegacyMultiTargets;
+    CollectLegacyMultiTargetControllers(pkNifStream, kLegacyMultiTargets);
+    if (!kLegacyMultiTargets.empty())
+    {
+        std::cout << "  Found " << kLegacyMultiTargets.size()
+            << " legacy NiMultiTargetTransformController(s)." << std::endl;
+        for (const LegacyMultiTargetEntry& kEntry : kLegacyMultiTargets)
+        {
+            unsigned int uiResolvedExtraTargets = 0;
+            for (NiAVObject* pkTarget : kEntry.extraTargets)
+                uiResolvedExtraTargets += pkTarget ? 1u : 0u;
+
+            std::cout << "    Multi-target root='"
+                << (kEntry.rootTarget
+                    ? GetExportNodeName(kEntry.rootTarget)
+                    : std::string("<null>"))
+                << "' extraTargets=" << kEntry.extraTargets.size()
+                << " (resolved=" << uiResolvedExtraTargets << ", uniqueNames="
+                << kEntry.uniqueTargetsByName.size() << ")." << std::endl;
+        }
+    }
+#endif
+
+    // NIF-level NiTransformControllers continue to run while a KFM/KF
+    // sequence drives the skeleton in Gamebryo. Collect them once and bake
+    // them into every exported sequence so animated effects and auxiliary
+    // meshes are not lost merely because skeletal animations are present.
+    std::vector<NifControllerEntry> kNifControllers;
+    CollectTransformControllers(pkNifRoot, kNifControllers);
+    if (!kNifControllers.empty())
+    {
+        std::cout << "  Found " << kNifControllers.size()
+            << " NIF NiTransformController(s); merging them into each "
+            << "KF/KFM animation." << std::endl;
+
+        for (const NifControllerEntry& kEntry : kNifControllers)
+        {
+            std::cout << "    Controller node='" << kEntry.name
+                << "' interpolator="
+                << kEntry.interpolator->GetRTTI()->GetName()
+                << " range=[" << kEntry.beginTime << ", "
+                << kEntry.endTime << "] frequency=" << kEntry.frequency
+                << " phase=" << kEntry.phase
+                << " cycle=" << GetCycleTypeName(kEntry.cycleType)
+                << " backwards=" << (kEntry.playBackwards ? "yes" : "no")
+                << " active=" << (kEntry.active ? "yes" : "no")
+                << std::endl;
+        }
+    }
 
     for (size_t s = 0; s < kSequenceDatas.size(); ++s)
     {
@@ -613,14 +1273,25 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
         unsigned int uiDuplicateComponentSources = 0;
         unsigned int uiSkippedAccumulationRoots = 0;
 
+#ifndef EE_REMOVE_BACK_COMPAT_STREAMING
+        const unsigned int uiTransformEvaluatorCount =
+            CountBakeableTransformEvaluators(pkSequence);
+        const LegacyTargetSelection kLegacySelection =
+            SelectLegacyTargetHints(pkSequence, uiTransformEvaluatorCount,
+                kSequenceOwners, kLegacyMultiTargets);
+        unsigned int uiLegacyTransformOrdinal = 0;
+        unsigned int uiLegacyUniqueNameMatches = 0;
+        unsigned int uiLegacyOrdinalNameMatches = 0;
+        unsigned int uiLegacyUnnamedFallbacks = 0;
+        unsigned int uiLegacyNameConflicts = 0;
+        unsigned int uiLegacyNullOrdinalTargets = 0;
+#endif
+        unsigned int uiUnnamedTransformEvaluators = 0;
+
         for (unsigned int e = 0; e < pkSequence->GetNumEvaluators(); ++e)
         {
             NiEvaluator* pkEvaluator = pkSequence->GetEvaluatorAt(e);
             if (!pkEvaluator)
-                continue;
-
-            const char* pcNodeName = pkEvaluator->GetAVObjectName();
-            if (!pcNodeName || pcNodeName[0] == '\0')
                 continue;
 
             if (!IsBakeableTransformEvaluator(pkEvaluator))
@@ -632,13 +1303,81 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
                 continue;
             }
 
-            const std::string kNodeName(pcNodeName);
+            const char* pcNodeName = pkEvaluator->GetAVObjectName();
+            std::string kNodeName =
+                (pcNodeName && pcNodeName[0] != '\0')
+                ? std::string(pcNodeName) : std::string();
             NiAVObject* pkRestObject = nullptr;
-            auto kRestNode = kNodesByName.find(kNodeName);
-            if (kRestNode != kNodesByName.end())
-                pkRestObject = kRestNode->second;
-            else
-                ++uiMissingRestNodes;
+
+#ifndef EE_REMOVE_BACK_COMPAT_STREAMING
+            NiAVObject* pkOrdinalTarget = nullptr;
+            if (uiLegacyTransformOrdinal <
+                kLegacySelection.ordinalTargets.size())
+            {
+                pkOrdinalTarget = kLegacySelection.ordinalTargets[
+                    uiLegacyTransformOrdinal];
+            }
+            ++uiLegacyTransformOrdinal;
+
+            if (!kNodeName.empty())
+            {
+                // The sequence ID tag remains authoritative. Use the legacy
+                // controller's direct pointer when its target name is unique,
+                // which also avoids choosing the wrong node when the scene has
+                // duplicate names.
+                pkRestObject = FindUniqueLegacyTargetByName(
+                    kLegacySelection.controller, kNodeName);
+                if (pkRestObject)
+                {
+                    ++uiLegacyUniqueNameMatches;
+                }
+                else if (pkOrdinalTarget)
+                {
+                    const std::string kOrdinalName =
+                        GetExportNodeName(pkOrdinalTarget);
+                    if (kOrdinalName == kNodeName)
+                    {
+                        pkRestObject = pkOrdinalTarget;
+                        ++uiLegacyOrdinalNameMatches;
+                    }
+                    else
+                    {
+                        // A valid sequence name must not be replaced merely
+                        // because a target array uses a different ordering.
+                        ++uiLegacyNameConflicts;
+                    }
+                }
+            }
+            else if (pkOrdinalTarget)
+            {
+                // Only use ordinal recovery when the number of transform
+                // evaluators exactly matches either Extra Targets or
+                // Target+Extra Targets. This avoids silently assigning an
+                // unnamed channel to the wrong bone.
+                kNodeName = GetExportNodeName(pkOrdinalTarget);
+                pkRestObject = pkOrdinalTarget;
+                ++uiLegacyUnnamedFallbacks;
+            }
+            else if (!kLegacySelection.ordinalTargets.empty())
+            {
+                ++uiLegacyNullOrdinalTargets;
+            }
+#endif
+
+            if (kNodeName.empty())
+            {
+                ++uiUnnamedTransformEvaluators;
+                continue;
+            }
+
+            if (!pkRestObject)
+            {
+                auto kRestNode = kNodesByName.find(kNodeName);
+                if (kRestNode != kNodesByName.end())
+                    pkRestObject = kRestNode->second;
+                else
+                    ++uiMissingRestNodes;
+            }
 
             // KFM/Gamebryo often uses a node such as "Bip01" as the
             // accumulation/root-motion node and keeps the actual skeleton under
@@ -675,6 +1414,27 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
             }
         }
 
+        // Preserve KF/KFM-authored components when a NIF controller targets
+        // the same node. The embedded controller fills only components not
+        // supplied by the sequence; on effect-only nodes it supplies the full
+        // transform. Multiple NIF controllers still follow list order and the
+        // later one may replace an earlier NIF-controller component.
+        std::unordered_map<std::string, TransformComponentMask>
+            kSequenceProtectedComponents;
+        for (const BakedNodeTrack& kTrack : kTracks)
+        {
+            TransformComponentMask kMask;
+            kMask.position = kTrack.hasPositionSource;
+            kMask.rotation = kTrack.hasRotationSource;
+            kMask.scale = kTrack.hasScaleSource;
+            kSequenceProtectedComponents.emplace(kTrack.name, kMask);
+        }
+
+        const ControllerBakeStats kControllerStats =
+            BakeNifControllersIntoTracks(kNifControllers, kGrid,
+                fSafeUnitScale, bConvertToUnrealAxes,
+                kSequenceProtectedComponents, kTracks, kTrackByName);
+
         const char* pcSequenceName = pkSequence->GetName().c_str();
         const std::string kAnimationName =
             (pcSequenceName && pcSequenceName[0] != '\0')
@@ -689,6 +1449,97 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
             << pkAnimation->mNumChannels << " node channels, "
             << kGrid.ticks.size() << " samples at "
             << kGrid.sampleRate << " fps" << std::endl;
+
+#ifndef EE_REMOVE_BACK_COMPAT_STREAMING
+        if (kLegacySelection.controller)
+        {
+            std::cout << "    NiMultiTargetTransformController resolved "
+                << uiLegacyUniqueNameMatches
+                << " channel target(s) by unique direct name";
+            if (uiLegacyOrdinalNameMatches > 0)
+            {
+                std::cout << " and " << uiLegacyOrdinalNameMatches
+                    << " duplicate-name target(s) by validated order";
+            }
+            std::cout << "." << std::endl;
+
+            if (!kLegacySelection.ordinalTargets.empty())
+            {
+                std::cout << "    Validated legacy target ordering for "
+                    << uiTransformEvaluatorCount
+                    << " transform evaluator(s)." << std::endl;
+            }
+        }
+        else if (kLegacySelection.ambiguousController)
+        {
+            std::cerr << "  Warning: animation '" << kAnimationName
+                << "' has more than one possible "
+                << "NiMultiTargetTransformController; direct target hints "
+                << "were not used." << std::endl;
+        }
+        if (uiLegacyUnnamedFallbacks > 0)
+        {
+            std::cout << "    Recovered " << uiLegacyUnnamedFallbacks
+                << " unnamed transform target(s) from the validated legacy "
+                << "target order." << std::endl;
+        }
+        if (uiLegacyNameConflicts > 0)
+        {
+            std::cerr << "  Warning: animation '" << kAnimationName
+                << "' had " << uiLegacyNameConflicts
+                << " sequence-name/multi-target-order conflict(s); sequence "
+                << "AVObject names were kept." << std::endl;
+        }
+        if (uiLegacyNullOrdinalTargets > 0)
+        {
+            std::cerr << "  Warning: animation '" << kAnimationName
+                << "' matched a validated legacy target order containing "
+                << uiLegacyNullOrdinalTargets << " unresolved/null target(s)."
+                << std::endl;
+        }
+#endif
+
+        if (uiUnnamedTransformEvaluators > 0)
+        {
+            std::cerr << "  Warning: animation '" << kAnimationName
+                << "' skipped " << uiUnnamedTransformEvaluators
+                << " unnamed transform evaluator(s) because no unambiguous "
+                << "legacy target mapping was available." << std::endl;
+        }
+
+        if (!kNifControllers.empty())
+        {
+            std::cout << "    Merged " << kControllerStats.controllersBaked
+                << "/" << kNifControllers.size()
+                << " NIF transform controller(s)." << std::endl;
+
+            const unsigned int uiProtectedComponents =
+                kControllerStats.protectedPositionComponents +
+                kControllerStats.protectedRotationComponents +
+                kControllerStats.protectedScaleComponents;
+            if (uiProtectedComponents > 0)
+            {
+                std::cout << "    KF/KFM precedence protected "
+                    << kControllerStats.protectedPositionComponents
+                    << " position, "
+                    << kControllerStats.protectedRotationComponents
+                    << " rotation, and "
+                    << kControllerStats.protectedScaleComponents
+                    << " scale controller component(s)." << std::endl;
+            }
+            if (kControllerStats.skippedAccumulationRoots > 0)
+            {
+                std::cout << "    Skipped "
+                    << kControllerStats.skippedAccumulationRoots
+                    << " NIF accumulation-root controller(s)." << std::endl;
+            }
+            if (kControllerStats.controllerSamplesFailed > 0)
+            {
+                std::cerr << "  Warning: animation '" << kAnimationName
+                    << "' had " << kControllerStats.controllerSamplesFailed
+                    << " failed NIF controller sample(s)." << std::endl;
+            }
+        }
 
         if (uiUnsupportedEvaluators > 0)
         {
@@ -768,53 +1619,13 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(
 
     std::vector<BakedNodeTrack> kTracks;
     std::unordered_map<std::string, size_t> kTrackByName;
+    const std::unordered_map<std::string, TransformComponentMask>
+        kNoProtectedComponents;
 
-    for (NifControllerEntry& kEntry : kControllers)
-    {
-        BakedNodeTrack& kTrack = GetOrCreateTrack(kEntry.name,
-            kEntry.object, kGrid, fSafeUnitScale,
-            bConvertToUnrealAxes, kTracks, kTrackByName);
-
-        for (size_t i = 0; i < kGrid.localTimes.size(); ++i)
-        {
-            const float fControllerSeconds = std::min(
-                kGrid.localTimes[i], kEntry.durationSeconds);
-            const float fLocalTime = std::min(
-                kEntry.beginTime + fControllerSeconds * kEntry.frequency,
-                kEntry.endTime);
-
-            NiQuatTransform kValue;
-            kEntry.interpolator->Update(fLocalTime, kEntry.object, kValue);
-
-            if (kValue.IsTranslateValid())
-            {
-                const NiPoint3& kPosition = kValue.GetTranslate();
-                const aiVector3D kSourcePosition(
-                    kPosition.x * fSafeUnitScale,
-                    kPosition.y * fSafeUnitScale,
-                    kPosition.z * fSafeUnitScale);
-                kTrack.positions[i].mValue = AxisConversion::ToUnrealVector(
-                    kSourcePosition, bConvertToUnrealAxes);
-                kTrack.hasPositionSource = true;
-                kTrack.hasAnimationData = true;
-            }
-            if (kValue.IsRotateValid())
-            {
-                kTrack.rotations[i].mValue = NormalizeQuaternion(
-                    AxisConversion::ToUnrealQuaternion(
-                        ToAiQuat(kValue.GetRotate()), bConvertToUnrealAxes));
-                kTrack.hasRotationSource = true;
-                kTrack.hasAnimationData = true;
-            }
-            if (kValue.IsScaleValid())
-            {
-                const float fScale = kValue.GetScale();
-                kTrack.scales[i].mValue = aiVector3D(fScale, fScale, fScale);
-                kTrack.hasScaleSource = true;
-                kTrack.hasAnimationData = true;
-            }
-        }
-    }
+    const ControllerBakeStats kControllerStats =
+        BakeNifControllersIntoTracks(kControllers, kGrid,
+            fSafeUnitScale, bConvertToUnrealAxes,
+            kNoProtectedComponents, kTracks, kTrackByName);
 
     aiAnimation* pkAnimation = BuildAiAnimation("NifAnimation", kGrid, kTracks);
     if (!pkAnimation)
@@ -823,6 +1634,22 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(
     std::cout << "  Baked NIF controller animation: "
         << pkAnimation->mNumChannels << " node channels, "
         << kGrid.ticks.size() << " samples at "
-        << kGrid.sampleRate << " fps" << std::endl;
+        << kGrid.sampleRate << " fps; controllers="
+        << kControllerStats.controllersBaked << "/"
+        << kControllers.size() << std::endl;
+
+    if (kControllerStats.skippedAccumulationRoots > 0)
+    {
+        std::cout << "    Skipped "
+            << kControllerStats.skippedAccumulationRoots
+            << " NIF accumulation-root controller(s)." << std::endl;
+    }
+    if (kControllerStats.controllerSamplesFailed > 0)
+    {
+        std::cerr << "  Warning: NIF controller animation had "
+            << kControllerStats.controllerSamplesFailed
+            << " failed sample(s)." << std::endl;
+    }
+
     return {pkAnimation};
 }

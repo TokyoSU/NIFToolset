@@ -28,6 +28,12 @@ target_compile_definitions(NiMesh
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIMESH_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiMesh
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiMeshPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiMesh
     PUBLIC

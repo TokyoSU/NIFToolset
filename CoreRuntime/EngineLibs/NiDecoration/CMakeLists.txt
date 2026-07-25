@@ -28,6 +28,12 @@ target_compile_definitions(NiDecoration
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIDECORATION_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiDecoration
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiDecorationPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiDecoration
     PUBLIC

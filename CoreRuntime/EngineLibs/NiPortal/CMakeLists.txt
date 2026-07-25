@@ -28,6 +28,12 @@ target_compile_definitions(NiPortal
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIPORTAL_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiPortal
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiPortalPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiPortal
     PUBLIC

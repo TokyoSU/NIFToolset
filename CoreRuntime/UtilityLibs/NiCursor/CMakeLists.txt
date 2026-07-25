@@ -28,6 +28,12 @@ target_compile_definitions(NiCursor
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NICURSOR_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiCursor
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiCursorPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiCursor
     PUBLIC

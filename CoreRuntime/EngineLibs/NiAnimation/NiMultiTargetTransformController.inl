@@ -14,8 +14,24 @@
 #ifndef EE_REMOVE_BACK_COMPAT_STREAMING
 
 //--------------------------------------------------------------------------------------------------
-inline NiMultiTargetTransformController::NiMultiTargetTransformController()
+inline NiMultiTargetTransformController::NiMultiTargetTransformController() :
+    m_usLegacyExtraTargetCount(0), m_ppkLegacyExtraTargets(NULL)
 {
+}
+
+//--------------------------------------------------------------------------------------------------
+inline unsigned short
+NiMultiTargetTransformController::GetLegacyExtraTargetCount() const
+{
+    return m_usLegacyExtraTargetCount;
+}
+
+//--------------------------------------------------------------------------------------------------
+inline NiAVObject* NiMultiTargetTransformController::GetLegacyExtraTargetAt(
+    unsigned short usIndex) const
+{
+    return usIndex < m_usLegacyExtraTargetCount && m_ppkLegacyExtraTargets
+        ? m_ppkLegacyExtraTargets[usIndex] : NULL;
 }
 
 //--------------------------------------------------------------------------------------------------

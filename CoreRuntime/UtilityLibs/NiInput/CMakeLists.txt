@@ -28,6 +28,12 @@ target_compile_definitions(NiInput
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIINPUT_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiInput
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiInputPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiInput
     PUBLIC

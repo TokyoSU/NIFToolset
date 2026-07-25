@@ -25,6 +25,9 @@ NiImplementRTTI(NiMultiTargetTransformController, NiInterpController, NiTypeMask
 //--------------------------------------------------------------------------------------------------
 NiMultiTargetTransformController::~NiMultiTargetTransformController()
 {
+    NiFree(m_ppkLegacyExtraTargets);
+    m_ppkLegacyExtraTargets = NULL;
+    m_usLegacyExtraTargetCount = 0;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -183,14 +186,20 @@ void NiMultiTargetTransformController::LoadBinary(NiStream& kStream)
 
     if (kStream.GetFileVersion() < NiAnimationConstants::GetPoseVersion())
     {
-        // Read the values from the stream, then ignore them.
-        unsigned short usNumInterps;
-        NiStreamLoadBinary(kStream, usNumInterps);
+        NiStreamLoadBinary(kStream, m_usLegacyExtraTargetCount);
 
-        for (unsigned short us = 0; us < usNumInterps; us++)
+        if (m_usLegacyExtraTargetCount > 0)
         {
-            // Read stored m_ppkTargets[us].
-            kStream.ResolveLinkID();
+            m_ppkLegacyExtraTargets =
+                NiAlloc(NiAVObject*, m_usLegacyExtraTargetCount);
+            for (unsigned short us = 0; us < m_usLegacyExtraTargetCount; ++us)
+            {
+                // All objects have already been created for versions that
+                // contain NiControllerSequence, so preserve the direct target
+                // pointer immediately just as the old loader resolved it.
+                m_ppkLegacyExtraTargets[us] = NiDynamicCast(NiAVObject,
+                    kStream.ResolveLinkID());
+            }
         }
     }
 }
@@ -246,8 +255,8 @@ void NiMultiTargetTransformController::GetViewerStrings(NiViewerStringsArray*
     pkStrings->Add(NiGetViewerString(NiMultiTargetTransformController::ms_RTTI
         .GetName()));
 
-    // This class has been deprecated and no longer contains any
-    // meaningful data members.
+    pkStrings->Add(NiGetViewerString("Legacy extra target count",
+        m_usLegacyExtraTargetCount));
 }
 
 //--------------------------------------------------------------------------------------------------

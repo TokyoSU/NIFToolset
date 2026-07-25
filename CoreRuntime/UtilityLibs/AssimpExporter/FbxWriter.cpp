@@ -11,12 +11,111 @@
 #include <NiGeometry.h>
 
 #include <filesystem>
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <cmath>
 #include <cstdint>
 
 namespace fs = std::filesystem;
+
+namespace
+{
+	bool NormalizeNormal(aiVector3D& kNormal)
+	{
+		if (!std::isfinite(kNormal.x) || !std::isfinite(kNormal.y) ||
+			!std::isfinite(kNormal.z))
+		{
+			return false;
+		}
+
+		const float fLengthSquared = kNormal.x * kNormal.x +
+			kNormal.y * kNormal.y + kNormal.z * kNormal.z;
+		if (!std::isfinite(fLengthSquared) || fLengthSquared <= 1.0e-20f)
+			return false;
+
+		const float fInvLength = 1.0f / std::sqrt(fLengthSquared);
+		kNormal.x *= fInvLength;
+		kNormal.y *= fInvLength;
+		kNormal.z *= fInvLength;
+		return true;
+	}
+
+	std::vector<aiVector3D> BuildCompleteNormals(
+		const IntermediateMesh& kMesh, unsigned int& uiGeneratedCount,
+		unsigned int& uiFallbackCount)
+	{
+		const std::size_t stVertexCount = kMesh.positions.size();
+		std::vector<aiVector3D> kAccumulated(stVertexCount,
+			aiVector3D(0.0f, 0.0f, 0.0f));
+
+		for (std::size_t i = 0; i + 2u < kMesh.indices.size(); i += 3u)
+		{
+			const unsigned int i0 = kMesh.indices[i + 0u];
+			const unsigned int i1 = kMesh.indices[i + 1u];
+			const unsigned int i2 = kMesh.indices[i + 2u];
+			if (i0 >= stVertexCount || i1 >= stVertexCount ||
+				i2 >= stVertexCount || i0 == i1 || i0 == i2 || i1 == i2)
+			{
+				continue;
+			}
+
+			const aiVector3D& p0 = kMesh.positions[i0];
+			const aiVector3D& p1 = kMesh.positions[i1];
+			const aiVector3D& p2 = kMesh.positions[i2];
+			const float e1x = p1.x - p0.x;
+			const float e1y = p1.y - p0.y;
+			const float e1z = p1.z - p0.z;
+			const float e2x = p2.x - p0.x;
+			const float e2y = p2.y - p0.y;
+			const float e2z = p2.z - p0.z;
+			const aiVector3D kFace(
+				e1y * e2z - e1z * e2y,
+				e1z * e2x - e1x * e2z,
+				e1x * e2y - e1y * e2x);
+			aiVector3D kUnit = kFace;
+			if (!NormalizeNormal(kUnit))
+				continue;
+
+			const unsigned int auiVertices[3] = { i0, i1, i2 };
+			for (unsigned int uiVertex : auiVertices)
+			{
+				kAccumulated[uiVertex].x += kFace.x;
+				kAccumulated[uiVertex].y += kFace.y;
+				kAccumulated[uiVertex].z += kFace.z;
+			}
+		}
+
+		const bool bHasSource = kMesh.normals.size() == stVertexCount;
+		std::vector<aiVector3D> kResult(stVertexCount);
+		uiGeneratedCount = 0;
+		uiFallbackCount = 0;
+		for (std::size_t v = 0; v < stVertexCount; ++v)
+		{
+			aiVector3D kNormal;
+			bool bValid = false;
+			if (bHasSource)
+			{
+				kNormal = kMesh.normals[v];
+				bValid = NormalizeNormal(kNormal);
+			}
+			if (!bValid)
+			{
+				kNormal = kAccumulated[v];
+				bValid = NormalizeNormal(kNormal);
+				if (bValid)
+					++uiGeneratedCount;
+			}
+			if (!bValid)
+			{
+				kNormal = aiVector3D(0.0f, 0.0f, 1.0f);
+				++uiFallbackCount;
+			}
+			kResult[v] = kNormal;
+		}
+		return kResult;
+	}
+}
 
 //--------------------------------------------------------------------------------------------------
 FbxWriter::FbxWriter(const TextureExporter& kTexExporter, float fUnitScale,
@@ -54,14 +153,24 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 	}
 
 	// ---- Normals ----
-	if (kIn.normals.size() == uiVertCount)
+	// Always provide a complete, finite normal stream to Assimp. Source NIF
+	// normals are preserved when valid; missing/invalid entries are generated
+	// from the exported triangle topology as a final safety net.
+	unsigned int uiGeneratedNormals = 0;
+	unsigned int uiFallbackNormals = 0;
+	const std::vector<aiVector3D> kNormals = BuildCompleteNormals(
+		kIn, uiGeneratedNormals, uiFallbackNormals);
+	pkMesh->mNormals = new aiVector3D[uiVertCount];
+	for (unsigned int i = 0; i < uiVertCount; ++i)
 	{
-		pkMesh->mNormals = new aiVector3D[uiVertCount];
-		for (unsigned int i = 0; i < uiVertCount; ++i)
-		{
-			pkMesh->mNormals[i] = AxisConversion::ToUnrealVector(
-				kIn.normals[i], m_bConvertToUnrealAxes);
-		}
+		pkMesh->mNormals[i] = AxisConversion::ToUnrealVector(
+			kNormals[i], m_bConvertToUnrealAxes);
+	}
+	if (uiGeneratedNormals != 0u || uiFallbackNormals != 0u)
+	{
+		std::cerr << "Warning: completed normal stream for mesh '"
+			<< kIn.name << "': generated=" << uiGeneratedNormals
+			<< " fallback=" << uiFallbackNormals << std::endl;
 	}
 
 	// ---- UVs ----
@@ -90,27 +199,127 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 	// ---- Bones (skinning) ----
 	if (!kIn.boneNames.empty() && !kIn.boneWeights.empty())
 	{
-		unsigned int uiBoneCount = static_cast<unsigned int>(kIn.boneNames.size());
+		const unsigned int uiBoneCount =
+			static_cast<unsigned int>(kIn.boneNames.size());
 
-		// Accumulate per-bone vertex weights
+		auto IsValidBone = [&](unsigned int uiBoneIndex)
+		{
+			if (uiBoneIndex >= uiBoneCount)
+				return false;
+			if (!kIn.boneValid.empty())
+			{
+				return uiBoneIndex < kIn.boneValid.size() &&
+					kIn.boneValid[uiBoneIndex];
+			}
+			return kIn.boneNames[uiBoneIndex].rfind("missing_bone_", 0) != 0;
+		};
+
+		const bool bHasFallback = IsValidBone(kIn.fallbackBoneIndex);
+
+		// Revalidate every vertex immediately before constructing Assimp bones.
+		// This guarantees that an invalid palette index, missing source bone, NaN
+		// weight, or short boneWeights array cannot reach the FBX writer as an
+		// unweighted vertex.
 		struct BoneAccum { std::vector<aiVertexWeight> weights; };
 		std::vector<BoneAccum> kBoneAccum(uiBoneCount);
 
-		for (unsigned int v = 0; v < static_cast<unsigned int>(kIn.boneWeights.size()); ++v)
+		unsigned int uiFinalFallbackVertices = 0;
+		unsigned int uiFinalInvalidInfluences = 0;
+		unsigned int uiStillUnweighted = 0;
+
+		for (unsigned int v = 0; v < uiVertCount; ++v)
 		{
-			for (const VertexBoneWeight& kBW : kIn.boneWeights[v])
+			std::vector<VertexBoneWeight> kWeights;
+			if (v < kIn.boneWeights.size())
 			{
-				if (kBW.boneIndex < uiBoneCount)
-					kBoneAccum[kBW.boneIndex].weights.emplace_back(v, kBW.weight);
+				for (const VertexBoneWeight& kWeight : kIn.boneWeights[v])
+				{
+					if (!IsValidBone(kWeight.boneIndex) ||
+						!std::isfinite(kWeight.weight) ||
+						kWeight.weight <= 0.0f)
+					{
+						++uiFinalInvalidInfluences;
+						continue;
+					}
+
+					auto kExisting = std::find_if(kWeights.begin(), kWeights.end(),
+						[&](const VertexBoneWeight& kMerged)
+						{
+							return kMerged.boneIndex == kWeight.boneIndex;
+						});
+					if (kExisting != kWeights.end())
+						kExisting->weight += kWeight.weight;
+					else
+						kWeights.push_back(kWeight);
+				}
+			}
+
+			std::stable_sort(kWeights.begin(), kWeights.end(),
+				[](const VertexBoneWeight& kLeft, const VertexBoneWeight& kRight)
+				{
+					return kLeft.weight > kRight.weight;
+				});
+			if (kWeights.size() > 4)
+				kWeights.resize(4);
+
+			float fTotal = 0.0f;
+			for (const VertexBoneWeight& kWeight : kWeights)
+				fTotal += kWeight.weight;
+
+			if (!std::isfinite(fTotal) || fTotal <= 0.000001f)
+			{
+				kWeights.clear();
+				if (bHasFallback)
+				{
+					kWeights.push_back({kIn.fallbackBoneIndex, 1.0f});
+					++uiFinalFallbackVertices;
+				}
+				else
+				{
+					++uiStillUnweighted;
+					continue;
+				}
+			}
+			else
+			{
+				const float fInvTotal = 1.0f / fTotal;
+				for (VertexBoneWeight& kWeight : kWeights)
+					kWeight.weight *= fInvTotal;
+			}
+
+			for (const VertexBoneWeight& kWeight : kWeights)
+			{
+				kBoneAccum[kWeight.boneIndex].weights.emplace_back(
+					v, kWeight.weight);
 			}
 		}
 
-		// Build aiBone array (only for bones that have weights)
+		if (uiFinalInvalidInfluences > 0)
+		{
+			std::cerr << "    FbxWriter discarded " << uiFinalInvalidInfluences
+				<< " invalid skin influence(s) from mesh '" << kIn.name
+				<< "'." << std::endl;
+		}
+		if (uiFinalFallbackVertices > 0)
+		{
+			std::cerr << "    FbxWriter assigned " << uiFinalFallbackVertices
+				<< " vertex/vertices to final fallback bone '"
+				<< kIn.boneNames[kIn.fallbackBoneIndex] << "' in mesh '"
+				<< kIn.name << "'." << std::endl;
+		}
+		if (uiStillUnweighted > 0)
+		{
+			std::cerr << "    Error: " << uiStillUnweighted
+				<< " vertex/vertices remain unweighted in mesh '" << kIn.name
+				<< "' because no real fallback bone exists." << std::endl;
+		}
+
+		// Build aiBone array only for real bones that have weights.
 		std::vector<aiBone*> kAiBones;
 		kAiBones.reserve(uiBoneCount);
 		for (unsigned int b = 0; b < uiBoneCount; ++b)
 		{
-			if (kBoneAccum[b].weights.empty())
+			if (!IsValidBone(b) || kBoneAccum[b].weights.empty())
 				continue;
 
 			aiBone* pkBone = new aiBone();
@@ -120,7 +329,8 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 			// translation again here would apply the unit scale twice.
 			pkBone->mOffsetMatrix = (b < kIn.boneOffsetMatrices.size())
 				? kIn.boneOffsetMatrices[b] : aiMatrix4x4();
-			pkBone->mNumWeights = static_cast<unsigned int>(kBoneAccum[b].weights.size());
+			pkBone->mNumWeights =
+				static_cast<unsigned int>(kBoneAccum[b].weights.size());
 			pkBone->mWeights = new aiVertexWeight[pkBone->mNumWeights];
 			for (unsigned int w = 0; w < pkBone->mNumWeights; ++w)
 				pkBone->mWeights[w] = kBoneAccum[b].weights[w];
@@ -276,7 +486,7 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 	if (pkRoot)
 	{
 		MeshExtractor kDummy("", false, m_fUnitScale,
-			true, true, 80.0f, m_bConvertToUnrealAxes);
+			m_bConvertToUnrealAxes);
 		aiNode* pkHierarchy = kDummy.BuildNodeHierarchy(pkRoot, kMeshAssignments);
 		if (pkHierarchy)
 		{
@@ -297,17 +507,30 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 		for (unsigned int i = 0; i < pkRootNode->mNumMeshes; ++i)
 			pkRootNode->mMeshes[i] = kUnassignedMeshes[i];
 
-		std::cerr << "Warning: " << kUnassignedMeshes.size()
-			<< " mesh(es) had no source NIF node and were attached to the export root."
-			<< std::endl;
+		if (pkRoot)
+		{
+			std::cerr << "Warning: " << kUnassignedMeshes.size()
+				<< " mesh(es) had no source NIF node and were attached to the export root."
+				<< std::endl;
+		}
 	}
 
 	pkScene->mRootNode = pkRootNode;
 
 
 	// ---- Export via Assimp ----
+	// Every intermediate mesh now carries a complete normal stream. The Assimp
+	// real-time preset can still generate tangents and validate the scene, while
+	// its non-forced smooth-normal step preserves the supplied normals.
+	// ConvertToLeftHanded handles final handedness, winding and V conversion.
+	const unsigned int uiPostProcessFlags =
+		aiProcessPreset_TargetRealtime_Quality |
+		aiProcess_ConvertToLeftHanded |
+		aiProcess_ValidateDataStructure;
+
 	Assimp::Exporter kExporter;
-	aiReturn eResult = kExporter.Export(pkScene, "fbx", kOutputPath.c_str(), aiProcess_ValidateDataStructure|aiProcess_FixInfacingNormals|aiProcess_ForceGenNormals);
+	aiReturn eResult = kExporter.Export(pkScene, "fbx",
+		kOutputPath.c_str(), uiPostProcessFlags);
 
 	// Assimp takes ownership of the scene? No — we must delete it.
 	// Actually Assimp::Exporter::Export does NOT delete the scene.

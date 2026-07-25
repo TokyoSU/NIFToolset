@@ -37,6 +37,12 @@ target_compile_definitions(NiDX9Renderer
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIDX9RENDERER_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiDX9Renderer
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiD3DRendererPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiDX9Renderer
     PUBLIC

@@ -28,6 +28,12 @@ target_compile_definitions(NiD3DXEffectShaderLib
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NID3DXEFFECTSHADER_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiD3DXEffectShaderLib
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiD3DXEffectShaderLibPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiD3DXEffectShaderLib
     PUBLIC

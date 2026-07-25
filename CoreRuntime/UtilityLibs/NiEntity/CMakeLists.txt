@@ -30,6 +30,12 @@ target_compile_definitions(NiEntity
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIENTITY_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiEntity
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiEntityPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiEntity
     PUBLIC

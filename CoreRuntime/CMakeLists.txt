@@ -21,6 +21,9 @@ option(NI_BUILD_CURSOR    "Build NiCursor"    ON)
 option(NI_BUILD_ENTITY    "Build NiEntity"    ON)
 option(NI_BUILD_FONT      "Build NiFont"      ON)
 option(NI_BUILD_INPUT     "Build NiInput"     ON)
+option(NI_BUILD_ASSIMP_EXPORTER
+    "Build the AssimpExporter FBX export tool (requires Assimp via vcpkg x64-windows)"
+    ON)
 # Shader libs
 option(NI_BUILD_D3DXEFFECT_SHADERLIB "Build NiD3DXEffectShaderLib" ON)
 
@@ -56,6 +59,14 @@ ni_force_deps(NI_BUILD_CURSOR     NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGA
 ni_force_deps(NI_BUILD_FONT       NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGATE NI_BUILD_MESH)
 ni_force_deps(NI_BUILD_D3DXEFFECT_SHADERLIB NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGATE NI_BUILD_MESH NI_BUILD_RENDERER)
 ni_force_deps(NI_BUILD_INPUT NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGATE NI_BUILD_MESH NI_BUILD_RENDERER)
+ni_force_deps(NI_BUILD_ASSIMP_EXPORTER
+    NI_BUILD_SYSTEM
+    NI_BUILD_MAIN
+    NI_BUILD_FLOODGATE
+    NI_BUILD_MESH
+    NI_BUILD_ANIMATION
+    NI_BUILD_PARTICLE
+    NI_BUILD_PORTAL)
 
 add_subdirectory("EngineLibs")
 add_subdirectory("UtilityLibs")

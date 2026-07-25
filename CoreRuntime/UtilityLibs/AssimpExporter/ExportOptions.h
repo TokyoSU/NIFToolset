@@ -10,12 +10,13 @@ struct ExportOptions
     std::string textureFolder;  // -texture_folder : search/output folder for textures
     std::string kfmFolder;      // -kfm_folder     : search folder for KFM files
     std::string outputFolder;   // -output         : destination for FBX + PNG output
+    std::string terrainFolder;  // -terrain_folder : recursively batch-convert .fsm terrain files
+    std::string terrainTextureFolder; // -terrain_texture_folder : root containing terrain diffuse/base textures
+    std::string terrainAlphaTextureFolder; // -terrain_alpha_texture_folder : root containing terrain alpha maps
     bool exportAll = false;     // -all            : discover all .nif/.kfm/.kf under nifFolder/kfmFolder
     float unitScale = 100.0f;   // -scale          : NIF units -> FBX centimeters (UE5 default: 100)
     float sampleRate = 30.0f;   // -sample_rate    : baked animation samples per second
-    bool flipUvV = true;        // D3D/Gamebryo top-left UV origin -> FBX/Blender bottom-left
-    bool smoothNormals = true;  // Rebuild smooth normals from exported triangles
     bool unrealAxes = true;     // Convert +Y-forward/Z-up NIF data to +X-forward/Z-up Unreal axes
-    float smoothNormalAngle = 80.0f; // Maximum smoothing angle in degrees
     std::vector<std::string> inputPaths; // positional: .nif / .kfm / .kf files
+    std::vector<std::string> terrainInputPaths; // positional/scanned .fsm files
 };

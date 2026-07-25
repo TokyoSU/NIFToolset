@@ -28,6 +28,12 @@ target_compile_definitions(NiEnvironment
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIENVIRONMENT_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiEnvironment
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiEnvironmentPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiEnvironment
     PUBLIC

@@ -34,8 +34,8 @@
 #include <functional>
 #include <iostream>
 #include <limits>
-#include <numbers>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -70,6 +70,79 @@ namespace
                 return static_cast<char>(std::tolower(c));
             });
         return kName;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    template <class T>
+    unsigned int SelectFallbackBoneIndex(T* const* ppkBones,
+        unsigned int uiBoneCount)
+    {
+        if (!ppkBones || uiBoneCount == 0)
+            return ~0u;
+
+        // Prefer the common Grand Fantasia/Gamebryo skeleton roots. These are
+        // safer rigid-attachment targets than blindly using palette slot 0.
+        static const char* s_apcPreferredNames[] =
+        {
+            "bip01 nonaccum",
+            "bip01",
+            "root",
+            "scene root"
+        };
+
+        for (const char* pcPreferred : s_apcPreferredNames)
+        {
+            for (unsigned int b = 0; b < uiBoneCount; ++b)
+            {
+                const NiAVObject* pkBone = ppkBones[b];
+                if (pkBone && ToLowerName(pkBone->GetName().c_str()) == pcPreferred)
+                    return b;
+            }
+        }
+
+        std::unordered_set<const NiAVObject*> kBoneSet;
+        kBoneSet.reserve(uiBoneCount);
+        for (unsigned int b = 0; b < uiBoneCount; ++b)
+        {
+            if (ppkBones[b])
+                kBoneSet.insert(ppkBones[b]);
+        }
+
+        // Otherwise choose a top-level bone from this skin's own bone set.
+        for (unsigned int b = 0; b < uiBoneCount; ++b)
+        {
+            const NiAVObject* pkBone = ppkBones[b];
+            if (!pkBone)
+                continue;
+
+            const NiNode* pkParent = pkBone->GetParent();
+            if (!pkParent || kBoneSet.find(pkParent) == kBoneSet.end())
+                return b;
+        }
+
+        for (unsigned int b = 0; b < uiBoneCount; ++b)
+        {
+            if (ppkBones[b])
+                return b;
+        }
+
+        return ~0u;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    bool IsUsableBoneIndex(const IntermediateMesh& kMesh,
+        unsigned int uiBoneIndex)
+    {
+        if (uiBoneIndex >= kMesh.boneNames.size())
+            return false;
+
+        if (!kMesh.boneValid.empty())
+        {
+            return uiBoneIndex < kMesh.boneValid.size() &&
+                kMesh.boneValid[uiBoneIndex];
+        }
+
+        return kMesh.boneNames[uiBoneIndex].rfind("missing_bone_", 0) != 0;
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -368,313 +441,6 @@ namespace
 	};
 
 
-	struct QuantizedPosition
-	{
-		std::int64_t x;
-		std::int64_t y;
-		std::int64_t z;
-
-		bool operator==(const QuantizedPosition& kOther) const
-		{
-			return x == kOther.x && y == kOther.y && z == kOther.z;
-		}
-	};
-
-	struct QuantizedPositionHash
-	{
-		std::size_t operator()(const QuantizedPosition& kKey) const
-		{
-			std::size_t stHash = std::hash<std::int64_t>{}(kKey.x);
-			stHash ^= std::hash<std::int64_t>{}(kKey.y) +
-				0x9e3779b97f4a7c15ull + (stHash << 6) + (stHash >> 2);
-			stHash ^= std::hash<std::int64_t>{}(kKey.z) +
-				0x9e3779b97f4a7c15ull + (stHash << 6) + (stHash >> 2);
-			return stHash;
-		}
-	};
-
-	struct GeneratedFaceNormal
-	{
-		aiVector3D weighted = aiVector3D(0.0f, 0.0f, 0.0f);
-		aiVector3D unit = aiVector3D(0.0f, 0.0f, 0.0f);
-		bool valid = false;
-	};
-
-	//--------------------------------------------------------------------------------------------------
-	bool IsFiniteVector(const aiVector3D& kVector)
-	{
-		return std::isfinite(kVector.x) && std::isfinite(kVector.y) &&
-			std::isfinite(kVector.z);
-	}
-
-	//--------------------------------------------------------------------------------------------------
-	float LengthSquared(const aiVector3D& kVector)
-	{
-		return kVector.x * kVector.x + kVector.y * kVector.y +
-			kVector.z * kVector.z;
-	}
-
-	//--------------------------------------------------------------------------------------------------
-	float Dot(const aiVector3D& kLeft, const aiVector3D& kRight)
-	{
-		return kLeft.x * kRight.x + kLeft.y * kRight.y +
-			kLeft.z * kRight.z;
-	}
-
-	//--------------------------------------------------------------------------------------------------
-	aiVector3D Cross(const aiVector3D& kLeft, const aiVector3D& kRight)
-	{
-		return aiVector3D(
-			kLeft.y * kRight.z - kLeft.z * kRight.y,
-			kLeft.z * kRight.x - kLeft.x * kRight.z,
-			kLeft.x * kRight.y - kLeft.y * kRight.x);
-	}
-
-	//--------------------------------------------------------------------------------------------------
-	bool NormalizeVector(aiVector3D& kVector)
-	{
-		if (!IsFiniteVector(kVector))
-			return false;
-
-		const float fLengthSquared = LengthSquared(kVector);
-		if (!std::isfinite(fLengthSquared) || fLengthSquared <= 1.0e-20f)
-			return false;
-
-		const float fInvLength = 1.0f / std::sqrt(fLengthSquared);
-		kVector.x *= fInvLength;
-		kVector.y *= fInvLength;
-		kVector.z *= fInvLength;
-		return IsFiniteVector(kVector);
-	}
-
-	//--------------------------------------------------------------------------------------------------
-	void AddVector(aiVector3D& kDestination, const aiVector3D& kValue)
-	{
-		kDestination.x += kValue.x;
-		kDestination.y += kValue.y;
-		kDestination.z += kValue.z;
-	}
-
-	//--------------------------------------------------------------------------------------------------
-	bool RebuildSmoothNormals(IntermediateMesh& kMesh, float fSmoothingAngle)
-	{
-		const unsigned int uiVertexCount =
-			static_cast<unsigned int>(kMesh.positions.size());
-		const unsigned int uiFaceCount =
-			static_cast<unsigned int>(kMesh.indices.size() / 3u);
-		if (uiVertexCount == 0 || uiFaceCount == 0)
-			return false;
-
-		// Compute a scale-relative position tolerance so vertices duplicated by
-		// UV seams or skin partitions can share normals without merging the mesh.
-		aiVector3D kMinimum(std::numeric_limits<float>::max(),
-			std::numeric_limits<float>::max(),
-			std::numeric_limits<float>::max());
-		aiVector3D kMaximum(std::numeric_limits<float>::lowest(),
-			std::numeric_limits<float>::lowest(),
-			std::numeric_limits<float>::lowest());
-		bool bHasFinitePosition = false;
-		for (const aiVector3D& kPosition : kMesh.positions)
-		{
-			if (!IsFiniteVector(kPosition))
-				continue;
-			bHasFinitePosition = true;
-			kMinimum.x = std::min(kMinimum.x, kPosition.x);
-			kMinimum.y = std::min(kMinimum.y, kPosition.y);
-			kMinimum.z = std::min(kMinimum.z, kPosition.z);
-			kMaximum.x = std::max(kMaximum.x, kPosition.x);
-			kMaximum.y = std::max(kMaximum.y, kPosition.y);
-			kMaximum.z = std::max(kMaximum.z, kPosition.z);
-		}
-
-		float fDiagonal = 1.0f;
-		if (bHasFinitePosition)
-		{
-			const float fDx = kMaximum.x - kMinimum.x;
-			const float fDy = kMaximum.y - kMinimum.y;
-			const float fDz = kMaximum.z - kMinimum.z;
-			const float fCandidate = std::sqrt(
-				fDx * fDx + fDy * fDy + fDz * fDz);
-			if (std::isfinite(fCandidate) && fCandidate > 0.0f)
-				fDiagonal = fCandidate;
-		}
-		const float fPositionTolerance = std::max(1.0e-6f,
-			fDiagonal * 1.0e-6f);
-
-		std::vector<GeneratedFaceNormal> kFaceNormals(uiFaceCount);
-		std::vector<std::vector<unsigned int>> kIncidentFaces(uiVertexCount);
-		unsigned int uiInvalidFaces = 0;
-
-		for (unsigned int f = 0; f < uiFaceCount; ++f)
-		{
-			const unsigned int i0 = kMesh.indices[f * 3u + 0u];
-			const unsigned int i1 = kMesh.indices[f * 3u + 1u];
-			const unsigned int i2 = kMesh.indices[f * 3u + 2u];
-			if (i0 >= uiVertexCount || i1 >= uiVertexCount ||
-				i2 >= uiVertexCount || i0 == i1 || i0 == i2 || i1 == i2)
-			{
-				++uiInvalidFaces;
-				continue;
-			}
-
-			const aiVector3D& p0 = kMesh.positions[i0];
-			const aiVector3D& p1 = kMesh.positions[i1];
-			const aiVector3D& p2 = kMesh.positions[i2];
-			if (!IsFiniteVector(p0) || !IsFiniteVector(p1) || !IsFiniteVector(p2))
-			{
-				++uiInvalidFaces;
-				continue;
-			}
-
-			const aiVector3D kEdge1(p1.x - p0.x, p1.y - p0.y,
-				p1.z - p0.z);
-			const aiVector3D kEdge2(p2.x - p0.x, p2.y - p0.y,
-				p2.z - p0.z);
-			aiVector3D kWeightedNormal = Cross(kEdge1, kEdge2);
-			aiVector3D kUnitNormal = kWeightedNormal;
-			if (!NormalizeVector(kUnitNormal))
-			{
-				++uiInvalidFaces;
-				continue;
-			}
-
-			GeneratedFaceNormal& kFace = kFaceNormals[f];
-			kFace.weighted = kWeightedNormal; // twice the triangle area
-			kFace.unit = kUnitNormal;
-			kFace.valid = true;
-			kIncidentFaces[i0].push_back(f);
-			kIncidentFaces[i1].push_back(f);
-			kIncidentFaces[i2].push_back(f);
-		}
-
-		if (uiInvalidFaces == uiFaceCount)
-			return false;
-
-		std::unordered_map<QuantizedPosition, std::vector<unsigned int>,
-			QuantizedPositionHash> kPositionGroups;
-		kPositionGroups.reserve(uiVertexCount);
-		std::vector<QuantizedPosition> kVertexKeys(uiVertexCount);
-		std::vector<bool> kHasVertexKey(uiVertexCount, false);
-
-		for (unsigned int v = 0; v < uiVertexCount; ++v)
-		{
-			const aiVector3D& kPosition = kMesh.positions[v];
-			if (!IsFiniteVector(kPosition))
-				continue;
-
-			const QuantizedPosition kKey = {
-				static_cast<std::int64_t>(std::llround(kPosition.x /
-					fPositionTolerance)),
-				static_cast<std::int64_t>(std::llround(kPosition.y /
-					fPositionTolerance)),
-				static_cast<std::int64_t>(std::llround(kPosition.z /
-					fPositionTolerance))};
-			kVertexKeys[v] = kKey;
-			kHasVertexKey[v] = true;
-			kPositionGroups[kKey].push_back(v);
-		}
-
-		unsigned int uiSeamGroups = 0;
-		for (const auto& kEntry : kPositionGroups)
-		{
-			if (kEntry.second.size() > 1u)
-				++uiSeamGroups;
-		}
-
-		const float fClampedAngle = std::clamp(fSmoothingAngle, 0.0f, 180.0f);
-		const float fCosThreshold = std::cos(fClampedAngle *
-			(std::numbers::pi_v<float> / 180.0f));
-
-		std::vector<aiVector3D> kGeneratedNormals(uiVertexCount,
-			aiVector3D(0.0f, 0.0f, 0.0f));
-		unsigned int uiFallbackNormals = 0;
-
-		for (unsigned int v = 0; v < uiVertexCount; ++v)
-		{
-			aiVector3D kReference(0.0f, 0.0f, 0.0f);
-			for (unsigned int uiFace : kIncidentFaces[v])
-			{
-				if (kFaceNormals[uiFace].valid)
-					AddVector(kReference, kFaceNormals[uiFace].weighted);
-			}
-			const bool bHasReference = NormalizeVector(kReference);
-
-			aiVector3D kSmoothed(0.0f, 0.0f, 0.0f);
-			if (kHasVertexKey[v])
-			{
-				const auto kGroup = kPositionGroups.find(kVertexKeys[v]);
-				if (kGroup != kPositionGroups.end())
-				{
-					for (unsigned int uiSharedVertex : kGroup->second)
-					{
-						for (unsigned int uiFace : kIncidentFaces[uiSharedVertex])
-						{
-							const GeneratedFaceNormal& kFace = kFaceNormals[uiFace];
-							if (!kFace.valid)
-								continue;
-							if (bHasReference &&
-								Dot(kReference, kFace.unit) < fCosThreshold)
-							{
-								continue;
-							}
-							AddVector(kSmoothed, kFace.weighted);
-						}
-					}
-				}
-			}
-
-			if (!NormalizeVector(kSmoothed))
-			{
-				kSmoothed = kReference;
-				if (!NormalizeVector(kSmoothed))
-				{
-					// Preserve a usable source normal only as a last resort for
-					// isolated vertices which are not referenced by any triangle.
-					if (kMesh.normals.size() == uiVertexCount)
-						kSmoothed = kMesh.normals[v];
-					if (!NormalizeVector(kSmoothed))
-						kSmoothed = aiVector3D(0.0f, 0.0f, 1.0f);
-					++uiFallbackNormals;
-				}
-			}
-
-			kGeneratedNormals[v] = kSmoothed;
-		}
-
-		kMesh.normals.swap(kGeneratedNormals);
-		std::cerr << "    Rebuilt smooth normals for '" << kMesh.name
-			<< "': vertices=" << uiVertexCount
-			<< " faces=" << uiFaceCount
-			<< " seamGroups=" << uiSeamGroups
-			<< " angle=" << fClampedAngle
-			<< " invalidFaces=" << uiInvalidFaces
-			<< " fallbackVertices=" << uiFallbackNormals << std::endl;
-		return true;
-	}
-
-	//--------------------------------------------------------------------------------------------------
-	void NormalizeOrDiscardSourceNormals(IntermediateMesh& kMesh)
-	{
-		if (kMesh.normals.size() != kMesh.positions.size())
-		{
-			kMesh.normals.clear();
-			return;
-		}
-
-		unsigned int uiInvalidNormals = 0;
-		for (aiVector3D& kNormal : kMesh.normals)
-		{
-			if (!NormalizeVector(kNormal))
-				++uiInvalidNormals;
-		}
-
-		if (uiInvalidNormals > 0)
-		{
-			std::cerr << "    Discarding source normals for '" << kMesh.name
-				<< "': " << uiInvalidNormals << " invalid vector(s)." << std::endl;
-			kMesh.normals.clear();
-		}
-	}
 
 	//--------------------------------------------------------------------------------------------------
 	bool ReadVec3Stream(NiMesh* pkMesh, const NiFixedString& kSemantic,
@@ -732,6 +498,131 @@ namespace
 	}
 
 	//--------------------------------------------------------------------------------------------------
+	bool NormalizeNormal(aiVector3D& kNormal)
+	{
+		if (!std::isfinite(kNormal.x) || !std::isfinite(kNormal.y) ||
+			!std::isfinite(kNormal.z))
+		{
+			return false;
+		}
+
+		const float fLengthSquared = kNormal.x * kNormal.x +
+			kNormal.y * kNormal.y + kNormal.z * kNormal.z;
+		if (!std::isfinite(fLengthSquared) || fLengthSquared <= 1.0e-20f)
+			return false;
+
+		const float fInvLength = 1.0f / std::sqrt(fLengthSquared);
+		kNormal.x *= fInvLength;
+		kNormal.y *= fInvLength;
+		kNormal.z *= fInvLength;
+		return true;
+	}
+
+	//--------------------------------------------------------------------------------------------------
+	aiVector3D MakeFaceNormal(const aiVector3D& kP0,
+		const aiVector3D& kP1, const aiVector3D& kP2)
+	{
+		const float fE1X = kP1.x - kP0.x;
+		const float fE1Y = kP1.y - kP0.y;
+		const float fE1Z = kP1.z - kP0.z;
+		const float fE2X = kP2.x - kP0.x;
+		const float fE2Y = kP2.y - kP0.y;
+		const float fE2Z = kP2.z - kP0.z;
+		return aiVector3D(
+			fE1Y * fE2Z - fE1Z * fE2Y,
+			fE1Z * fE2X - fE1X * fE2Z,
+			fE1X * fE2Y - fE1Y * fE2X);
+	}
+
+	//--------------------------------------------------------------------------------------------------
+	void EnsureCompleteNormals(IntermediateMesh& kMesh)
+	{
+		const std::size_t stVertexCount = kMesh.positions.size();
+		if (stVertexCount == 0)
+		{
+			kMesh.normals.clear();
+			return;
+		}
+
+		const bool bHasCompleteSource =
+			kMesh.normals.size() == stVertexCount;
+		std::vector<aiVector3D> kSourceNormals;
+		if (bHasCompleteSource)
+			kSourceNormals = kMesh.normals;
+
+		std::vector<aiVector3D> kGenerated(stVertexCount,
+			aiVector3D(0.0f, 0.0f, 0.0f));
+		unsigned int uiValidFaces = 0;
+		for (std::size_t i = 0; i + 2u < kMesh.indices.size(); i += 3u)
+		{
+			const unsigned int i0 = kMesh.indices[i + 0u];
+			const unsigned int i1 = kMesh.indices[i + 1u];
+			const unsigned int i2 = kMesh.indices[i + 2u];
+			if (i0 >= stVertexCount || i1 >= stVertexCount ||
+				i2 >= stVertexCount || i0 == i1 || i0 == i2 || i1 == i2)
+			{
+				continue;
+			}
+
+			const aiVector3D kFaceNormal = MakeFaceNormal(
+				kMesh.positions[i0], kMesh.positions[i1], kMesh.positions[i2]);
+			aiVector3D kUnitNormal = kFaceNormal;
+			if (!NormalizeNormal(kUnitNormal))
+				continue;
+
+			// Accumulate the unnormalized cross product so larger triangles have
+			// proportionally more influence on the generated smooth normal.
+			for (unsigned int uiVertex : { i0, i1, i2 })
+			{
+				kGenerated[uiVertex].x += kFaceNormal.x;
+				kGenerated[uiVertex].y += kFaceNormal.y;
+				kGenerated[uiVertex].z += kFaceNormal.z;
+			}
+			++uiValidFaces;
+		}
+
+		kMesh.normals.resize(stVertexCount);
+		unsigned int uiGeneratedVertices = 0;
+		unsigned int uiFallbackVertices = 0;
+		for (std::size_t v = 0; v < stVertexCount; ++v)
+		{
+			aiVector3D kNormal;
+			bool bValid = false;
+			if (bHasCompleteSource)
+			{
+				kNormal = kSourceNormals[v];
+				bValid = NormalizeNormal(kNormal);
+			}
+
+			if (!bValid)
+			{
+				kNormal = kGenerated[v];
+				bValid = NormalizeNormal(kNormal);
+				if (bValid)
+					++uiGeneratedVertices;
+			}
+
+			if (!bValid)
+			{
+				kNormal = aiVector3D(0.0f, 0.0f, 1.0f);
+				++uiFallbackVertices;
+			}
+			kMesh.normals[v] = kNormal;
+		}
+
+		if (!bHasCompleteSource || uiGeneratedVertices != 0u ||
+			uiFallbackVertices != 0u)
+		{
+			std::cerr << "    Completed normals for '" << kMesh.name
+				<< "': source="
+				<< (bHasCompleteSource ? "partial/invalid" : "missing")
+				<< " generatedVertices=" << uiGeneratedVertices
+				<< " fallbackVertices=" << uiFallbackVertices
+				<< " validFaces=" << uiValidFaces << std::endl;
+		}
+	}
+
+	//--------------------------------------------------------------------------------------------------
 	bool ReadVec2Stream(NiMesh* pkMesh, const NiFixedString& kSemantic,
 		unsigned int uiSemanticIndex, unsigned int uiSubmesh,
 		std::vector<aiVector2D>& kOut)
@@ -773,7 +664,7 @@ namespace
 
 	//--------------------------------------------------------------------------------------------------
 	void ApplyTextureUvConversion(std::vector<aiVector2D>& kUvs,
-		const NiTextureTransform* pkTransform, bool bFlipV)
+		const NiTextureTransform* pkTransform)
 	{
 		const NiMatrix3* pkMatrix = pkTransform ? pkTransform->GetMatrix() : nullptr;
 
@@ -798,11 +689,6 @@ namespace
 				fV = fOutV;
 			}
 
-			// Gamebryo/D3D samples V=0 at the top. Blender/FBX UVs use
-			// V=0 at the bottom, while the exported PNG keeps its rows in
-			// top-to-bottom order. Flip exactly one side of the mapping.
-			if (bFlipV)
-				fV = 1.0f - fV;
 
 			kUv.x = fU;
 			kUv.y = fV;
@@ -811,7 +697,7 @@ namespace
 
 	//--------------------------------------------------------------------------------------------------
 	void LogUvRange(const std::vector<aiVector2D>& kUvs, unsigned int uiSet,
-		bool bHasTransform, bool bFlipV)
+		bool bHasTransform)
 	{
 		if (kUvs.empty())
 			return;
@@ -832,7 +718,7 @@ namespace
 			<< ", range U=[" << fMinU << ", " << fMaxU
 			<< "] V=[" << fMinV << ", " << fMaxV << "]"
 			<< ", transform=" << (bHasTransform ? "yes" : "no")
-			<< ", V-flip=" << (bFlipV ? "yes" : "no") << std::endl;
+			<< ", V-flip=Assimp ConvertToLeftHanded" << std::endl;
 	}
 
 	//--------------------------------------------------------------------------------------------------
@@ -844,12 +730,26 @@ namespace
 		NiDataStreamElementLock kLock(pkMesh, NiCommonSemantics::BLENDINDICES(), 0,
 			NiDataStreamElement::F_UNKNOWN, NiDataStream::LOCK_READ | NiDataStream::LOCK_TOOL_READ);
 		if (!kLock.IsLocked() || uiSubmesh >= kLock.GetSubmeshCount())
+		{
+			std::cerr << "      Missing BLENDINDICES stream for submesh "
+				<< uiSubmesh << "." << std::endl;
 			return false;
+		}
 
-		const unsigned int uiCount = std::min<unsigned int>(
-			uiVertexCount, kLock.count(uiSubmesh));
+		const unsigned int uiCount = kLock.count(uiSubmesh);
+		const NiDataStreamElement& kElement = kLock.GetDataStreamElement();
+		if (uiCount != uiVertexCount)
+		{
+			std::cerr << "      Invalid BLENDINDICES stream for submesh "
+				<< uiSubmesh << ": format=" << static_cast<const char*>(kElement.GetFormatString())
+				<< " streamVertices=" << uiCount
+				<< " positionVertices=" << uiVertexCount
+				<< ". The complete submesh will use rigid fallback skinning."
+				<< std::endl;
+			return false;
+		}
 
-		switch (kLock.GetDataStreamElement().GetFormat())
+		switch (kElement.GetFormat())
 		{
 		case NiDataStreamElement::F_UINT8_4:
 		case NiDataStreamElement::F_NORMUINT8_4:
@@ -898,6 +798,9 @@ namespace
 			return true;
 		}
 		default:
+			std::cerr << "      Unsupported BLENDINDICES format "
+				<< static_cast<const char*>(kElement.GetFormatString()) << " for submesh "
+				<< uiSubmesh << "." << std::endl;
 			return false;
 		}
 	}
@@ -911,12 +814,26 @@ namespace
 		NiDataStreamElementLock kLock(pkMesh, NiCommonSemantics::BLENDWEIGHT(), 0,
 			NiDataStreamElement::F_UNKNOWN, NiDataStream::LOCK_READ | NiDataStream::LOCK_TOOL_READ);
 		if (!kLock.IsLocked() || uiSubmesh >= kLock.GetSubmeshCount())
+		{
+			std::cerr << "      Missing BLENDWEIGHT stream for submesh "
+				<< uiSubmesh << "." << std::endl;
 			return false;
+		}
 
-		const unsigned int uiCount = std::min<unsigned int>(
-			uiVertexCount, kLock.count(uiSubmesh));
+		const unsigned int uiCount = kLock.count(uiSubmesh);
+		const NiDataStreamElement& kElement = kLock.GetDataStreamElement();
+		if (uiCount != uiVertexCount)
+		{
+			std::cerr << "      Invalid BLENDWEIGHT stream for submesh "
+				<< uiSubmesh << ": format=" << static_cast<const char*>(kElement.GetFormatString())
+				<< " streamVertices=" << uiCount
+				<< " positionVertices=" << uiVertexCount
+				<< ". The complete submesh will use rigid fallback skinning."
+				<< std::endl;
+			return false;
+		}
 
-		switch (kLock.GetDataStreamElement().GetFormat())
+		switch (kElement.GetFormat())
 		{
 		case NiDataStreamElement::F_FLOAT32_3:
 		{
@@ -988,6 +905,9 @@ namespace
 			break;
 		}
 		default:
+			std::cerr << "      Unsupported BLENDWEIGHT format "
+				<< static_cast<const char*>(kElement.GetFormatString()) << " for submesh "
+				<< uiSubmesh << "." << std::endl;
 			return false;
 		}
 
@@ -1052,6 +972,10 @@ namespace
 			break;
 		}
 		default:
+			std::cerr << "      Unsupported BONE_PALETTE format "
+				<< static_cast<const char*>(
+					kLock.GetDataStreamElement().GetFormatString())
+				<< " for submesh " << uiSubmesh << "." << std::endl;
 			return false;
 		}
 
@@ -1284,7 +1208,7 @@ namespace
 		for (const VertexBoneWeight& kWeight : kMesh.boneWeights[uiVertex])
 		{
 			if (kWeight.weight > 0.0f &&
-				kWeight.boneIndex < kMesh.boneNames.size())
+				IsUsableBoneIndex(kMesh, kWeight.boneIndex))
 			{
 				return true;
 			}
@@ -1321,27 +1245,35 @@ namespace
 			return;
 		}
 
+		const bool bHasFallback =
+			IsUsableBoneIndex(kMesh, kMesh.fallbackBoneIndex);
 		unsigned int uiFallbackVertices = 0;
+		unsigned int uiInvalidInfluences = 0;
+
 		for (std::vector<VertexBoneWeight>& kWeights : kMesh.boneWeights)
 		{
+			const size_t stBeforeFilter = kWeights.size();
 			kWeights.erase(std::remove_if(kWeights.begin(), kWeights.end(),
 				[&](const VertexBoneWeight& kWeight)
 				{
-					return kWeight.boneIndex >= kMesh.boneNames.size() ||
+					return !IsUsableBoneIndex(kMesh, kWeight.boneIndex) ||
+						!std::isfinite(kWeight.weight) ||
 						kWeight.weight <= 0.0f;
 				}), kWeights.end());
+			uiInvalidInfluences += static_cast<unsigned int>(
+				stBeforeFilter - kWeights.size());
 
 			// A partition palette can legally map more than one local slot to
-			// the same global bone. Merge those entries before enforcing UE's
+			// the same global bone. Merge those entries before enforcing the
 			// four-influence limit so a duplicate does not consume a slot.
 			std::vector<VertexBoneWeight> kMergedWeights;
 			for (const VertexBoneWeight& kWeight : kWeights)
 			{
 				auto kExisting = std::find_if(kMergedWeights.begin(),
-					kMergedWeights.end(), [&](const VertexBoneWeight& kMerged)
-					{
-						return kMerged.boneIndex == kWeight.boneIndex;
-					});
+				kMergedWeights.end(), [&](const VertexBoneWeight& kMerged)
+				{
+					return kMerged.boneIndex == kWeight.boneIndex;
+				});
 				if (kExisting != kMergedWeights.end())
 					kExisting->weight += kWeight.weight;
 				else
@@ -1361,10 +1293,14 @@ namespace
 			for (const VertexBoneWeight& kWeight : kWeights)
 				fTotal += kWeight.weight;
 
-			if (fTotal <= 0.000001f)
+			if (!std::isfinite(fTotal) || fTotal <= 0.000001f)
 			{
-				kWeights = {{0u, 1.0f}};
-				++uiFallbackVertices;
+				kWeights.clear();
+				if (bHasFallback)
+				{
+					kWeights.push_back({kMesh.fallbackBoneIndex, 1.0f});
+					++uiFallbackVertices;
+				}
 				continue;
 			}
 
@@ -1373,26 +1309,37 @@ namespace
 				kWeight.weight *= fInvTotal;
 		}
 
+		if (uiInvalidInfluences > 0)
+		{
+			std::cerr << "    Warning: discarded " << uiInvalidInfluences
+				<< " invalid/missing-bone influence(s) in mesh '"
+				<< kMesh.name << "'." << std::endl;
+		}
+
 		if (uiFallbackVertices > 0)
 		{
-			std::cerr << "    Warning: assigned " << uiFallbackVertices
-				<< " unweighted vertices to bone 0 in mesh '" << kMesh.name << "'."
-				<< std::endl;
+			std::cerr << "    Assigned " << uiFallbackVertices
+				<< " unweighted vertices to real fallback bone '"
+				<< kMesh.boneNames[kMesh.fallbackBoneIndex] << "' in mesh '"
+				<< kMesh.name << "'." << std::endl;
+		}
+		else if (!bHasFallback && CountUnweightedVertices(kMesh) > 0)
+		{
+			std::cerr << "    Error: mesh '" << kMesh.name
+				<< "' has unweighted vertices but no real exported bone is "
+				<< "available for fallback skinning." << std::endl;
 		}
 	}
+
 }
 
 //--------------------------------------------------------------------------------------------------
 MeshExtractor::MeshExtractor(const std::string& kTextureOutputFolder,
-	bool bConvertTexturesToPng, float fTransformUnitScale, bool bFlipUvV,
-	bool bSmoothNormals, float fSmoothNormalAngle,
+	bool bConvertTexturesToPng, float fTransformUnitScale,
 	bool bConvertToUnrealAxes)
 	: m_kTextureOutputFolder(kTextureOutputFolder)
 	, m_bConvertTexturesToPng(bConvertTexturesToPng)
 	, m_fTransformUnitScale(fTransformUnitScale)
-	, m_bFlipUvV(bFlipUvV)
-	, m_bSmoothNormals(bSmoothNormals)
-	, m_fSmoothNormalAngle(std::clamp(fSmoothNormalAngle, 0.0f, 180.0f))
 	, m_bConvertToUnrealAxes(bConvertToUnrealAxes)
 {
 }
@@ -1617,10 +1564,9 @@ bool MeshExtractor::ExtractNiMesh(NiMesh* pkMesh,
 		return false;
 	}
 
-	IntermediateMesh kOut;
 	const char* pcName = pkMesh->GetName().c_str();
-	kOut.name = pcName ? std::string(pcName) : "mesh";
-	kOut.sourceObject = pkMesh;
+	const std::string kBaseName = pcName && pcName[0] != '\0'
+		? std::string(pcName) : "mesh";
 
 	NiTexturingProperty* pkTexProp = FindEffectiveProperty<NiTexturingProperty>(
 		pkMesh, NiProperty::TEXTURING);
@@ -1629,7 +1575,7 @@ bool MeshExtractor::ExtractNiMesh(NiMesh* pkMesh,
 	NiMaterialProperty* pkMaterialProp = FindEffectiveProperty<NiMaterialProperty>(
 		pkMesh, NiProperty::MATERIAL);
 	const std::string kTexPath = ResolveTexturePath(pkTexProp);
-	kOut.materialIndex = FindOrAddMaterial(kTexPath, kOut.name,
+	const unsigned int uiMaterialIndex = FindOrAddMaterial(kTexPath, kBaseName,
 		pkAlphaProp, pkMaterialProp, kMaterials);
 
 	const unsigned int uiBaseUvSet = pkTexProp
@@ -1648,10 +1594,100 @@ bool MeshExtractor::ExtractNiMesh(NiMesh* pkMesh,
 		}
 	}
 
-	if (pkSkinModifier)
-		InitializeSkinningFromNiMesh(pkSkinModifier, kOut);
+	// Static NiMesh submeshes must remain independent. Combining them into one
+	// Assimp mesh can mix unrelated vertex/index regions and loses the original
+	// submesh boundaries used by some models. Multiple output meshes can safely
+	// be attached to the same aiNode through MeshNodeAssignmentMap.
+	if (!pkSkinModifier)
+	{
+		unsigned int uiExportedSubmeshes = 0;
+		for (unsigned int uiSubmesh = 0; uiSubmesh < uiSubmeshCount; ++uiSubmesh)
+		{
+			IntermediateMesh kOut;
+			kOut.name = kBaseName;
+			if (uiSubmeshCount > 1)
+				kOut.name += "_submesh_" + std::to_string(uiSubmesh);
+			kOut.sourceObject = pkMesh;
+			kOut.materialIndex = uiMaterialIndex;
 
-	bool bAllNormals = true;
+			if (!ReadVec3Stream(pkMesh, NiCommonSemantics::POSITION(),
+				uiSubmesh, kOut.positions) || kOut.positions.empty())
+			{
+				std::cerr << "    Static submesh " << uiSubmesh
+					<< " skipped: no readable position stream." << std::endl;
+				continue;
+			}
+
+			if (!ReadVec3Stream(pkMesh, NiCommonSemantics::NORMAL(),
+				uiSubmesh, kOut.normals) ||
+				kOut.normals.size() != kOut.positions.size())
+			{
+				kOut.normals.clear();
+			}
+
+			unsigned int uiReadUvSet = uiBaseUvSet;
+			bool bGotUvs = ReadVec2Stream(pkMesh,
+				NiCommonSemantics::TEXCOORD(), uiReadUvSet, uiSubmesh, kOut.uvs);
+			if (!bGotUvs && uiReadUvSet != 0u)
+			{
+				std::cerr << "      Base texture requests UV set " << uiReadUvSet
+					<< ", but it is unavailable for submesh " << uiSubmesh
+					<< "; falling back to UV set 0." << std::endl;
+				uiReadUvSet = 0u;
+				bGotUvs = ReadVec2Stream(pkMesh,
+					NiCommonSemantics::TEXCOORD(), uiReadUvSet, uiSubmesh, kOut.uvs);
+			}
+
+			if (!bGotUvs || kOut.uvs.size() != kOut.positions.size())
+			{
+				kOut.uvs.clear();
+			}
+			else
+			{
+				ApplyTextureUvConversion(kOut.uvs, pkBaseUvTransform);
+				LogUvRange(kOut.uvs, uiReadUvSet, pkBaseUvTransform != nullptr);
+			}
+
+			if (!ReadTriangleIndices(pkMesh, uiSubmesh,
+				static_cast<unsigned int>(kOut.positions.size()), kOut.indices))
+			{
+				std::cerr << "    Static submesh " << uiSubmesh
+					<< " skipped: no readable triangles." << std::endl;
+				continue;
+			}
+
+			EnsureCompleteNormals(kOut);
+
+			std::cerr << "    Exported static submesh " << uiSubmesh
+				<< " separately: vertices=" << kOut.positions.size()
+				<< " triangles=" << (kOut.indices.size() / 3) << std::endl;
+
+			kMeshes.push_back(std::move(kOut));
+			++uiExportedSubmeshes;
+		}
+
+		if (uiExportedSubmeshes == 0)
+		{
+			std::cerr << "    Skipping: no complete static submesh could be extracted."
+				<< std::endl;
+			return false;
+		}
+
+		std::cerr << "    Exported " << uiExportedSubmeshes << "/"
+			<< uiSubmeshCount << " static submeshes as separate Assimp meshes."
+			<< std::endl;
+		return true;
+	}
+
+	// Skin partitions are still combined into one logical skinned mesh. This
+	// preserves smoothing across partition boundaries and the existing bind-pose
+	// and bone-weight behavior.
+	IntermediateMesh kOut;
+	kOut.name = kBaseName;
+	kOut.sourceObject = pkMesh;
+	kOut.materialIndex = uiMaterialIndex;
+	InitializeSkinningFromNiMesh(pkSkinModifier, kOut);
+
 	bool bAllUvs = true;
 	unsigned int uiExportedSubmeshes = 0;
 
@@ -1662,12 +1698,8 @@ bool MeshExtractor::ExtractNiMesh(NiMesh* pkMesh,
 		std::vector<aiVector2D> kUvs;
 		std::vector<unsigned int> kIndices;
 
-		bool bGotPositions = false;
-		if (pkSkinModifier)
-		{
-			bGotPositions = ReadVec3Stream(pkMesh,
-				NiCommonSemantics::POSITION_BP(), uiSubmesh, kPositions);
-		}
+		bool bGotPositions = ReadVec3Stream(pkMesh,
+			NiCommonSemantics::POSITION_BP(), uiSubmesh, kPositions);
 		if (!bGotPositions)
 		{
 			bGotPositions = ReadVec3Stream(pkMesh,
@@ -1676,27 +1708,20 @@ bool MeshExtractor::ExtractNiMesh(NiMesh* pkMesh,
 
 		if (!bGotPositions || kPositions.empty())
 		{
-			std::cerr << "    Submesh " << uiSubmesh
+			std::cerr << "    Skinned submesh " << uiSubmesh
 				<< " skipped: no readable position stream." << std::endl;
 			continue;
 		}
 
-		bool bGotNormals = false;
-		if (pkSkinModifier)
-		{
-			bGotNormals = ReadVec3Stream(pkMesh,
-				NiCommonSemantics::NORMAL_BP(), uiSubmesh, kNormals);
-		}
+		bool bGotNormals = ReadVec3Stream(pkMesh,
+			NiCommonSemantics::NORMAL_BP(), uiSubmesh, kNormals);
 		if (!bGotNormals)
 		{
 			bGotNormals = ReadVec3Stream(pkMesh,
 				NiCommonSemantics::NORMAL(), uiSubmesh, kNormals);
 		}
 		if (!bGotNormals || kNormals.size() != kPositions.size())
-		{
-			bAllNormals = false;
-			kNormals.assign(kPositions.size(), aiVector3D());
-		}
+			kNormals.assign(kPositions.size(), aiVector3D(0.0f, 0.0f, 0.0f));
 
 		unsigned int uiReadUvSet = uiBaseUvSet;
 		bool bGotUvs = ReadVec2Stream(pkMesh,
@@ -1718,63 +1743,50 @@ bool MeshExtractor::ExtractNiMesh(NiMesh* pkMesh,
 		}
 		else
 		{
-			ApplyTextureUvConversion(kUvs, pkBaseUvTransform, m_bFlipUvV);
-			LogUvRange(kUvs, uiReadUvSet, pkBaseUvTransform != nullptr,
-				m_bFlipUvV);
+			ApplyTextureUvConversion(kUvs, pkBaseUvTransform);
+			LogUvRange(kUvs, uiReadUvSet, pkBaseUvTransform != nullptr);
 		}
 
 		if (!ReadTriangleIndices(pkMesh, uiSubmesh,
 			static_cast<unsigned int>(kPositions.size()), kIndices))
 		{
-			std::cerr << "    Submesh " << uiSubmesh
+			std::cerr << "    Skinned submesh " << uiSubmesh
 				<< " skipped: no readable triangles." << std::endl;
 			continue;
 		}
 
-		const unsigned int uiVertexBase = static_cast<unsigned int>(kOut.positions.size());
-		kOut.positions.insert(kOut.positions.end(), kPositions.begin(), kPositions.end());
-		kOut.normals.insert(kOut.normals.end(), kNormals.begin(), kNormals.end());
+		const unsigned int uiVertexBase =
+			static_cast<unsigned int>(kOut.positions.size());
+		kOut.positions.insert(kOut.positions.end(),
+			kPositions.begin(), kPositions.end());
+		kOut.normals.insert(kOut.normals.end(),
+			kNormals.begin(), kNormals.end());
 		kOut.uvs.insert(kOut.uvs.end(), kUvs.begin(), kUvs.end());
 
 		kOut.indices.reserve(kOut.indices.size() + kIndices.size());
 		for (unsigned int uiIndex : kIndices)
 			kOut.indices.push_back(uiVertexBase + uiIndex);
 
-		if (kOut.isSkinned)
-		{
-			AppendSkinningFromNiMeshSubmesh(pkMesh, pkSkinModifier, uiSubmesh,
-				static_cast<unsigned int>(kPositions.size()), kOut);
-		}
-
+		AppendSkinningFromNiMeshSubmesh(pkMesh, pkSkinModifier, uiSubmesh,
+			static_cast<unsigned int>(kPositions.size()), kOut);
 		++uiExportedSubmeshes;
 	}
 
 	if (kOut.positions.empty() || kOut.indices.empty())
 	{
-		std::cerr << "    Skipping: no complete submesh could be extracted." << std::endl;
+		std::cerr << "    Skipping: no complete skinned submesh could be extracted."
+			<< std::endl;
 		return false;
 	}
 
-	if (!bAllNormals)
-		kOut.normals.clear();
 	if (!bAllUvs)
 		kOut.uvs.clear();
 
-	if (m_bSmoothNormals)
-	{
-		if (!RebuildSmoothNormals(kOut, m_fSmoothNormalAngle))
-			NormalizeOrDiscardSourceNormals(kOut);
-	}
-	else
-	{
-		NormalizeOrDiscardSourceNormals(kOut);
-	}
-
-	if (kOut.isSkinned)
-		NormalizeLegacyWeights(kOut);
+	EnsureCompleteNormals(kOut);
+	NormalizeLegacyWeights(kOut);
 
 	std::cerr << "    Combined " << uiExportedSubmeshes << "/" << uiSubmeshCount
-		<< " submeshes: vertices=" << kOut.positions.size()
+		<< " skinned partitions: vertices=" << kOut.positions.size()
 		<< " triangles=" << (kOut.indices.size() / 3)
 		<< " bones=" << kOut.boneNames.size() << std::endl;
 
@@ -1799,16 +1811,31 @@ void MeshExtractor::InitializeSkinningFromNiMesh(
 	kOut.isSkinned = true;
 	kOut.boneNames.resize(uiBoneCount);
 	kOut.boneOffsetMatrices.resize(uiBoneCount);
+	kOut.boneValid.assign(uiBoneCount, false);
+	kOut.fallbackBoneIndex = SelectFallbackBoneIndex(ppkBones, uiBoneCount);
 
 	for (NiUInt32 b = 0; b < uiBoneCount; ++b)
 	{
 		NiAVObject* pkBone = ppkBones ? ppkBones[b] : nullptr;
+		kOut.boneValid[b] = pkBone != nullptr;
 		kOut.boneNames[b] = pkBone
 			? GetExportNodeName(pkBone)
 			: "missing_bone_" + std::to_string(b);
 
 		kOut.boneOffsetMatrices[b] = pkSkinToBone
 			? MakeAiMatrix(pkSkinToBone[b]) : aiMatrix4x4();
+	}
+
+	if (IsUsableBoneIndex(kOut, kOut.fallbackBoneIndex))
+	{
+		std::cerr << "    Skin fallback bone: index="
+			<< kOut.fallbackBoneIndex << " name='"
+			<< kOut.boneNames[kOut.fallbackBoneIndex] << "'." << std::endl;
+	}
+	else
+	{
+		std::cerr << "    Warning: skin has no real bone available for "
+			<< "rigid/unweighted fallback vertices." << std::endl;
 	}
 }
 
@@ -1829,50 +1856,99 @@ void MeshExtractor::AppendSkinningFromNiMeshSubmesh(NiMesh* pkMesh,
 	const bool bHasWeights = ReadBlendWeights(pkMesh, uiSubmesh,
 		uiVertexCount, kBlendWeights);
 	const bool bHasPalette = ReadBonePalette(pkMesh, uiSubmesh, kBonePalette);
+	const bool bCanReadSkin = bHasIndices && bHasWeights;
+	const bool bHasFallback =
+		IsUsableBoneIndex(kOut, kOut.fallbackBoneIndex);
 
 	const size_t stOldSize = kOut.boneWeights.size();
 	kOut.boneWeights.resize(stOldSize + uiVertexCount);
 
 	unsigned int uiFallbackVertices = 0;
+	unsigned int uiInvalidPaletteIndices = 0;
+	unsigned int uiInvalidGlobalBones = 0;
+	unsigned int uiMissingBonePointers = 0;
+
 	for (unsigned int v = 0; v < uiVertexCount; ++v)
 	{
-		std::vector<VertexBoneWeight>& kVertexWeights = kOut.boneWeights[stOldSize + v];
+		std::vector<VertexBoneWeight>& kVertexWeights =
+			kOut.boneWeights[stOldSize + v];
 
-		if (bHasIndices && bHasWeights)
+		if (bCanReadSkin)
 		{
 			for (unsigned int k = 0; k < 4; ++k)
 			{
 				const float fWeight = kBlendWeights[v][k];
-				if (fWeight <= 0.000001f)
+				if (!std::isfinite(fWeight) || fWeight <= 0.000001f)
 					continue;
 
 				unsigned int uiBoneIndex = kBlendIndices[v][k];
 				if (bHasPalette)
 				{
 					if (uiBoneIndex >= kBonePalette.size())
+					{
+						++uiInvalidPaletteIndices;
 						continue;
+					}
 					uiBoneIndex = kBonePalette[uiBoneIndex];
 				}
 
-				if (uiBoneIndex < kOut.boneNames.size())
-					kVertexWeights.push_back({uiBoneIndex, fWeight});
+				if (uiBoneIndex >= kOut.boneNames.size())
+				{
+					++uiInvalidGlobalBones;
+					continue;
+				}
+
+				if (!IsUsableBoneIndex(kOut, uiBoneIndex))
+				{
+					++uiMissingBonePointers;
+					continue;
+				}
+
+				kVertexWeights.push_back({uiBoneIndex, fWeight});
 			}
 		}
 
-		if (kVertexWeights.empty())
+		if (kVertexWeights.empty() && bHasFallback)
 		{
-			// Unreal rejects or drops vertices without a valid influence. Bone 0
-			// is the least destructive fallback and keeps the complete section.
-			kVertexWeights.push_back({0u, 1.0f});
+			kVertexWeights.push_back({kOut.fallbackBoneIndex, 1.0f});
 			++uiFallbackVertices;
 		}
 	}
 
+	if (!bCanReadSkin)
+	{
+		std::cerr << "    Warning: submesh " << uiSubmesh
+			<< " does not have a complete, exact-size BLENDINDICES/"
+			<< "BLENDWEIGHT pair; treated as a rigid skinned section";
+		if (bHasFallback)
+		{
+			std::cerr << " attached to '"
+				<< kOut.boneNames[kOut.fallbackBoneIndex] << "'";
+		}
+		std::cerr << "." << std::endl;
+	}
+
+	if (uiInvalidPaletteIndices > 0 || uiInvalidGlobalBones > 0 ||
+		uiMissingBonePointers > 0)
+	{
+		std::cerr << "    Warning: submesh " << uiSubmesh
+			<< " discarded invalid skin influences: paletteIndex="
+			<< uiInvalidPaletteIndices << " globalBone="
+			<< uiInvalidGlobalBones << " missingBone="
+			<< uiMissingBonePointers << "." << std::endl;
+	}
+
 	if (uiFallbackVertices > 0)
 	{
-		std::cerr << "    Warning: submesh " << uiSubmesh << " had "
-			<< uiFallbackVertices << " vertices without readable skin weights; "
-			<< "assigned them to bone 0." << std::endl;
+		std::cerr << "    Submesh " << uiSubmesh << " assigned "
+			<< uiFallbackVertices << " vertex/vertices to real fallback bone '"
+			<< kOut.boneNames[kOut.fallbackBoneIndex] << "'." << std::endl;
+	}
+	else if (!bHasFallback)
+	{
+		std::cerr << "    Error: submesh " << uiSubmesh
+			<< " has no valid fallback bone; unweighted vertices cannot be "
+			<< "made export-safe." << std::endl;
 	}
 }
 
@@ -1958,9 +2034,8 @@ bool MeshExtractor::ExtractNiGeometry(NiGeometry* pkGeom,
 		for (unsigned short v = 0; v < usVertexCount; ++v)
 			kOut.uvs.emplace_back(pkUvs[v].x, pkUvs[v].y);
 
-		ApplyTextureUvConversion(kOut.uvs, pkLegacyUvTransform, m_bFlipUvV);
-		LogUvRange(kOut.uvs, uiLegacyUvSet, pkLegacyUvTransform != nullptr,
-			m_bFlipUvV);
+		ApplyTextureUvConversion(kOut.uvs, pkLegacyUvTransform);
+		LogUvRange(kOut.uvs, uiLegacyUvSet, pkLegacyUvTransform != nullptr);
 	}
 
 	NiTriBasedGeomData* pkTriData = NiStaticCast(NiTriBasedGeomData, pkData);
@@ -1986,15 +2061,7 @@ bool MeshExtractor::ExtractNiGeometry(NiGeometry* pkGeom,
 	if (kOut.indices.empty())
 		return false;
 
-	if (m_bSmoothNormals)
-	{
-		if (!RebuildSmoothNormals(kOut, m_fSmoothNormalAngle))
-			NormalizeOrDiscardSourceNormals(kOut);
-	}
-	else
-	{
-		NormalizeOrDiscardSourceNormals(kOut);
-	}
+	EnsureCompleteNormals(kOut);
 
 	if (pkGeom->GetSkinInstance())
 	{
@@ -2028,15 +2095,25 @@ void MeshExtractor::ExtractSkinningFromNiGeometry(NiGeometry* pkGeom,
 	kOut.isSkinned = true;
 	kOut.boneNames.resize(uiBoneCount);
 	kOut.boneOffsetMatrices.resize(uiBoneCount);
+	kOut.boneValid.assign(uiBoneCount, false);
+	kOut.fallbackBoneIndex = SelectFallbackBoneIndex(ppkBones, uiBoneCount);
 
 	for (unsigned int b = 0; b < uiBoneCount; ++b)
 	{
 		const NiAVObject* pkBone = ppkBones ? ppkBones[b] : nullptr;
+		kOut.boneValid[b] = pkBone != nullptr;
 		kOut.boneNames[b] = pkBone
 			? GetExportNodeName(pkBone)
 			: "missing_bone_" + std::to_string(b);
 
 		kOut.boneOffsetMatrices[b] = MakeAiMatrix(pkBoneData[b].m_kSkinToBone);
+	}
+
+	if (IsUsableBoneIndex(kOut, kOut.fallbackBoneIndex))
+	{
+		std::cerr << "    Legacy skin fallback bone: index="
+			<< kOut.fallbackBoneIndex << " name='"
+			<< kOut.boneNames[kOut.fallbackBoneIndex] << "'." << std::endl;
 	}
 
 	const unsigned int uiVertexCount = static_cast<unsigned int>(kOut.positions.size());
@@ -2067,6 +2144,8 @@ void MeshExtractor::ExtractSkinningFromNiGeometry(NiGeometry* pkGeom,
 	kPartitionWeights.name = kOut.name;
 	kPartitionWeights.positions.resize(uiVertexCount);
 	kPartitionWeights.boneNames = kOut.boneNames;
+	kPartitionWeights.boneValid = kOut.boneValid;
+	kPartitionWeights.fallbackBoneIndex = kOut.fallbackBoneIndex;
 	kPartitionWeights.boneWeights.resize(uiVertexCount);
 
 	ExtractSkinningFromPartition(pkSkin, pkSkinData, kPartitionWeights,
@@ -2129,6 +2208,10 @@ void MeshExtractor::ExtractSkinningFromPartition(NiSkinInstance* pkSkin,
 	if (!pkParts)
 		return;
 
+	unsigned int uiInvalidVertexMap = 0;
+	unsigned int uiInvalidLocalPalette = 0;
+	unsigned int uiInvalidGlobalBone = 0;
+
 	for (unsigned int p = 0; p < uiPartitionCount; ++p)
 	{
 		const NiSkinPartition::Partition& kPart = pkParts[p];
@@ -2139,27 +2222,48 @@ void MeshExtractor::ExtractSkinningFromPartition(NiSkinInstance* pkSkin,
 		{
 			const unsigned int uiFullVertex = kPart.m_pusVertexMap[vLocal];
 			if (uiFullVertex >= uiVertexCount)
+			{
+				++uiInvalidVertexMap;
 				continue;
+			}
 
 			for (unsigned short k = 0; k < kPart.m_usBonesPerVertex; ++k)
 			{
 				const unsigned int uiInfluence =
 					vLocal * kPart.m_usBonesPerVertex + k;
 				const float fWeight = kPart.m_pfWeights[uiInfluence];
-				if (fWeight <= 0.0f)
+				if (!std::isfinite(fWeight) || fWeight <= 0.0f)
 					continue;
 
 				const unsigned int uiLocalBone = kPart.m_pucBonePalette
 					? kPart.m_pucBonePalette[uiInfluence]
 					: static_cast<unsigned int>(k);
 				if (uiLocalBone >= kPart.m_usBones)
+				{
+					++uiInvalidLocalPalette;
 					continue;
+				}
 
 				const unsigned int uiGlobalBone = kPart.m_pusBones[uiLocalBone];
-				if (uiGlobalBone < kOut.boneNames.size())
-					kOut.boneWeights[uiFullVertex].push_back({uiGlobalBone, fWeight});
+				if (!IsUsableBoneIndex(kOut, uiGlobalBone))
+				{
+					++uiInvalidGlobalBone;
+					continue;
+				}
+
+				kOut.boneWeights[uiFullVertex].push_back({uiGlobalBone, fWeight});
 			}
 		}
+	}
+
+	if (uiInvalidVertexMap > 0 || uiInvalidLocalPalette > 0 ||
+		uiInvalidGlobalBone > 0)
+	{
+		std::cerr << "    Warning: NiSkinPartition discarded invalid entries: "
+			<< "vertexMap=" << uiInvalidVertexMap
+			<< " paletteIndex=" << uiInvalidLocalPalette
+			<< " globalBone=" << uiInvalidGlobalBone
+			<< " in mesh '" << kOut.name << "'." << std::endl;
 	}
 }
 

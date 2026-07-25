@@ -37,6 +37,12 @@ target_compile_definitions(ecrD3D11Renderer
         $<$<BOOL:${BUILD_SHARED_LIBS}>:EE_ECRD3D11RENDERER_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(ecrD3D11Renderer
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/ecrD3D11Renderer/ecrD3D11RendererPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(ecrD3D11Renderer
     PUBLIC

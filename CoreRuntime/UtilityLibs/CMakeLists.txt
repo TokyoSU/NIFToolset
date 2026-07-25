@@ -28,7 +28,6 @@ else()
     message(STATUS "[NIFToolset] SDL3 support disabled, NiApplication skipped.")
 endif()
 
-option(NI_BUILD_ASSIMP_EXPORTER "Build the AssimpExporter FBX export tool (requires Assimp via vcpkg x64-windows)" ON)
 if(NI_BUILD_ASSIMP_EXPORTER)
     add_subdirectory("AssimpExporter")
 else()

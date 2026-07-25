@@ -37,6 +37,12 @@ target_compile_definitions(NiD3D10Renderer
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NID3D10RENDERER_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiD3D10Renderer
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiD3D10RendererPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiD3D10Renderer
     PUBLIC

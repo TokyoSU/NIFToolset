@@ -28,6 +28,12 @@ target_compile_definitions(NiTerrain
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NITERRAIN_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiTerrain
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiTerrainPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiTerrain
     PUBLIC

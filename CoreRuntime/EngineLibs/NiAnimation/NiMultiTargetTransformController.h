@@ -30,6 +30,7 @@
 //--------------------------------------------------------------------------------------------------
 
 class NiInterpolator;
+class NiAVObject;
 
 class NIANIMATION_ENTRY NiMultiTargetTransformController :
     public NiInterpController
@@ -69,6 +70,15 @@ public:
         float fWeightThreshold = 0.0f, unsigned char ucArraySize = 2) const;
     virtual void GuaranteeTimeRange(float fStartTime, float fEndTime);
     virtual bool TargetIsRequiredType() const;
+
+    // Legacy streaming information. Older NIF files store the animated
+    // NiAVObject targets directly on this controller. Gamebryo's modern pose
+    // conversion no longer needs the array and historically discarded it
+    // while loading. Keep it available for tools such as AssimpExporter so
+    // malformed/partially named NiControllerSequence blocks can still be
+    // matched to their original scene targets.
+    unsigned short GetLegacyExtraTargetCount() const;
+    NiAVObject* GetLegacyExtraTargetAt(unsigned short usIndex) const;
     // *** end Emergent internal use only ***
 
 protected:
@@ -79,6 +89,9 @@ protected:
     // For debug only.
     virtual bool InterpolatorIsCorrectType(NiInterpolator* pkInterpolator,
         unsigned short usIndex) const;
+
+    unsigned short m_usLegacyExtraTargetCount;
+    NiAVObject** m_ppkLegacyExtraTargets;
 };
 
 NiSmartPointer(NiMultiTargetTransformController);

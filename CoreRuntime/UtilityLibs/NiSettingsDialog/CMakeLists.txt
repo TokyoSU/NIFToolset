@@ -35,6 +35,12 @@ find_package(dxsdk-d3dx CONFIG REQUIRED)
 get_target_property(_d3dx9_inc Microsoft::D3DX9 INTERFACE_INCLUDE_DIRECTORIES)
 get_filename_component(_d3dx9_parent_inc "${_d3dx9_inc}" DIRECTORY)
 
+# Precompiled header
+target_precompile_headers(NiSettingsDialog
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiSettingsDialogPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiSettingsDialog
     PUBLIC

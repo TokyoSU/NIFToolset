@@ -28,6 +28,12 @@ target_compile_definitions(NiLightPrePass
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NILIGHTPREPASS_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiLightPrePass
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiLightPrePassPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiLightPrePass
     PUBLIC

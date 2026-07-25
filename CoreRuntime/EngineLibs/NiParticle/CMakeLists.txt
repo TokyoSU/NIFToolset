@@ -28,6 +28,12 @@ target_compile_definitions(NiParticle
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIPARTICLE_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiParticle
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiParticlePCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiParticle
     PUBLIC

@@ -28,6 +28,12 @@ target_compile_definitions(NiAnimation
         $<$<BOOL:${BUILD_SHARED_LIBS}>:NIANIMATION_IMPORT>
 )
 
+# Precompiled header
+target_precompile_headers(NiAnimation
+    PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/NiAnimationPCH.h>"
+)
+
 # Link dependencies
 target_link_libraries(NiAnimation
     PUBLIC

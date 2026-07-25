@@ -37,7 +37,7 @@ struct VertexBoneWeight
 	float weight;
 };
 
-// Intermediate mesh representation, aggregated before writing into aiScene
+// Intermediate representation for one exported mesh before writing aiScene
 struct IntermediateMesh
 {
 	std::string name;
@@ -53,6 +53,13 @@ struct IntermediateMesh
 	// If skinned, list of bone nodes (by aiScene node name)
 	std::vector<std::string> boneNames;
 	std::vector<aiMatrix4x4> boneOffsetMatrices; // bindpose inverse
+	// True only when the corresponding source bone pointer is valid. Invalid
+	// placeholder bones must
+	// never receive vertex influences because Blender/Unity discard them.
+	std::vector<bool> boneValid;
+	// Real skeleton bone used for rigid/unweighted fallback vertices. This is
+	// selected from the source hierarchy rather than assuming bone index 0.
+	unsigned int fallbackBoneIndex = ~0u;
 
 	// Material index into the scene material list
 	unsigned int materialIndex = 0;
@@ -77,9 +84,6 @@ public:
 	MeshExtractor(const std::string& kTextureOutputFolder,
 		bool bConvertTexturesToPng = true,
 		float fTransformUnitScale = 1.0f,
-		bool bFlipUvV = true,
-		bool bSmoothNormals = true,
-		float fSmoothNormalAngle = 80.0f,
 		bool bConvertToUnrealAxes = true);
 
 	// Recursively traverse the NIF scene graph and extract all geometry.
@@ -151,8 +155,5 @@ private:
 	std::string m_kTextureOutputFolder;
 	bool m_bConvertTexturesToPng;
 	float m_fTransformUnitScale;
-	bool m_bFlipUvV;
-	bool m_bSmoothNormals;
-	float m_fSmoothNormalAngle;
 	bool m_bConvertToUnrealAxes;
 };

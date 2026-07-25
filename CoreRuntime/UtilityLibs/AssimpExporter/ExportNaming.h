@@ -14,7 +14,7 @@ inline std::string GetExportNodeName(const NiAVObject* pkObject)
 {
 	if (pkObject)
 	{
-		const char* pcName = pkObject->GetName();
+		const char* pcName = pkObject->GetName().c_str();
 		if (pcName && pcName[0] != '\0')
 			return pcName;
 	}
