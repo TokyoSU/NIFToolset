@@ -6,6 +6,7 @@
 #include "NIF.Native.System.h"
 #include "NIF.Native.Main.Object.h"
 #include "NIF.Native.Main.Scene.h"
+#include "NIF.Native.Nodes.h"
 #include "NIF.Native.Main.Stream.h"
 #include "NIF.Native.Main.Camera.h"
 #include "NIF.Native.Floodgate.h"

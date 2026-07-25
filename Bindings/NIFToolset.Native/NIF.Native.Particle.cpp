@@ -6,13 +6,10 @@
 #include <NiPSEmitter.h>
 #include <NiPSParticleSystem.h>
 
+#include <new>
+
 namespace
 {
-	struct NIF_ParticleMeshHandle_t
-	{
-		NiMeshPtr spObject;
-	};
-
 	NiPSParticleSystem* NIF_GetParticleSystem(NIF_ParticleSystemHandle particleSystem)
 	{
 		NIF_ParticleSystemHandle_t* pHandle = static_cast<NIF_ParticleSystemHandle_t*>(particleSystem);
@@ -33,7 +30,12 @@ NIF_ParticleSystemHandle NIF_CreateParticleSystemHandle(NiPSParticleSystem* pkOb
 		return nullptr;
 	}
 
-	NIF_ParticleSystemHandle_t* pHandle = new NIF_ParticleSystemHandle_t();
+	NIF_ParticleSystemHandle_t* pHandle = new (std::nothrow) NIF_ParticleSystemHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate particle-system handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -45,7 +47,12 @@ NIF_PSEmitterHandle NIF_CreatePSEmitterHandle(NiPSEmitter* pkObject)
 		return nullptr;
 	}
 
-	NIF_PSEmitterHandle_t* pHandle = new NIF_PSEmitterHandle_t();
+	NIF_PSEmitterHandle_t* pHandle = new (std::nothrow) NIF_PSEmitterHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate emitter handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -257,12 +264,11 @@ NIF_MeshHandle NIF_Particle_System_AsMesh(NIF_ParticleSystemHandle particleSyste
 	NiPSParticleSystem* pkParticleSystem = NIF_GetParticleSystem(particleSystem);
 	if (!pkParticleSystem)
 	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid particle-system handle");
 		return nullptr;
 	}
 
-	NIF_ParticleMeshHandle_t* pHandle = new NIF_ParticleMeshHandle_t();
-	pHandle->spObject = pkParticleSystem;
-	return static_cast<NIF_MeshHandle>(pHandle);
+	return NIF_CreateMeshHandle(pkParticleSystem);
 }
 
 NIF_AVObjectHandle NIF_Particle_System_AsAVObject(NIF_ParticleSystemHandle particleSystem)

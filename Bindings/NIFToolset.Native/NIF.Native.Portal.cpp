@@ -1,6 +1,8 @@
 #include "NIF.Native.Portal.h"
 #include "NIF.Native.Internal.h"
 
+#include <new>
+
 #include <NiBound.h>
 #include <NiPortal.h>
 #include <NiRoom.h>
@@ -84,7 +86,12 @@ NIF_PortalHandle NIF_CreatePortalHandle(NiPortal* pkObject)
 		return nullptr;
 	}
 
-	NIF_PortalHandle_t* pHandle = new NIF_PortalHandle_t();
+	NIF_PortalHandle_t* pHandle = new (std::nothrow) NIF_PortalHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -96,7 +103,12 @@ NIF_RoomGroupHandle NIF_CreateRoomGroupHandle(NiRoomGroup* pkObject)
 		return nullptr;
 	}
 
-	NIF_RoomGroupHandle_t* pHandle = new NIF_RoomGroupHandle_t();
+	NIF_RoomGroupHandle_t* pHandle = new (std::nothrow) NIF_RoomGroupHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -108,7 +120,12 @@ NIF_RoomHandle NIF_CreateRoomHandle(NiRoom* pkObject)
 		return nullptr;
 	}
 
-	NIF_RoomHandle_t* pHandle = new NIF_RoomHandle_t();
+	NIF_RoomHandle_t* pHandle = new (std::nothrow) NIF_RoomHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -124,37 +141,59 @@ void NIF_Portal_Destroy(NIF_PortalHandle portal)
 NIF_PortalHandle NIF_Portal_Create(unsigned int vertexCount, const NIF_Vec3* vertices, NIF_AVObjectHandle adjoiner, int active)
 {
 	NIF_AVObjectHandle_t* pAdjoinerHandle = static_cast<NIF_AVObjectHandle_t*>(adjoiner);
-	if (vertexCount > 0xFFFFu || (vertexCount > 0 && !vertices))
+	if (vertexCount > 0xFFFFu)
 	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "Portal vertex count exceeds 65535");
+		return nullptr;
+	}
+	if (vertexCount > 0 && !vertices)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_ARGUMENT, "vertices must not be null when vertexCount is non-zero");
 		return nullptr;
 	}
 
 	NiPoint3 localVertices[32];
 	NiPoint3* pVertices = nullptr;
-	if (vertexCount > 0)
-		{
-		if (vertexCount <= 32)
-		{
-			pVertices = localVertices;
-		}
-		else
-		{
-			pVertices = NiNew NiPoint3[vertexCount];
-		}
-
-		for (unsigned int i = 0; i < vertexCount; ++i)
-		{
-			pVertices[i] = NIF_MakePoint3(vertices[i]);
-		}
-	}
-
-	NiPortal* pkPortal = NiNew NiPortal(static_cast<unsigned short>(vertexCount), pVertices, pAdjoinerHandle ? pAdjoinerHandle->spObject : nullptr, active != 0);
-	if (pVertices && pVertices != localVertices)
+	try
 	{
-		NiDelete[] pVertices;
-	}
+		if (vertexCount > 0)
+		{
+			if (vertexCount <= 32)
+			{
+				pVertices = localVertices;
+			}
+			else
+			{
+				pVertices = NiNew NiPoint3[vertexCount];
+				if (!pVertices)
+				{
+					NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate portal vertices");
+					return nullptr;
+				}
+			}
 
-	return NIF_CreatePortalHandle(pkPortal);
+			for (unsigned int i = 0; i < vertexCount; ++i)
+			{
+				pVertices[i] = NIF_MakePoint3(vertices[i]);
+			}
+		}
+
+		NiPortalPtr spPortal = NiNew NiPortal(static_cast<unsigned short>(vertexCount), pVertices, pAdjoinerHandle ? pAdjoinerHandle->spObject : nullptr, active != 0);
+		if (pVertices && pVertices != localVertices)
+		{
+			NiDelete[] pVertices;
+		}
+		return NIF_CreatePortalHandle(spPortal);
+	}
+	catch (...)
+	{
+		if (pVertices && pVertices != localVertices)
+		{
+			NiDelete[] pVertices;
+		}
+		NIF_SetLastErrorFromCurrentException("NIF_Portal_Create");
+		return nullptr;
+	}
 }
 
 int NIF_Portal_AsAVObject(NIF_PortalHandle portal, NIF_AVObjectHandle* outObject)
@@ -276,7 +315,8 @@ void NIF_Room_Destroy(NIF_RoomHandle room)
 
 NIF_RoomHandle NIF_Room_Create(void)
 {
-	return NIF_CreateRoomHandle(NiNew NiRoom());
+	NiRoomPtr spRoom = NiNew NiRoom();
+	return NIF_CreateRoomHandle(spRoom);
 }
 
 int NIF_Room_AsNode(NIF_RoomHandle room, NIF_NodeHandle* outNode)
@@ -415,7 +455,8 @@ void NIF_RoomGroup_Destroy(NIF_RoomGroupHandle roomGroup)
 
 NIF_RoomGroupHandle NIF_RoomGroup_Create(void)
 {
-	return NIF_CreateRoomGroupHandle(NiNew NiRoomGroup());
+	NiRoomGroupPtr spRoomGroup = NiNew NiRoomGroup();
+	return NIF_CreateRoomGroupHandle(spRoomGroup);
 }
 
 int NIF_RoomGroup_AsNode(NIF_RoomGroupHandle roomGroup, NIF_NodeHandle* outNode)

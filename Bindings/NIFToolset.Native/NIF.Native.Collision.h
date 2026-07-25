@@ -21,6 +21,10 @@ typedef struct NIF_CollisionIntersectDesc
 	NIF_Vec3 normal1;
 } NIF_CollisionIntersectDesc;
 
+// Releases all owned handles stored in the result and resets every field.
+// C# callers should invoke this in a finally block after a successful query.
+NIFTOOLSET_NATIVE_ENTRY void NIF_CollisionIntersectDesc_Release(NIF_CollisionIntersectDesc* intersect);
+
 typedef struct NIF_CollisionTriangleDesc
 {
 	NIF_Vec3 point0;
@@ -29,6 +33,7 @@ typedef struct NIF_CollisionTriangleDesc
 } NIF_CollisionTriangleDesc;
 
 NIFTOOLSET_NATIVE_ENTRY void NIF_Collision_Data_Destroy(NIF_CollisionDataHandle collisionData);
+NIFTOOLSET_NATIVE_ENTRY NIF_ObjectHandle NIF_Collision_Data_AsObject(NIF_CollisionDataHandle collisionData);
 NIFTOOLSET_NATIVE_ENTRY NIF_CollisionDataHandle NIF_Collision_Data_Create(NIF_AVObjectHandle sceneObject);
 NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Collision_Data_GetSceneObject(NIF_CollisionDataHandle collisionData);
 NIFTOOLSET_NATIVE_ENTRY void NIF_Collision_Data_SetPropagationMode(NIF_CollisionDataHandle collisionData, int propagationMode);

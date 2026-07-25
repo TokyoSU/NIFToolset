@@ -1,6 +1,15 @@
 #include "NIF.Native.Animation.h"
 #include "NIF.Native.Internal.h"
 
+#include <cstddef>
+#include <new>
+
+static_assert(offsetof(NIF_TextKeyDesc, text) == (sizeof(void*) == 8 ? 8u : 4u), "Unexpected text-key layout");
+static_assert(sizeof(NIF_TextKeyDesc) == (sizeof(void*) == 8 ? 16u : 8u), "Unexpected text-key size");
+static_assert(sizeof(NIF_KFMSequenceGroupEntryDesc) == 28u, "Unexpected sequence-group entry size");
+static_assert(sizeof(NIF_KFMBlendPairDesc) == sizeof(void*) * 2u, "Unexpected blend-pair size");
+static_assert(sizeof(NIF_KFMChainEntryDesc) == 8u, "Unexpected chain-entry size");
+
 #include <NiActorManager.h>
 #include <NiAnimState.h>
 #include <NiAnimationConstants.h>
@@ -58,7 +67,12 @@ NIF_KFMToolHandle NIF_CreateKFMToolHandle(NiKFMTool* pkObject)
 		return nullptr;
 	}
 
-	NIF_KFMToolHandle_t* pHandle = new NIF_KFMToolHandle_t();
+	NIF_KFMToolHandle_t* pHandle = new (std::nothrow) NIF_KFMToolHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -70,7 +84,12 @@ NIF_ActorManagerHandle NIF_CreateActorManagerHandle(NiActorManager* pkObject)
 		return nullptr;
 	}
 
-	NIF_ActorManagerHandle_t* pHandle = new NIF_ActorManagerHandle_t();
+	NIF_ActorManagerHandle_t* pHandle = new (std::nothrow) NIF_ActorManagerHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -82,7 +101,12 @@ NIF_SequenceDataHandle NIF_CreateSequenceDataHandle(NiSequenceData* pkObject)
 		return nullptr;
 	}
 
-	NIF_SequenceDataHandle_t* pHandle = new NIF_SequenceDataHandle_t();
+	NIF_SequenceDataHandle_t* pHandle = new (std::nothrow) NIF_SequenceDataHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -97,24 +121,81 @@ void NIF_Animation_KFM_Destroy(NIF_KFMToolHandle kfmTool)
 
 NIF_KFMToolHandle NIF_Animation_KFM_Create(void)
 {
-	return NIF_CreateKFMToolHandle(NiNew NiKFMTool());
+	try
+	{
+		NiKFMToolPtr spTool = NiNew NiKFMTool();
+		if (!spTool)
+		{
+			NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate NiKFMTool");
+			return nullptr;
+		}
+		return NIF_CreateKFMToolHandle(spTool);
+	}
+	catch (...)
+	{
+		NIF_SetLastErrorFromCurrentException("NIF_Animation_KFM_Create");
+		return nullptr;
+	}
 }
 
 NIF_KFMToolHandle NIF_Animation_KFM_Load(const char* filename)
 {
-	if (!filename)
+	if (!filename || !filename[0])
 	{
+		NIF_SetLastError(NIF_RESULT_INVALID_ARGUMENT, "KFM filename is null or empty");
 		return nullptr;
 	}
 
-	NiKFMToolPtr spTool = NiNew NiKFMTool();
-	return spTool->LoadFile(filename) == NiKFMTool::KFM_SUCCESS ? NIF_CreateKFMToolHandle(spTool) : nullptr;
+	try
+	{
+		NiKFMToolPtr spTool = NiNew NiKFMTool();
+		if (!spTool)
+		{
+			NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate NiKFMTool");
+			return nullptr;
+		}
+		if (spTool->LoadFile(filename) != NiKFMTool::KFM_SUCCESS)
+		{
+			NIF_SetLastError(NIF_RESULT_ENGINE_ERROR, "NiKFMTool failed to load the KFM file");
+			return nullptr;
+		}
+		return NIF_CreateKFMToolHandle(spTool);
+	}
+	catch (...)
+	{
+		NIF_SetLastErrorFromCurrentException("NIF_Animation_KFM_Load");
+		return nullptr;
+	}
 }
 
 int NIF_Animation_KFM_LoadFile(NIF_KFMToolHandle kfmTool, const char* filename)
 {
 	NiKFMTool* pkKFMTool = NIF_GetKFMTool(kfmTool);
-	return (pkKFMTool && filename && pkKFMTool->LoadFile(filename) == NiKFMTool::KFM_SUCCESS) ? 1 : 0;
+	if (!pkKFMTool)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid KFM tool handle");
+		return 0;
+	}
+	if (!filename || !filename[0])
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_ARGUMENT, "KFM filename is null or empty");
+		return 0;
+	}
+
+	try
+	{
+		if (pkKFMTool->LoadFile(filename) != NiKFMTool::KFM_SUCCESS)
+		{
+			NIF_SetLastError(NIF_RESULT_ENGINE_ERROR, "NiKFMTool failed to load the KFM file");
+			return 0;
+		}
+		return 1;
+	}
+	catch (...)
+	{
+		NIF_SetLastErrorFromCurrentException("NIF_Animation_KFM_LoadFile");
+		return 0;
+	}
 }
 
 const char* NIF_Animation_KFM_GetModelPath(NIF_KFMToolHandle kfmTool)

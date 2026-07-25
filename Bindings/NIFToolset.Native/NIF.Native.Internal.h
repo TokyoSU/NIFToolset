@@ -22,6 +22,7 @@
 #include <NiFrustum.h>
 #include <NiKFMTool.h>
 #include <NiMatrix3.h>
+#include <NiMesh.h>
 #include <NiNode.h>
 #include <NiObjectNET.h>
 #include <NiPoint3.h>
@@ -42,6 +43,9 @@
 #include <Ni3DRenderView.h>
 #include <NiMeshCullingProcess.h>
 
+#include <cstddef>
+#include <string>
+
 class NiPSParticleSystem;
 class NiPSEmitter;
 
@@ -60,7 +64,102 @@ struct NIF_AVObjectHandle_t
 	NiAVObjectPtr spObject;
 };
 
+struct NIF_MeshHandle_t
+{
+	NiMeshPtr spObject;
+};
+
 struct NIF_NodeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_BSPNodeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_BillboardNodeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_SwitchNodeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_LODNodeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_SortAdjustNodeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_TerrainHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_TerrainCellHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_TerrainCellNodeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_TerrainCellLeafHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_TerrainSectorHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_AtmosphereHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_EnvironmentHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_SkyHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_SkyDomeHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_DecorationFieldHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_DecorationLayerHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_DecorationPlaneHandle_t
+{
+	NiNodePtr spObject;
+};
+
+struct NIF_OldWallHandle_t
 {
 	NiNodePtr spObject;
 };
@@ -199,8 +298,8 @@ struct NIF_ViewRenderClickHandle_t
 struct NIF_RenderStepHandle_t
 {
 	NiRenderStepPtr spObject;
-	void* pPreCallback = nullptr;
-	void* pPostCallback = nullptr;
+	NIF_RenderStepCallback pPreCallback = nullptr;
+	NIF_RenderStepCallback pPostCallback = nullptr;
 	void* pPreCallbackUserData = nullptr;
 	void* pPostCallbackUserData = nullptr;
 };
@@ -237,7 +336,26 @@ const char* NIF_GetObjectName(const NiObject* pkObject);
 void NIF_SetObjectName(NiObject* pkObject, const char* name);
 NIF_ObjectHandle NIF_CreateObjectHandle(NiObject* pkObject);
 NIF_AVObjectHandle NIF_CreateAVObjectHandle(NiAVObject* pkObject);
+NIF_MeshHandle NIF_CreateMeshHandle(NiMesh* pkObject);
 NIF_NodeHandle NIF_CreateNodeHandle(NiNode* pkObject);
+NIF_BSPNodeHandle NIF_CreateBSPNodeHandle(NiNode* pkObject);
+NIF_BillboardNodeHandle NIF_CreateBillboardNodeHandle(NiNode* pkObject);
+NIF_SwitchNodeHandle NIF_CreateSwitchNodeHandle(NiNode* pkObject);
+NIF_LODNodeHandle NIF_CreateLODNodeHandle(NiNode* pkObject);
+NIF_SortAdjustNodeHandle NIF_CreateSortAdjustNodeHandle(NiNode* pkObject);
+NIF_TerrainHandle NIF_CreateTerrainHandle(NiNode* pkObject);
+NIF_TerrainCellHandle NIF_CreateTerrainCellHandle(NiNode* pkObject);
+NIF_TerrainCellNodeHandle NIF_CreateTerrainCellNodeHandle(NiNode* pkObject);
+NIF_TerrainCellLeafHandle NIF_CreateTerrainCellLeafHandle(NiNode* pkObject);
+NIF_TerrainSectorHandle NIF_CreateTerrainSectorHandle(NiNode* pkObject);
+NIF_AtmosphereHandle NIF_CreateAtmosphereHandle(NiNode* pkObject);
+NIF_EnvironmentHandle NIF_CreateEnvironmentHandle(NiNode* pkObject);
+NIF_SkyHandle NIF_CreateSkyHandle(NiNode* pkObject);
+NIF_SkyDomeHandle NIF_CreateSkyDomeHandle(NiNode* pkObject);
+NIF_DecorationFieldHandle NIF_CreateDecorationFieldHandle(NiNode* pkObject);
+NIF_DecorationLayerHandle NIF_CreateDecorationLayerHandle(NiNode* pkObject);
+NIF_DecorationPlaneHandle NIF_CreateDecorationPlaneHandle(NiNode* pkObject);
+NIF_OldWallHandle NIF_CreateOldWallHandle(NiNode* pkObject);
 NIF_CameraHandle NIF_CreateCameraHandle(NiCamera* pkObject);
 NIF_DataStreamHandle NIF_CreateDataStreamHandle(NiDataStream* pkObject);
 NIF_DataStreamRefHandle NIF_CreateDataStreamRefHandle(NiDataStreamRef* pkObject, NiObject* pkOwner);
@@ -271,6 +389,11 @@ NIF_ParticleSystemHandle NIF_CreateParticleSystemHandle(NiPSParticleSystem* pkOb
 NIF_PSEmitterHandle NIF_CreatePSEmitterHandle(NiPSEmitter* pkObject);
 NIF_Mat3 NIF_MakeIdentityMat3(void);
 
-typedef int (*NIF_RenderStepCallback)(NIF_RenderStepHandle renderStep, void* userData);
+
+
+void NIF_SetLastError(NIF_Result result, const char* message);
+void NIF_SetLastError(NIF_Result result, const std::string& message);
+void NIF_SetLastErrorFromCurrentException(const char* context);
+size_t NIF_CopyStringInternal(const char* source, char* destination, size_t destinationSize);
 
 #endif // NIF_NATIVE_INTERNAL_H

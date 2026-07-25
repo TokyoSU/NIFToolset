@@ -36,6 +36,8 @@ NIFTOOLSET_NATIVE_ENTRY float NIF_Camera_GetMaxFarNearRatio(NIF_CameraHandle cam
 NIFTOOLSET_NATIVE_ENTRY void NIF_Camera_SetLODAdjust(NIF_CameraHandle camera, float value);
 NIFTOOLSET_NATIVE_ENTRY float NIF_Camera_GetLODAdjust(NIF_CameraHandle camera);
 
+NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Camera_AsAVObject(NIF_CameraHandle camera);
+
 #ifdef __cplusplus
 }
 #endif

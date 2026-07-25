@@ -36,6 +36,16 @@ void NIF_RenderTargetGroup_Destroy(NIF_RenderTargetGroupHandle renderTargetGroup
 	delete static_cast<NIF_RenderTargetGroupHandle_t*>(renderTargetGroup);
 }
 
+void NIF_RenderBuffer_Destroy(NIF_RenderBufferHandle buffer)
+{
+	delete static_cast<NIF_RenderBufferHandle_t*>(buffer);
+}
+
+void NIF_DepthStencilBuffer_Destroy(NIF_DepthStencilBufferHandle depthStencilBuffer)
+{
+	delete static_cast<NIF_DepthStencilBufferHandle_t*>(depthStencilBuffer);
+}
+
 NIF_RenderTargetGroupHandle NIF_RenderTargetGroup_Create(unsigned int bufferCount, NIF_RendererHandle renderer)
 {
 	NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
@@ -51,13 +61,33 @@ unsigned int NIF_RenderTargetGroup_GetBufferCount(NIF_RenderTargetGroupHandle re
 unsigned int NIF_RenderTargetGroup_GetWidth(NIF_RenderTargetGroupHandle renderTargetGroup, unsigned int index)
 {
 	NiRenderTargetGroup* pkRenderTargetGroup = NIF_GetRenderTargetGroup(renderTargetGroup);
-	return pkRenderTargetGroup ? pkRenderTargetGroup->GetWidth(index) : 0;
+	if (!pkRenderTargetGroup)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid render-target-group handle");
+		return 0;
+	}
+	if (index >= pkRenderTargetGroup->GetBufferCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "render buffer index is out of range");
+		return 0;
+	}
+	return pkRenderTargetGroup->GetWidth(index);
 }
 
 unsigned int NIF_RenderTargetGroup_GetHeight(NIF_RenderTargetGroupHandle renderTargetGroup, unsigned int index)
 {
 	NiRenderTargetGroup* pkRenderTargetGroup = NIF_GetRenderTargetGroup(renderTargetGroup);
-	return pkRenderTargetGroup ? pkRenderTargetGroup->GetHeight(index) : 0;
+	if (!pkRenderTargetGroup)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid render-target-group handle");
+		return 0;
+	}
+	if (index >= pkRenderTargetGroup->GetBufferCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "render buffer index is out of range");
+		return 0;
+	}
+	return pkRenderTargetGroup->GetHeight(index);
 }
 
 unsigned int NIF_RenderTargetGroup_GetDepthStencilWidth(NIF_RenderTargetGroupHandle renderTargetGroup)
@@ -94,7 +124,17 @@ int NIF_RenderTargetGroup_AttachBuffer(NIF_RenderTargetGroupHandle renderTargetG
 {
 	NiRenderTargetGroup* pkRenderTargetGroup = NIF_GetRenderTargetGroup(renderTargetGroup);
 	Ni2DBuffer* pkBuffer = NIF_GetRenderBuffer(buffer);
-	return (pkRenderTargetGroup && pkBuffer && pkRenderTargetGroup->AttachBuffer(pkBuffer, index)) ? 1 : 0;
+	if (!pkRenderTargetGroup || !pkBuffer)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid render-target-group or render-buffer handle");
+		return 0;
+	}
+	if (index >= pkRenderTargetGroup->GetBufferCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "render buffer index is out of range");
+		return 0;
+	}
+	return pkRenderTargetGroup->AttachBuffer(pkBuffer, index) ? 1 : 0;
 }
 
 int NIF_RenderTargetGroup_AttachDepthStencilBuffer(NIF_RenderTargetGroupHandle renderTargetGroup, NIF_DepthStencilBufferHandle depthStencilBuffer)
@@ -114,6 +154,13 @@ int NIF_RenderTargetGroup_GetBuffer(NIF_RenderTargetGroupHandle renderTargetGrou
 	NiRenderTargetGroup* pkRenderTargetGroup = NIF_GetRenderTargetGroup(renderTargetGroup);
 	if (!pkRenderTargetGroup || !outBuffer)
 	{
+		NIF_SetLastError(!outBuffer ? NIF_RESULT_INVALID_ARGUMENT : NIF_RESULT_INVALID_HANDLE,
+			!outBuffer ? "outBuffer must not be null" : "Invalid render-target-group handle");
+		return 0;
+	}
+	if (index >= pkRenderTargetGroup->GetBufferCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "render buffer index is out of range");
 		return 0;
 	}
 
@@ -131,6 +178,13 @@ int NIF_RenderTargetGroup_GetDepthStencilBuffer(NIF_RenderTargetGroupHandle rend
 	NiRenderTargetGroup* pkRenderTargetGroup = NIF_GetRenderTargetGroup(renderTargetGroup);
 	if (!pkRenderTargetGroup || !outDepthStencilBuffer)
 	{
+		NIF_SetLastError(!outDepthStencilBuffer ? NIF_RESULT_INVALID_ARGUMENT : NIF_RESULT_INVALID_HANDLE,
+			!outDepthStencilBuffer ? "outDepthStencilBuffer must not be null" : "Invalid render-target-group handle");
+		return 0;
+	}
+	if (!pkRenderTargetGroup->GetDepthStencilBuffer())
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_TYPE, "Render target group has no depth-stencil buffer");
 		return 0;
 	}
 

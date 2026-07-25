@@ -9,6 +9,26 @@ extern "C"
 {
 #endif
 
+
+typedef enum NIF_PrimitiveType
+{
+	NIF_PRIMITIVE_TRIANGLES = 0,
+	NIF_PRIMITIVE_TRISTRIPS = 1,
+	NIF_PRIMITIVE_LINES = 2,
+	NIF_PRIMITIVE_LINESTRIPS = 3,
+	NIF_PRIMITIVE_QUADS = 4,
+	NIF_PRIMITIVE_POINTS = 5
+} NIF_PrimitiveType;
+
+typedef enum NIF_DataStreamUsage
+{
+	NIF_DATA_STREAM_USAGE_VERTEX_INDEX = 0,
+	NIF_DATA_STREAM_USAGE_VERTEX = 1,
+	NIF_DATA_STREAM_USAGE_SHADER_CONSTANT = 2,
+	NIF_DATA_STREAM_USAGE_USER = 3,
+	NIF_DATA_STREAM_USAGE_DISPLAY_LIST = 4
+} NIF_DataStreamUsage;
+
 typedef struct NIF_DataStreamRegion
 {
 	unsigned int startIndex;
@@ -60,6 +80,7 @@ NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Mesh_AsAVObject(NIF_MeshHandle me
 NIFTOOLSET_NATIVE_ENTRY NIF_ObjectHandle NIF_Mesh_AsObject(NIF_MeshHandle mesh);
 
 NIFTOOLSET_NATIVE_ENTRY void NIF_DataStream_Destroy(NIF_DataStreamHandle dataStream);
+NIFTOOLSET_NATIVE_ENTRY NIF_ObjectHandle NIF_DataStream_AsObject(NIF_DataStreamHandle dataStream);
 NIFTOOLSET_NATIVE_ENTRY NIF_DataStreamHandle NIF_DataStream_CreateSingleElement(int format, unsigned int count, unsigned int accessMask, int usage, const void* sourceData, int createRegion0, int forceToolDataStream);
 NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_DataStream_GetStride(NIF_DataStreamHandle dataStream);
 NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_DataStream_GetSize(NIF_DataStreamHandle dataStream);

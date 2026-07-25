@@ -1,0 +1,93 @@
+#pragma once
+#ifndef NIF_NATIVE_NODES_H
+#define NIF_NATIVE_NODES_H
+
+#include "NIF.Native.Common.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Concrete scene-graph node types listed by NiTypeMask/NiRTTI.
+// Returned handles are owned wrapper references and must be destroyed.
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeType NIF_Object_GetNodeType(NIF_ObjectHandle object);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_NodeType_GetName(NIF_NodeType type);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsBSPNode(NIF_ObjectHandle object, NIF_BSPNodeHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_BSPNode_Destroy(NIF_BSPNodeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_BSPNode_AsNode(NIF_BSPNodeHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsBillboardNode(NIF_ObjectHandle object, NIF_BillboardNodeHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_BillboardNode_Destroy(NIF_BillboardNodeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_BillboardNode_AsNode(NIF_BillboardNodeHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsSwitchNode(NIF_ObjectHandle object, NIF_SwitchNodeHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_SwitchNode_Destroy(NIF_SwitchNodeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_SwitchNode_AsNode(NIF_SwitchNodeHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsLODNode(NIF_ObjectHandle object, NIF_LODNodeHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_LODNode_Destroy(NIF_LODNodeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_SwitchNodeHandle NIF_LODNode_AsSwitchNode(NIF_LODNodeHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsSortAdjustNode(NIF_ObjectHandle object, NIF_SortAdjustNodeHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_SortAdjustNode_Destroy(NIF_SortAdjustNodeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_SortAdjustNode_AsNode(NIF_SortAdjustNodeHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsOldWall(NIF_ObjectHandle object, NIF_OldWallHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_OldWall_Destroy(NIF_OldWallHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_OldWall_AsNode(NIF_OldWallHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsTerrain(NIF_ObjectHandle object, NIF_TerrainHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Terrain_Destroy(NIF_TerrainHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_Terrain_AsNode(NIF_TerrainHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsTerrainCell(NIF_ObjectHandle object, NIF_TerrainCellHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_TerrainCell_Destroy(NIF_TerrainCellHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_TerrainCell_AsNode(NIF_TerrainCellHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsTerrainCellNode(NIF_ObjectHandle object, NIF_TerrainCellNodeHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_TerrainCellNode_Destroy(NIF_TerrainCellNodeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_TerrainCellHandle NIF_TerrainCellNode_AsTerrainCell(NIF_TerrainCellNodeHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsTerrainCellLeaf(NIF_ObjectHandle object, NIF_TerrainCellLeafHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_TerrainCellLeaf_Destroy(NIF_TerrainCellLeafHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_TerrainCellHandle NIF_TerrainCellLeaf_AsTerrainCell(NIF_TerrainCellLeafHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsTerrainSector(NIF_ObjectHandle object, NIF_TerrainSectorHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_TerrainSector_Destroy(NIF_TerrainSectorHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_TerrainSector_AsNode(NIF_TerrainSectorHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsAtmosphere(NIF_ObjectHandle object, NIF_AtmosphereHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Atmosphere_Destroy(NIF_AtmosphereHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_Atmosphere_AsNode(NIF_AtmosphereHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsEnvironment(NIF_ObjectHandle object, NIF_EnvironmentHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Environment_Destroy(NIF_EnvironmentHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_Environment_AsNode(NIF_EnvironmentHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsSky(NIF_ObjectHandle object, NIF_SkyHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Sky_Destroy(NIF_SkyHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_Sky_AsNode(NIF_SkyHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsSkyDome(NIF_ObjectHandle object, NIF_SkyDomeHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_SkyDome_Destroy(NIF_SkyDomeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_SkyHandle NIF_SkyDome_AsSky(NIF_SkyDomeHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsDecorationField(NIF_ObjectHandle object, NIF_DecorationFieldHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_DecorationField_Destroy(NIF_DecorationFieldHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_DecorationField_AsNode(NIF_DecorationFieldHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsDecorationLayer(NIF_ObjectHandle object, NIF_DecorationLayerHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_DecorationLayer_Destroy(NIF_DecorationLayerHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_DecorationLayer_AsNode(NIF_DecorationLayerHandle node);
+
+NIFTOOLSET_NATIVE_ENTRY int NIF_Object_AsDecorationPlane(NIF_ObjectHandle object, NIF_DecorationPlaneHandle* outNode);
+NIFTOOLSET_NATIVE_ENTRY void NIF_DecorationPlane_Destroy(NIF_DecorationPlaneHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_NodeHandle NIF_DecorationPlane_AsNode(NIF_DecorationPlaneHandle node);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // NIF_NATIVE_NODES_H

@@ -9,8 +9,6 @@ extern "C"
 {
 #endif
 
-typedef int (*NIF_RenderStepCallback)(NIF_RenderStepHandle renderStep, void* userData);
-
 NIFTOOLSET_NATIVE_ENTRY void NIF_AlphaAccumulator_Destroy(NIF_AlphaAccumulatorHandle accumulator);
 NIFTOOLSET_NATIVE_ENTRY NIF_AlphaAccumulatorHandle NIF_AlphaAccumulator_Create(void);
 NIFTOOLSET_NATIVE_ENTRY void NIF_AlphaAccumulator_SetObserveNoSortHint(NIF_AlphaAccumulatorHandle accumulator, int observe);
@@ -25,6 +23,7 @@ NIFTOOLSET_NATIVE_ENTRY int NIF_AlphaSortProcessor_AsRenderListProcessor(NIF_Alp
 NIFTOOLSET_NATIVE_ENTRY void NIF_AlphaSortProcessor_SetObserveNoSortHint(NIF_AlphaSortProcessorHandle processor, int observeNoSortHint);
 NIFTOOLSET_NATIVE_ENTRY int NIF_AlphaSortProcessor_GetObserveNoSortHint(NIF_AlphaSortProcessorHandle processor);
 
+NIFTOOLSET_NATIVE_ENTRY void NIF_CullingProcess_Destroy(NIF_CullingProcessHandle cullingProcess);
 NIFTOOLSET_NATIVE_ENTRY void NIF_MeshCullingProcess_Destroy(NIF_MeshCullingProcessHandle cullingProcess);
 NIFTOOLSET_NATIVE_ENTRY NIF_MeshCullingProcessHandle NIF_MeshCullingProcess_Create(void);
 NIFTOOLSET_NATIVE_ENTRY int NIF_MeshCullingProcess_AsCullingProcess(NIF_MeshCullingProcessHandle cullingProcess, NIF_CullingProcessHandle* outCullingProcess);
@@ -103,6 +102,7 @@ NIFTOOLSET_NATIVE_ENTRY void NIF_RenderStep_SetActive(NIF_RenderStepHandle rende
 NIFTOOLSET_NATIVE_ENTRY int NIF_RenderStep_GetActive(NIF_RenderStepHandle renderStep);
 NIFTOOLSET_NATIVE_ENTRY void NIF_RenderStep_SetPreCallback(NIF_RenderStepHandle renderStep, NIF_RenderStepCallback callback, void* userData);
 NIFTOOLSET_NATIVE_ENTRY void NIF_RenderStep_SetPostCallback(NIF_RenderStepHandle renderStep, NIF_RenderStepCallback callback, void* userData);
+NIFTOOLSET_NATIVE_ENTRY void NIF_RenderStep_ClearCallbacks(NIF_RenderStepHandle renderStep);
 NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderStep_GetNumObjectsDrawn(NIF_RenderStepHandle renderStep);
 NIFTOOLSET_NATIVE_ENTRY float NIF_RenderStep_GetCullTime(NIF_RenderStepHandle renderStep);
 NIFTOOLSET_NATIVE_ENTRY float NIF_RenderStep_GetRenderTime(NIF_RenderStepHandle renderStep);

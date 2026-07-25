@@ -10,6 +10,8 @@ extern "C"
 #endif
 
 NIFTOOLSET_NATIVE_ENTRY void NIF_RenderTargetGroup_Destroy(NIF_RenderTargetGroupHandle renderTargetGroup);
+NIFTOOLSET_NATIVE_ENTRY void NIF_RenderBuffer_Destroy(NIF_RenderBufferHandle buffer);
+NIFTOOLSET_NATIVE_ENTRY void NIF_DepthStencilBuffer_Destroy(NIF_DepthStencilBufferHandle depthStencilBuffer);
 NIFTOOLSET_NATIVE_ENTRY NIF_RenderTargetGroupHandle NIF_RenderTargetGroup_Create(unsigned int bufferCount, NIF_RendererHandle renderer);
 NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderTargetGroup_GetBufferCount(NIF_RenderTargetGroupHandle renderTargetGroup);
 NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_RenderTargetGroup_GetWidth(NIF_RenderTargetGroupHandle renderTargetGroup, unsigned int index);

@@ -9,9 +9,9 @@ extern "C"
 {
 #endif
 
-typedef void* NIF_FloodgateTaskHandle;
-typedef void* NIF_FloodgateWorkflowHandle;
-typedef void* NIF_FloodgateStreamHandle;
+typedef struct NIF_FloodgateTaskHandle_t* NIF_FloodgateTaskHandle;
+typedef struct NIF_FloodgateWorkflowHandle_t* NIF_FloodgateWorkflowHandle;
+typedef struct NIF_FloodgateStreamHandle_t* NIF_FloodgateStreamHandle;
 
 NIFTOOLSET_NATIVE_ENTRY void NIF_Floodgate_Task_Destroy(NIF_FloodgateTaskHandle task);
 NIFTOOLSET_NATIVE_ENTRY NIF_FloodgateTaskHandle NIF_Floodgate_Task_Create(unsigned short inputCount, unsigned short outputCount);

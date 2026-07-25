@@ -9,10 +9,8 @@
 #include <NiMesh.h>
 #include <NiPrimitiveType.h>
 
-struct NIF_MeshHandle_t
-{
-	NiMeshPtr spObject;
-};
+static_assert(sizeof(NIF_DataStreamRegion) == 8u, "Unexpected data-stream region size");
+static_assert(sizeof(NIF_DataStreamElementDesc) == 32u, "Unexpected data-stream element descriptor size");
 
 namespace
 {
@@ -86,9 +84,8 @@ void NIF_Mesh_Destroy(NIF_MeshHandle mesh)
 
 NIF_MeshHandle NIF_Mesh_Create(void)
 {
-	NIF_MeshHandle_t* pHandle = new NIF_MeshHandle_t();
-	pHandle->spObject = NiNew NiMesh();
-	return pHandle;
+	NiMeshPtr spMesh = NiNew NiMesh();
+	return NIF_CreateMeshHandle(spMesh);
 }
 
 const char* NIF_Mesh_GetName(NIF_MeshHandle mesh)
@@ -117,7 +114,17 @@ unsigned int NIF_Mesh_GetVertexCount(NIF_MeshHandle mesh)
 unsigned int NIF_Mesh_GetPrimitiveCount(NIF_MeshHandle mesh, unsigned int submeshIndex)
 {
 	NIF_MeshHandle_t* pHandle = static_cast<NIF_MeshHandle_t*>(mesh);
-	return (pHandle && pHandle->spObject) ? pHandle->spObject->GetPrimitiveCount(submeshIndex) : 0;
+	if (!pHandle || !pHandle->spObject)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid mesh handle");
+		return 0;
+	}
+	if (submeshIndex >= pHandle->spObject->GetSubmeshCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "submeshIndex is out of range");
+		return 0;
+	}
+	return pHandle->spObject->GetPrimitiveCount(submeshIndex);
 }
 
 unsigned int NIF_Mesh_GetTotalPrimitiveCount(NIF_MeshHandle mesh)
@@ -253,6 +260,7 @@ void NIF_Mesh_SetPrimitiveType(NIF_MeshHandle mesh, int primitiveType)
 
 	if (primitiveType < 0 || primitiveType >= NiPrimitiveType::PRIMITIVE_MAX)
 	{
+		NIF_SetLastError(NIF_RESULT_INVALID_ARGUMENT, "primitiveType is invalid");
 		return;
 	}
 
@@ -309,6 +317,12 @@ NIF_ObjectHandle NIF_Mesh_GetModifierAt(NIF_MeshHandle mesh, unsigned int index)
 	NIF_MeshHandle_t* pHandle = static_cast<NIF_MeshHandle_t*>(mesh);
 	if (!pHandle || !pHandle->spObject)
 	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid mesh handle");
+		return nullptr;
+	}
+	if (index >= pHandle->spObject->GetModifierCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "modifier index is out of range");
 		return nullptr;
 	}
 
@@ -318,7 +332,17 @@ NIF_ObjectHandle NIF_Mesh_GetModifierAt(NIF_MeshHandle mesh, unsigned int index)
 int NIF_Mesh_RemoveModifierAt(NIF_MeshHandle mesh, unsigned int index)
 {
 	NIF_MeshHandle_t* pHandle = static_cast<NIF_MeshHandle_t*>(mesh);
-	return (pHandle && pHandle->spObject && pHandle->spObject->RemoveModifierAt(index)) ? 1 : 0;
+	if (!pHandle || !pHandle->spObject)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid mesh handle");
+		return 0;
+	}
+	if (index >= pHandle->spObject->GetModifierCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "modifier index is out of range");
+		return 0;
+	}
+	return pHandle->spObject->RemoveModifierAt(index) ? 1 : 0;
 }
 
 int NIF_Mesh_AttachAllModifiers(NIF_MeshHandle mesh)
@@ -349,6 +373,19 @@ NIF_ObjectHandle NIF_Mesh_AsObject(NIF_MeshHandle mesh)
 {
 	NIF_MeshHandle_t* pHandle = static_cast<NIF_MeshHandle_t*>(mesh);
 	return (pHandle && pHandle->spObject) ? NIF_CreateObjectHandle(pHandle->spObject) : nullptr;
+}
+
+
+NIF_ObjectHandle NIF_DataStream_AsObject(NIF_DataStreamHandle dataStream)
+{
+	NIF_DataStreamHandle_t* dataStreamHandle = static_cast<NIF_DataStreamHandle_t*>(dataStream);
+	if (!dataStreamHandle || !dataStreamHandle->spObject)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid data stream handle");
+		return nullptr;
+	}
+
+	return NIF_CreateObjectHandle(dataStreamHandle->spObject);
 }
 
 void NIF_DataStream_Destroy(NIF_DataStreamHandle dataStream)
@@ -691,6 +728,18 @@ void NIF_DataStreamRef_BindRegionToSubmesh(NIF_DataStreamRefHandle streamRef, un
 	NIF_DataStreamRefHandle_t* pHandle = nullptr;
 	if (!NIF_TryGetDataStreamRef(streamRef, pHandle))
 	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid data-stream-reference handle");
+		return;
+	}
+	if (submeshIndex >= pHandle->pObject->GetSubmeshRemapCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "submeshIndex is out of range");
+		return;
+	}
+	NiDataStream* dataStream = pHandle->pObject->GetDataStream();
+	if (!dataStream || regionIndex >= dataStream->GetRegionCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "regionIndex is out of range");
 		return;
 	}
 

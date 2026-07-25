@@ -1,6 +1,14 @@
 #include "NIF.Native.Collision.h"
 #include "NIF.Native.Internal.h"
 
+#include <cstddef>
+#include <new>
+
+static_assert(offsetof(NIF_CollisionIntersectDesc, root0) == 0, "Unexpected collision result layout");
+static_assert(offsetof(NIF_CollisionIntersectDesc, time) == sizeof(void*) * 4, "Unexpected collision result layout");
+static_assert(sizeof(NIF_CollisionIntersectDesc) == (sizeof(void*) == 8 ? 72u : 56u), "Unexpected collision result size");
+static_assert(sizeof(NIF_CollisionTriangleDesc) == 36u, "Unexpected collision triangle size");
+
 #include <NiAVObject.h>
 #include <NiBoundingVolume.h>
 #include <NiCollisionData.h>
@@ -88,7 +96,12 @@ NIF_CollisionDataHandle NIF_CreateCollisionDataHandle(NiCollisionData* pkObject)
 		return nullptr;
 	}
 
-	NIF_CollisionDataHandle_t* pHandle = new NIF_CollisionDataHandle_t();
+	NIF_CollisionDataHandle_t* pHandle = new (std::nothrow) NIF_CollisionDataHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -100,13 +113,62 @@ NIF_CollisionGroupHandle NIF_CreateCollisionGroupHandle(NiCollisionGroup* pkObje
 		return nullptr;
 	}
 
-	NIF_CollisionGroupHandle_t* pHandle = new NIF_CollisionGroupHandle_t();
+	NIF_CollisionGroupHandle_t* pHandle = new (std::nothrow) NIF_CollisionGroupHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->pObject = pkObject;
 	return pHandle;
 }
 
 extern "C"
 {
+
+void NIF_CollisionIntersectDesc_Release(NIF_CollisionIntersectDesc* intersect)
+{
+	if (!intersect)
+	{
+		return;
+	}
+
+	NIF_AVObjectHandle handles[4] = { intersect->root0, intersect->root1, intersect->object0, intersect->object1 };
+	for (unsigned int index = 0; index < 4; ++index)
+	{
+		if (!handles[index])
+		{
+			continue;
+		}
+		bool alreadyReleased = false;
+		for (unsigned int previous = 0; previous < index; ++previous)
+		{
+			if (handles[previous] == handles[index])
+			{
+				alreadyReleased = true;
+				break;
+			}
+		}
+		if (!alreadyReleased)
+		{
+			delete static_cast<NIF_AVObjectHandle_t*>(handles[index]);
+		}
+	}
+	NIF_ClearIntersectDesc(intersect);
+}
+
+
+NIF_ObjectHandle NIF_Collision_Data_AsObject(NIF_CollisionDataHandle collisionData)
+{
+	NIF_CollisionDataHandle_t* collisionHandle = static_cast<NIF_CollisionDataHandle_t*>(collisionData);
+	if (!collisionHandle || !collisionHandle->spObject)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid collision data handle");
+		return nullptr;
+	}
+
+	return NIF_CreateObjectHandle(collisionHandle->spObject);
+}
 
 void NIF_Collision_Data_Destroy(NIF_CollisionDataHandle collisionData)
 {
@@ -116,7 +178,13 @@ void NIF_Collision_Data_Destroy(NIF_CollisionDataHandle collisionData)
 NIF_CollisionDataHandle NIF_Collision_Data_Create(NIF_AVObjectHandle sceneObject)
 {
 	NiAVObject* pkSceneObject = NIF_GetCollisionAVObject(sceneObject);
-	return pkSceneObject ? NIF_CreateCollisionDataHandle(NiNew NiCollisionData(pkSceneObject)) : nullptr;
+	if (!pkSceneObject)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid scene-object handle");
+		return nullptr;
+	}
+	NiObjectPtr spCollisionObject = static_cast<NiObject*>(NiNew NiCollisionData(pkSceneObject));
+	return NIF_CreateCollisionDataHandle(NiDynamicCast(NiCollisionData, spCollisionObject));
 }
 
 NIF_AVObjectHandle NIF_Collision_Data_GetSceneObject(NIF_CollisionDataHandle collisionData)
@@ -344,13 +412,27 @@ int NIF_Collision_Data_TestABVIntersect(NIF_CollisionDataHandle collisionData0, 
 
 int NIF_Collision_Data_FindABVIntersect(NIF_CollisionDataHandle collisionData0, NIF_CollisionDataHandle collisionData1, float deltaTime, int calculateNormals, NIF_CollisionIntersectDesc* intersect)
 {
+	NIF_ClearLastError();
+	if (!intersect)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_ARGUMENT, "intersect must not be null");
+		return 0;
+	}
+
+	NIF_ClearIntersectDesc(intersect);
 	NiCollisionData* pkCollisionData0 = NIF_GetCollisionData(collisionData0);
 	NiCollisionData* pkCollisionData1 = NIF_GetCollisionData(collisionData1);
+	if (!pkCollisionData0 || !pkCollisionData1)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid collision-data handle");
+		return 0;
+	}
+
 	NiBoundingVolume* pkBoundingVolume0 = NIF_GetWorldSpaceABV(pkCollisionData0);
 	NiBoundingVolume* pkBoundingVolume1 = NIF_GetWorldSpaceABV(pkCollisionData1);
-	NIF_ClearIntersectDesc(intersect);
-	if (!pkCollisionData0 || !pkCollisionData1 || !pkBoundingVolume0 || !pkBoundingVolume1 || !intersect)
+	if (!pkBoundingVolume0 || !pkBoundingVolume1)
 	{
+		NIF_SetLastError(NIF_RESULT_ENGINE_ERROR, "Collision data has no world-space bounding volume");
 		return 0;
 	}
 
@@ -363,10 +445,19 @@ int NIF_Collision_Data_FindABVIntersect(NIF_CollisionDataHandle collisionData0, 
 		return 0;
 	}
 
-	intersect->root0 = NIF_CreateAVObjectHandle(pkCollisionData0->GetSceneGraphObject());
-	intersect->root1 = NIF_CreateAVObjectHandle(pkCollisionData1->GetSceneGraphObject());
-	intersect->object0 = intersect->root0;
-	intersect->object1 = intersect->root1;
+	NiAVObject* root0 = pkCollisionData0->GetSceneGraphObject();
+	NiAVObject* root1 = pkCollisionData1->GetSceneGraphObject();
+	intersect->root0 = NIF_CreateAVObjectHandle(root0);
+	intersect->root1 = NIF_CreateAVObjectHandle(root1);
+	intersect->object0 = NIF_CreateAVObjectHandle(root0);
+	intersect->object1 = NIF_CreateAVObjectHandle(root1);
+	if ((root0 && (!intersect->root0 || !intersect->object0)) ||
+		(root1 && (!intersect->root1 || !intersect->object1)))
+	{
+		NIF_CollisionIntersectDesc_Release(intersect);
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate collision result handles");
+		return 0;
+	}
 	intersect->time = intersectionTime;
 	intersect->point = NIF_MakeVec3(intersectionPoint);
 	intersect->normal0 = NIF_MakeVec3(normal0);
@@ -399,13 +490,20 @@ int NIF_Collision_Data_GetEnableVelocity(void)
 
 void NIF_Collision_Group_Destroy(NIF_CollisionGroupHandle collisionGroup)
 {
-	delete NIF_GetCollisionGroup(collisionGroup);
+	NiCollisionGroup* group = NIF_GetCollisionGroup(collisionGroup);
+	NiDelete group;
 	delete static_cast<NIF_CollisionGroupHandle_t*>(collisionGroup);
 }
 
 NIF_CollisionGroupHandle NIF_Collision_Group_Create(void)
 {
-	return NIF_CreateCollisionGroupHandle(NiNew NiCollisionGroup());
+	NiCollisionGroup* pkGroup = NiNew NiCollisionGroup();
+	NIF_CollisionGroupHandle handle = NIF_CreateCollisionGroupHandle(pkGroup);
+	if (!handle)
+	{
+		NiDelete pkGroup;
+	}
+	return handle;
 }
 
 void NIF_Collision_Group_AddCollider(NIF_CollisionGroupHandle collisionGroup, NIF_AVObjectHandle objectHandle, int createCollisionData, int maxDepth, int binSize)

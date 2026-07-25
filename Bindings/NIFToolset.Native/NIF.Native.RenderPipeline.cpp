@@ -1,6 +1,8 @@
 #include "NIF.Native.RenderPipeline.h"
 #include "NIF.Native.Internal.h"
 
+#include <new>
+
 #include <NiAlphaAccumulator.h>
 #include <NiAlphaSortProcessor.h>
 #include <NiDefaultClickRenderStep.h>
@@ -13,8 +15,6 @@
 
 namespace
 {
-	using NIF_RenderStepCallbackFn = NIF_RenderStepCallback;
-
 	template <typename TList>
 	unsigned int NIF_GetListCount(const TList& list)
 	{
@@ -125,14 +125,14 @@ namespace
 	bool NIF_RenderStepPreCallbackThunk(NiRenderStep* pkCurrentStep, void* pvCallbackData)
 	{
 		NIF_RenderStepHandle_t* pHandle = static_cast<NIF_RenderStepHandle_t*>(pvCallbackData);
-		NIF_RenderStepCallbackFn callback = pHandle ? reinterpret_cast<NIF_RenderStepCallbackFn>(pHandle->pPreCallback) : nullptr;
+		NIF_RenderStepCallback callback = pHandle ? pHandle->pPreCallback : nullptr;
 		return callback ? (callback(static_cast<NIF_RenderStepHandle>(pHandle), pHandle->pPreCallbackUserData) != 0) : true;
 	}
 
 	bool NIF_RenderStepPostCallbackThunk(NiRenderStep* pkCurrentStep, void* pvCallbackData)
 	{
 		NIF_RenderStepHandle_t* pHandle = static_cast<NIF_RenderStepHandle_t*>(pvCallbackData);
-		NIF_RenderStepCallbackFn callback = pHandle ? reinterpret_cast<NIF_RenderStepCallbackFn>(pHandle->pPostCallback) : nullptr;
+		NIF_RenderStepCallback callback = pHandle ? pHandle->pPostCallback : nullptr;
 		return callback ? (callback(static_cast<NIF_RenderStepHandle>(pHandle), pHandle->pPostCallbackUserData) != 0) : true;
 	}
 }
@@ -144,7 +144,12 @@ NIF_CullingProcessHandle NIF_CreateCullingProcessHandle(NiCullingProcess* pkObje
 		return nullptr;
 	}
 
-	NIF_CullingProcessHandle_t* pHandle = new NIF_CullingProcessHandle_t();
+	NIF_CullingProcessHandle_t* pHandle = new (std::nothrow) NIF_CullingProcessHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -156,7 +161,12 @@ NIF_RenderListProcessorHandle NIF_CreateRenderListProcessorHandle(NiRenderListPr
 		return nullptr;
 	}
 
-	NIF_RenderListProcessorHandle_t* pHandle = new NIF_RenderListProcessorHandle_t();
+	NIF_RenderListProcessorHandle_t* pHandle = new (std::nothrow) NIF_RenderListProcessorHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -168,7 +178,12 @@ NIF_AlphaSortProcessorHandle NIF_CreateAlphaSortProcessorHandle(NiAlphaSortProce
 		return nullptr;
 	}
 
-	NIF_AlphaSortProcessorHandle_t* pHandle = new NIF_AlphaSortProcessorHandle_t();
+	NIF_AlphaSortProcessorHandle_t* pHandle = new (std::nothrow) NIF_AlphaSortProcessorHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -180,7 +195,12 @@ NIF_MeshCullingProcessHandle NIF_CreateMeshCullingProcessHandle(NiMeshCullingPro
 		return nullptr;
 	}
 
-	NIF_MeshCullingProcessHandle_t* pHandle = new NIF_MeshCullingProcessHandle_t();
+	NIF_MeshCullingProcessHandle_t* pHandle = new (std::nothrow) NIF_MeshCullingProcessHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -192,7 +212,12 @@ NIF_AlphaAccumulatorHandle NIF_CreateAlphaAccumulatorHandle(NiAlphaAccumulator* 
 		return nullptr;
 	}
 
-	NIF_AlphaAccumulatorHandle_t* pHandle = new NIF_AlphaAccumulatorHandle_t();
+	NIF_AlphaAccumulatorHandle_t* pHandle = new (std::nothrow) NIF_AlphaAccumulatorHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -204,7 +229,12 @@ NIF_RenderViewHandle NIF_CreateRenderViewHandle(NiRenderView* pkObject)
 		return nullptr;
 	}
 
-	NIF_RenderViewHandle_t* pHandle = new NIF_RenderViewHandle_t();
+	NIF_RenderViewHandle_t* pHandle = new (std::nothrow) NIF_RenderViewHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -216,7 +246,12 @@ NIF_RenderView3DHandle NIF_CreateRenderView3DHandle(Ni3DRenderView* pkObject)
 		return nullptr;
 	}
 
-	NIF_RenderView3DHandle_t* pHandle = new NIF_RenderView3DHandle_t();
+	NIF_RenderView3DHandle_t* pHandle = new (std::nothrow) NIF_RenderView3DHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -228,7 +263,12 @@ NIF_RenderClickHandle NIF_CreateRenderClickHandle(NiRenderClick* pkObject)
 		return nullptr;
 	}
 
-	NIF_RenderClickHandle_t* pHandle = new NIF_RenderClickHandle_t();
+	NIF_RenderClickHandle_t* pHandle = new (std::nothrow) NIF_RenderClickHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -240,7 +280,12 @@ NIF_ViewRenderClickHandle NIF_CreateViewRenderClickHandle(NiViewRenderClick* pkO
 		return nullptr;
 	}
 
-	NIF_ViewRenderClickHandle_t* pHandle = new NIF_ViewRenderClickHandle_t();
+	NIF_ViewRenderClickHandle_t* pHandle = new (std::nothrow) NIF_ViewRenderClickHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -252,7 +297,12 @@ NIF_RenderStepHandle NIF_CreateRenderStepHandle(NiRenderStep* pkObject)
 		return nullptr;
 	}
 
-	NIF_RenderStepHandle_t* pHandle = new NIF_RenderStepHandle_t();
+	NIF_RenderStepHandle_t* pHandle = new (std::nothrow) NIF_RenderStepHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -264,7 +314,12 @@ NIF_DefaultClickRenderStepHandle NIF_CreateDefaultClickRenderStepHandle(NiDefaul
 		return nullptr;
 	}
 
-	NIF_DefaultClickRenderStepHandle_t* pHandle = new NIF_DefaultClickRenderStepHandle_t();
+	NIF_DefaultClickRenderStepHandle_t* pHandle = new (std::nothrow) NIF_DefaultClickRenderStepHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spObject = pkObject;
 	return pHandle;
 }
@@ -279,7 +334,8 @@ void NIF_AlphaAccumulator_Destroy(NIF_AlphaAccumulatorHandle accumulator)
 
 NIF_AlphaAccumulatorHandle NIF_AlphaAccumulator_Create(void)
 {
-	return NIF_CreateAlphaAccumulatorHandle(NiNew NiAlphaAccumulator());
+	NiAlphaAccumulatorPtr spAccumulator = NiNew NiAlphaAccumulator();
+	return NIF_CreateAlphaAccumulatorHandle(spAccumulator);
 }
 
 void NIF_AlphaAccumulator_SetObserveNoSortHint(NIF_AlphaAccumulatorHandle accumulator, int observe)
@@ -351,7 +407,8 @@ void NIF_AlphaSortProcessor_Destroy(NIF_AlphaSortProcessorHandle processor)
 
 NIF_AlphaSortProcessorHandle NIF_AlphaSortProcessor_Create(int observeNoSortHint, int sortByClosestPoint)
 {
-	return NIF_CreateAlphaSortProcessorHandle(NiNew NiAlphaSortProcessor(observeNoSortHint != 0, sortByClosestPoint != 0));
+	NiAlphaSortProcessorPtr spProcessor = NiNew NiAlphaSortProcessor(observeNoSortHint != 0, sortByClosestPoint != 0);
+	return NIF_CreateAlphaSortProcessorHandle(spProcessor);
 }
 
 int NIF_AlphaSortProcessor_AsRenderListProcessor(NIF_AlphaSortProcessorHandle processor, NIF_RenderListProcessorHandle* outProcessor)
@@ -386,6 +443,11 @@ int NIF_AlphaSortProcessor_GetObserveNoSortHint(NIF_AlphaSortProcessorHandle pro
 	return (pkProcessor && pkProcessor->GetObserveNoSortHint()) ? 1 : 0;
 }
 
+void NIF_CullingProcess_Destroy(NIF_CullingProcessHandle cullingProcess)
+{
+	delete static_cast<NIF_CullingProcessHandle_t*>(cullingProcess);
+}
+
 void NIF_MeshCullingProcess_Destroy(NIF_MeshCullingProcessHandle cullingProcess)
 {
 	delete static_cast<NIF_MeshCullingProcessHandle_t*>(cullingProcess);
@@ -393,7 +455,8 @@ void NIF_MeshCullingProcess_Destroy(NIF_MeshCullingProcessHandle cullingProcess)
 
 NIF_MeshCullingProcessHandle NIF_MeshCullingProcess_Create(void)
 {
-	return NIF_CreateMeshCullingProcessHandle(NiNew NiMeshCullingProcess(nullptr, nullptr));
+	NiMeshCullingProcessPtr spProcess = NiNew NiMeshCullingProcess(nullptr, nullptr);
+	return NIF_CreateMeshCullingProcessHandle(spProcess);
 }
 
 int NIF_MeshCullingProcess_AsCullingProcess(NIF_MeshCullingProcessHandle cullingProcess, NIF_CullingProcessHandle* outCullingProcess)
@@ -478,7 +541,8 @@ NIF_RenderView3DHandle NIF_RenderView3D_Create(NIF_CameraHandle camera, NIF_Cull
 {
 	NIF_CameraHandle_t* pCameraHandle = static_cast<NIF_CameraHandle_t*>(camera);
 	NiCullingProcess* pkCullingProcess = NIF_GetCullingProcess(cullingProcess);
-	return NIF_CreateRenderView3DHandle(NiNew Ni3DRenderView(pCameraHandle ? pCameraHandle->spObject : nullptr, pkCullingProcess, alwaysUseCameraViewport != 0));
+	Ni3DRenderViewPtr spRenderView = NiNew Ni3DRenderView(pCameraHandle ? pCameraHandle->spObject : nullptr, pkCullingProcess, alwaysUseCameraViewport != 0);
+	return NIF_CreateRenderView3DHandle(spRenderView);
 }
 
 int NIF_RenderView3D_AsRenderView(NIF_RenderView3DHandle renderView, NIF_RenderViewHandle* outRenderView)
@@ -841,7 +905,8 @@ void NIF_ViewRenderClick_Destroy(NIF_ViewRenderClickHandle renderClick)
 
 NIF_ViewRenderClickHandle NIF_ViewRenderClick_Create(void)
 {
-	return NIF_CreateViewRenderClickHandle(NiNew NiViewRenderClick());
+	NiViewRenderClickPtr spRenderClick = NiNew NiViewRenderClick();
+	return NIF_CreateViewRenderClickHandle(spRenderClick);
 }
 
 int NIF_ViewRenderClick_AsRenderClick(NIF_ViewRenderClickHandle renderClick, NIF_RenderClickHandle* outRenderClick)
@@ -915,7 +980,27 @@ NIF_RenderViewHandle NIF_ViewRenderClick_GetRenderViewAt(NIF_ViewRenderClickHand
 
 void NIF_RenderStep_Destroy(NIF_RenderStepHandle renderStep)
 {
-	delete static_cast<NIF_RenderStepHandle_t*>(renderStep);
+	NIF_RenderStepHandle_t* pHandle = static_cast<NIF_RenderStepHandle_t*>(renderStep);
+	if (!pHandle)
+	{
+		return;
+	}
+
+	NiRenderStep* pkRenderStep = pHandle->spObject;
+	if (pkRenderStep)
+	{
+		if (pkRenderStep->GetPreProcessingCallbackFunc() == &NIF_RenderStepPreCallbackThunk &&
+			pkRenderStep->GetPreProcessingCallbackFuncData() == pHandle)
+		{
+			pkRenderStep->SetPreProcessingCallbackFunc(nullptr, nullptr);
+		}
+		if (pkRenderStep->GetPostProcessingCallbackFunc() == &NIF_RenderStepPostCallbackThunk &&
+			pkRenderStep->GetPostProcessingCallbackFuncData() == pHandle)
+		{
+			pkRenderStep->SetPostProcessingCallbackFunc(nullptr, nullptr);
+		}
+	}
+	delete pHandle;
 }
 
 const char* NIF_RenderStep_GetName(NIF_RenderStepHandle renderStep)
@@ -966,7 +1051,7 @@ void NIF_RenderStep_SetPreCallback(NIF_RenderStepHandle renderStep, NIF_RenderSt
 		return;
 	}
 
-	pHandle->pPreCallback = reinterpret_cast<void*>(callback);
+	pHandle->pPreCallback = callback;
 	pHandle->pPreCallbackUserData = userData;
 	pkRenderStep->SetPreProcessingCallbackFunc(callback ? &NIF_RenderStepPreCallbackThunk : nullptr, callback ? pHandle : nullptr);
 }
@@ -980,9 +1065,34 @@ void NIF_RenderStep_SetPostCallback(NIF_RenderStepHandle renderStep, NIF_RenderS
 		return;
 	}
 
-	pHandle->pPostCallback = reinterpret_cast<void*>(callback);
+	pHandle->pPostCallback = callback;
 	pHandle->pPostCallbackUserData = userData;
 	pkRenderStep->SetPostProcessingCallbackFunc(callback ? &NIF_RenderStepPostCallbackThunk : nullptr, callback ? pHandle : nullptr);
+}
+
+void NIF_RenderStep_ClearCallbacks(NIF_RenderStepHandle renderStep)
+{
+	NIF_RenderStepHandle_t* pHandle = NIF_GetRenderStepStorage(renderStep);
+	NiRenderStep* pkRenderStep = NIF_GetRenderStep(renderStep);
+	if (!pHandle || !pkRenderStep)
+	{
+		return;
+	}
+
+	if (pkRenderStep->GetPreProcessingCallbackFunc() == &NIF_RenderStepPreCallbackThunk &&
+		pkRenderStep->GetPreProcessingCallbackFuncData() == pHandle)
+	{
+		pkRenderStep->SetPreProcessingCallbackFunc(nullptr, nullptr);
+	}
+	if (pkRenderStep->GetPostProcessingCallbackFunc() == &NIF_RenderStepPostCallbackThunk &&
+		pkRenderStep->GetPostProcessingCallbackFuncData() == pHandle)
+	{
+		pkRenderStep->SetPostProcessingCallbackFunc(nullptr, nullptr);
+	}
+	pHandle->pPreCallback = nullptr;
+	pHandle->pPostCallback = nullptr;
+	pHandle->pPreCallbackUserData = nullptr;
+	pHandle->pPostCallbackUserData = nullptr;
 }
 
 unsigned int NIF_RenderStep_GetNumObjectsDrawn(NIF_RenderStepHandle renderStep)
@@ -1043,7 +1153,8 @@ void NIF_DefaultClickRenderStep_Destroy(NIF_DefaultClickRenderStepHandle renderS
 
 NIF_DefaultClickRenderStepHandle NIF_DefaultClickRenderStep_Create(void)
 {
-	return NIF_CreateDefaultClickRenderStepHandle(NiNew NiDefaultClickRenderStep());
+	NiDefaultClickRenderStepPtr spRenderStep = NiNew NiDefaultClickRenderStep();
+	return NIF_CreateDefaultClickRenderStepHandle(spRenderStep);
 }
 
 int NIF_DefaultClickRenderStep_AsRenderStep(NIF_DefaultClickRenderStepHandle renderStep, NIF_RenderStepHandle* outRenderStep)

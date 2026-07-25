@@ -16,6 +16,7 @@ NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Node_GetChildAt(NIF_NodeHandle no
 NIFTOOLSET_NATIVE_ENTRY int NIF_Node_AttachChild(NIF_NodeHandle node, NIF_AVObjectHandle child);
 NIFTOOLSET_NATIVE_ENTRY int NIF_Node_DetachChild(NIF_NodeHandle node, NIF_AVObjectHandle child);
 NIFTOOLSET_NATIVE_ENTRY void NIF_Node_RemoveAllChildren(NIF_NodeHandle node);
+NIFTOOLSET_NATIVE_ENTRY NIF_AVObjectHandle NIF_Node_AsAVObject(NIF_NodeHandle node);
 
 NIFTOOLSET_NATIVE_ENTRY void NIF_AVObject_Destroy(NIF_AVObjectHandle object);
 NIFTOOLSET_NATIVE_ENTRY const char* NIF_AVObject_GetName(NIF_AVObjectHandle object);

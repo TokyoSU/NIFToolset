@@ -1,6 +1,11 @@
 #include "NIF.Native.Renderer.DX11.h"
 #include "NIF.Native.Internal.h"
 
+#include <cstddef>
+
+static_assert(offsetof(NIF_DX11RendererDesc, outputWindow) == 72u, "Unexpected DX11 renderer descriptor layout");
+static_assert(sizeof(NIF_DX11RendererDesc) == (sizeof(void*) == 8 ? 96u : 88u), "Unexpected DX11 renderer descriptor size");
+
 #include <ecrD3D11Renderer/D3D11Renderer.h>
 
 namespace

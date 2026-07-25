@@ -1,6 +1,8 @@
 #include "NIF.Native.Floodgate.h"
 #include "NIF.Native.Internal.h"
 
+#include <new>
+
 #include <NiDataStream.h>
 #include <NiSPStream.h>
 #include <NiSPTask.h>
@@ -38,7 +40,12 @@ NIF_FloodgateTaskHandle NIF_Floodgate_Task_Create(unsigned short inputCount, uns
 		return nullptr;
 	}
 
-	NIF_FloodgateTaskHandle_t* pHandle = new NIF_FloodgateTaskHandle_t();
+	NIF_FloodgateTaskHandle_t* pHandle = new (std::nothrow) NIF_FloodgateTaskHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spTask = spTask;
 	return pHandle;
 }
@@ -199,7 +206,12 @@ NIF_FloodgateWorkflowHandle NIF_Floodgate_Workflow_Create(void)
 		return nullptr;
 	}
 
-	NIF_FloodgateWorkflowHandle_t* pHandle = new NIF_FloodgateWorkflowHandle_t();
+	NIF_FloodgateWorkflowHandle_t* pHandle = new (std::nothrow) NIF_FloodgateWorkflowHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spWorkflow = spWorkflow;
 	return pHandle;
 }
@@ -259,7 +271,12 @@ NIF_FloodgateTaskHandle NIF_Floodgate_Workflow_AddNewTask(NIF_FloodgateWorkflowH
 		return nullptr;
 	}
 
-	NIF_FloodgateTaskHandle_t* pHandle = new NIF_FloodgateTaskHandle_t();
+	NIF_FloodgateTaskHandle_t* pHandle = new (std::nothrow) NIF_FloodgateTaskHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
 	pHandle->spTask = pkTask;
 	return pHandle;
 }
@@ -355,15 +372,35 @@ void NIF_Floodgate_Stream_Destroy(NIF_FloodgateStreamHandle stream)
 		return;
 	}
 
-	delete pHandle->pStream;
+	NiDelete pHandle->pStream;
 	delete pHandle;
 }
 
 NIF_FloodgateStreamHandle NIF_Floodgate_Stream_Create(void* data, unsigned int stride, unsigned int blockCount, int fixedInput)
 {
-	NIF_FloodgateStreamHandle_t* pHandle = new NIF_FloodgateStreamHandle_t();
-	pHandle->pStream = NiNew NiSPStream(data, stride, blockCount, fixedInput != 0);
-	return pHandle;
+	NIF_FloodgateStreamHandle_t* pHandle = new (std::nothrow) NIF_FloodgateStreamHandle_t();
+	if (!pHandle)
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate native handle");
+		return nullptr;
+	}
+	try
+	{
+		pHandle->pStream = NiNew NiSPStream(data, stride, blockCount, fixedInput != 0);
+		if (!pHandle->pStream)
+		{
+			delete pHandle;
+			NIF_SetLastError(NIF_RESULT_OUT_OF_MEMORY, "Failed to allocate NiSPStream");
+			return nullptr;
+		}
+		return pHandle;
+	}
+	catch (...)
+	{
+		delete pHandle;
+		NIF_SetLastErrorFromCurrentException("NIF_Floodgate_Stream_Create");
+		return nullptr;
+	}
 }
 
 void* NIF_Floodgate_Stream_GetData(NIF_FloodgateStreamHandle stream)

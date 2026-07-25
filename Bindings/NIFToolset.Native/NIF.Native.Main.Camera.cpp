@@ -8,7 +8,8 @@ extern "C"
 
 NIF_CameraHandle NIF_Camera_Create(void)
 {
-	return NIF_CreateCameraHandle(NiNew NiCamera());
+	NiCameraPtr spCamera = NiNew NiCamera();
+	return NIF_CreateCameraHandle(spCamera);
 }
 
 void NIF_Camera_Destroy(NIF_CameraHandle camera)
@@ -278,6 +279,19 @@ float NIF_Camera_GetLODAdjust(NIF_CameraHandle camera)
 	}
 
 	return pCameraHandle->spObject->GetLODAdjust();
+}
+
+
+NIF_AVObjectHandle NIF_Camera_AsAVObject(NIF_CameraHandle camera)
+{
+	NIF_CameraHandle_t* cameraHandle = static_cast<NIF_CameraHandle_t*>(camera);
+	if (!cameraHandle || !cameraHandle->spObject)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid camera handle");
+		return nullptr;
+	}
+
+	return NIF_CreateAVObjectHandle(cameraHandle->spObject);
 }
 
 }

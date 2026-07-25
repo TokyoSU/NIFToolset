@@ -6,7 +6,8 @@ extern "C"
 
 NIF_NodeHandle NIF_Node_Create(void)
 {
-	return NIF_CreateNodeHandle(NiNew NiNode());
+	NiNodePtr spNode = NiNew NiNode();
+	return NIF_CreateNodeHandle(spNode);
 }
 
 void NIF_Node_Destroy(NIF_NodeHandle node)
@@ -30,6 +31,12 @@ NIF_AVObjectHandle NIF_Node_GetChildAt(NIF_NodeHandle node, unsigned int index)
 	NIF_NodeHandle_t* pNodeHandle = static_cast<NIF_NodeHandle_t*>(node);
 	if (!pNodeHandle || !pNodeHandle->spObject)
 	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid node handle");
+		return nullptr;
+	}
+	if (index >= pNodeHandle->spObject->GetChildCount())
+	{
+		NIF_SetLastError(NIF_RESULT_OUT_OF_RANGE, "child index is out of range");
 		return nullptr;
 	}
 
@@ -70,6 +77,19 @@ void NIF_Node_RemoveAllChildren(NIF_NodeHandle node)
 	}
 
 	pNodeHandle->spObject->RemoveAllChildren();
+}
+
+
+NIF_AVObjectHandle NIF_Node_AsAVObject(NIF_NodeHandle node)
+{
+	NIF_NodeHandle_t* nodeHandle = static_cast<NIF_NodeHandle_t*>(node);
+	if (!nodeHandle || !nodeHandle->spObject)
+	{
+		NIF_SetLastError(NIF_RESULT_INVALID_HANDLE, "Invalid node handle");
+		return nullptr;
+	}
+
+	return NIF_CreateAVObjectHandle(nodeHandle->spObject);
 }
 
 void NIF_AVObject_Destroy(NIF_AVObjectHandle object)
