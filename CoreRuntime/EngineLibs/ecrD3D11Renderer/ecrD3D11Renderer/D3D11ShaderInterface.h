@@ -18,8 +18,7 @@
 #include <ecrD3D11Renderer/ecrD3D11RendererLibType.h>
 #include <NiShader.h>
 
-struct _D3DX11_STATE_BLOCK_MASK;
-typedef _D3DX11_STATE_BLOCK_MASK D3DX11_STATE_BLOCK_MASK;
+#include "D3D11StateBlockMask.h"
 
 namespace ecr
 {
@@ -55,7 +54,7 @@ public:
     virtual void RecreateRendererData() = 0;
 
     /// Return a mask indicating which render states this shader will set.
-    virtual const D3DX11_STATE_BLOCK_MASK* GetStateBlockMask(
+    virtual const D3D11StateBlockMask* GetStateBlockMask(
         const NiRenderCallContext& callContext) const;
 
     /// @cond EMERGENT_INTERNAL

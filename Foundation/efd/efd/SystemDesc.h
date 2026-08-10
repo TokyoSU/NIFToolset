@@ -42,13 +42,14 @@ public:
         RENDERER_DX9 = 2,
         RENDERER_D3D10 = 3,
         RENDERER_D3D11 = 6,
+        RENDERER_BGFX = 7,
         RENDERER_WII = 4, // No longer supported, but remains for compatibility
         // Generic renderer is used for tool mode so that assets can be
         // generated independent of the current renderer.
         RENDERER_GENERIC = 5,
 
         // The total number of enumerated renderers
-        RENDERER_COUNT = 7,
+        RENDERER_COUNT = 8,
 
         // Compatibility enumerations
         RENDERER_NUM = RENDERER_COUNT,

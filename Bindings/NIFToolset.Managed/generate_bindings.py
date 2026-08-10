@@ -20,7 +20,7 @@ HEADER_ORDER = [
     'NIF.Native.Particle.h',
     'NIF.Native.Collision.h',
     'NIF.Native.Portal.h',
-    'NIF.Native.Renderer.DX11.h',
+    'NIF.Native.Renderer.Bgfx.h',
     'NIF.Native.Renderer.Utility.h',
     'NIF.Native.RenderTarget.h',
     'NIF.Native.RenderPipeline.h',
@@ -113,7 +113,7 @@ TYPE_MAP = {
     'NIF_CollisionTriangleDesc': 'NifCollisionTriangle',
     'NIF_DataStreamRegion': 'NifDataStreamRegion',
     'NIF_DataStreamElementDesc': 'NifDataStreamElementDesc',
-    'NIF_DX11RendererDesc': 'NifDx11RendererDesc',
+    'NIF_BgfxRendererDesc': 'NifBgfxRendererDesc',
     'NIF_RenderStepCallback': 'RenderStepCallback?',
 }
 

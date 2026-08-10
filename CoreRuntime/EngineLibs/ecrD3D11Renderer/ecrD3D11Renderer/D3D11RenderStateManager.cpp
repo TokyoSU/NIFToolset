@@ -19,56 +19,6 @@
 #include "D3D11Error.h"
 #include "D3D11RenderStateGroup.h"
 
-// D3DX11_STATE_BLOCK_MASK definition from Effects11 (d3dx11effect.h)
-struct _D3DX11_STATE_BLOCK_MASK
-{
-    BYTE VS;
-    BYTE VSSamplers[2];
-    BYTE VSShaderResources[16];
-    BYTE VSConstantBuffers[2];
-    BYTE VSInterfaces[32];
-    BYTE HS;
-    BYTE HSSamplers[2];
-    BYTE HSShaderResources[16];
-    BYTE HSConstantBuffers[2];
-    BYTE HSInterfaces[32];
-    BYTE DS;
-    BYTE DSSamplers[2];
-    BYTE DSShaderResources[16];
-    BYTE DSConstantBuffers[2];
-    BYTE DSInterfaces[32];
-    BYTE GS;
-    BYTE GSSamplers[2];
-    BYTE GSShaderResources[16];
-    BYTE GSConstantBuffers[2];
-    BYTE GSInterfaces[32];
-    BYTE PS;
-    BYTE PSSamplers[2];
-    BYTE PSShaderResources[16];
-    BYTE PSConstantBuffers[2];
-    BYTE PSInterfaces[32];
-    BYTE CS;
-    BYTE CSSamplers[2];
-    BYTE CSShaderResources[16];
-    BYTE CSConstantBuffers[2];
-    BYTE CSInterfaces[32];
-    BYTE CSUnorderedAccessViews[1];
-    BYTE IAVertexBuffers[4];
-    BYTE IAIndexBuffer;
-    BYTE IAInputLayout;
-    BYTE IAPrimitiveTopology;
-    BYTE OMRenderTargets;
-    BYTE OMDepthStencilState;
-    BYTE OMBlendState;
-    BYTE OMBlendFactor[4];
-    BYTE OMSampleMask;
-    BYTE RSViewports;
-    BYTE RSScissorRects;
-    BYTE RSRasterizerState;
-    BYTE SOBuffers;
-    BYTE Predication;
-};
-
 #include <NiWireframeProperty.h>
 
 using namespace ecr;
@@ -923,7 +873,7 @@ void D3D11RenderStateManager::SetDefaultSamplerDesc(
 
 //------------------------------------------------------------------------------------------------
 void D3D11RenderStateManager::ApplyCurrentState(
-    const D3DX11_STATE_BLOCK_MASK* pMask)
+    const D3D11StateBlockMask* pMask)
 {
     if (pMask == NULL || pMask->OMBlendState != 0)
         ApplyCurrentBlendState();
@@ -1070,7 +1020,7 @@ void D3D11RenderStateManager::ApplyCurrentRasterizerState()
 
 //------------------------------------------------------------------------------------------------
 void D3D11RenderStateManager::ApplyCurrentSamplers(
-    const D3DX11_STATE_BLOCK_MASK* pMask)
+    const D3D11StateBlockMask* pMask)
 {
     // Don't set the samplers for null shaders.
     if (m_pDeviceState->VSGetShader() != NULL)
@@ -1128,7 +1078,7 @@ void D3D11RenderStateManager::ApplyCurrentSamplers(
     NiGPUProgram::ProgramType shaderType,
     efd::UInt32 samplerStart,
     efd::UInt32 samplerCount,
-    const D3DX11_STATE_BLOCK_MASK* pMask)
+    const D3D11StateBlockMask* pMask)
 {
     if (samplerStart >= D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT)
         return;

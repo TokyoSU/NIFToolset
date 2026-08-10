@@ -23,6 +23,153 @@
 #include <efd/SystemLogger.h>
 #include <efd/DebugOutDestination.h>
 
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <mutex>
+
+namespace
+{
+    std::mutex g_kLogCallbackMutex;
+    NiLogCallback g_pfnLogCallback = nullptr;
+    void* g_pvLogCallbackUserData = nullptr;
+    thread_local bool g_bInsideLogCallback = false;
+
+    bool DispatchCustomLog(NiLogLevel eLevel, const char* pcCategory,
+        const char* pcMessage, const char* pcFilePath, unsigned int uiLine)
+    {
+        if (g_bInsideLogCallback)
+            return false;
+
+        NiLogCallback pfnCallback = nullptr;
+        void* pvUserData = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(g_kLogCallbackMutex);
+            pfnCallback = g_pfnLogCallback;
+            pvUserData = g_pvLogCallbackUserData;
+        }
+        if (!pfnCallback)
+            return false;
+
+        // User callbacks are deliberately invoked without holding NiLogger's
+        // internal critical section or the callback-state mutex. A spdlog sink
+        // is therefore free to take its own locks, and accidental logging from
+        // inside the callback does not deadlock NiSystem.
+        g_bInsideLogCallback = true;
+        try
+        {
+            pfnCallback(eLevel, pcCategory ? pcCategory : "NiSystem",
+                pcMessage ? pcMessage : "", pcFilePath, uiLine, pvUserData);
+        }
+        catch (...)
+        {
+            g_bInsideLogCallback = false;
+            return false;
+        }
+        g_bInsideLogCallback = false;
+        return true;
+    }
+
+    void DebugFallback(NiLogLevel eLevel, const char* pcCategory,
+        const char* pcMessage, const char* pcFilePath, unsigned int uiLine)
+    {
+        const char* pcSafeMessage = pcMessage ? pcMessage : "";
+        const size_t uiMessageLength = std::strlen(pcSafeMessage);
+        const bool bHasTrailingNewline = uiMessageLength > 0 &&
+            (pcSafeMessage[uiMessageLength - 1] == '\n' ||
+             pcSafeMessage[uiMessageLength - 1] == '\r');
+        const char* pcSuffix = bHasTrailingNewline ? "" : "\n";
+
+        char acBuffer[4096];
+        if (pcFilePath && *pcFilePath && uiLine != 0)
+        {
+            std::snprintf(acBuffer, sizeof(acBuffer), "[%s][%s] %s(%u): %s%s",
+                NiLogLevelToString(eLevel), pcCategory ? pcCategory : "NiSystem",
+                pcFilePath, uiLine, pcSafeMessage, pcSuffix);
+        }
+        else
+        {
+            std::snprintf(acBuffer, sizeof(acBuffer), "[%s][%s] %s%s",
+                NiLogLevelToString(eLevel), pcCategory ? pcCategory : "NiSystem",
+                pcSafeMessage, pcSuffix);
+        }
+        EE_OUTPUT_DEBUG_STRING(acBuffer);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiSetLogCallback(NiLogCallback pfnCallback, void* pvUserData)
+{
+    std::lock_guard<std::mutex> lock(g_kLogCallbackMutex);
+    g_pfnLogCallback = pfnCallback;
+    g_pvLogCallbackUserData = pfnCallback ? pvUserData : nullptr;
+}
+
+//--------------------------------------------------------------------------------------------------
+NiLogCallback NiGetLogCallback()
+{
+    std::lock_guard<std::mutex> lock(g_kLogCallbackMutex);
+    return g_pfnLogCallback;
+}
+
+//--------------------------------------------------------------------------------------------------
+void* NiGetLogCallbackUserData()
+{
+    std::lock_guard<std::mutex> lock(g_kLogCallbackMutex);
+    return g_pvLogCallbackUserData;
+}
+
+//--------------------------------------------------------------------------------------------------
+const char* NiLogLevelToString(NiLogLevel eLevel)
+{
+    switch (eLevel)
+    {
+    case NI_LOG_TRACE:   return "trace";
+    case NI_LOG_DEBUG:   return "debug";
+    case NI_LOG_INFO:    return "info";
+    case NI_LOG_WARNING: return "warning";
+    case NI_LOG_ERROR:   return "error";
+    case NI_LOG_FATAL:   return "fatal";
+    default:             return "unknown";
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiLogWrite(NiLogLevel eLevel, const char* pcCategory,
+    const char* pcMessage, const char* pcFilePath, unsigned int uiLine)
+{
+    if (!DispatchCustomLog(eLevel, pcCategory, pcMessage, pcFilePath, uiLine))
+        DebugFallback(eLevel, pcCategory, pcMessage, pcFilePath, uiLine);
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiLogWriteRaw(NiLogLevel eLevel, const char* pcCategory,
+    const char* pcMessage, const char* pcFilePath, unsigned int uiLine)
+{
+    if (!pcMessage)
+        return;
+
+    if (!DispatchCustomLog(eLevel, pcCategory, pcMessage, pcFilePath, uiLine))
+        EE_OUTPUT_DEBUG_STRING(pcMessage);
+}
+
+//--------------------------------------------------------------------------------------------------
+void NiLogWriteFormat(NiLogLevel eLevel, const char* pcCategory,
+    const char* pcFilePath, unsigned int uiLine, const char* pcFormat, ...)
+{
+    if (!pcFormat)
+        return;
+
+    char acBuffer[4096];
+    va_list kArgs;
+    va_start(kArgs, pcFormat);
+    std::vsnprintf(acBuffer, sizeof(acBuffer), pcFormat, kArgs);
+    va_end(kArgs);
+    acBuffer[sizeof(acBuffer) - 1] = '\0';
+
+    NiLogWrite(eLevel, pcCategory, acBuffer, pcFilePath, uiLine);
+}
+
 char NiLogger::ms_acBuffer[MAX_OUTPUT_LENGTH];
 NiLogMessageOptions NiLogger::ms_akMessageOptions[NIMESSAGE_MAX_TYPES];
 NiUInt16 NiLogger::ms_akLogIDMap[NIMESSAGE_MAX_TYPES];
@@ -46,6 +193,7 @@ NiLogger::NiLogger(int iMessageType, const char* pcFormat, ...)
 {
     if (OkayToOutput() && pcFormat)
     {
+        char acCallbackBuffer[MAX_OUTPUT_LENGTH] = {};
         ms_kCriticalSection.Lock();
 
         va_list kArgList;
@@ -55,9 +203,15 @@ NiLogger::NiLogger(int iMessageType, const char* pcFormat, ...)
 
         va_end(kArgList);
 
-        EE_LOG(ms_akLogIDMap[m_iMessageType], efd::ILogger::kLVL0, ("%s", ms_acBuffer));
+        std::strncpy(acCallbackBuffer, ms_acBuffer, sizeof(acCallbackBuffer) - 1);
+        const bool bLegacyOutput =
+            ms_akMessageOptions[m_iMessageType].m_bOutputToDebugWindow ||
+            ms_akMessageOptions[m_iMessageType].m_iLogID != -1;
+        if (bLegacyOutput)
+            EE_LOG(ms_akLogIDMap[m_iMessageType], efd::ILogger::kLVL0, ("%s", ms_acBuffer));
 
         ms_kCriticalSection.Unlock();
+        DispatchCustomLog(NI_LOG_DEBUG, "NiLogger", acCallbackBuffer, nullptr, 0);
     }
 
 }
@@ -67,6 +221,7 @@ NiLogger::NiLogger(const char* pcFormat, ...) : m_iMessageType(0)
 {
     if (OkayToOutput() && pcFormat)
     {
+        char acCallbackBuffer[MAX_OUTPUT_LENGTH] = {};
         ms_kCriticalSection.Lock();
 
         va_list kArgList;
@@ -76,13 +231,20 @@ NiLogger::NiLogger(const char* pcFormat, ...) : m_iMessageType(0)
 
         va_end(kArgList);
 
-        EE_LOG(ms_akLogIDMap[m_iMessageType], efd::ILogger::kLVL0, ("%s", ms_acBuffer));
+        std::strncpy(acCallbackBuffer, ms_acBuffer, sizeof(acCallbackBuffer) - 1);
+        const bool bLegacyOutput =
+            ms_akMessageOptions[m_iMessageType].m_bOutputToDebugWindow ||
+            ms_akMessageOptions[m_iMessageType].m_iLogID != -1;
+        if (bLegacyOutput)
+            EE_LOG(ms_akLogIDMap[m_iMessageType], efd::ILogger::kLVL0, ("%s", ms_acBuffer));
 
         ms_kCriticalSection.Unlock();
+        DispatchCustomLog(NI_LOG_DEBUG, "NiLogger", acCallbackBuffer, nullptr, 0);
     }
 }//-------------------------------------------------------------------------------------------------
 NiLoggerDirect::NiLoggerDirect(int iLogID, const char* pcFormat, ...)
 {
+    char acCallbackBuffer[MAX_OUTPUT_LENGTH] = {};
     ms_kCriticalSection.Lock();
 
     m_iMessageType = NIMESSAGE_RESERVED_FOR_LOGDIRECT;
@@ -95,17 +257,27 @@ NiLoggerDirect::NiLoggerDirect(int iLogID, const char* pcFormat, ...)
 
     va_end(kArgList);
 
+    std::strncpy(acCallbackBuffer, ms_acBuffer, sizeof(acCallbackBuffer) - 1);
     EE_LOG(ms_akLogIDMap[m_iMessageType], efd::ILogger::kLVL0, ("%s", ms_acBuffer));
 
     ms_kCriticalSection.Unlock();
+    DispatchCustomLog(NI_LOG_DEBUG, "NiLogger", acCallbackBuffer, nullptr, 0);
 }
 
 //--------------------------------------------------------------------------------------------------
 bool NiLogger::OkayToOutput()
 {
-    return (m_iMessageType >= 0 && m_iMessageType < NIMESSAGE_MAX_TYPES &&
-        (ms_akMessageOptions[m_iMessageType].m_bOutputToDebugWindow ||
-        ms_akMessageOptions[m_iMessageType].m_iLogID != -1));
+    if (m_iMessageType < 0 || m_iMessageType >= NIMESSAGE_MAX_TYPES)
+        return false;
+
+    const bool bLegacyOutput =
+        ms_akMessageOptions[m_iMessageType].m_bOutputToDebugWindow ||
+        ms_akMessageOptions[m_iMessageType].m_iLogID != -1;
+
+    // A custom application callback is an independent destination. This also
+    // allows early-startup NILOG diagnostics before NiLogBehavior configures
+    // the legacy efd destinations.
+    return bLegacyOutput || NiGetLogCallback() != nullptr;
 }
 
 //--------------------------------------------------------------------------------------------------

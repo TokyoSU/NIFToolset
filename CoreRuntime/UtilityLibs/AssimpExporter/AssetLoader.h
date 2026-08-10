@@ -23,6 +23,10 @@ struct ResolvedInputAsset
 struct LoadedNifAsset
 {
 	NiStream* pStream = nullptr;
+	// All top-level AVObjects returned by NiStream. root points either to the
+	// sole top-level object or to a temporary identity NiNode combining them,
+	// preserving the existing one-FBX-per-input behavior.
+	std::vector<NiAVObjectPtr> roots;
 	NiAVObjectPtr root;
 
 	~LoadedNifAsset()

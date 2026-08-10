@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -65,16 +66,73 @@ namespace
         if (kOutputRoot.empty())
             kOutputRoot = fs::path(".");
 
-        // Keep the FBX and every texture generated/copied for this asset in a
-        // dedicated folder named after the source model.
-        return kOutputRoot / kModelPath.stem();
+        // Batch export is flat by default: every FBX and exported texture is
+        // written directly into the single -output directory.
+        //
+        // -preserve_folders changes only that layout by restoring one
+        // model-named directory per FBX. Explicit non-batch exports retain
+        // their historical per-model folder layout.
+        if (kOptions.preserveFolders || !kOptions.exportAll)
+            return kOutputRoot / kModelPath.stem();
+
+        return kOutputRoot;
     }
 
-    fs::path BuildOutputFbxPath(const ResolvedInputAsset& kAsset,
-        const fs::path& kOutputFolder)
+    fs::path BuildOutputFbxPath(const fs::path& kOutputFolder,
+        const std::string& kOutputStem)
     {
-        const fs::path kStem = fs::path(kAsset.modelNifPath).stem();
-        return kOutputFolder / (kStem.string() + ".fbx");
+        return kOutputFolder / (kOutputStem + ".fbx");
+    }
+
+    std::string SanitizePathComponent(std::string kName,
+        const std::string& kFallback)
+    {
+        constexpr const char* pcInvalidCharacters = "<>:\"/\\|?*";
+        for (char& c : kName)
+        {
+            const unsigned char uc = static_cast<unsigned char>(c);
+            if (uc < 32u || std::strchr(pcInvalidCharacters, c))
+                c = '_';
+        }
+
+        // Windows silently strips trailing spaces and dots from file names.
+        // Remove them ourselves so folder/FBX names remain predictable.
+        while (!kName.empty() &&
+            (kName.back() == ' ' || kName.back() == '.'))
+        {
+            kName.pop_back();
+        }
+        while (!kName.empty() && kName.front() == ' ')
+            kName.erase(kName.begin());
+
+        if (kName.empty() || kName == "." || kName == "..")
+            kName = kFallback;
+
+        // Avoid Win32 device names even when they are followed by an extension.
+        const std::string kLowerStem = ToLower(fs::path(kName).stem().string());
+        const bool bReserved = kLowerStem == "con" || kLowerStem == "prn" ||
+            kLowerStem == "aux" || kLowerStem == "nul" ||
+            (kLowerStem.size() == 4u &&
+                ((kLowerStem.rfind("com", 0) == 0) ||
+                 (kLowerStem.rfind("lpt", 0) == 0)) &&
+                kLowerStem[3] >= '1' && kLowerStem[3] <= '9');
+        if (bReserved)
+            kName += '_';
+
+        // Leave enough room for the suffix, extension and a reasonably long
+        // output root while staying below common Win32 path limits.
+        constexpr std::size_t stMaxComponentLength = 120u;
+        if (kName.size() > stMaxComponentLength)
+        {
+            kName.resize(stMaxComponentLength);
+            while (!kName.empty() &&
+                (kName.back() == ' ' || kName.back() == '.'))
+            {
+                kName.pop_back();
+            }
+        }
+
+        return kName.empty() ? kFallback : kName;
     }
 
     fs::path BuildTerrainOutputFolder(const fs::path& kFsmPath,
@@ -204,11 +262,11 @@ int AssimpExporterApp::Run(int argc, char** argv)
         std::cout << "  Unit scale: " << kOptions.unitScale
             << " (NIF unit -> FBX cm), animation sample rate: "
             << kOptions.sampleRate << " fps, normals: source + generated fallback"
-            << ", handedness/UVs: Assimp ConvertToLeftHanded"
+            << ", handedness: "
+            << GetExportHandednessDescription(kOptions.handedness)
+            << ", UVs: V flipped for FBX"
             << ", axes: "
-            << (kOptions.unrealAxes
-                ? "Unreal (+X forward, +Z up)"
-                : "native NIF (+Y forward, +Z up)")
+            << GetExportAxisDescription(kOptions.axisPreset, kOptions.handedness)
             << std::endl;
 
         LoadedNifAsset kNifAsset;
@@ -220,8 +278,7 @@ int AssimpExporterApp::Run(int argc, char** argv)
             continue;
         }
 
-        NiAVObject* pkRoot = kNifAsset.root;
-        if (!pkRoot)
+        if (kNifAsset.roots.empty() || !kNifAsset.root)
         {
             std::cerr << "  NIF has no root object." << std::endl;
             ++iFailures;
@@ -234,52 +291,9 @@ int AssimpExporterApp::Run(int argc, char** argv)
             ? kNifDir : kOptions.textureFolder;
         const fs::path kAssetOutputFolder =
             BuildModelOutputFolder(kAsset, kOptions);
-        std::error_code kAssetDirectoryError;
-        fs::create_directories(kAssetOutputFolder, kAssetDirectoryError);
-        if (kAssetDirectoryError)
-        {
-            std::cerr << "  Failed to create asset output directory: "
-                << kAssetOutputFolder.string() << " ("
-                << kAssetDirectoryError.message() << ")" << std::endl;
-            ++iFailures;
-            continue;
-        }
-        const std::string kTexOutputFolder = kAssetOutputFolder.string();
 
-        MeshExtractor kMeshEx(kTexOutputFolder, true,
-            kOptions.unitScale, kOptions.unrealAxes);
-        TextureExporter kTexEx(kTexSearchFolder, kTexOutputFolder);
-
-        std::vector<IntermediateMesh> kMeshes;
-        std::vector<IntermediateMaterial> kMaterials;
-        NodeIndexMap kNodeMap;
-        kMeshEx.Extract(pkRoot, kMeshes, kMaterials, kNodeMap);
-
-        if (kMeshes.empty())
-        {
-            std::cout << "  Warning: no meshes found in NIF." << std::endl;
-        }
-        else
-        {
-            size_t stVertices = 0;
-            size_t stTriangles = 0;
-            size_t stSkinnedMeshes = 0;
-            for (const IntermediateMesh& kMesh : kMeshes)
-            {
-                stVertices += kMesh.positions.size();
-                stTriangles += kMesh.indices.size() / 3u;
-                stSkinnedMeshes += kMesh.isSkinned ? 1u : 0u;
-            }
-
-            std::cout << "  Meshes: " << kMeshes.size()
-                << " (skinned: " << stSkinnedMeshes << ")"
-                << ", vertices: " << stVertices
-                << ", triangles: " << stTriangles << std::endl;
-        }
-
-        std::vector<aiAnimation*> kAnimations;
-        std::vector<NiSequenceDataPtr> kSequenceDatas;
-
+        // KF/KFM data is loaded once for this source asset.
+        std::vector<NiSequenceDataPtr> kExternalSequenceDatas;
         bool bLoadExternalSequences = true;
         if (!kAsset.kfmPath.empty())
         {
@@ -301,7 +315,8 @@ int AssimpExporterApp::Run(int argc, char** argv)
                 if (kAssetLoader.LoadKfSequences(
                     kKfPath, kLoadedSequences, kError))
                 {
-                    kSequenceDatas.insert(kSequenceDatas.end(),
+                    kExternalSequenceDatas.insert(
+                        kExternalSequenceDatas.end(),
                         kLoadedSequences.begin(), kLoadedSequences.end());
                 }
                 else
@@ -312,40 +327,111 @@ int AssimpExporterApp::Run(int argc, char** argv)
             }
         }
 
-        AnimationExporter::AppendFromControllerManagers(
-            pkRoot, kSequenceDatas);
-
-        if (!kSequenceDatas.empty())
+        auto ExportRoot = [&](NiAVObject* pkRoot,
+            const fs::path& kOutputFolder,
+            const std::string& kOutputStem) -> bool
         {
-            kAnimations = AnimationExporter::BuildFromSequenceDatas(
-                kSequenceDatas, pkRoot, kOptions.unitScale,
-                kOptions.sampleRate, kOptions.unrealAxes,
-                kNifAsset.pStream);
-        }
+            if (!pkRoot)
+            {
+                std::cerr << "  Export object is null." << std::endl;
+                return false;
+            }
 
-        if (kAnimations.empty())
+            std::error_code kAssetDirectoryError;
+            fs::create_directories(kOutputFolder, kAssetDirectoryError);
+            if (kAssetDirectoryError)
+            {
+                std::cerr << "  Failed to create object output directory: "
+                    << kOutputFolder.string() << " ("
+                    << kAssetDirectoryError.message() << ")" << std::endl;
+                return false;
+            }
+
+            // Re-evaluate world transforms before each extraction because a
+            // previous export may have evaluated controllers on another root.
+            pkRoot->Update(0.0f, false);
+
+            const std::string kTexOutputFolder = kOutputFolder.string();
+            MeshExtractor kMeshEx(kTexOutputFolder, true,
+                kOptions.unitScale, kOptions.axisPreset);
+            TextureExporter kTexEx(kTexSearchFolder, kTexOutputFolder);
+
+            std::vector<IntermediateMesh> kMeshes;
+            std::vector<IntermediateMaterial> kMaterials;
+            NodeIndexMap kNodeMap;
+            kMeshEx.Extract(pkRoot, kMeshes, kMaterials, kNodeMap);
+
+            if (kMeshes.empty())
+            {
+                std::cout << "    Warning: no meshes found in object."
+                    << std::endl;
+            }
+            else
+            {
+                size_t stVertices = 0;
+                size_t stTriangles = 0;
+                size_t stSkinnedMeshes = 0;
+                for (const IntermediateMesh& kMesh : kMeshes)
+                {
+                    stVertices += kMesh.positions.size();
+                    stTriangles += kMesh.indices.size() / 3u;
+                    stSkinnedMeshes += kMesh.isSkinned ? 1u : 0u;
+                }
+
+                std::cout << "    Meshes: " << kMeshes.size()
+                    << " (skinned: " << stSkinnedMeshes << ")"
+                    << ", vertices: " << stVertices
+                    << ", triangles: " << stTriangles << std::endl;
+            }
+
+            std::vector<NiSequenceDataPtr> kSequenceDatas =
+                kExternalSequenceDatas;
+            AnimationExporter::AppendFromControllerManagers(
+                pkRoot, kSequenceDatas);
+
+            std::vector<aiAnimation*> kAnimations;
+            if (!kSequenceDatas.empty())
+            {
+                kAnimations = AnimationExporter::BuildFromSequenceDatas(
+                    kSequenceDatas, pkRoot, kOptions.unitScale,
+                    kOptions.sampleRate, kOptions.axisPreset,
+                    kNifAsset.pStream);
+            }
+
+            if (kAnimations.empty())
+            {
+                kAnimations = AnimationExporter::BuildFromNifControllers(
+                    pkRoot, kOptions.unitScale, kOptions.sampleRate,
+                    kOptions.axisPreset);
+            }
+
+            if (!kAnimations.empty())
+            {
+                std::cout << "    Animations: " << kAnimations.size()
+                    << std::endl;
+            }
+
+            const std::string kOutputPath =
+                BuildOutputFbxPath(kOutputFolder, kOutputStem).string();
+            FbxWriter kWriter(kTexEx, kOptions.unitScale,
+                kOptions.axisPreset, kOptions.handedness);
+            if (!kWriter.Write(kOutputPath, pkRoot, kMeshes, kMaterials,
+                kAnimations, kError))
+            {
+                std::cerr << "    Export failed: " << kError << std::endl;
+                return false;
+            }
+
+            std::cout << "    Written: " << kOutputPath << std::endl;
+            return true;
+        };
+
+        const std::string kModelStem = SanitizePathComponent(
+            fs::path(kAsset.modelNifPath).stem().string(), "Model");
+        if (!ExportRoot(kNifAsset.root, kAssetOutputFolder,
+            kModelStem))
         {
-            kAnimations = AnimationExporter::BuildFromNifControllers(
-                pkRoot, kOptions.unitScale, kOptions.sampleRate,
-                kOptions.unrealAxes);
-        }
-
-        if (!kAnimations.empty())
-            std::cout << "  Animations: " << kAnimations.size() << std::endl;
-
-        const std::string kOutputPath =
-            BuildOutputFbxPath(kAsset, kAssetOutputFolder).string();
-        FbxWriter kWriter(kTexEx, kOptions.unitScale,
-            kOptions.unrealAxes);
-        if (!kWriter.Write(kOutputPath, pkRoot, kMeshes, kMaterials,
-            kAnimations, kError))
-        {
-            std::cerr << "  Export failed: " << kError << std::endl;
             ++iFailures;
-        }
-        else
-        {
-            std::cout << "  Written: " << kOutputPath << std::endl;
         }
     }
 
@@ -405,17 +491,17 @@ int AssimpExporterApp::Run(int argc, char** argv)
         std::cout << "  Terrain mesh: vertices: " << stVertices
             << ", triangles: " << stTriangles
             << ", normals: heightmap/source + generated fallback"
-            << ", handedness/UVs: Assimp ConvertToLeftHanded"
+            << ", handedness: "
+            << GetExportHandednessDescription(kOptions.handedness)
+            << ", UVs: V flipped for FBX"
             << ", axes: "
-            << (kOptions.unrealAxes
-                ? "Unreal (+X forward, +Z up)"
-                : "native Z-up") << std::endl;
+            << GetExportAxisDescription(kOptions.axisPreset, kOptions.handedness) << std::endl;
 
         TextureExporter kTerrainTextureExporter(
             kFinalTexturePath.parent_path().string(),
             kOutputFolder.string());
         FbxWriter kTerrainWriter(kTerrainTextureExporter,
-            kOptions.unitScale, kOptions.unrealAxes);
+            kOptions.unitScale, kOptions.axisPreset, kOptions.handedness);
 
         const fs::path kOutputPath = kOutputFolder /
             (kFsmPath.stem().string() + ".fbx");
@@ -553,14 +639,36 @@ bool AssimpExporterApp::ParseCommandLine(int argc, char** argv,
             kOptions.exportAll = true;
             continue;
         }
-        if (kArg == "-unreal_axes")
+        if (kArg == "-preserve_folders" ||
+            kArg == "-per_fbx_folder" ||
+            kArg == "-mirror_folders")
         {
-            kOptions.unrealAxes = true;
+            kOptions.preserveFolders = true;
             continue;
         }
-        if (kArg == "-no_unreal_axes")
+        if (kArg == "-unreal_axes")
         {
-            kOptions.unrealAxes = false;
+            kOptions.axisPreset = ExportAxisPreset::Unreal;
+            continue;
+        }
+        if (kArg == "-unity_axes")
+        {
+            kOptions.axisPreset = ExportAxisPreset::Unity;
+            continue;
+        }
+        if (kArg == "-native_axes" || kArg == "-no_unreal_axes")
+        {
+            kOptions.axisPreset = ExportAxisPreset::Native;
+            continue;
+        }
+        if (kArg == "-left-handed" || kArg == "-left_handed")
+        {
+            kOptions.handedness = ExportHandedness::Left;
+            continue;
+        }
+        if (kArg == "-right-handed" || kArg == "-right_handed")
+        {
+            kOptions.handedness = ExportHandedness::Right;
             continue;
         }
 
@@ -745,12 +853,19 @@ void AssimpExporterApp::PrintUsage() const
         << "  -terrain_folder         <dir>  Recursively batch-convert all .fsm files\n"
         << "  -terrain_texture_folder <dir>  Root containing terrain diffuse/base textures\n"
         << "  -terrain_alpha_texture_folder <dir>  Root containing terrain alpha maps\n"
-        << "  -output                 <dir>  Root for per-file FBX/texture folders\n"
+        << "  -output                 <dir>  Destination for exported FBX/textures\n"
+        << "  -preserve_folders             With -all, create one folder per FBX\n"
+        << "                                  (-per_fbx_folder and -mirror_folders are aliases)\n"
         << "  -scale                  <num>  Source units -> FBX centimeters; default 100\n"
         << "  -sample_rate            <fps>  Bake animation curves; default 30\n"
-        << "                                  Complete normals are exported; Assimp converts to left-handed FBX\n"
-        << "  -unreal_axes                   Export +X forward, +Z up (default)\n"
-        << "  -no_unreal_axes                Preserve native source axes\n"
+        << "                                  Complete normals are exported; UV V coordinates are flipped for FBX\n"
+        << "  -unreal_axes                   Export +X forward, +Z up (default axes)\n"
+        << "  -unity_axes                    Export Y-up Unity axes (-Z forward in right-handed mode; +Z in left-handed mode)\n"
+        << "  -native_axes                   Preserve native +Y forward, +Z up axes\n"
+        << "  -no_unreal_axes                Compatibility alias for -native_axes\n"
+        << "  -left-handed                  Export a left-handed FBX (alias: -left_handed)\n"
+        << "                                  Right-handed output is the default\n"
+        << "  -right-handed                 Explicitly select the default right-handed mode\n"
         << "  -all                           Auto-discover model assets\n"
         << "\nSingle terrain example:\n"
         << "  AssimpExporter"
@@ -764,11 +879,23 @@ void AssimpExporterApp::PrintUsage() const
         << " -terrain_texture_folder \"C:\\Game\\TerrainTextures\""
         << " -terrain_alpha_texture_folder \"C:\\Game\\TerrainAlpha\""
         << " -output \"C:\\Export\\Maps\"\n"
-        << "\nModel batch example:\n"
+        << "\nFlat model batch example (default):\n"
         << "  AssimpExporter"
         << " -kfm_folder \"C:\\Game\\monster\""
         << " -anim_folder \"C:\\Game\\monster\\animation\""
         << " -texture_folder \"C:\\Game\\monster\\texture\""
         << " -output \"C:\\Export\\monster\""
-        << " -all\n";
+        << " -all\n"
+        << "  Result: C:\\Export\\monster\\M001.fbx, M002.fbx, ...\n"
+        << "\nOne folder per FBX example:\n"
+        << "  AssimpExporter"
+        << " -nif_folder \"C:\\Game\\models\""
+        << " -output \"C:\\Export\\models\""
+        << " -all -preserve_folders\n"
+        << "  Result: C:\\Export\\models\\M001\\M001.fbx, ...\n"
+        << "\nUnity-axis batch example:\n"
+        << "  AssimpExporter"
+        << " -nif_folder \"C:\\Game\\models\""
+        << " -output \"C:\\Export\\Unity\""
+        << " -all -unity_axes -left-handed\n";
 }

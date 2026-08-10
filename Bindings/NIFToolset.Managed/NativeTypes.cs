@@ -219,28 +219,10 @@ public struct NifDataStreamElementDesc
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct NifDx11RendererDesc
+public struct NifBgfxRendererDesc
 {
-    public uint AdapterIndex;
-    public uint OutputIndex;
-    public int DriverType;
-    public uint CreateFlags;
-    public int CreateSwapChain;
-    public int CreateDepthStencilBuffer;
-    public int AssociateWithWindow;
-    public uint WindowAssociationFlags;
-    public uint DepthStencilFormat;
-    public uint BackBufferWidth;
-    public uint BackBufferHeight;
-    public uint BackBufferFormat;
-    public uint RefreshRateNumerator;
-    public uint RefreshRateDenominator;
-    public uint SampleCount;
-    public uint SampleQuality;
-    public uint BufferUsage;
-    public uint BufferCount;
-    public nint OutputWindow;
-    public int Windowed;
-    public uint SwapEffect;
-    public uint SwapChainFlags;
+    public nint NativeWindowHandle;
+    public uint Width;
+    public uint Height;
+    public int VSync;
 }

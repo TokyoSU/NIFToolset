@@ -519,10 +519,10 @@ class NID3D10RENDERER_ENTRY NiD3D10Renderer : public NiRenderer
         bool bAutoWriteToDisk, bool bWriteDebugFile, bool bLoad,
         bool bNoNewProgramCreation, const char* pcWorkingDir);
 
-    inline const D3DXMATRIXA16& GetProjectionMatrix() const;
-    inline const D3DXMATRIXA16& GetViewMatrix() const;
-    inline const D3DXMATRIXA16& GetInverseViewMatrix() const;
-    inline const D3DXMATRIXA16& GetWorldMatrix() const;
+    inline const NiBgfxMath::Mat4A& GetProjectionMatrix() const;
+    inline const NiBgfxMath::Mat4A& GetViewMatrix() const;
+    inline const NiBgfxMath::Mat4A& GetInverseViewMatrix() const;
+    inline const NiBgfxMath::Mat4A& GetWorldMatrix() const;
 
     inline void GetCameraNearAndFar(float& fNear, float& fFar) const;
 
@@ -636,10 +636,10 @@ protected:
     inline unsigned int GetD3D10WindowAssociationFlags(
         unsigned int uiWindowAssociationFlags) const;
 
-    D3DXMATRIXA16 m_kD3DView;
-    D3DXMATRIXA16 m_kInvView;
-    D3DXMATRIXA16 m_kD3DProj;
-    D3DXMATRIXA16 m_kD3DModel;
+    NiBgfxMath::Mat4A m_kViewMatrix;
+    NiBgfxMath::Mat4A m_kInverseViewMatrix;
+    NiBgfxMath::Mat4A m_kProjectionMatrix;
+    NiBgfxMath::Mat4A m_kWorldMatrix;
 
     CreationParameters m_kInitialCreateParameters;
     NiD3D10SystemDescPtr m_spSystemDesc;

@@ -1529,55 +1529,55 @@ void NiD3D10Shader::PackWorldParallelEffect(const NiMatrix3&,
     const NiPoint3&, NiD3D10Pass*, unsigned int)
 {
     EE_ASSERT(false);
-    //D3DXMATRIXA16* pkMat = pkPass->GetTextureTransformation(uiSampler);
+    //NiBgfxMath::Mat4A* pkMat = pkPass->GetTextureTransformation(uiSampler);
     //EE_ASSERT(pkMat);
 
     //// pkMat->_14, pkMat->_24, pkMat->_34 and pkMat->_44 are always 0.0
 
     //// cam matrix = kWorldMat * m_invView
     //// D3DMatrices are transposed with respect to NiMatrix3.
-    //const D3DXMATRIXA16& kInvMat =
+    //const NiBgfxMath::Mat4A& kInvMat =
     //    NiD3D10Renderer::GetRenderer()->GetInverseViewMatrix();
 
     //// cam matrix = kWorldMat * m_invView
-    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._13;
-    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._23;
-    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._33;
-    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._13;
-    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._23;
-    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._33;
-    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._13;
-    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._23;
-    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._33;
+    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[2];
+    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[6];
+    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[10];
+    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[2];
+    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[6];
+    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[10];
+    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[2];
+    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[6];
+    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[10];
 
     //// cam trans = kWorldMat * invViewTrans + kWorldTrans
-    //pkMat->_41 = kWorldMat.GetEntry(0,0) * kInvMat._41 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._42 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._43 + kWorldTrans.x;
-    //pkMat->_42 = kWorldMat.GetEntry(1,0) * kInvMat._41 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._42 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._43 + kWorldTrans.y;
-    //pkMat->_43 = kWorldMat.GetEntry(2,0) * kInvMat._41 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._42 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._43 + kWorldTrans.z;
+    //pkMat->_41 = kWorldMat.GetEntry(0,0) * kInvMat[12] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[13] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[14] + kWorldTrans.x;
+    //pkMat->_42 = kWorldMat.GetEntry(1,0) * kInvMat[12] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[13] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[14] + kWorldTrans.y;
+    //pkMat->_43 = kWorldMat.GetEntry(2,0) * kInvMat[12] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[13] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[14] + kWorldTrans.z;
 
     //pkMat->_14 = pkMat->_24 = pkMat->_34 = pkMat->_44 = 0.0f;
 }
@@ -1587,55 +1587,55 @@ void NiD3D10Shader::PackWorldPerspectiveEffect(const NiMatrix3&,
     const NiPoint3&, NiD3D10Pass*, unsigned int)
 {
     EE_ASSERT(false);
-    //D3DXMATRIXA16* pkMat = pkPass->GetTextureTransformation(uiSampler);
+    //NiBgfxMath::Mat4A* pkMat = pkPass->GetTextureTransformation(uiSampler);
     //EE_ASSERT(pkMat);
 
     //// pkMat->_14, pkMat->_24, pkMat->_34 and pkMat->_44 are always 0.0
 
     //// cam matrix = kWorldMat * kInvMat
     //// D3DMatrices are transposed with respect to NiMatrix3.
-    //const D3DXMATRIXA16& kInvMat =
+    //const NiBgfxMath::Mat4A& kInvMat =
     //    NiD3D10Renderer::GetRenderer()->GetInverseViewMatrix();
 
-    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._13;
-    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._23;
-    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._33;
-    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._13;
-    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._23;
-    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._33;
-    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._13;
-    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._23;
-    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._33;
+    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[2];
+    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[6];
+    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[10];
+    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[2];
+    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[6];
+    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[10];
+    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[2];
+    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[6];
+    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[10];
 
     //// cam trans = kWorldMat * pkInvViewTrans + kWorldTrans
 
-    //pkMat->_41 = kWorldMat.GetEntry(0,0) * kInvMat._41 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._42 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._43 + kWorldTrans.x;
-    //pkMat->_42 = kWorldMat.GetEntry(1,0) * kInvMat._41 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._42 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._43 + kWorldTrans.y;
-    //pkMat->_43 = kWorldMat.GetEntry(2,0) * kInvMat._41 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._42 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._43 + kWorldTrans.z;
+    //pkMat->_41 = kWorldMat.GetEntry(0,0) * kInvMat[12] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[13] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[14] + kWorldTrans.x;
+    //pkMat->_42 = kWorldMat.GetEntry(1,0) * kInvMat[12] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[13] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[14] + kWorldTrans.y;
+    //pkMat->_43 = kWorldMat.GetEntry(2,0) * kInvMat[12] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[13] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[14] + kWorldTrans.z;
 
     //pkMat->_14 = pkMat->_24 = pkMat->_34 = pkMat->_44 = 0.0f;
 }
@@ -1646,43 +1646,43 @@ void NiD3D10Shader::PackWorldSphereEffect(const NiMatrix3&,
 {
     EE_ASSERT(false);
 
-    //D3DXMATRIXA16* pkMat = pkPass->GetTextureTransformation(uiSampler);
+    //NiBgfxMath::Mat4A* pkMat = pkPass->GetTextureTransformation(uiSampler);
     //EE_ASSERT(pkMat);
 
     //// pkMat->_14, pkMat->_24, pkMat->_34 and pkMat->_44 are always 0.0
 
     //// cam matrix = kWorldMat * kInvMat
     //// D3DMatrices are transposed with respect to NiMatrix3.
-    //const D3DXMATRIXA16& kInvMat =
+    //const NiBgfxMath::Mat4A& kInvMat =
     //    NiD3D10Renderer::GetRenderer()->GetInverseViewMatrix();
 
-    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._13;
-    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._23;
-    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._33;
-    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._13;
-    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._23;
-    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._33;
-    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._13;
-    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._23;
-    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._33;
+    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[2];
+    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[6];
+    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[10];
+    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[2];
+    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[6];
+    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[10];
+    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[2];
+    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[6];
+    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[10];
 
     //// cam trans is used directly
 
@@ -1698,7 +1698,7 @@ void NiD3D10Shader::PackCameraSphereEffect(const NiMatrix3&,
     const NiPoint3&, NiD3D10Pass*, unsigned int)
 {
     EE_ASSERT(false);
-    //D3DXMATRIXA16* pkMat = pkPass->GetTextureTransformation(uiSampler);
+    //NiBgfxMath::Mat4A* pkMat = pkPass->GetTextureTransformation(uiSampler);
     //EE_ASSERT(pkMat);
 
     //// This is always the same matrix in camera space
@@ -1720,43 +1720,43 @@ void NiD3D10Shader::PackSpecularCubeEffect(const NiMatrix3&,
 {
     EE_ASSERT(false);
 
-    //D3DXMATRIXA16* pkMat = pkPass->GetTextureTransformation(uiSampler);
+    //NiBgfxMath::Mat4A* pkMat = pkPass->GetTextureTransformation(uiSampler);
     //EE_ASSERT(pkMat);
 
     //// pkMat->_14, pkMat->_24, pkMat->_34 and pkMat->_44 are always 0.0
 
     //// cam matrix = kWorldMat * kInvMat
     //// D3DMatrices are transposed with respect to NiMatrix3.
-    //const D3DXMATRIXA16& kInvMat =
+    //const NiBgfxMath::Mat4A& kInvMat =
     //    NiD3D10Renderer::GetRenderer()->GetInverseViewMatrix();
 
-    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._13;
-    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._23;
-    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._33;
-    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._13;
-    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._23;
-    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._33;
-    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._13;
-    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._23;
-    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._33;
+    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[2];
+    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[6];
+    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[10];
+    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[2];
+    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[6];
+    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[10];
+    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[2];
+    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[6];
+    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[10];
 
     //// cam trans is used directly
 
@@ -1773,43 +1773,43 @@ void NiD3D10Shader::PackDiffuseCubeEffect(const NiMatrix3&,
 {
     EE_ASSERT(false);
 
-    //D3DXMATRIXA16* pkMat = pkPass->GetTextureTransformation(uiSampler);
+    //NiBgfxMath::Mat4A* pkMat = pkPass->GetTextureTransformation(uiSampler);
     //EE_ASSERT(pkMat);
 
     //// pkMat->_14, pkMat->_24, pkMat->_34 and pkMat->_44 are always 0.0
 
     //// cam matrix = kWorldMat * kInvMat
     //// D3DMatrices are transposed with respect to NiMatrix3.
-    //const D3DXMATRIXA16& kInvMat =
+    //const NiBgfxMath::Mat4A& kInvMat =
     //    NiD3D10Renderer::GetRenderer()->GetInverseViewMatrix();
 
-    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._13;
-    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._23;
-    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(0,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(0,2) * kInvMat._33;
-    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._13;
-    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._23;
-    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(1,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(1,2) * kInvMat._33;
-    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat._11 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._12 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._13;
-    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat._21 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._22 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._23;
-    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat._31 +
-    //    kWorldMat.GetEntry(2,1) * kInvMat._32 +
-    //    kWorldMat.GetEntry(2,2) * kInvMat._33;
+    //pkMat->_11 = kWorldMat.GetEntry(0,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[2];
+    //pkMat->_21 = kWorldMat.GetEntry(0,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[6];
+    //pkMat->_31 = kWorldMat.GetEntry(0,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(0,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(0,2) * kInvMat[10];
+    //pkMat->_12 = kWorldMat.GetEntry(1,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[2];
+    //pkMat->_22 = kWorldMat.GetEntry(1,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[6];
+    //pkMat->_32 = kWorldMat.GetEntry(1,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(1,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(1,2) * kInvMat[10];
+    //pkMat->_13 = kWorldMat.GetEntry(2,0) * kInvMat[0] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[1] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[2];
+    //pkMat->_23 = kWorldMat.GetEntry(2,0) * kInvMat[4] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[5] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[6];
+    //pkMat->_33 = kWorldMat.GetEntry(2,0) * kInvMat[8] +
+    //    kWorldMat.GetEntry(2,1) * kInvMat[9] +
+    //    kWorldMat.GetEntry(2,2) * kInvMat[10];
 
     //// cam trans is used directly
 

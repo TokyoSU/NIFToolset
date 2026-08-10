@@ -47,7 +47,5 @@ if(NI_BUILD_LIGHTPREPASS)
 endif()
 
 if(NI_BUILD_RENDERER)
-    add_subdirectory("NiDX9Renderer")
-    add_subdirectory("NiD3D10Renderer")
-    add_subdirectory("ecrD3D11Renderer")
+    add_subdirectory("NiBgfxRenderer")
 endif()

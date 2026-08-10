@@ -26,12 +26,12 @@ class NID3D10RENDERER_ENTRY NiD3D10Utility
 {
 public:
     // Matrix conversion
-    static void GetD3DFromNi(D3DXMATRIX& kD3D, const NiTransform& kNi);
-    static void GetD3DFromNi(D3DXMATRIX& kD3D, const NiMatrix3& kNiRot,
+    static void GetMatrixFromNi(NiBgfxMath::Mat4& kMatrix, const NiTransform& kNi);
+    static void GetMatrixFromNi(NiBgfxMath::Mat4& kMatrix, const NiMatrix3& kNiRot,
         const NiPoint3& kNiTrans, float fNiScale);
-    static void GetD3DTransposeFromNi(D3DXMATRIX& kD3D,
+    static void GetTransposeMatrixFromNi(NiBgfxMath::Mat4& kMatrix,
         const NiTransform& kNi);
-    static void GetD3DTransposeFromNi(D3DXMATRIX& kD3D,
+    static void GetTransposeMatrixFromNi(NiBgfxMath::Mat4& kMatrix,
         const NiMatrix3& kNiRot, const NiPoint3& kNiTrans, float fNiScale);
 
     // Fast float to int

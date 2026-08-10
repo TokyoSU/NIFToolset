@@ -73,7 +73,9 @@ public:
             m_name.sprintf("%s_%d", strBaseName.c_str(), i);
 
             HANDLE handle = CreateEventA(NULL, false, true, m_name.c_str());
-            if (handle && GetLastError() != ERROR_ALREADY_EXISTS)
+            if (handle == NULL) continue;
+
+            if (GetLastError() != ERROR_ALREADY_EXISTS)
             {
                 m_handle = handle;
                 m_index = i;

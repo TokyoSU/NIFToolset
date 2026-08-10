@@ -24,13 +24,15 @@
 #include <NiDrawSceneUtility.h>
 #include <NiMeshCullingProcess.h>
 
-#ifdef EE_PLATFORM_WIN32
+#if defined(EE_PLATFORM_WIN32) && defined(NI_RENDERER_DX11)
     #include <ecrD3D11Renderer/D3D11Renderer.h>
     #include <ecrD3D11Renderer/D3D112DBufferData.h>
     #include <ecrD3D11Renderer/D3D11RenderedTextureData.h>
     #include <ecrD3D11Renderer/D3D11ResourceManager.h>
+#elif defined(EE_PLATFORM_WIN32) && defined(NI_RENDERER_DX10)
     #include <NiD3D10RenderedTextureData.h>
     #include <NiD3D10ResourceManager.h>
+#elif defined(EE_PLATFORM_WIN32) && defined(NI_RENDERER_DX9)
     #include <NiDX9RenderedTextureData.h>
 #elif defined EE_PLATFORM_XBOX360
     #include <NiD3DRendererHeaders.h>
@@ -57,8 +59,8 @@ EE_HANDLER_WRAP(
     efd::StreamMessage,
     efd::kMSGID_SimDebuggerCommand);
 
-#ifdef EE_PLATFORM_PS3
-// PS3 implementation uses the bmp format to deliver image data to Toolbench
+#if defined(EE_PLATFORM_PS3) || defined(NI_RENDERER_BGFX)
+// PS3 and bgfx use the bmp format to deliver image data to Toolbench.
 struct BmpHeader
 {
     // Leading UInt16 magic number is handled separately to avoid undesired padding
@@ -522,6 +524,64 @@ bool SnapshotGenerator::GenerateImage(
             pBuffer->GetBufferSize(),
             ar);
         pBuffer->Release();
+    }
+    else
+    {
+        return false;
+    }
+#elif defined(NI_RENDERER_BGFX)
+    if (pRenderer->GetRendererID() == efd::SystemDesc::RENDERER_BGFX)
+    {
+        NiPixelDataPtr spPixelData = pRenderer->TakeScreenShot(NULL,
+            spRenderTargetGroup);
+        if (!spPixelData ||
+            spPixelData->GetPixelFormat() != NiPixelFormat::RGBA32)
+        {
+            return false;
+        }
+
+        // BMP scanlines are padded to a 4-byte boundary and stored bottom-up.
+        // TakeScreenShot returns RGBA32, so emit the required BGR byte order.
+        const efd::UInt32 rowBytes = width * 3;
+        const efd::UInt32 rowPadding = (4 - (rowBytes & 3)) & 3;
+        const efd::UInt32 rowStride = rowBytes + rowPadding;
+
+        efd::UInt16 magicNumber = 0x4d42;
+        BmpHeader bmpHeader;
+        bmpHeader.m_width = width;
+        bmpHeader.m_height = height;
+        bmpHeader.m_bmpByteSize = rowStride * height;
+        bmpHeader.m_fileSize = bmpHeader.m_bmpOffset +
+            bmpHeader.m_bmpByteSize;
+
+        const efd::UInt32 streamSize = sizeof(efd::UInt16) +
+            sizeof(BmpHeader) + bmpHeader.m_bmpByteSize;
+        ar.CheckBytes(streamSize);
+        ar.SetEndianness(efd::Endian_Little);
+        efd::Serializer::SerializeObject(magicNumber, ar);
+        efd::Serializer::SerializeObject(bmpHeader, ar);
+
+        const efd::UInt8 zero = 0;
+        for (efd::SInt32 row = static_cast<efd::SInt32>(height) - 1;
+            row >= 0; --row)
+        {
+            const efd::UInt8* pixels = spPixelData->GetPixels() +
+                static_cast<size_t>(row) * width * 4;
+            for (efd::UInt32 col = 0; col < width; ++col)
+            {
+                // GetPixels() is const in this path, so the dereferenced bytes
+                // are const UInt8 values. SerializeObject<const UInt8> would
+                // select the generic object serializer and try to call
+                // UInt8::Serialize(). This path only packs the screenshot, so
+                // use the serializer's const-aware primitive entry point.
+                efd::Serializer::SerializeConstObject(*(pixels + col * 4 + 2), ar);
+                efd::Serializer::SerializeConstObject(*(pixels + col * 4 + 1), ar);
+                efd::Serializer::SerializeConstObject(*(pixels + col * 4 + 0), ar);
+            }
+            for (efd::UInt32 pad = 0; pad < rowPadding; ++pad)
+                efd::Serializer::SerializeConstObject(zero, ar);
+        }
+        ar.SetEndianness(efd::Endian_NetworkOrder);
     }
     else
     {

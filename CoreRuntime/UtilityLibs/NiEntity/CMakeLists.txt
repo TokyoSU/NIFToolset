@@ -47,12 +47,7 @@ target_link_libraries(NiEntity
 )
 
 if(NI_BUILD_RENDERER)
-    target_link_libraries(NiEntity
-        PUBLIC
-            NiDX9Renderer
-            NiD3D10Renderer
-            ecrD3D11Renderer
-    )
+    target_link_libraries(NiEntity PUBLIC NiBgfxRenderer)
 endif()
 
 # Set C++ standard (inherit from root or override here)

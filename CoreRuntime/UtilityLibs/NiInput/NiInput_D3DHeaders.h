@@ -15,6 +15,6 @@
 #ifndef NIINPUT_D3DHEADERS_H
 #define NIINPUT_D3DHEADERS_H
 
-#include <NiD3DRendererHeaders.h>
+#include <NiOS.h>
 
 #endif  //#ifndef NIINPUT_D3DHEADERS_H

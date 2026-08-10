@@ -9,16 +9,14 @@
 #include <NiFragmentMaterial.h>
 #include <NiDevImageConverter.h>
 #include <NiParticleSDM.h>
-#include <NiPortal/NiPortalSDM.h>
+#include <NiPortalSDM.h>
 #include <NiMath.h>
 #include <NiBillboardNode.h>
 #include <NiParticleSystem.h>
 #include <NiPSParticleSystem.h>
 #include <NiMeshHWInstance.h>
 #include <NiShadowGenerator.h>
-#include <NiDX9Renderer.h>
-#include <NiD3D10Renderer.h>
-#include <ecrD3D11Renderer/D3D11Renderer.h>
+#include <BgfxRenderer.h>
 #include <NiNode.h>
 #include <NiDefaultClickRenderStep.h>
 #include <NiViewRenderClick.h>
@@ -193,7 +191,8 @@ bool NiApplication::Initialize(const Settings& kSettings)
         m_spAlphaAccum = NiNew NiAlphaAccumulator();
         m_spAlphaAccum->SetObserveNoSortHint(kSettings.m_bObserveNoSortHint);
         m_spAlphaAccum->SetSortByClosestPoint(kSettings.m_bSortByClosestPoint);
-        m_spRenderer->SetSorter(m_spAlphaAccum);
+        if (m_spRenderer)
+            m_spRenderer->SetSorter(m_spAlphaAccum);
     }
 
     if (kSettings.m_bShadows)
@@ -507,7 +506,7 @@ void NiApplication::EndFrame()
 void NiApplication::Present()
 {
     if (m_spRenderer)
-		m_spRenderer->DisplayFrame();
+        m_spRenderer->DisplayFrame();
 }
 
 bool NiApplication::CreateSDLWindow(const Settings& kSettings)
@@ -545,143 +544,17 @@ bool NiApplication::CreateSDLWindow(const Settings& kSettings)
 
 bool NiApplication::CreateRenderer(const Settings& kSettings)
 {
-    switch (kSettings.m_eRendererID)
+    m_bVSync = kSettings.m_bVSync;
+    m_spRenderer = BgfxRenderer::Create(m_hWnd, kSettings.m_uiWidth,
+        kSettings.m_uiHeight, m_bVSync, kSettings.m_pszBgfxShaderRoot);
+    if (!m_spRenderer)
     {
-    case efd::SystemDesc::RENDERER_DX9:
-    {
-        unsigned int uiFlags = kSettings.m_uiDX9Flags;
-        if (kSettings.m_bFullscreen)
-            uiFlags |= NiDX9Renderer::USE_FULLSCREEN;
-
-        NiDX9Renderer* pRenderer = NiDX9Renderer::Create(
-            kSettings.m_uiWidth, kSettings.m_uiHeight,
-            uiFlags,
-            reinterpret_cast<NiWindowRef>(m_hWnd),
-            reinterpret_cast<NiWindowRef>(m_hWnd),
-            kSettings.m_uiAdapter,
-            kSettings.m_eDeviceDesc,
-            kSettings.m_eFBFormat,
-            kSettings.m_eDSFormat,
-            kSettings.m_ePresentInterval,
-            kSettings.m_eSwapEffect,
-            NiDX9Renderer::FBMODE_DEFAULT,
-            kSettings.m_uiBackBufferCount,
-            NiDX9Renderer::REFRESHRATE_DEFAULT);
-
-        if (!pRenderer)
-        {
-            SDL_Log("NiDX9Renderer::Create failed.");
-            return false;
-        }
-
-        m_spRenderer = pRenderer;
-        if (!m_spRenderer) {
-            SDL_Log("Failed to assign renderer to m_spRenderer.");
-            return false;
-        }
-
-        m_spRenderer->SetBackgroundColor(m_kClearColor);
-        return true;
-    }
-
-    case efd::SystemDesc::RENDERER_D3D10:
-    {
-        NiD3D10Renderer::CreationParameters kParams(m_hWnd);
-        kParams.m_eDriverType                   = kSettings.m_eDriverType10;
-        kParams.m_uiCreateFlags                 = kSettings.m_uiDX10CreateFlags;
-        kParams.m_bCreateDepthStencilBuffer     = kSettings.m_bCreateDepthBuffer10;
-        kParams.m_eDepthStencilFormat           = kSettings.m_eDepthFormat10;
-        kParams.m_kSwapChain.Windowed           = !kSettings.m_bFullscreen;
-        kParams.m_kSwapChain.BufferCount        = kSettings.m_uiBackBufferCount;
-        kParams.m_kSwapChain.SampleDesc.Count   = kSettings.m_uiSampleCount;
-        kParams.m_kSwapChain.SampleDesc.Quality = kSettings.m_uiSampleQuality;
-        kParams.m_kSwapChain.BufferDesc.Width   = kSettings.m_uiWidth;
-        kParams.m_kSwapChain.BufferDesc.Height  = kSettings.m_uiHeight;
-        kParams.m_kSwapChain.BufferDesc.Format  = kSettings.m_eSwapChainBuffer10;
-
-        NiPointer<NiD3D10Renderer> spD3D10;
-        if (!NiD3D10Renderer::Create(kParams, spD3D10) || !spD3D10)
-        {
-            SDL_Log("NiD3D10Renderer::Create failed.");
-            return false;
-        }
-
-        m_spRenderer = spD3D10;
-        if (!m_spRenderer) {
-            SDL_Log("Failed to assign renderer to m_spRenderer.");
-            return false;
-        }
-
-        UINT uiViewportCount = 0;
-        ID3D10Device* deviceContext = spD3D10->GetD3D10Device();
-        deviceContext->RSGetViewports(&uiViewportCount, nullptr);
-        if (uiViewportCount == 0)
-        {
-            D3D10_VIEWPORT kViewport = {};
-            kViewport.TopLeftX = 0.0f;
-            kViewport.TopLeftY = 0.0f;
-            kViewport.Width = static_cast<float>(kSettings.m_uiWidth);
-            kViewport.Height = static_cast<float>(kSettings.m_uiHeight);
-            kViewport.MinDepth = 0.0f;
-            kViewport.MaxDepth = 1.0f;
-            deviceContext->RSSetViewports(1, &kViewport);
-        }
-
-        m_spRenderer->SetBackgroundColor(m_kClearColor);
-        return true;
-    }
-
-    case efd::SystemDesc::RENDERER_D3D11:
-    {
-        ecr::D3D11Renderer::CreationParameters kParams(m_hWnd);
-        kParams.m_driverType                    = kSettings.m_eDriverType11;
-        kParams.m_createFlags                   = kSettings.m_uiDX11CreateFlags;
-        kParams.m_createDepthStencilBuffer      = kSettings.m_bCreateDepthBuffer11;
-        kParams.m_depthStencilFormat            = kSettings.m_eDepthFormat11;
-        kParams.m_swapChain.Windowed            = !kSettings.m_bFullscreen;
-        kParams.m_swapChain.SampleDesc.Count    = kSettings.m_uiSampleCount;
-        kParams.m_swapChain.SampleDesc.Quality  = kSettings.m_uiSampleQuality;
-        kParams.m_swapChain.BufferCount         = kSettings.m_uiBackBufferCount;
-        kParams.m_swapChain.BufferDesc.Width    = kSettings.m_uiWidth;
-        kParams.m_swapChain.BufferDesc.Height   = kSettings.m_uiHeight;
-        kParams.m_swapChain.BufferDesc.Format   = kSettings.m_eSwapChainBuffer11;
-
-        ecr::D3D11RendererPtr spD3D11;
-        if (!ecr::D3D11Renderer::Create(kParams, spD3D11) || !spD3D11)
-        {
-            SDL_Log("ecr::D3D11Renderer::Create failed.");
-            return false;
-        }
-
-        m_spRenderer = spD3D11;
-        if (!m_spRenderer) {
-            SDL_Log("Failed to assign renderer to m_spRenderer.");
-            return false;
-        }
-
-        UINT uiViewportCount = 0;
-        ID3D11DeviceContext* deviceContext = spD3D11->GetCurrentD3D11DeviceContext();
-        deviceContext->RSGetViewports(&uiViewportCount, nullptr);
-        if (uiViewportCount == 0)
-        {
-            D3D11_VIEWPORT kViewport = {};
-            kViewport.TopLeftX = 0.0f;
-            kViewport.TopLeftY = 0.0f;
-            kViewport.Width = static_cast<float>(kSettings.m_uiWidth);
-            kViewport.Height = static_cast<float>(kSettings.m_uiHeight);
-            kViewport.MinDepth = 0.0f;
-            kViewport.MaxDepth = 1.0f;
-            deviceContext->RSSetViewports(1, &kViewport);
-        }
-
-        m_spRenderer->SetBackgroundColor(m_kClearColor);
-        return true;
-    }
-
-    default:
-        SDL_Log("Unsupported renderer ID: %u", static_cast<unsigned int>(kSettings.m_eRendererID));
+        SDL_Log("BgfxRenderer initialization failed.");
         return false;
     }
+
+    m_spRenderer->SetBackgroundColor(kSettings.m_kClearColor);
+    return true;
 }
 
 void NiApplication::DestroyAll()
@@ -737,7 +610,7 @@ bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
         m_pfnEvent(this, kEvent, m_pEventUserData);
     }
 
-	// Handle window events and quit event. For window resize events, also update the renderer viewport size if applicable.
+    // Handle window events and quit event.
     switch (kEvent.type)
     {
     case SDL_EVENT_QUIT:
@@ -749,37 +622,9 @@ bool NiApplication::DispatchEvent(const SDL_Event& kEvent)
         m_uiWidth = static_cast<unsigned int>(kEvent.window.data1);
         m_uiHeight = static_cast<unsigned int>(kEvent.window.data2);
 
-        // Resize the renderer's swap chain / back buffer with the new window size.
-        // This is necessary for proper rendering after a window resize, especially in fullscreen mode where the swap chain is tied to the window size.
-        auto* pRenderer = NiDynamicCast(NiD3D10Renderer, m_spRenderer);
-        if (pRenderer) {
-            pRenderer->ResizeBuffers(m_uiWidth, m_uiHeight, m_hWnd);
-
-            D3D10_VIEWPORT kViewport = {};
-            kViewport.TopLeftX = 0.0f;
-            kViewport.TopLeftY = 0.0f;
-            kViewport.Width = static_cast<float>(m_uiWidth);
-            kViewport.Height = static_cast<float>(m_uiHeight);
-            kViewport.MinDepth = 0.0f;
-            kViewport.MaxDepth = 1.0f;
-            pRenderer->GetD3D10Device()->RSSetViewports(1, &kViewport);
-        }
-
-        // Resize the renderer's swap chain / back buffer with the new window size.
-        // This is necessary for proper rendering after a window resize, especially in fullscreen mode where the swap chain is tied to the window size.
-        auto* pD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, m_spRenderer);
-        if (pD3D11Renderer) {
-            pD3D11Renderer->ResizeBuffers(m_uiWidth, m_uiHeight, m_hWnd);
-
-            D3D11_VIEWPORT kViewport = {};
-            kViewport.TopLeftX = 0.0f;
-            kViewport.TopLeftY = 0.0f;
-            kViewport.Width = static_cast<float>(m_uiWidth);
-            kViewport.Height = static_cast<float>(m_uiHeight);
-            kViewport.MinDepth = 0.0f;
-            kViewport.MaxDepth = 1.0f;
-            pD3D11Renderer->GetCurrentD3D11DeviceContext()->RSSetViewports(1, &kViewport);
-        }
+        if (m_spRenderer && m_spRenderer->GetRendererID() == NiSystemDesc::RENDERER_BGFX)
+            static_cast<BgfxRenderer*>(m_spRenderer.data())->Resize(
+                m_uiWidth, m_uiHeight, m_bVSync);
 
         if (m_pfnResize)
 			m_pfnResize(this, m_uiWidth, m_uiHeight, m_pResizeUserData);

@@ -26,8 +26,7 @@
 #include <NiTexturingProperty.h>
 #include <NiZBufferProperty.h>
 
-struct _D3DX11_STATE_BLOCK_MASK;
-typedef _D3DX11_STATE_BLOCK_MASK D3DX11_STATE_BLOCK_MASK;
+#include "D3D11StateBlockMask.h"
 
 namespace ecr
 {
@@ -364,7 +363,7 @@ public:
 
         @param pMask State block mask indicating which render state blocks to set.
     */
-    void ApplyCurrentState(const D3DX11_STATE_BLOCK_MASK* pMask = NULL);
+    void ApplyCurrentState(const D3D11StateBlockMask* pMask = NULL);
 
     /// Create blend state block object and set it on the device context.
     void ApplyCurrentBlendState();
@@ -373,7 +372,7 @@ public:
     /// Create rasterizer state block object and set it on the device context.
     void ApplyCurrentRasterizerState();
     /// Create sampler objects and set them on the device context.
-    void ApplyCurrentSamplers(const D3DX11_STATE_BLOCK_MASK* pMask = NULL);
+    void ApplyCurrentSamplers(const D3D11StateBlockMask* pMask = NULL);
 
     /** 
         Create sampler objects for the given shader type and set them on the device context.
@@ -387,7 +386,7 @@ public:
         NiGPUProgram::ProgramType shaderType,
         efd::UInt32 samplerStart, 
         efd::UInt32 samplerCount,
-        const D3DX11_STATE_BLOCK_MASK* pMask = NULL);
+        const D3D11StateBlockMask* pMask = NULL);
 
     /** 
         Set an array of D3D11RenderStateGroup::Sampler objects.

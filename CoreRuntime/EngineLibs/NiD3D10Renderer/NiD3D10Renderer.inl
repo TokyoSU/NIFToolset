@@ -170,27 +170,27 @@ inline void NiD3D10Renderer::PurgeAllD3D10Shaders()
 }
 
 //--------------------------------------------------------------------------------------------------
-inline const D3DXMATRIXA16& NiD3D10Renderer::GetProjectionMatrix() const
+inline const NiBgfxMath::Mat4A& NiD3D10Renderer::GetProjectionMatrix() const
 {
-    return m_kD3DProj;
+    return m_kProjectionMatrix;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline const D3DXMATRIXA16& NiD3D10Renderer::GetViewMatrix() const
+inline const NiBgfxMath::Mat4A& NiD3D10Renderer::GetViewMatrix() const
 {
-    return m_kD3DView;
+    return m_kViewMatrix;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline const D3DXMATRIXA16& NiD3D10Renderer::GetInverseViewMatrix() const
+inline const NiBgfxMath::Mat4A& NiD3D10Renderer::GetInverseViewMatrix() const
 {
-    return m_kInvView;
+    return m_kInverseViewMatrix;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline const D3DXMATRIXA16& NiD3D10Renderer::GetWorldMatrix() const
+inline const NiBgfxMath::Mat4A& NiD3D10Renderer::GetWorldMatrix() const
 {
-    return m_kD3DModel;
+    return m_kWorldMatrix;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ inline void NiD3D10Renderer::GetCameraNearAndFar(float& fNear,
 //--------------------------------------------------------------------------------------------------
 inline void NiD3D10Renderer::SetModelTransform(const NiTransform& kWorld)
 {
-    NiD3D10Utility::GetD3DFromNi(m_kD3DModel, kWorld);
+    NiD3D10Utility::GetMatrixFromNi(m_kWorldMatrix, kWorld);
 }
 
 //--------------------------------------------------------------------------------------------------

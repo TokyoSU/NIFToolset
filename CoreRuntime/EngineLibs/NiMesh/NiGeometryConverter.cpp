@@ -436,6 +436,20 @@ NiGeometryConverter::ConversionResult NiGeometryConverter::Convert(
         m_pkSkinPartition = m_pkSkinInstance->GetSkinPartition();
         m_bNiSkinInstance_HardwareSkinned = m_pkSkinPartition != NULL;
 
+        // A NiSkinPartition means the source asset was prepared for GPU
+        // skinning, but the active renderer still has to support that path.
+        // Renderers such as NiBgfxRenderer currently expose no hardware
+        // skinning capability, so convert the legacy NiGeometry to the
+        // existing software-skinned NiMesh representation instead. This keeps
+        // animated assets functional without introducing a bgfx-specific
+        // dependency into NiMesh.
+        NiRenderer* pkRenderer = NiRenderer::GetRenderer();
+        if (m_bNiSkinInstance_HardwareSkinned && pkRenderer &&
+            !(pkRenderer->GetFlags() & NiRenderer::CAPS_HARDWARESKINNING))
+        {
+            m_bNiSkinInstance_HardwareSkinned = false;
+        }
+
         m_pkSkinData = m_pkSkinInstance->GetSkinData();
         EE_ASSERT(m_pkSkinData);
 

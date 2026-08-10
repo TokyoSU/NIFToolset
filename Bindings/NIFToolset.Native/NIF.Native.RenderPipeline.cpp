@@ -35,14 +35,14 @@ namespace
 		NiTListIterator pos = list.GetHeadPos();
 		while (pos)
 		{
-			auto item = list.GetNext(pos);
+			auto& item = list.GetNext(pos);
 			if (currentIndex == index)
 			{
 				return item;
 			}
 			++currentIndex;
 		}
-		return nullptr;
+		return list.GetHead();
 	}
 
 	NiCullingProcess* NIF_GetCullingProcess(NIF_CullingProcessHandle cullingProcess)

@@ -286,6 +286,94 @@ namespace
     }
 
     //--------------------------------------------------------------------------------------------------
+    bool ComputeModernSkinWorld(NiSkinningMeshModifier* pkSkin,
+        NiTransform& kOutSkinWorld)
+    {
+        if (!pkSkin || !pkSkin->GetRootBoneParent())
+            return false;
+
+        NiTransform kSkinToRootParent;
+        pkSkin->GetRootBoneParentToSkinTransform().Invert(kSkinToRootParent);
+        kOutSkinWorld =
+            ComputeWorldTransformFromParents(pkSkin->GetRootBoneParent()) *
+            kSkinToRootParent;
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    bool ComputeLegacySkinWorld(NiSkinInstance* pkSkin,
+        NiTransform& kOutSkinWorld)
+    {
+        if (!pkSkin || !pkSkin->GetSkinData() || !pkSkin->GetRootParent())
+            return false;
+
+        NiTransform kSkinToRootParent;
+        pkSkin->GetSkinData()->GetRootParentToSkin().Invert(kSkinToRootParent);
+        kOutSkinWorld =
+            ComputeWorldTransformFromParents(pkSkin->GetRootParent()) *
+            kSkinToRootParent;
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    bool IsFiniteTransform(const NiTransform& kTransform)
+    {
+        if (!std::isfinite(kTransform.m_fScale) ||
+            !std::isfinite(kTransform.m_Translate.x) ||
+            !std::isfinite(kTransform.m_Translate.y) ||
+            !std::isfinite(kTransform.m_Translate.z))
+        {
+            return false;
+        }
+
+        for (unsigned int r = 0; r < 3; ++r)
+        {
+            for (unsigned int c = 0; c < 3; ++c)
+            {
+                if (!std::isfinite(kTransform.m_Rotate.GetEntry(r, c)))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    bool ComputeHierarchySkinToBone(const NiAVObject* pkBone,
+        const NiTransform& kSkinWorld, NiTransform& kOutSkinToBone)
+    {
+        if (!pkBone)
+            return false;
+
+        const NiTransform kBoneWorld =
+            ComputeWorldTransformFromParents(pkBone);
+        NiTransform kWorldToBone;
+        kBoneWorld.Invert(kWorldToBone);
+        kOutSkinToBone = kWorldToBone * kSkinWorld;
+        return true;
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    float MaxTransformDifference(const NiTransform& kA,
+        const NiTransform& kB)
+    {
+        float fMax = std::abs(kA.m_fScale - kB.m_fScale);
+        fMax = std::max(fMax, std::abs(kA.m_Translate.x - kB.m_Translate.x));
+        fMax = std::max(fMax, std::abs(kA.m_Translate.y - kB.m_Translate.y));
+        fMax = std::max(fMax, std::abs(kA.m_Translate.z - kB.m_Translate.z));
+        for (unsigned int r = 0; r < 3; ++r)
+        {
+            for (unsigned int c = 0; c < 3; ++c)
+            {
+                fMax = std::max(fMax, std::abs(
+                    kA.m_Rotate.GetEntry(r, c) -
+                    kB.m_Rotate.GetEntry(r, c)));
+            }
+        }
+        return fMax;
+    }
+
+    //--------------------------------------------------------------------------------------------------
     bool GetModernSkinNodeTransform(NiAVObject* pkObject, NiTransform& kOutLocal)
     {
         if (!pkObject || !NiIsKindOf(NiMesh, pkObject))
@@ -316,12 +404,9 @@ namespace
         // NiMesh local transform is kept instead, every bone has the same
         // residual MeshWorld^-1 * SkinWorld translation: the pose is shaped
         // correctly, but the complete character is displaced from (0,0,0).
-        NiTransform kSkinToRootParent;
-        pkSkin->GetRootBoneParentToSkinTransform().Invert(kSkinToRootParent);
-
-        const NiTransform kSkinWorld =
-            ComputeWorldTransformFromParents(pkSkin->GetRootBoneParent()) *
-            kSkinToRootParent;
+        NiTransform kSkinWorld;
+        if (!ComputeModernSkinWorld(pkSkin, kSkinWorld))
+            return false;
 
         const NiNode* pkParent = pkObject->GetParent();
         if (!pkParent)
@@ -364,15 +449,11 @@ namespace
         // that skin-space transform, otherwise aiBone::mOffsetMatrix
         // (SkinToBone) is evaluated against a different mesh bind space and
         // hands/feet can stretch during some KF/KFM clips.
-        NiTransform kSkinToRootParent;
-        pkSkin->GetSkinData()->GetRootParentToSkin().Invert(kSkinToRootParent);
-
-        const NiAVObject* pkRootParent = pkSkin->GetRootParent();
         const NiNode* pkParent = pkObject->GetParent();
 
-        const NiTransform kRootParentWorld =
-            ComputeWorldTransformFromParents(pkRootParent);
-        const NiTransform kSkinWorld = kRootParentWorld * kSkinToRootParent;
+        NiTransform kSkinWorld;
+        if (!ComputeLegacySkinWorld(pkSkin, kSkinWorld))
+            return false;
 
         if (!pkParent)
         {
@@ -718,7 +799,7 @@ namespace
 			<< ", range U=[" << fMinU << ", " << fMaxU
 			<< "] V=[" << fMinV << ", " << fMaxV << "]"
 			<< ", transform=" << (bHasTransform ? "yes" : "no")
-			<< ", V-flip=Assimp ConvertToLeftHanded" << std::endl;
+			<< ", V-flip=Assimp aiProcess_FlipUVs" << std::endl;
 	}
 
 	//--------------------------------------------------------------------------------------------------
@@ -1336,11 +1417,11 @@ namespace
 //--------------------------------------------------------------------------------------------------
 MeshExtractor::MeshExtractor(const std::string& kTextureOutputFolder,
 	bool bConvertTexturesToPng, float fTransformUnitScale,
-	bool bConvertToUnrealAxes)
+	ExportAxisPreset eAxisPreset)
 	: m_kTextureOutputFolder(kTextureOutputFolder)
 	, m_bConvertTexturesToPng(bConvertTexturesToPng)
 	, m_fTransformUnitScale(fTransformUnitScale)
-	, m_bConvertToUnrealAxes(bConvertToUnrealAxes)
+	, m_eAxisPreset(eAxisPreset)
 {
 }
 
@@ -1533,8 +1614,8 @@ aiMatrix4x4 MeshExtractor::MakeAiMatrix(const NiTransform& kT) const
 		fScale * kRotate.GetEntry(2, 2), kTranslate.z * m_fTransformUnitScale,
 		0.0f, 0.0f, 0.0f, 1.0f);
 
-	return AxisConversion::ToUnrealMatrix(kSourceMatrix,
-		m_bConvertToUnrealAxes);
+	return AxisConversion::ToTargetMatrix(kSourceMatrix,
+		m_eAxisPreset);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1806,7 +1887,13 @@ void MeshExtractor::InitializeSkinningFromNiMesh(
 		return;
 
 	NiAVObject** ppkBones = pkModifier->GetBones();
-	NiTransform* pkSkinToBone = pkModifier->GetSkinToBoneTransforms();
+	NiTransform* pkStoredSkinToBone = pkModifier->GetSkinToBoneTransforms();
+	NiTransform kSkinWorld;
+	const bool bCanReconstructFallback =
+		ComputeModernSkinWorld(pkModifier, kSkinWorld);
+	unsigned int uiStoredOffsets = 0;
+	unsigned int uiHierarchyFallbacks = 0;
+	unsigned int uiInvalidOffsets = 0;
 
 	kOut.isSkinned = true;
 	kOut.boneNames.resize(uiBoneCount);
@@ -1822,9 +1909,39 @@ void MeshExtractor::InitializeSkinningFromNiMesh(
 			? GetExportNodeName(pkBone)
 			: "missing_bone_" + std::to_string(b);
 
-		kOut.boneOffsetMatrices[b] = pkSkinToBone
-			? MakeAiMatrix(pkSkinToBone[b]) : aiMatrix4x4();
+		NiTransform kSkinToBone;
+		bool bHaveOffset = false;
+
+		// NiSkinningMeshModifier::GetSkinToBoneTransforms() is the native
+		// inverse-bind data used by Gamebryo at runtime. It is already expressed
+		// in skin/mesh space, exactly matching aiBone::mOffsetMatrix. Do not
+		// rebuild it from the current node hierarchy: that hierarchy can contain
+		// an animation/rest pose that differs from the skin's authored bind pose.
+		if (pkStoredSkinToBone && IsFiniteTransform(pkStoredSkinToBone[b]))
+		{
+			kSkinToBone = pkStoredSkinToBone[b];
+			bHaveOffset = true;
+			++uiStoredOffsets;
+		}
+		else if (bCanReconstructFallback && pkBone &&
+			ComputeHierarchySkinToBone(pkBone, kSkinWorld, kSkinToBone) &&
+			IsFiniteTransform(kSkinToBone))
+		{
+			bHaveOffset = true;
+			++uiHierarchyFallbacks;
+		}
+		else
+		{
+			++uiInvalidOffsets;
+		}
+
+		kOut.boneOffsetMatrices[b] = bHaveOffset
+			? MakeAiMatrix(kSkinToBone) : aiMatrix4x4();
 	}
+
+	std::cerr << "    Skin inverse-bind matrices: stored=" << uiStoredOffsets
+		<< ", hierarchy fallback=" << uiHierarchyFallbacks
+		<< ", invalid=" << uiInvalidOffsets << "." << std::endl;
 
 	if (IsUsableBoneIndex(kOut, kOut.fallbackBoneIndex))
 	{
@@ -2091,6 +2208,8 @@ void MeshExtractor::ExtractSkinningFromNiGeometry(NiGeometry* pkGeom,
 		return;
 
 	const NiAVObject* const* ppkBones = pkSkin->GetBones();
+	unsigned int uiStoredOffsets = 0;
+	unsigned int uiInvalidOffsets = 0;
 
 	kOut.isSkinned = true;
 	kOut.boneNames.resize(uiBoneCount);
@@ -2106,8 +2225,22 @@ void MeshExtractor::ExtractSkinningFromNiGeometry(NiGeometry* pkGeom,
 			? GetExportNodeName(pkBone)
 			: "missing_bone_" + std::to_string(b);
 
-		kOut.boneOffsetMatrices[b] = MakeAiMatrix(pkBoneData[b].m_kSkinToBone);
+		if (IsFiniteTransform(pkBoneData[b].m_kSkinToBone))
+		{
+			kOut.boneOffsetMatrices[b] =
+				MakeAiMatrix(pkBoneData[b].m_kSkinToBone);
+			++uiStoredOffsets;
+		}
+		else
+		{
+			kOut.boneOffsetMatrices[b] = aiMatrix4x4();
+			++uiInvalidOffsets;
+		}
 	}
+
+	std::cerr << "    Legacy skin inverse-bind matrices: stored="
+		<< uiStoredOffsets << ", invalid=" << uiInvalidOffsets << "."
+		<< std::endl;
 
 	if (IsUsableBoneIndex(kOut, kOut.fallbackBoneIndex))
 	{
@@ -2269,192 +2402,55 @@ void MeshExtractor::ExtractSkinningFromPartition(NiSkinInstance* pkSkin,
 
 
 //--------------------------------------------------------------------------------------------------
-void MeshExtractor::CollectLegacySkinBindPose(NiGeometry* pkGeom,
-    BindPoseOverrideMap& kOut) const
-{
-    if (!pkGeom)
-        return;
-
-    NiSkinInstance* pkSkin = pkGeom->GetSkinInstance();
-    if (!pkSkin || !pkSkin->GetSkinData() || !pkSkin->GetRootParent())
-        return;
-
-    NiSkinData* pkSkinData = pkSkin->GetSkinData();
-    const unsigned int uiBoneCount = pkSkinData->GetBoneCount();
-    NiSkinData::BoneData* pkBoneData = pkSkinData->GetBoneData();
-    NiAVObject* const* ppkBones = pkSkin->GetBones();
-    if (uiBoneCount == 0 || !pkBoneData || !ppkBones)
-        return;
-
-    NiTransform kSkinToRootParent;
-    pkSkinData->GetRootParentToSkin().Invert(kSkinToRootParent);
-    const NiTransform kSkinWorld =
-        ComputeWorldTransformFromParents(pkSkin->GetRootParent()) *
-        kSkinToRootParent;
-
-    std::unordered_map<NiAVObject*, NiTransform> kBoneWorldBind;
-    kBoneWorldBind.reserve(uiBoneCount);
-
-    for (unsigned int b = 0; b < uiBoneCount; ++b)
-    {
-        NiAVObject* pkBone = ppkBones[b];
-        if (!pkBone)
-            continue;
-
-        NiTransform kBoneToSkin;
-        pkBoneData[b].m_kSkinToBone.Invert(kBoneToSkin);
-        kBoneWorldBind[pkBone] = kSkinWorld * kBoneToSkin;
-    }
-
-    unsigned int uiOverrides = 0;
-    for (const auto& kEntry : kBoneWorldBind)
-    {
-        NiAVObject* pkBone = kEntry.first;
-        const NiTransform& kBoneWorld = kEntry.second;
-
-        NiTransform kParentWorld = MakeIdentityTransform();
-        NiNode* pkParent = pkBone->GetParent();
-        if (pkParent)
-        {
-            auto kParentBind = kBoneWorldBind.find(pkParent);
-            if (kParentBind != kBoneWorldBind.end())
-                kParentWorld = kParentBind->second;
-            else
-                kParentWorld = ComputeWorldTransformFromParents(pkParent);
-        }
-
-        NiTransform kWorldToParent;
-        kParentWorld.Invert(kWorldToParent);
-        kOut[pkBone] = kWorldToParent * kBoneWorld;
-        ++uiOverrides;
-    }
-
-    if (uiOverrides > 0)
-    {
-        std::cerr << "    Built " << uiOverrides
-            << " bind-pose bone transform override(s) from NiSkinInstance for mesh '"
-            << (pkGeom->GetName().c_str() ? pkGeom->GetName().c_str() : "<unnamed>")
-            << "'." << std::endl;
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-void MeshExtractor::CollectModernSkinBindPose(NiMesh* pkMesh,
-    BindPoseOverrideMap& kOut) const
-{
-    if (!pkMesh)
-        return;
-
-    for (NiUInt32 m = 0; m < pkMesh->GetModifierCount(); ++m)
-    {
-        NiMeshModifier* pkModifier = pkMesh->GetModifierAt(m);
-        if (!pkModifier || !NiIsKindOf(NiSkinningMeshModifier, pkModifier))
-            continue;
-
-        NiSkinningMeshModifier* pkSkin =
-            NiStaticCast(NiSkinningMeshModifier, pkModifier);
-        const NiUInt32 uiBoneCount = pkSkin->GetBoneCount();
-        NiAVObject** ppkBones = pkSkin->GetBones();
-        NiTransform* pkSkinToBone = pkSkin->GetSkinToBoneTransforms();
-        NiAVObject* pkRootParent = pkSkin->GetRootBoneParent();
-        if (uiBoneCount == 0 || !ppkBones || !pkSkinToBone || !pkRootParent)
-            continue;
-
-        NiTransform kSkinToRootParent;
-        pkSkin->GetRootBoneParentToSkinTransform().Invert(kSkinToRootParent);
-        const NiTransform kSkinWorld =
-            ComputeWorldTransformFromParents(pkRootParent) * kSkinToRootParent;
-
-        std::unordered_map<NiAVObject*, NiTransform> kBoneWorldBind;
-        kBoneWorldBind.reserve(uiBoneCount);
-
-        for (NiUInt32 b = 0; b < uiBoneCount; ++b)
-        {
-            NiAVObject* pkBone = ppkBones[b];
-            if (!pkBone)
-                continue;
-
-            NiTransform kBoneToSkin;
-            pkSkinToBone[b].Invert(kBoneToSkin);
-            kBoneWorldBind[pkBone] = kSkinWorld * kBoneToSkin;
-        }
-
-        unsigned int uiOverrides = 0;
-        for (const auto& kEntry : kBoneWorldBind)
-        {
-            NiAVObject* pkBone = kEntry.first;
-            const NiTransform& kBoneWorld = kEntry.second;
-
-            NiTransform kParentWorld = MakeIdentityTransform();
-            NiNode* pkParent = pkBone->GetParent();
-            if (pkParent)
-            {
-                auto kParentBind = kBoneWorldBind.find(pkParent);
-                if (kParentBind != kBoneWorldBind.end())
-                    kParentWorld = kParentBind->second;
-                else
-                    kParentWorld = ComputeWorldTransformFromParents(pkParent);
-            }
-
-            NiTransform kWorldToParent;
-            kParentWorld.Invert(kWorldToParent);
-            kOut[pkBone] = kWorldToParent * kBoneWorld;
-            ++uiOverrides;
-        }
-
-        if (uiOverrides > 0)
-        {
-            std::cerr << "    Built " << uiOverrides
-                << " bind-pose bone transform override(s) from NiSkinningMeshModifier for mesh '"
-                << (pkMesh->GetName().c_str() ? pkMesh->GetName().c_str() : "<unnamed>")
-                << "'." << std::endl;
-        }
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-void MeshExtractor::BuildSkinBindPoseOverrides(NiAVObject* pkRoot,
-    BindPoseOverrideMap& kOut) const
-{
-    if (!pkRoot)
-        return;
-
-    if (NiIsKindOf(NiGeometry, pkRoot))
-        CollectLegacySkinBindPose(NiStaticCast(NiGeometry, pkRoot), kOut);
-    else if (NiIsKindOf(NiMesh, pkRoot))
-        CollectModernSkinBindPose(NiStaticCast(NiMesh, pkRoot), kOut);
-
-    if (NiIsKindOf(NiNode, pkRoot))
-    {
-        NiNode* pkNode = NiStaticCast(NiNode, pkRoot);
-        for (unsigned int i = 0; i < pkNode->GetArrayCount(); ++i)
-            BuildSkinBindPoseOverrides(pkNode->GetAt(i), kOut);
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
 aiNode* MeshExtractor::BuildNodeRecursive(NiAVObject* pkObject,
-	const MeshNodeAssignmentMap& kMeshNodeAssignments,
-	const BindPoseOverrideMap& kBindPoseOverrides) const
+	const MeshNodeAssignmentMap& kMeshNodeAssignments) const
 {
 	if (!pkObject)
 		return nullptr;
 
 	aiNode* pkAiNode = new aiNode();
-	pkAiNode->mName = GetExportNodeName(pkObject).c_str();
+	const std::string kExportName = GetExportNodeName(pkObject);
+	pkAiNode->mName = kExportName.c_str();
 
 	NiTransform kNodeTransform;
-	auto kBindPoseOverride = kBindPoseOverrides.find(pkObject);
-	if (kBindPoseOverride != kBindPoseOverrides.end())
-	{
-		kNodeTransform = kBindPoseOverride->second;
-	}
-	else if (!GetLegacySkinNodeTransform(pkObject, kNodeTransform) &&
+	if (!GetLegacySkinNodeTransform(pkObject, kNodeTransform) &&
 		!GetModernSkinNodeTransform(pkObject, kNodeTransform))
 	{
+		// Bone nodes deliberately keep their original NIF local transforms.
+		// Animation evaluators also produce transforms in this frame.
 		kNodeTransform = pkObject->GetLocalTransform();
 	}
-	pkAiNode->mTransformation = MakeAiMatrix(kNodeTransform);
+
+	// FBX/Unity evaluates scaling curves whenever a node has an animation
+	// channel. A negative static scale on an animated bone can therefore be
+	// decomposed into unstable per-axis scale curves. Move the complete static
+	// rest transform onto a synthetic parent and leave the original named node
+	// at identity. AnimationExporter writes the named node as a rest-relative
+	// transform, so the bind world matrix remains unchanged while animated scale
+	// stays positive.
+	aiNode* pkReturnNode = pkAiNode;
+	if (std::isfinite(kNodeTransform.m_fScale) &&
+		kNodeTransform.m_fScale < -0.000001f)
+	{
+		aiNode* pkStaticParent = new aiNode();
+		pkStaticParent->mName =
+			("NIFToolset_StaticRest_" + kExportName).c_str();
+		pkStaticParent->mTransformation = MakeAiMatrix(kNodeTransform);
+		pkStaticParent->mNumChildren = 1;
+		pkStaticParent->mChildren = new aiNode*[1];
+		pkStaticParent->mChildren[0] = pkAiNode;
+		pkAiNode->mParent = pkStaticParent;
+		pkAiNode->mTransformation = aiMatrix4x4();
+		pkReturnNode = pkStaticParent;
+
+		std::cerr << "    Isolated negative static scale for node '"
+			<< kExportName << "' on parent '"
+			<< pkStaticParent->mName.C_Str() << "'." << std::endl;
+	}
+	else
+	{
+		pkAiNode->mTransformation = MakeAiMatrix(kNodeTransform);
+	}
 
 	auto kAssignment = kMeshNodeAssignments.find(pkObject);
 	if (kAssignment != kMeshNodeAssignments.end() && !kAssignment->second.empty())
@@ -2472,7 +2468,7 @@ aiNode* MeshExtractor::BuildNodeRecursive(NiAVObject* pkObject,
 		if (pkBestChild)
 		{
 			aiNode* pkChildNode = BuildNodeRecursive(pkBestChild,
-				kMeshNodeAssignments, kBindPoseOverrides);
+				kMeshNodeAssignments);
 			if (pkChildNode)
 			{
 				pkChildNode->mParent = pkAiNode;
@@ -2481,7 +2477,7 @@ aiNode* MeshExtractor::BuildNodeRecursive(NiAVObject* pkObject,
 				pkAiNode->mChildren[0] = pkChildNode;
 			}
 		}
-		return pkAiNode;
+		return pkReturnNode;
 	}
 
 	if (NiIsKindOf(NiSwitchNode, pkObject))
@@ -2491,7 +2487,7 @@ aiNode* MeshExtractor::BuildNodeRecursive(NiAVObject* pkObject,
 		if (pkChild)
 		{
 			aiNode* pkChildNode = BuildNodeRecursive(pkChild,
-				kMeshNodeAssignments, kBindPoseOverrides);
+				kMeshNodeAssignments);
 			if (pkChildNode)
 			{
 				pkChildNode->mParent = pkAiNode;
@@ -2500,7 +2496,7 @@ aiNode* MeshExtractor::BuildNodeRecursive(NiAVObject* pkObject,
 				pkAiNode->mChildren[0] = pkChildNode;
 			}
 		}
-		return pkAiNode;
+		return pkReturnNode;
 	}
 
 	if (NiIsKindOf(NiNode, pkObject))
@@ -2515,7 +2511,7 @@ aiNode* MeshExtractor::BuildNodeRecursive(NiAVObject* pkObject,
 			if (!pkChild)
 				continue;
 
-			aiNode* pkChildNode = BuildNodeRecursive(pkChild, kMeshNodeAssignments, kBindPoseOverrides);
+			aiNode* pkChildNode = BuildNodeRecursive(pkChild, kMeshNodeAssignments);
 			if (pkChildNode)
 			{
 				pkChildNode->mParent = pkAiNode;
@@ -2532,23 +2528,18 @@ aiNode* MeshExtractor::BuildNodeRecursive(NiAVObject* pkObject,
 		}
 	}
 
-	return pkAiNode;
+	return pkReturnNode;
 }
 
 //--------------------------------------------------------------------------------------------------
 aiNode* MeshExtractor::BuildNodeHierarchy(NiAVObject* pkRoot,
 	const MeshNodeAssignmentMap& kMeshNodeAssignments) const
 {
-	BindPoseOverrideMap kBindPoseOverrides;
-	BuildSkinBindPoseOverrides(pkRoot, kBindPoseOverrides);
-	if (!kBindPoseOverrides.empty())
-	{
-		std::cerr << "  Bind-pose overrides: "
-			<< kBindPoseOverrides.size() << " bone node(s)." << std::endl;
-	}
-
-	aiNode* pkHierarchy = BuildNodeRecursive(pkRoot, kMeshNodeAssignments,
-		kBindPoseOverrides);
+	// Keep the exported skeleton in the same original local frame used by
+	// KF/KFM and NiTransformController animation channels. Negative static
+	// transforms are isolated on synthetic parents while the original named
+	// bone remains available as the animation/skin target.
+	aiNode* pkHierarchy = BuildNodeRecursive(pkRoot, kMeshNodeAssignments);
 	if (!pkHierarchy)
 		return nullptr;
 

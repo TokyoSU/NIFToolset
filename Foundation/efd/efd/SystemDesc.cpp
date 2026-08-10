@@ -37,6 +37,8 @@ const char* SystemDesc::GetRendererString(const SystemDesc::RendererID eRenderer
         return "D3D10";
     case SystemDesc::RENDERER_D3D11:
         return "D3D11";
+    case SystemDesc::RENDERER_BGFX:
+        return "BGFX";
     case SystemDesc::RENDERER_GENERIC:
         return "Generic";
     default:
@@ -124,6 +126,7 @@ bool SystemDesc::IsRendererLittleEndian(SystemDesc::RendererID eRenderer)
     case RENDERER_DX9:
     case RENDERER_D3D10:
     case RENDERER_D3D11:
+    case RENDERER_BGFX:
     case RENDERER_GENERIC:
         return true;
     default:

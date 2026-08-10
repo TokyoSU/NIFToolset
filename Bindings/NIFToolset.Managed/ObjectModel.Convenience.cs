@@ -402,31 +402,30 @@ public unsafe partial class NiRenderer
         set => SetStencilClear(value);
     }
 
-    public uint SyncInterval
-    {
-        get => GetSyncInterval();
-        set => SetSyncInterval(value);
-    }
+    public bool VSync => BgfxGetVSync() != 0;
+
+    public bool Resize(uint width, uint height, bool vsync = true) =>
+        BgfxResize(width, height, vsync ? 1 : 0) != 0;
 
     public static uint DefaultClearMode => NativeMethods.NIF_Renderer_GetDefaultClearMode();
 
-    public static NifDx11RendererDesc CreateDefaultDescription()
+    public static NifBgfxRendererDesc CreateDefaultDescription()
     {
-        NifDx11RendererDesc description = default;
-        NativeMethods.NIF_DX11Renderer_FillDefaultDesc(&description);
+        NifBgfxRendererDesc description = default;
+        NativeMethods.NIF_BgfxRenderer_FillDefaultDesc(&description);
         return description;
     }
 
-    public static NifDx11RendererDesc CreateWindowedDescription(nint windowHandle)
+    public static NifBgfxRendererDesc CreateWindowedDescription(nint windowHandle)
     {
-        NifDx11RendererDesc description = default;
-        NativeMethods.NIF_DX11Renderer_FillWindowedDesc(&description, windowHandle);
+        NifBgfxRendererDesc description = default;
+        NativeMethods.NIF_BgfxRenderer_FillWindowedDesc(&description, windowHandle);
         return description;
     }
 
-    public static NiRenderer CreateDX11(NifDx11RendererDesc description) =>
+    public static NiRenderer CreateBgfx(NifBgfxRendererDesc description) =>
         NiRenderer.FromOwnedHandle(
-            NiHandleGuard.Require(NativeMethods.NIF_DX11Renderer_Create(&description), nameof(CreateDX11)));
+            NiHandleGuard.Require(NativeMethods.NIF_BgfxRenderer_Create(&description), nameof(CreateBgfx)));
 }
 
 public static class NiAnimation

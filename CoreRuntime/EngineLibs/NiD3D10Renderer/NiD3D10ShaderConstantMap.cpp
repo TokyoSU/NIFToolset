@@ -861,33 +861,33 @@ void NiD3D10ShaderConstantMap::ReleaseShaderConstantDataStream()
 
 //--------------------------------------------------------------------------------------------------
 void NiD3D10ShaderConstantMap::SetupTextureTransformMatrix(
-    D3DXMATRIXA16& kResult, const NiMatrix3* pkTexMatrix, bool bTrans)
+    NiBgfxMath::Mat4A& kResult, const NiMatrix3* pkTexMatrix, bool bTrans)
 {
     if (pkTexMatrix)
     {
-        kResult._11 = pkTexMatrix->GetEntry(0, 0);
-        kResult._12 = pkTexMatrix->GetEntry(1, 0);
-        kResult._13 = 0.0f;
-        kResult._14 = 0.0f;
-        kResult._21 = pkTexMatrix->GetEntry(0, 1);
-        kResult._22 = pkTexMatrix->GetEntry(1, 1);
-        kResult._23 = 0.0f;
-        kResult._24 = 0.0f;
-        kResult._31 = 0.0f;
-        kResult._32 = 0.0f;
-        kResult._33 = 0.0f;
-        kResult._34 = 0.0f;
-        kResult._41 = pkTexMatrix->GetEntry(0, 2);
-        kResult._42 = pkTexMatrix->GetEntry(1, 2);
-        kResult._43 = 0.0f;
-        kResult._44 = 0.0f;
+        kResult[0] = pkTexMatrix->GetEntry(0, 0);
+        kResult[1] = pkTexMatrix->GetEntry(1, 0);
+        kResult[2] = 0.0f;
+        kResult[3] = 0.0f;
+        kResult[4] = pkTexMatrix->GetEntry(0, 1);
+        kResult[5] = pkTexMatrix->GetEntry(1, 1);
+        kResult[6] = 0.0f;
+        kResult[7] = 0.0f;
+        kResult[8] = 0.0f;
+        kResult[9] = 0.0f;
+        kResult[10] = 0.0f;
+        kResult[11] = 0.0f;
+        kResult[12] = pkTexMatrix->GetEntry(0, 2);
+        kResult[13] = pkTexMatrix->GetEntry(1, 2);
+        kResult[14] = 0.0f;
+        kResult[15] = 0.0f;
 
         if (bTrans)
-            D3DXMatrixTranspose(&kResult, &kResult);
+            NiBgfxMath::Transpose(&kResult, &kResult);
     }
     else
     {
-        D3DXMatrixIdentity(&kResult);
+        NiBgfxMath::Identity(&kResult);
     }
 }
 
@@ -1643,7 +1643,7 @@ NiShaderError NiD3D10ShaderConstantMap::UpdateDefinedConstantValue(
         return NISHADERERR_UNKNOWN;
     }
 
-    D3DXMATRIXA16 kTempMatrix;
+    NiBgfxMath::Mat4A kTempMatrix;
     const void* pvDataSource = ObtainDefinedConstantValue(pkEntry, kRCC,
         kTempMatrix);
     if (pvDataSource == NULL)
@@ -1738,7 +1738,7 @@ NiShaderError NiD3D10ShaderConstantMap::UpdateConstantConstantValue(
     void* pvShaderConstantBuffer, NiShaderConstantMapEntry* pkEntry,
     const NiRenderCallContext& kRCC)
 {
-    D3DXMATRIXA16 kTempMatrix;
+    NiBgfxMath::Mat4A kTempMatrix;
     const void* pvDataSource =
         ObtainConstantConstantValue(pkEntry, kRCC, kTempMatrix);
     if (pvDataSource == NULL)
@@ -1797,7 +1797,7 @@ NiShaderError NiD3D10ShaderConstantMap::UpdateAttributeConstantValue(
 
     // Grab the attribute from the geometry and set it
 
-    D3DXMATRIXA16 kTempMatrix;
+    NiBgfxMath::Mat4A kTempMatrix;
     const void* pvDataSource = ObtainAttributeConstantValue(pkEntry, kRCC,
         bGlobal, pkExtraData, kTempMatrix);
     if (pvDataSource == NULL)
@@ -1862,7 +1862,7 @@ NiShaderError NiD3D10ShaderConstantMap::UpdateGlobalConstantValue(
     void* pvShaderConstantBuffer, NiShaderConstantMapEntry* pkEntry,
     const NiRenderCallContext& kRCC)
 {
-    D3DXMATRIXA16 kTempMatrix;
+    NiBgfxMath::Mat4A kTempMatrix;
     const void* pvDataSource =
         ObtainGlobalConstantValue(pkEntry, kRCC, kTempMatrix);
     if (pvDataSource == NULL)
@@ -1915,7 +1915,7 @@ NiShaderError NiD3D10ShaderConstantMap::UpdateOperatorConstantValue(
     void* pvShaderConstantBuffer, NiShaderConstantMapEntry* pkEntry,
     const NiRenderCallContext& kRCC, bool bGlobal, NiExtraData* pkExtraData)
 {
-    D3DXMATRIXA16 kResult;
+    NiBgfxMath::Mat4A kResult;
 
     const void* pvDataSource = ObtainOperatorConstantValue(pkEntry, kRCC,
         bGlobal, pkExtraData, kResult);
@@ -1997,7 +1997,7 @@ NiShaderError NiD3D10ShaderConstantMap::UpdateObjectConstantValue(
     unsigned int uiSize = uiMatrixRegisters * 4 * sizeof(float) + 16;
     unsigned char* pvInitialData = NiStackAlloc(unsigned char, uiSize);
     size_t stPtr = (size_t)pvInitialData;
-    D3DXMATRIXA16* pkResult = (D3DXMATRIXA16*)((stPtr + 15) & ~0xF);
+    NiBgfxMath::Mat4A* pkResult = (NiBgfxMath::Mat4A*)((stPtr + 15) & ~0xF);
 
     const void* pvDataSource = ObtainObjectConstantValue(pkEntry, kRCC,
         pkResult);
@@ -2194,7 +2194,7 @@ NiShaderError NiD3D10ShaderConstantMap::FillShaderConstantBuffer(
 //--------------------------------------------------------------------------------------------------
 const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
     NiShaderConstantMapEntry* pkEntry, const NiRenderCallContext& kRCC,
-    D3DXMATRIXA16& kTempMatrix)
+    NiBgfxMath::Mat4A& kTempMatrix)
 {
     EE_ASSERT(NiD3D10Renderer::GetRenderer());
     NiD3D10Renderer* pkRenderer = NiD3D10Renderer::GetRenderer();
@@ -2231,9 +2231,9 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         kTempMatrix = pkRenderer->GetProjectionMatrix();
 
         if (bInv)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTrans)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
 
         return &kTempMatrix;
     }
@@ -2263,9 +2263,9 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         kTempMatrix = pkRenderer->GetViewMatrix();
 
         if (bInv)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTrans)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
 
         return &kTempMatrix;
     }
@@ -2295,9 +2295,9 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         kTempMatrix = pkRenderer->GetWorldMatrix();
 
         if (bInv)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTrans)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
 
         return &kTempMatrix;
     }
@@ -2324,14 +2324,14 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         if (pkEntry->GetColumnMajor())
             bTrans = !bTrans;
 
-        const D3DXMATRIXA16& kD3DWorld = pkRenderer->GetWorldMatrix();
-        const D3DXMATRIXA16& kD3DView = pkRenderer->GetViewMatrix();
-        kTempMatrix = kD3DWorld * kD3DView;
+        const NiBgfxMath::Mat4A& kWorldMatrix = pkRenderer->GetWorldMatrix();
+        const NiBgfxMath::Mat4A& kViewMatrix = pkRenderer->GetViewMatrix();
+        kTempMatrix = kWorldMatrix * kViewMatrix;
 
         if (bInv)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTrans)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
 
         return &kTempMatrix;
     }
@@ -2358,14 +2358,14 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         if (pkEntry->GetColumnMajor())
             bTrans = !bTrans;
 
-        const D3DXMATRIXA16& kD3DView = pkRenderer->GetViewMatrix();
-        const D3DXMATRIXA16& kD3DProj = pkRenderer->GetProjectionMatrix();
-        kTempMatrix = kD3DView * kD3DProj;
+        const NiBgfxMath::Mat4A& kViewMatrix = pkRenderer->GetViewMatrix();
+        const NiBgfxMath::Mat4A& kProjectionMatrix = pkRenderer->GetProjectionMatrix();
+        kTempMatrix = kViewMatrix * kProjectionMatrix;
 
         if (bInv)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTrans)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
 
         return &kTempMatrix;
     }
@@ -2392,16 +2392,16 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         if (pkEntry->GetColumnMajor())
             bTrans = !bTrans;
 
-        const D3DXMATRIXA16& kD3DWorld = pkRenderer->GetWorldMatrix();
-        const D3DXMATRIXA16& kD3DView = pkRenderer->GetViewMatrix();
-        const D3DXMATRIXA16& kD3DProj = pkRenderer->GetProjectionMatrix();
-        D3DXMATRIXA16 kD3DWorldView = kD3DWorld * kD3DView;
-        kTempMatrix = kD3DWorldView * kD3DProj;
+        const NiBgfxMath::Mat4A& kWorldMatrix = pkRenderer->GetWorldMatrix();
+        const NiBgfxMath::Mat4A& kViewMatrix = pkRenderer->GetViewMatrix();
+        const NiBgfxMath::Mat4A& kProjectionMatrix = pkRenderer->GetProjectionMatrix();
+        NiBgfxMath::Mat4A kWorldViewMatrix = kWorldMatrix * kViewMatrix;
+        kTempMatrix = kWorldViewMatrix * kProjectionMatrix;
 
         if (bInv)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTrans)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
 
         return &kTempMatrix;
     }
@@ -2883,10 +2883,10 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         NiMaterialProperty* pkMaterial = kRCC.m_pkState->GetMaterial();
         if (pkMaterial)
         {
-            kTempMatrix._11 = pkMaterial->GetDiffuseColor().r;
-            kTempMatrix._12 = pkMaterial->GetDiffuseColor().g;
-            kTempMatrix._13 = pkMaterial->GetDiffuseColor().b;
-            kTempMatrix._14 = pkMaterial->GetAlpha();
+            kTempMatrix[0] = pkMaterial->GetDiffuseColor().r;
+            kTempMatrix[1] = pkMaterial->GetDiffuseColor().g;
+            kTempMatrix[2] = pkMaterial->GetDiffuseColor().b;
+            kTempMatrix[3] = pkMaterial->GetAlpha();
         }
         return &kTempMatrix;
     }
@@ -2895,10 +2895,10 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         NiMaterialProperty* pkMaterial = kRCC.m_pkState->GetMaterial();
         if (pkMaterial)
         {
-            kTempMatrix._11 = pkMaterial->GetAmbientColor().r;
-            kTempMatrix._12 = pkMaterial->GetAmbientColor().g;
-            kTempMatrix._13 = pkMaterial->GetAmbientColor().b;
-            kTempMatrix._14 = pkMaterial->GetAlpha();
+            kTempMatrix[0] = pkMaterial->GetAmbientColor().r;
+            kTempMatrix[1] = pkMaterial->GetAmbientColor().g;
+            kTempMatrix[2] = pkMaterial->GetAmbientColor().b;
+            kTempMatrix[3] = pkMaterial->GetAlpha();
         }
         return &kTempMatrix;
     }
@@ -2907,10 +2907,10 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         NiMaterialProperty* pkMaterial = kRCC.m_pkState->GetMaterial();
         if (pkMaterial)
         {
-            kTempMatrix._11 = pkMaterial->GetSpecularColor().r;
-            kTempMatrix._12 = pkMaterial->GetSpecularColor().g;
-            kTempMatrix._13 = pkMaterial->GetSpecularColor().b;
-            kTempMatrix._14 = pkMaterial->GetAlpha();
+            kTempMatrix[0] = pkMaterial->GetSpecularColor().r;
+            kTempMatrix[1] = pkMaterial->GetSpecularColor().g;
+            kTempMatrix[2] = pkMaterial->GetSpecularColor().b;
+            kTempMatrix[3] = pkMaterial->GetAlpha();
         }
         return &kTempMatrix;
     }
@@ -2919,10 +2919,10 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         NiMaterialProperty* pkMaterial = kRCC.m_pkState->GetMaterial();
         if (pkMaterial)
         {
-            kTempMatrix._11 = pkMaterial->GetEmittance().r;
-            kTempMatrix._12 = pkMaterial->GetEmittance().g;
-            kTempMatrix._13 = pkMaterial->GetEmittance().b;
-            kTempMatrix._14 = pkMaterial->GetAlpha();
+            kTempMatrix[0] = pkMaterial->GetEmittance().r;
+            kTempMatrix[1] = pkMaterial->GetEmittance().g;
+            kTempMatrix[2] = pkMaterial->GetEmittance().b;
+            kTempMatrix[3] = pkMaterial->GetAlpha();
         }
         return &kTempMatrix;
     }
@@ -2931,32 +2931,32 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         NiMaterialProperty* pkMaterial = kRCC.m_pkState->GetMaterial();
         if (pkMaterial)
         {
-            kTempMatrix._11 = pkMaterial->GetShineness();
-            kTempMatrix._12 = pkMaterial->GetShineness();
-            kTempMatrix._13 = pkMaterial->GetShineness();
-            kTempMatrix._14 = pkMaterial->GetShineness();
+            kTempMatrix[0] = pkMaterial->GetShineness();
+            kTempMatrix[1] = pkMaterial->GetShineness();
+            kTempMatrix[2] = pkMaterial->GetShineness();
+            kTempMatrix[3] = pkMaterial->GetShineness();
         }
         return &kTempMatrix;
     }
     // Eye
     case SCM_DEF_EYE_POS:
     {
-        const D3DXMATRIXA16& kViewMat = pkRenderer->GetInverseViewMatrix();
+        const NiBgfxMath::Mat4A& kViewMat = pkRenderer->GetInverseViewMatrix();
 
-        kTempMatrix._11 = kViewMat._41;
-        kTempMatrix._12 = kViewMat._42;
-        kTempMatrix._13 = kViewMat._43;
-        kTempMatrix._14 = kViewMat._44;
+        kTempMatrix[0] = kViewMat[12];
+        kTempMatrix[1] = kViewMat[13];
+        kTempMatrix[2] = kViewMat[14];
+        kTempMatrix[3] = kViewMat[15];
         return &kTempMatrix;
     }
     case SCM_DEF_EYE_DIR:
     {
-        const D3DXMATRIXA16& kViewMat = pkRenderer->GetInverseViewMatrix();
+        const NiBgfxMath::Mat4A& kViewMat = pkRenderer->GetInverseViewMatrix();
 
-        kTempMatrix._11 = kViewMat._31;
-        kTempMatrix._12 = kViewMat._32;
-        kTempMatrix._13 = kViewMat._33;
-        kTempMatrix._14 = kViewMat._34;
+        kTempMatrix[0] = kViewMat[8];
+        kTempMatrix[1] = kViewMat[9];
+        kTempMatrix[2] = kViewMat[10];
+        kTempMatrix[3] = kViewMat[11];
         return &kTempMatrix;
     }
     // Constants
@@ -2988,34 +2988,34 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         switch (uiInternal)
         {
         case SCM_DEF_CONSTS_TIME:
-            kTempMatrix._11 = fTime;
-            kTempMatrix._12 = fTime;
-            kTempMatrix._13 = fTime;
-            kTempMatrix._14 = fTime;
+            kTempMatrix[0] = fTime;
+            kTempMatrix[1] = fTime;
+            kTempMatrix[2] = fTime;
+            kTempMatrix[3] = fTime;
             break;
         case SCM_DEF_CONSTS_SINTIME:
-            kTempMatrix._11 = sinf(fTime);
-            kTempMatrix._12 = kTempMatrix._11;
-            kTempMatrix._13 = kTempMatrix._11;
-            kTempMatrix._14 = kTempMatrix._11;
+            kTempMatrix[0] = sinf(fTime);
+            kTempMatrix[1] = kTempMatrix[0];
+            kTempMatrix[2] = kTempMatrix[0];
+            kTempMatrix[3] = kTempMatrix[0];
             break;
         case SCM_DEF_CONSTS_COSTIME:
-            kTempMatrix._11 = cosf(fTime);
-            kTempMatrix._12 = kTempMatrix._11;
-            kTempMatrix._13 = kTempMatrix._11;
-            kTempMatrix._14 = kTempMatrix._11;
+            kTempMatrix[0] = cosf(fTime);
+            kTempMatrix[1] = kTempMatrix[0];
+            kTempMatrix[2] = kTempMatrix[0];
+            kTempMatrix[3] = kTempMatrix[0];
             break;
         case SCM_DEF_CONSTS_TANTIME:
-            kTempMatrix._11 = tanf(fTime);
-            kTempMatrix._12 = kTempMatrix._11;
-            kTempMatrix._13 = kTempMatrix._11;
-            kTempMatrix._14 = kTempMatrix._11;
+            kTempMatrix[0] = tanf(fTime);
+            kTempMatrix[1] = kTempMatrix[0];
+            kTempMatrix[2] = kTempMatrix[0];
+            kTempMatrix[3] = kTempMatrix[0];
             break;
         case SCM_DEF_CONSTS_TIME_SINTIME_COSTIME_TANTIME:
-            kTempMatrix._11 = fTime;
-            kTempMatrix._12 = sinf(fTime);
-            kTempMatrix._13 = cosf(fTime);
-            kTempMatrix._14 = tanf(fTime);
+            kTempMatrix[0] = fTime;
+            kTempMatrix[1] = sinf(fTime);
+            kTempMatrix[2] = cosf(fTime);
+            kTempMatrix[3] = tanf(fTime);
             break;
         default:
             EE_FAIL("Time set --> Invalid case!");
@@ -3024,8 +3024,8 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
     }
     case SCM_DEF_AMBIENTLIGHT:
     {
-        kTempMatrix._11 = kTempMatrix._12 = kTempMatrix._13 = 0.0f;
-        kTempMatrix._14 = 1.0f;
+        kTempMatrix[0] = kTempMatrix[1] = kTempMatrix[2] = 0.0f;
+        kTempMatrix[3] = 1.0f;
         if (kRCC.m_pkEffects)
         {
             NiDynEffectStateIter kIter = kRCC.m_pkEffects->GetLightHeadPos();
@@ -3037,9 +3037,9 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
                 {
                     NiColor kColor = pkLight->GetAmbientColor() *
                         pkLight->GetDimmer();
-                    kTempMatrix._11 += kColor.r;
-                    kTempMatrix._12 += kColor.g;
-                    kTempMatrix._13 += kColor.b;
+                    kTempMatrix[0] += kColor.r;
+                    kTempMatrix[1] += kColor.g;
+                    kTempMatrix[2] += kColor.b;
                 }
             }
         }
@@ -3054,10 +3054,10 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         pkRenderer->GetCameraNearAndFar(fNear, fFar);
         float fDensity = 1.0f / (pkFog->GetDepth() * (fFar - fNear));
 
-        kTempMatrix._11 = fDensity;
-        kTempMatrix._12 = fDensity;
-        kTempMatrix._13 = fDensity;
-        kTempMatrix._14 = fDensity;
+        kTempMatrix[0] = fDensity;
+        kTempMatrix[1] = fDensity;
+        kTempMatrix[2] = fDensity;
+        kTempMatrix[3] = fDensity;
         return &kTempMatrix;
     }
     case SCM_DEF_FOG_NEARFAR:
@@ -3075,10 +3075,10 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
         float fFogFar = fFar +
             pkRenderer->GetMaxFogFactor() * fWorldDepth;
 
-        kTempMatrix._11 = fFogNear;
-        kTempMatrix._12 = fFogFar;
-        kTempMatrix._13 = 0.0f;
-        kTempMatrix._14 = 0.0f;
+        kTempMatrix[0] = fFogNear;
+        kTempMatrix[1] = fFogFar;
+        kTempMatrix[2] = 0.0f;
+        kTempMatrix[3] = 0.0f;
         return &kTempMatrix;
     }
     case SCM_DEF_FOG_COLOR:
@@ -3088,10 +3088,10 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
 
         const NiColor& kFogColor = pkFog->GetFogColor();
 
-        kTempMatrix._11 = kFogColor.r;
-        kTempMatrix._12 = kFogColor.g;
-        kTempMatrix._13 = kFogColor.b;
-        kTempMatrix._14 = 1.0f;
+        kTempMatrix[0] = kFogColor.r;
+        kTempMatrix[1] = kFogColor.g;
+        kTempMatrix[2] = kFogColor.b;
+        kTempMatrix[3] = 1.0f;
 
         return &kTempMatrix;
     }
@@ -3108,7 +3108,7 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
                 fOffset = pkParallaxMap->GetOffset();
             }
         }
-        kTempMatrix._11 = fOffset;
+        kTempMatrix[0] = fOffset;
 
         return &kTempMatrix;
     }
@@ -3120,17 +3120,17 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
             pkBumpMap = pkTexProp->GetBumpMap();
         if (pkBumpMap)
         {
-            kTempMatrix._11 = pkBumpMap->GetBumpMat00();
-            kTempMatrix._12 = pkBumpMap->GetBumpMat01();
-            kTempMatrix._13 = pkBumpMap->GetBumpMat10();
-            kTempMatrix._14 = pkBumpMap->GetBumpMat11();
+            kTempMatrix[0] = pkBumpMap->GetBumpMat00();
+            kTempMatrix[1] = pkBumpMap->GetBumpMat01();
+            kTempMatrix[2] = pkBumpMap->GetBumpMat10();
+            kTempMatrix[3] = pkBumpMap->GetBumpMat11();
         }
         else
         {
-            kTempMatrix._11 = 1.0f;
-            kTempMatrix._12 = 1.0f;
-            kTempMatrix._13 = 1.0f;
-            kTempMatrix._14 = 1.0f;
+            kTempMatrix[0] = 1.0f;
+            kTempMatrix[1] = 1.0f;
+            kTempMatrix[2] = 1.0f;
+            kTempMatrix[3] = 1.0f;
         }
 
         return &kTempMatrix;
@@ -3143,13 +3143,13 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
             pkBumpMap = pkTexProp->GetBumpMap();
         if (pkBumpMap)
         {
-            kTempMatrix._11 = pkBumpMap->GetLumaOffset();
-            kTempMatrix._12 = pkBumpMap->GetLumaScale();
+            kTempMatrix[0] = pkBumpMap->GetLumaOffset();
+            kTempMatrix[1] = pkBumpMap->GetLumaScale();
         }
         else
         {
-            kTempMatrix._11 = 0.0f;
-            kTempMatrix._12 = 1.0f;
+            kTempMatrix[0] = 0.0f;
+            kTempMatrix[1] = 1.0f;
         }
 
         return &kTempMatrix;
@@ -3207,13 +3207,13 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
             if (pkMap && pkMap->GetTexture())
             {
                 NiTexture* pkTex = pkMap->GetTexture();
-                kTempMatrix._11 = (float) pkTex->GetWidth();
-                kTempMatrix._12 = (float) pkTex->GetHeight();
+                kTempMatrix[0] = (float) pkTex->GetWidth();
+                kTempMatrix[1] = (float) pkTex->GetHeight();
             }
             else
             {
-                kTempMatrix._11 = 0.0f;
-                kTempMatrix._12 = 0.0f;
+                kTempMatrix[0] = 0.0f;
+                kTempMatrix[1] = 0.0f;
             }
         }
         return &kTempMatrix;
@@ -3271,9 +3271,9 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
             }
         }
 
-        kTempMatrix._11 = kTestConditions.x;
-        kTempMatrix._12 = kTestConditions.y;
-        kTempMatrix._13 = kTestConditions.z;
+        kTempMatrix[0] = kTestConditions.x;
+        kTempMatrix[1] = kTestConditions.y;
+        kTempMatrix[2] = kTestConditions.z;
         return &kTempMatrix;
     }
     case SCM_DEF_ALPHA_TEST_REF:
@@ -3285,7 +3285,7 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
             fRef = (float)pkAlphaProp->GetTestRef() / 255.0f;
         }
 
-        kTempMatrix._11 = fRef;
+        kTempMatrix[0] = fRef;
         return &kTempMatrix;
     }
 
@@ -3331,7 +3331,7 @@ const void* NiD3D10ShaderConstantMap::ObtainDefinedConstantValue(
 //--------------------------------------------------------------------------------------------------
 const void* NiD3D10ShaderConstantMap::ObtainConstantConstantValue(
     NiShaderConstantMapEntry* pkEntry, const NiRenderCallContext&,
-    D3DXMATRIXA16& kTempMatrix)
+    NiBgfxMath::Mat4A& kTempMatrix)
 {
     if (pkEntry->GetColumnMajor())
     {
@@ -3366,22 +3366,22 @@ const void* NiD3D10ShaderConstantMap::ObtainConstantConstantValue(
         {
             const float* pfConstantData =
                 (const float*)pkEntry->GetDataSource();
-            kTempMatrix._11 = pfConstantData[0];
-            kTempMatrix._21 = pfConstantData[1];
-            kTempMatrix._31 = pfConstantData[2];
-            kTempMatrix._41 = pfConstantData[3];
-            kTempMatrix._12 = pfConstantData[4];
-            kTempMatrix._22 = pfConstantData[5];
-            kTempMatrix._32 = pfConstantData[6];
-            kTempMatrix._42 = pfConstantData[7];
-            kTempMatrix._13 = pfConstantData[8];
-            kTempMatrix._23 = pfConstantData[9];
-            kTempMatrix._33 = pfConstantData[10];
-            kTempMatrix._43 = pfConstantData[11];
-            kTempMatrix._14 = pfConstantData[12];
-            kTempMatrix._24 = pfConstantData[13];
-            kTempMatrix._34 = pfConstantData[14];
-            kTempMatrix._44 = pfConstantData[15];
+            kTempMatrix[0] = pfConstantData[0];
+            kTempMatrix[4] = pfConstantData[1];
+            kTempMatrix[8] = pfConstantData[2];
+            kTempMatrix[12] = pfConstantData[3];
+            kTempMatrix[1] = pfConstantData[4];
+            kTempMatrix[5] = pfConstantData[5];
+            kTempMatrix[9] = pfConstantData[6];
+            kTempMatrix[13] = pfConstantData[7];
+            kTempMatrix[2] = pfConstantData[8];
+            kTempMatrix[6] = pfConstantData[9];
+            kTempMatrix[10] = pfConstantData[10];
+            kTempMatrix[14] = pfConstantData[11];
+            kTempMatrix[3] = pfConstantData[12];
+            kTempMatrix[7] = pfConstantData[13];
+            kTempMatrix[11] = pfConstantData[14];
+            kTempMatrix[15] = pfConstantData[15];
 
             return &kTempMatrix;
         }
@@ -3393,7 +3393,7 @@ const void* NiD3D10ShaderConstantMap::ObtainConstantConstantValue(
 //--------------------------------------------------------------------------------------------------
 const void* NiD3D10ShaderConstantMap::ObtainAttributeConstantValue(
     NiShaderConstantMapEntry* pkEntry, const NiRenderCallContext& kRCC,
-    bool bGlobal, NiExtraData* pkExtraData, D3DXMATRIXA16& kTempMatrix)
+    bool bGlobal, NiExtraData* pkExtraData, NiBgfxMath::Mat4A& kTempMatrix)
 {
     EE_ASSERT(kRCC.m_pkMesh != NULL);
     // Attempt to get the extra data for this attribute from the cache
@@ -3469,26 +3469,26 @@ const void* NiD3D10ShaderConstantMap::ObtainAttributeConstantValue(
         NiBooleanExtraData* pkBoolED = (NiBooleanExtraData*)pkExtra;
 
         // Ugly nastiness!
-        *((NiInt32*)(&kTempMatrix._11)) = pkBoolED->GetValue();
+        *((NiInt32*)(&kTempMatrix[0])) = pkBoolED->GetValue();
 
-        return &kTempMatrix._11;
+        return &kTempMatrix[0];
     }
     case NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT:
     {
         NiIntegerExtraData* pkIntED = (NiIntegerExtraData*)pkExtra;
 
         // Ugly nastiness!
-        *((NiInt32*)(&kTempMatrix._11)) = pkIntED->GetValue();
+        *((NiInt32*)(&kTempMatrix[0])) = pkIntED->GetValue();
 
-        return &kTempMatrix._11;
+        return &kTempMatrix[0];
     }
     case NiShaderAttributeDesc::ATTRIB_TYPE_FLOAT:
     {
         NiFloatExtraData* pkFloatED = (NiFloatExtraData*)pkExtra;
 
-        kTempMatrix._11 = pkFloatED->GetValue();
+        kTempMatrix[0] = pkFloatED->GetValue();
 
-        return &kTempMatrix._11;
+        return &kTempMatrix[0];
     }
     case NiShaderAttributeDesc::ATTRIB_TYPE_POINT2:
     {
@@ -3532,10 +3532,10 @@ const void* NiD3D10ShaderConstantMap::ObtainAttributeConstantValue(
         {
             NiColorExtraData* pkColorED = (NiColorExtraData*)pkExtra;
 
-            kTempMatrix._11 = pkColorED->GetRed();
-            kTempMatrix._12 = pkColorED->GetGreen();
-            kTempMatrix._13 = pkColorED->GetBlue();
-            kTempMatrix._14 = pkColorED->GetAlpha();
+            kTempMatrix[0] = pkColorED->GetRed();
+            kTempMatrix[1] = pkColorED->GetGreen();
+            kTempMatrix[2] = pkColorED->GetBlue();
+            kTempMatrix[3] = pkColorED->GetAlpha();
 
             return &kTempMatrix;
         }
@@ -3598,22 +3598,22 @@ const void* NiD3D10ShaderConstantMap::ObtainAttributeConstantValue(
         if (pkEntry->GetColumnMajor())
         {
             // Transpose if necessary
-            kTempMatrix._11 = pfValue[0];
-            kTempMatrix._21 = pfValue[1];
-            kTempMatrix._31 = pfValue[2];
-            kTempMatrix._41 = pfValue[3];
-            kTempMatrix._12 = pfValue[4];
-            kTempMatrix._22 = pfValue[5];
-            kTempMatrix._32 = pfValue[6];
-            kTempMatrix._42 = pfValue[7];
-            kTempMatrix._13 = pfValue[8];
-            kTempMatrix._23 = pfValue[9];
-            kTempMatrix._33 = pfValue[10];
-            kTempMatrix._43 = pfValue[11];
-            kTempMatrix._14 = pfValue[12];
-            kTempMatrix._24 = pfValue[13];
-            kTempMatrix._34 = pfValue[14];
-            kTempMatrix._44 = pfValue[15];
+            kTempMatrix[0] = pfValue[0];
+            kTempMatrix[4] = pfValue[1];
+            kTempMatrix[8] = pfValue[2];
+            kTempMatrix[12] = pfValue[3];
+            kTempMatrix[1] = pfValue[4];
+            kTempMatrix[5] = pfValue[5];
+            kTempMatrix[9] = pfValue[6];
+            kTempMatrix[13] = pfValue[7];
+            kTempMatrix[2] = pfValue[8];
+            kTempMatrix[6] = pfValue[9];
+            kTempMatrix[10] = pfValue[10];
+            kTempMatrix[14] = pfValue[11];
+            kTempMatrix[3] = pfValue[12];
+            kTempMatrix[7] = pfValue[13];
+            kTempMatrix[11] = pfValue[14];
+            kTempMatrix[15] = pfValue[15];
 
             return &kTempMatrix;
         }
@@ -3626,10 +3626,10 @@ const void* NiD3D10ShaderConstantMap::ObtainAttributeConstantValue(
     {
         NiColorExtraData* pkColorED = (NiColorExtraData*)pkExtra;
 
-        kTempMatrix._11 = pkColorED->GetRed();
-        kTempMatrix._12 = pkColorED->GetGreen();
-        kTempMatrix._13 = pkColorED->GetBlue();
-        kTempMatrix._14 = pkColorED->GetAlpha();
+        kTempMatrix[0] = pkColorED->GetRed();
+        kTempMatrix[1] = pkColorED->GetGreen();
+        kTempMatrix[2] = pkColorED->GetBlue();
+        kTempMatrix[3] = pkColorED->GetAlpha();
 
         return &kTempMatrix;
     }
@@ -3669,7 +3669,7 @@ const void* NiD3D10ShaderConstantMap::ObtainAttributeConstantValue(
 //--------------------------------------------------------------------------------------------------
 const void* NiD3D10ShaderConstantMap::ObtainGlobalConstantValue(
     NiShaderConstantMapEntry* pkEntry, const NiRenderCallContext&,
-    D3DXMATRIXA16& kTempMatrix)
+    NiBgfxMath::Mat4A& kTempMatrix)
 {
     NiShaderFactory* pkFactory = NiShaderFactory::GetInstance();
     NiGlobalConstantEntry* pkGlobalEntry =
@@ -3714,22 +3714,22 @@ const void* NiD3D10ShaderConstantMap::ObtainGlobalConstantValue(
         {
             const float* pfConstantData =
                 (const float*)pkEntry->GetDataSource();
-            kTempMatrix._11 = pfConstantData[0];
-            kTempMatrix._21 = pfConstantData[1];
-            kTempMatrix._31 = pfConstantData[2];
-            kTempMatrix._41 = pfConstantData[3];
-            kTempMatrix._12 = pfConstantData[4];
-            kTempMatrix._22 = pfConstantData[5];
-            kTempMatrix._32 = pfConstantData[6];
-            kTempMatrix._42 = pfConstantData[7];
-            kTempMatrix._13 = pfConstantData[8];
-            kTempMatrix._23 = pfConstantData[9];
-            kTempMatrix._33 = pfConstantData[10];
-            kTempMatrix._43 = pfConstantData[11];
-            kTempMatrix._14 = pfConstantData[12];
-            kTempMatrix._24 = pfConstantData[13];
-            kTempMatrix._34 = pfConstantData[14];
-            kTempMatrix._44 = pfConstantData[15];
+            kTempMatrix[0] = pfConstantData[0];
+            kTempMatrix[4] = pfConstantData[1];
+            kTempMatrix[8] = pfConstantData[2];
+            kTempMatrix[12] = pfConstantData[3];
+            kTempMatrix[1] = pfConstantData[4];
+            kTempMatrix[5] = pfConstantData[5];
+            kTempMatrix[9] = pfConstantData[6];
+            kTempMatrix[13] = pfConstantData[7];
+            kTempMatrix[2] = pfConstantData[8];
+            kTempMatrix[6] = pfConstantData[9];
+            kTempMatrix[10] = pfConstantData[10];
+            kTempMatrix[14] = pfConstantData[11];
+            kTempMatrix[3] = pfConstantData[12];
+            kTempMatrix[7] = pfConstantData[13];
+            kTempMatrix[11] = pfConstantData[14];
+            kTempMatrix[15] = pfConstantData[15];
 
             return &kTempMatrix;
         }
@@ -3741,7 +3741,7 @@ const void* NiD3D10ShaderConstantMap::ObtainGlobalConstantValue(
 //--------------------------------------------------------------------------------------------------
 const void* NiD3D10ShaderConstantMap::ObtainOperatorConstantValue(
     NiShaderConstantMapEntry* pkEntry, const NiRenderCallContext& kRCC,
-    bool bGlobal, NiExtraData* pkExtraData, D3DXMATRIXA16& kTempMatrix)
+    bool bGlobal, NiExtraData* pkExtraData, NiBgfxMath::Mat4A& kTempMatrix)
 {
     NiUInt32 uiExtra = pkEntry->GetExtra();
 
@@ -3781,8 +3781,8 @@ const void* NiD3D10ShaderConstantMap::ObtainOperatorConstantValue(
     const void* pvOperand1 = NULL;
     const void* pvOperand2 = NULL;
 
-    D3DXMATRIXA16 kOperand1;
-    D3DXMATRIXA16 kOperand2;
+    NiBgfxMath::Mat4A kOperand1;
+    NiBgfxMath::Mat4A kOperand2;
 
     // Setup entry 1s value
     if (pkEntry1->IsDefined())
@@ -3863,7 +3863,7 @@ const void* NiD3D10ShaderConstantMap::ObtainOperatorConstantValue(
 //--------------------------------------------------------------------------------------------------
 const void* NiD3D10ShaderConstantMap::ObtainObjectConstantValue(
     NiShaderConstantMapEntry* pkEntry, const NiRenderCallContext& kRCC,
-    D3DXMATRIXA16* pkResult)
+    NiBgfxMath::Mat4A* pkResult)
 {
     // Get NiDynamicEffect corresponding to this object type.
     NiDynamicEffect* pkDynEffect = GetDynamicEffectForObject(kRCC.m_pkEffects,
@@ -3893,7 +3893,7 @@ const void* NiD3D10ShaderConstantMap::ObtainObjectConstantValue(
 bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
     NiShaderConstantMapEntry* pkEntry, ObjectMappings eMapping,
     NiDynamicEffect* pkDynEffect, const NiRenderCallContext& kRCC,
-    D3DXMATRIXA16* pkResult)
+    NiBgfxMath::Mat4A* pkResult)
 {
     EE_ASSERT(kRCC.m_pkWorld != NULL && kRCC.m_pkWorldBound != NULL &&
         kRCC.m_pkMesh != NULL);
@@ -4228,13 +4228,13 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
                 // If it's column major, then we must manually transpose.
                 if (pkEntry->GetColumnMajor())
                 {
-                    NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0],
+                    NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0],
                         pkDynEffect->GetWorldRotate(), kTranslate,
                         pkDynEffect->GetWorldScale());
                 }
                 else
                 {
-                    NiD3D10Utility::GetD3DFromNi(pkResult[0],
+                    NiD3D10Utility::GetMatrixFromNi(pkResult[0],
                         pkDynEffect->GetWorldRotate(), kTranslate,
                         pkDynEffect->GetWorldScale());
                 }
@@ -4244,12 +4244,12 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
                 // If it's column major, then we must manually transpose.
                 if (pkEntry->GetColumnMajor())
                 {
-                    NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0],
+                    NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0],
                         pkDynEffect->GetWorldTransform());
                 }
                 else
                 {
-                    NiD3D10Utility::GetD3DFromNi(pkResult[0],
+                    NiD3D10Utility::GetMatrixFromNi(pkResult[0],
                         pkDynEffect->GetWorldTransform());
                 }
             }
@@ -4257,7 +4257,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
     case NiShaderConstantMap::SCM_OBJ_MODELTRANSFORM:
@@ -4278,12 +4278,12 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
                 // If it's column major, then we must manually transpose.
                 if (pkEntry->GetColumnMajor())
                 {
-                    NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0], kInvWorld *
+                    NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0], kInvWorld *
                         kDynEffectWorld);
                 }
                 else
                 {
-                    NiD3D10Utility::GetD3DFromNi(pkResult[0], kInvWorld *
+                    NiD3D10Utility::GetMatrixFromNi(pkResult[0], kInvWorld *
                         kDynEffectWorld);
                 }
             }
@@ -4292,12 +4292,12 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
                 // If it's column major, then we must manually transpose.
                 if (pkEntry->GetColumnMajor())
                 {
-                    NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0], kInvWorld *
+                    NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0], kInvWorld *
                         pkDynEffect->GetWorldTransform());
                 }
                 else
                 {
-                    NiD3D10Utility::GetD3DFromNi(pkResult[0], kInvWorld *
+                    NiD3D10Utility::GetMatrixFromNi(pkResult[0], kInvWorld *
                         pkDynEffect->GetWorldTransform());
                 }
             }
@@ -4305,7 +4305,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
     case NiShaderConstantMap::SCM_OBJ_SPOTATTENUATION:
@@ -4373,13 +4373,13 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
             // If it's column major, then we must manually transpose.
             if (pkEntry->GetColumnMajor())
             {
-                NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0],
+                NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0],
                     ((NiTextureEffect*)pkDynEffect)->
                     GetWorldProjectionMatrix(), NiPoint3::ZERO, 1.0f);
             }
             else
             {
-                NiD3D10Utility::GetD3DFromNi(pkResult[0],
+                NiD3D10Utility::GetMatrixFromNi(pkResult[0],
                     ((NiTextureEffect*)pkDynEffect)->
                     GetWorldProjectionMatrix(), NiPoint3::ZERO, 1.0f);
             }
@@ -4387,7 +4387,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
     case NiShaderConstantMap::SCM_OBJ_MODELPROJECTIONMATRIX:
@@ -4399,14 +4399,14 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
             // If it's column major, then we must manually transpose.
             if (pkEntry->GetColumnMajor())
             {
-                NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0],
+                NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0],
                     kRCC.m_pkWorld->m_Rotate.Transpose() *
                     ((NiTextureEffect*)pkDynEffect)->
                     GetWorldProjectionMatrix(), NiPoint3::ZERO, 1.0f);
             }
             else
             {
-                NiD3D10Utility::GetD3DFromNi(pkResult[0],
+                NiD3D10Utility::GetMatrixFromNi(pkResult[0],
                     kRCC.m_pkWorld->m_Rotate.Transpose() *
                     ((NiTextureEffect*)pkDynEffect)->
                     GetWorldProjectionMatrix(), NiPoint3::ZERO, 1.0f);
@@ -4415,7 +4415,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
     case NiShaderConstantMap::SCM_OBJ_WORLDPROJECTIONTRANSLATION:
@@ -4595,13 +4595,13 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
             // If it's column major, then we must manually transpose.
             if (pkEntry->GetColumnMajor())
             {
-                NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0],
+                NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0],
                     pkTexEffect->GetWorldProjectionMatrix(),
                     pkTexEffect->GetWorldProjectionTranslation(), 1.0f);
             }
             else
             {
-                NiD3D10Utility::GetD3DFromNi(pkResult[0],
+                NiD3D10Utility::GetMatrixFromNi(pkResult[0],
                     pkTexEffect->GetWorldProjectionMatrix(),
                     pkTexEffect->GetWorldProjectionTranslation(), 1.0f);
             }
@@ -4609,7 +4609,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
     case NiShaderConstantMap::SCM_OBJ_MODELPROJECTIONTRANSFORM:
@@ -4628,14 +4628,14 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
             // If it's column major, then we must manually transpose.
             if (pkEntry->GetColumnMajor())
             {
-                NiD3D10Utility::GetD3DTransposeFromNi(pkResult[0],
+                NiD3D10Utility::GetTransposeMatrixFromNi(pkResult[0],
                     kRCC.m_pkWorld->m_Rotate.Transpose() *
                     pkTexEffect->GetWorldProjectionMatrix(),
                     kTranslation, 1.0f);
             }
             else
             {
-                NiD3D10Utility::GetD3DFromNi(pkResult[0],
+                NiD3D10Utility::GetMatrixFromNi(pkResult[0],
                     kRCC.m_pkWorld->m_Rotate.Transpose() *
                     pkTexEffect->GetWorldProjectionMatrix(),
                     kTranslation, 1.0f);
@@ -4644,7 +4644,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
 
@@ -4667,18 +4667,18 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
             // if it's _not_ column major.
             if (pkEntry->GetColumnMajor())
             {
-                pkResult[0] = *((D3DXMATRIXA16*)aafWorldToSM);
+                pkResult[0] = *((NiBgfxMath::Mat4A*)aafWorldToSM);
             }
             else
             {
-                D3DXMatrixTranspose(&pkResult[0], (D3DXMATRIXA16*)aafWorldToSM);
+                NiBgfxMath::Transpose(&pkResult[0], (NiBgfxMath::Mat4A*)aafWorldToSM);
             }
 
             return true;
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
     case NiShaderConstantMap::SCM_OBJ_SHADOWMAPTEXSIZE:
@@ -4787,10 +4787,10 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
                 if (!pkEntry->GetColumnMajor())
                 {
                     // Transpose all the matrices retrieved
-                    D3DXMATRIXA16 kMatrixT;
+                    NiBgfxMath::Mat4A kMatrixT;
                     for (NiUInt32 ui = 0; ui < uiNumMatrices; ++ui)
                     {
-                        D3DXMatrixTranspose(&kMatrixT, &pkResult[ui]);
+                        NiBgfxMath::Transpose(&kMatrixT, &pkResult[ui]);
                         pkResult[ui] = kMatrixT;
                     }
                 }
@@ -4800,7 +4800,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
             {
                 for (NiUInt32 ui = 0; ui < uiNumMatrices; ++ui)
                 {
-                    D3DXMatrixIdentity(&pkResult[ui]);
+                    NiBgfxMath::Identity(&pkResult[ui]);
                 }
                 return false;
             }
@@ -4854,8 +4854,8 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
             if (!pkEntry->GetColumnMajor())
             {
                 // Transpose all the matrices retrieved
-                D3DXMATRIXA16 kMatrixT;
-                D3DXMatrixTranspose(&kMatrixT, &pkResult[0]);
+                NiBgfxMath::Mat4A kMatrixT;
+                NiBgfxMath::Transpose(&kMatrixT, &pkResult[0]);
                 NiMemcpy(&pkResult[0], &kMatrixT, sizeof(float) * 16);
             }
 
@@ -4863,7 +4863,7 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
         }
         else
         {
-            D3DXMatrixIdentity(&pkResult[0]);
+            NiBgfxMath::Identity(&pkResult[0]);
             return false;
         }
     case NiShaderConstantMap::SCM_OBJ_SHADOW_PSSM_TRANSITIONSIZE:
@@ -4898,18 +4898,18 @@ bool NiD3D10ShaderConstantMap::ObtainDataFromDynamicEffect(
 const void* NiD3D10ShaderConstantMap::PerformOperatorMultiply(
     const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
     const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-    bool bInverse, bool bTranspose, D3DXMATRIXA16& kTempMatrix)
+    bool bInverse, bool bTranspose, NiBgfxMath::Mat4A& kTempMatrix)
 {
     if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_MATRIX4)
     {
-        D3DXMATRIX* pkMatrix1 = (D3DXMATRIX*)pvOperand1;
-        D3DXMATRIXA16 kOperand1 = *pkMatrix1;
+        NiBgfxMath::Mat4* pkMatrix1 = (NiBgfxMath::Mat4*)pvOperand1;
+        NiBgfxMath::Mat4A kOperand1 = *pkMatrix1;
         if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_MATRIX4)
         {
-            D3DXMATRIX* pkMatrix2 = (D3DXMATRIX*)pvOperand2;
-            D3DXMATRIXA16 kOperand2 = *pkMatrix2;
+            NiBgfxMath::Mat4* pkMatrix2 = (NiBgfxMath::Mat4*)pvOperand2;
+            NiBgfxMath::Mat4A kOperand2 = *pkMatrix2;
 
-            D3DXMatrixMultiply(&kTempMatrix, &kOperand1, &kOperand2);
+            NiBgfxMath::Multiply(&kTempMatrix, &kOperand1, &kOperand2);
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
         {
@@ -4927,9 +4927,9 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorMultiply(
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
-            D3DXVECTOR4 kResult;
-            D3DXVec4Transform(&kResult, pkOperand2, &kOperand1);
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
+            NiBgfxMath::Vec4 kResult;
+            NiBgfxMath::Transform(&kResult, pkOperand2, &kOperand1);
             kTempMatrix[0] = kResult.x;
             kTempMatrix[1] = kResult.y;
             kTempMatrix[2] = kResult.z;
@@ -4941,21 +4941,21 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorMultiply(
         }
 
         if (bInverse)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTranspose)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
     }
     else if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
         eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
     {
-        D3DXVECTOR4* pkOperand1 = (D3DXVECTOR4*)pvOperand1;
-        D3DXVECTOR4* pkResult = (D3DXVECTOR4*)(&kTempMatrix);
+        NiBgfxMath::Vec4* pkOperand1 = (NiBgfxMath::Vec4*)pvOperand1;
+        NiBgfxMath::Vec4* pkResult = (NiBgfxMath::Vec4*)(&kTempMatrix);
 
         if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_MATRIX4)
         {
-            D3DXMATRIX* pkMatrix2 = (D3DXMATRIX*)pvOperand2;
-            D3DXMATRIXA16 kOperand2 = *pkMatrix2;
-            D3DXVec4Transform(pkResult, pkOperand1, &kOperand2);
+            NiBgfxMath::Mat4* pkMatrix2 = (NiBgfxMath::Mat4*)pvOperand2;
+            NiBgfxMath::Mat4A kOperand2 = *pkMatrix2;
+            NiBgfxMath::Transform(pkResult, pkOperand1, &kOperand2);
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
         {
@@ -4973,7 +4973,7 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorMultiply(
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
             for (NiUInt32 i = 0; i < 4; i++)
                 (*pkResult)[i] = (*pkOperand1)[i] * (*pkOperand2)[i];
         }
@@ -4994,12 +4994,12 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorMultiply(
 const void* NiD3D10ShaderConstantMap::PerformOperatorDivide(
     const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
     const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-    bool bInverse, bool bTranspose, D3DXMATRIXA16& kTempMatrix)
+    bool bInverse, bool bTranspose, NiBgfxMath::Mat4A& kTempMatrix)
 {
     if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_MATRIX4)
     {
-        D3DXMATRIX* pkMatrix1 = (D3DXMATRIX*)pvOperand1;
-        D3DXMATRIXA16 kOperand1 = *pkMatrix1;
+        NiBgfxMath::Mat4* pkMatrix1 = (NiBgfxMath::Mat4*)pvOperand1;
+        NiBgfxMath::Mat4A kOperand1 = *pkMatrix1;
         if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
         {
             NiUInt32 uiOperand2 = *(NiUInt32*)pvOperand2;
@@ -5019,15 +5019,15 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorDivide(
         }
 
         if (bInverse)
-            D3DXMatrixInverse(&kTempMatrix, 0, &kTempMatrix);
+            NiBgfxMath::Inverse(&kTempMatrix, 0, &kTempMatrix);
         if (bTranspose)
-            D3DXMatrixTranspose(&kTempMatrix, &kTempMatrix);
+            NiBgfxMath::Transpose(&kTempMatrix, &kTempMatrix);
     }
     else if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
         eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
     {
-        D3DXVECTOR4* pkOperand1 = (D3DXVECTOR4*)pvOperand1;
-        D3DXVECTOR4* pkResult = (D3DXVECTOR4*)(&kTempMatrix);
+        NiBgfxMath::Vec4* pkOperand1 = (NiBgfxMath::Vec4*)pvOperand1;
+        NiBgfxMath::Vec4* pkResult = (NiBgfxMath::Vec4*)(&kTempMatrix);
 
         if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
         {
@@ -5045,7 +5045,7 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorDivide(
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
             for (NiUInt32 i = 0; i < 4; i++)
                 (*pkResult)[i] = (*pkOperand1)[i] / (*pkOperand2)[i];
         }
@@ -5066,7 +5066,7 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorDivide(
 const void* NiD3D10ShaderConstantMap::PerformOperatorAdd(
     const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
     const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-    bool, bool, D3DXMATRIXA16& kTempMatrix)
+    bool, bool, NiBgfxMath::Mat4A& kTempMatrix)
 {
     if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
     {
@@ -5076,20 +5076,20 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorAdd(
         {
             NiUInt32 uiOperand2 = *(NiUInt32*)pvOperand2;
 
-            *((NiUInt32*)(&(kTempMatrix._11))) = uiOperand1 + uiOperand2;
+            *((NiUInt32*)(&(kTempMatrix[0]))) = uiOperand1 + uiOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_FLOAT)
         {
             float fOperand1 = (float)uiOperand1;
             float fOperand2 = *(float*)pvOperand2;
 
-            kTempMatrix._11 = fOperand1 + fOperand2;
+            kTempMatrix[0] = fOperand1 + fOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
             float fOperand1 = (float)uiOperand1;
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
             for (NiUInt32 i = 0; i < 4; i++)
                 kTempMatrix[i] = fOperand1 + (*pkOperand2)[i];
         }
@@ -5106,18 +5106,18 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorAdd(
             NiUInt32 uiOperand2 = *(NiUInt32*)pvOperand2;
             float fOperand2 = (float)uiOperand2;
 
-            kTempMatrix._11 = fOperand1 + fOperand2;
+            kTempMatrix[0] = fOperand1 + fOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_FLOAT)
         {
             float fOperand2 = *(float*)pvOperand2;
 
-            kTempMatrix._11 = fOperand1 + fOperand2;
+            kTempMatrix[0] = fOperand1 + fOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
 
             for (NiUInt32 i = 0; i < 4; i++)
                 kTempMatrix[i] = fOperand1 + (*pkOperand2)[i];
@@ -5130,7 +5130,7 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorAdd(
     else if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
         eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
     {
-        D3DXVECTOR4* pkOperand1 = (D3DXVECTOR4*)pvOperand1;
+        NiBgfxMath::Vec4* pkOperand1 = (NiBgfxMath::Vec4*)pvOperand1;
 
         if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
         {
@@ -5150,8 +5150,8 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorAdd(
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
-            D3DXVECTOR4* pkResult = (D3DXVECTOR4*)(&kTempMatrix);
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
+            NiBgfxMath::Vec4* pkResult = (NiBgfxMath::Vec4*)(&kTempMatrix);
 
             *pkResult = *pkOperand1 + *pkOperand2;
         }
@@ -5172,7 +5172,7 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorAdd(
 const void* NiD3D10ShaderConstantMap::PerformOperatorSubtract(
     const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
     const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-    bool, bool, D3DXMATRIXA16& kTempMatrix)
+    bool, bool, NiBgfxMath::Mat4A& kTempMatrix)
 {
     if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
     {
@@ -5182,20 +5182,20 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorSubtract(
         {
             NiUInt32 uiOperand2 = *(NiUInt32*)pvOperand2;
 
-            *((NiUInt32*)(&(kTempMatrix._11))) = uiOperand1 - uiOperand2;
+            *((NiUInt32*)(&(kTempMatrix[0]))) = uiOperand1 - uiOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_FLOAT)
         {
             float fOperand1 = (float)uiOperand1;
             float fOperand2 = *(float*)pvOperand2;
 
-            kTempMatrix._11 = fOperand1 - fOperand2;
+            kTempMatrix[0] = fOperand1 - fOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
             float fOperand1 = (float)uiOperand1;
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
             for (NiUInt32 i = 0; i < 4; i++)
                 kTempMatrix[i] = fOperand1 - (*pkOperand2)[i];
         }
@@ -5212,18 +5212,18 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorSubtract(
             NiUInt32 uiOperand2 = *(NiUInt32*)pvOperand2;
             float fOperand2 = (float)uiOperand2;
 
-            kTempMatrix._11 = fOperand1 - fOperand2;
+            kTempMatrix[0] = fOperand1 - fOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_FLOAT)
         {
             float fOperand2 = *(float*)pvOperand2;
 
-            kTempMatrix._11 = fOperand1 - fOperand2;
+            kTempMatrix[0] = fOperand1 - fOperand2;
         }
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
 
             for (NiUInt32 i = 0; i < 4; i++)
                 kTempMatrix[i] = fOperand1 - (*pkOperand2)[i];
@@ -5236,7 +5236,7 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorSubtract(
     else if (eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
         eType1 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
     {
-        D3DXVECTOR4* pkOperand1 = (D3DXVECTOR4*)pvOperand1;
+        NiBgfxMath::Vec4* pkOperand1 = (NiBgfxMath::Vec4*)pvOperand1;
 
         if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_UNSIGNEDINT)
         {
@@ -5256,8 +5256,8 @@ const void* NiD3D10ShaderConstantMap::PerformOperatorSubtract(
         else if (eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_POINT4 ||
             eType2 == NiShaderAttributeDesc::ATTRIB_TYPE_COLOR)
         {
-            D3DXVECTOR4* pkOperand2 = (D3DXVECTOR4*)pvOperand2;
-            D3DXVECTOR4* pkResult = (D3DXVECTOR4*)(&kTempMatrix);
+            NiBgfxMath::Vec4* pkOperand2 = (NiBgfxMath::Vec4*)pvOperand2;
+            NiBgfxMath::Vec4* pkResult = (NiBgfxMath::Vec4*)(&kTempMatrix);
 
             *pkResult = *pkOperand1 - *pkOperand2;
         }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AssetLoader.h"
+#include "ExportAxes.h"
 
 #include <assimp/scene.h>
 
@@ -24,7 +25,7 @@ public:
 		NiAVObject* pkNifRoot,
 		float fUnitScale,
 		float fSampleRate,
-		bool bConvertToUnrealAxes = true,
+		ExportAxisPreset eAxisPreset = ExportAxisPreset::Unreal,
 		const NiStream* pkNifStream = nullptr);
 
 	// Append sequences stored inside NiControllerManager controllers in the
@@ -38,10 +39,10 @@ public:
 
 	// NIF fallback: scan the NIF scene graph for NiTransformControllers.
 	// Curves are sampled through Gamebryo's interpolator implementation so
-	// Bezier/Euler interpolation is baked correctly for FBX/Unreal.
+	// Bezier/Euler interpolation is baked correctly for the selected FBX axis preset.
 	static std::vector<aiAnimation*> BuildFromNifControllers(
 		NiAVObject* pkRoot,
 		float fUnitScale,
 		float fSampleRate,
-		bool bConvertToUnrealAxes = true);
+		ExportAxisPreset eAxisPreset = ExportAxisPreset::Unreal);
 };

@@ -22,9 +22,9 @@ class NIMAIN_ENTRY NiTransform : public NiMemObject
 public:
     // NOTE: Variable declaration order effects assembly language code.
     // Do not change.
-    NiMatrix3 m_Rotate;
-    NiPoint3 m_Translate;
-    float m_fScale;
+    NiMatrix3 m_Rotate = NiMatrix3::ZERO;
+    NiPoint3 m_Translate = NiPoint3::ZERO;
+    float m_fScale = 0.0f;
 
     void MakeIdentity();
     bool operator!=(const NiTransform &xform) const;

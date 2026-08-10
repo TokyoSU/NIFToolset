@@ -1642,48 +1642,11 @@ NiInputErr NiDI8InputSystem::ConfigureDevices()
     kDICDP.lprgFormats = &m_kDIActionFormat;
     kDICDP.hwnd = NiDI8InputSystem::GetOwnerWindow();
 
-    // The renderer is really needed here, to support this capability in
-    // full-screen.
-    NiRenderer* pkRenderer = NiRenderer::GetRenderer();
-
-    HRESULT hr = E_FAIL;
-    if (NiIsKindOf(NiDX9Renderer, pkRenderer))
-    {
-        NiDX9Renderer* pkDX9Renderer = (NiDX9Renderer*)pkRenderer;
-        EE_ASSERT(pkDX9Renderer);
-        D3DPRESENT_PARAMETERS* pkD3DPP = pkDX9Renderer->GetPresentParams();
-
-        bool bWasFullScreen = false;
-        unsigned int uiW = 0;
-        unsigned int uiH = 0;
-        if (pkD3DPP->Windowed == false)
-        {
-            // Flip it
-            bWasFullScreen = true;
-            const NiRenderTargetGroup* pkRTGroup =
-                pkDX9Renderer->GetDefaultRenderTargetGroup();
-            uiW = pkRTGroup->GetWidth(0);
-            uiH = pkRTGroup->GetHeight(0);
-
-            pkDX9Renderer->Recreate(640, 480, (NiD3DRenderer::FlagType)0,
-                GetOwnerWindow());
-        }
-
-        kDICDP.lpUnkDDSTarget = 0;
-        hr = m_pkDirectInput8->ConfigureDevices(0, &kDICDP, DICD_EDIT, this);
-
-        if (bWasFullScreen)
-        {
-            NiDX9Renderer::FlagType eFlag;
-            eFlag = NiDX9Renderer::USE_FULLSCREEN;
-            pkDX9Renderer->Recreate(uiW, uiH, eFlag, GetOwnerWindow());
-        }
-    }
-    else
-    {
-        kDICDP.lpUnkDDSTarget = 0;
-        hr = m_pkDirectInput8->ConfigureDevices(0, &kDICDP, DICD_EDIT, this);
-    }
+    // DirectInput's configuration UI does not require a Direct3D device.
+    // The old DX9 renderer temporarily recreated the device in windowed mode;
+    // bgfx owns presentation now, so keep input configuration renderer-neutral.
+    kDICDP.lpUnkDDSTarget = 0;
+    HRESULT hr = m_pkDirectInput8->ConfigureDevices(0, &kDICDP, DICD_EDIT, this);
 
     // Check the results
     if (SUCCEEDED(hr))

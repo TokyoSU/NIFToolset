@@ -3,6 +3,8 @@
 
 #include <assimp/scene.h>
 #include <assimp/Exporter.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/version.h>
 #include <assimp/postprocess.h>
 #include <assimp/metadata.h>
 
@@ -16,6 +18,10 @@
 #include <iostream>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
+#include <fstream>
+#include <set>
+#include <sstream>
 
 namespace fs = std::filesystem;
 
@@ -115,15 +121,877 @@ namespace
 		}
 		return kResult;
 	}
+
+	bool IsFiniteVector(const aiVector3D& kValue)
+	{
+		return std::isfinite(kValue.x) && std::isfinite(kValue.y) &&
+			std::isfinite(kValue.z);
+	}
+
+	bool IsFiniteQuaternion(const aiQuaternion& kValue)
+	{
+		if (!std::isfinite(kValue.w) || !std::isfinite(kValue.x) ||
+			!std::isfinite(kValue.y) || !std::isfinite(kValue.z))
+		{
+			return false;
+		}
+
+		const double dLengthSquared =
+			static_cast<double>(kValue.w) * kValue.w +
+			static_cast<double>(kValue.x) * kValue.x +
+			static_cast<double>(kValue.y) * kValue.y +
+			static_cast<double>(kValue.z) * kValue.z;
+		return std::isfinite(dLengthSquared) && dLengthSquared > 1.0e-20;
+	}
+
+	bool IsFiniteMatrix(const aiMatrix4x4& kValue)
+	{
+		const float afValues[16] =
+		{
+			kValue.a1, kValue.a2, kValue.a3, kValue.a4,
+			kValue.b1, kValue.b2, kValue.b3, kValue.b4,
+			kValue.c1, kValue.c2, kValue.c3, kValue.c4,
+			kValue.d1, kValue.d2, kValue.d3, kValue.d4
+		};
+		for (float fValue : afValues)
+		{
+			if (!std::isfinite(fValue))
+				return false;
+		}
+		return true;
+	}
+
+	bool ValidateFiniteNode(const aiNode* pkNode, const std::string& kPath,
+		std::string& kError)
+	{
+		if (!pkNode)
+			return true;
+
+		const std::string kName = pkNode->mName.length > 0
+			? pkNode->mName.C_Str() : "<unnamed>";
+		const std::string kNodePath = kPath.empty()
+			? kName : kPath + "/" + kName;
+		if (!IsFiniteMatrix(pkNode->mTransformation))
+		{
+			kError = "Non-finite node transform at '" + kNodePath + "'.";
+			return false;
+		}
+
+		for (unsigned int i = 0; i < pkNode->mNumChildren; ++i)
+		{
+			if (!ValidateFiniteNode(pkNode->mChildren[i], kNodePath, kError))
+				return false;
+		}
+		return true;
+	}
+
+	bool ValidateFiniteScene(const aiScene* pkScene, std::string& kError)
+	{
+		if (!pkScene || !pkScene->mRootNode)
+		{
+			kError = "Assimp scene has no root node.";
+			return false;
+		}
+
+		if (!ValidateFiniteNode(pkScene->mRootNode, std::string(), kError))
+			return false;
+
+		for (unsigned int m = 0; m < pkScene->mNumMeshes; ++m)
+		{
+			const aiMesh* pkMesh = pkScene->mMeshes[m];
+			if (!pkMesh)
+				continue;
+			const std::string kMeshName = pkMesh->mName.length > 0
+				? pkMesh->mName.C_Str() : ("mesh_" + std::to_string(m));
+
+			for (unsigned int v = 0; v < pkMesh->mNumVertices; ++v)
+			{
+				if (!IsFiniteVector(pkMesh->mVertices[v]))
+				{
+					kError = "Non-finite vertex " + std::to_string(v) +
+						" in mesh '" + kMeshName + "'.";
+					return false;
+				}
+				if (pkMesh->mNormals && !IsFiniteVector(pkMesh->mNormals[v]))
+				{
+					kError = "Non-finite normal " + std::to_string(v) +
+						" in mesh '" + kMeshName + "'.";
+					return false;
+				}
+			}
+
+			for (unsigned int b = 0; b < pkMesh->mNumBones; ++b)
+			{
+				const aiBone* pkBone = pkMesh->mBones[b];
+				if (!pkBone)
+					continue;
+				const std::string kBoneName = pkBone->mName.length > 0
+					? pkBone->mName.C_Str() : ("bone_" + std::to_string(b));
+				if (!IsFiniteMatrix(pkBone->mOffsetMatrix))
+				{
+					kError = "Non-finite inverse-bind matrix for bone '" +
+						kBoneName + "' in mesh '" + kMeshName + "'.";
+					return false;
+				}
+				for (unsigned int w = 0; w < pkBone->mNumWeights; ++w)
+				{
+					const aiVertexWeight& kWeight = pkBone->mWeights[w];
+					if (kWeight.mVertexId >= pkMesh->mNumVertices ||
+						!std::isfinite(kWeight.mWeight) || kWeight.mWeight < 0.0f)
+					{
+						kError = "Invalid weight " + std::to_string(w) +
+							" for bone '" + kBoneName + "' in mesh '" +
+							kMeshName + "'.";
+						return false;
+					}
+				}
+			}
+		}
+
+		for (unsigned int a = 0; a < pkScene->mNumAnimations; ++a)
+		{
+			const aiAnimation* pkAnimation = pkScene->mAnimations[a];
+			if (!pkAnimation)
+				continue;
+			const std::string kAnimationName = pkAnimation->mName.length > 0
+				? pkAnimation->mName.C_Str() : ("animation_" + std::to_string(a));
+			if (!std::isfinite(pkAnimation->mDuration) ||
+				!std::isfinite(pkAnimation->mTicksPerSecond))
+			{
+				kError = "Non-finite timing in animation '" + kAnimationName + "'.";
+				return false;
+			}
+
+			for (unsigned int c = 0; c < pkAnimation->mNumChannels; ++c)
+			{
+				const aiNodeAnim* pkChannel = pkAnimation->mChannels[c];
+				if (!pkChannel)
+					continue;
+				const std::string kChannelName = pkChannel->mNodeName.C_Str();
+				for (unsigned int i = 0; i < pkChannel->mNumPositionKeys; ++i)
+				{
+					if (!std::isfinite(pkChannel->mPositionKeys[i].mTime) ||
+						!IsFiniteVector(pkChannel->mPositionKeys[i].mValue))
+					{
+						kError = "Non-finite position key " + std::to_string(i) +
+							" for node '" + kChannelName + "' in animation '" +
+							kAnimationName + "'.";
+						return false;
+					}
+				}
+				for (unsigned int i = 0; i < pkChannel->mNumRotationKeys; ++i)
+				{
+					if (!std::isfinite(pkChannel->mRotationKeys[i].mTime) ||
+						!IsFiniteQuaternion(pkChannel->mRotationKeys[i].mValue))
+					{
+						kError = "Invalid rotation key " + std::to_string(i) +
+							" for node '" + kChannelName + "' in animation '" +
+							kAnimationName + "'.";
+						return false;
+					}
+				}
+				for (unsigned int i = 0; i < pkChannel->mNumScalingKeys; ++i)
+				{
+					if (!std::isfinite(pkChannel->mScalingKeys[i].mTime) ||
+						!IsFiniteVector(pkChannel->mScalingKeys[i].mValue))
+					{
+						kError = "Non-finite scale key " + std::to_string(i) +
+							" for node '" + kChannelName + "' in animation '" +
+							kAnimationName + "'.";
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	struct AxisMetadata
+	{
+		int32_t upAxis = 1;
+		int32_t upAxisSign = 1;
+		int32_t frontAxis = 2;
+		int32_t frontAxisSign = 1;
+		int32_t coordAxis = 0;
+		int32_t coordAxisSign = 1;
+	};
+
+	AxisMetadata GetExpectedAxisMetadata(ExportAxisPreset ePreset,
+		ExportHandedness eHandedness)
+	{
+		AxisMetadata kResult;
+		switch (ePreset)
+		{
+		case ExportAxisPreset::Unreal:
+			kResult.upAxis = 2;
+			kResult.upAxisSign = 1;
+			kResult.frontAxis = 0;
+			kResult.frontAxisSign = -1;
+			kResult.coordAxis = 1;
+			kResult.coordAxisSign =
+				eHandedness == ExportHandedness::Left ? 1 : -1;
+			break;
+		case ExportAxisPreset::Unity:
+			kResult.upAxis = 1;
+			kResult.upAxisSign = 1;
+			kResult.frontAxis = 2;
+			kResult.frontAxisSign =
+				eHandedness == ExportHandedness::Left ? 1 : -1;
+			kResult.coordAxis = 0;
+			kResult.coordAxisSign = 1;
+			break;
+		case ExportAxisPreset::Native:
+		default:
+			kResult.upAxis = 2;
+			kResult.upAxisSign = 1;
+			kResult.frontAxis = 1;
+			kResult.frontAxisSign = -1;
+			kResult.coordAxis = 0;
+			kResult.coordAxisSign =
+				eHandedness == ExportHandedness::Left ? -1 : 1;
+			break;
+		}
+		return kResult;
+	}
+
+	bool IsAssimpVersionAtLeast(unsigned int uiMajor,
+		unsigned int uiMinor, unsigned int uiRevision)
+	{
+		const unsigned int uiRuntimeMajor = aiGetVersionMajor();
+		const unsigned int uiRuntimeMinor = aiGetVersionMinor();
+		const unsigned int uiRuntimeRevision = aiGetVersionRevision();
+		if (uiRuntimeMajor != uiMajor)
+			return uiRuntimeMajor > uiMajor;
+		if (uiRuntimeMinor != uiMinor)
+			return uiRuntimeMinor > uiMinor;
+		return uiRuntimeRevision >= uiRevision;
+	}
+
+	const aiExportFormatDesc* FindExporterFormat(
+		const Assimp::Exporter& kExporter, const char* pcId)
+	{
+		for (size_t i = 0; i < kExporter.GetExportFormatCount(); ++i)
+		{
+			const aiExportFormatDesc* pkDescription =
+				kExporter.GetExportFormatDescription(i);
+			if (pkDescription && pkDescription->id &&
+				std::strcmp(pkDescription->id, pcId) == 0)
+			{
+				return pkDescription;
+			}
+		}
+		return nullptr;
+	}
+
+	bool ReadWrittenFbxVersion(const std::string& kPath,
+		uint32_t& uiVersion, std::string& kError)
+	{
+		uiVersion = 0;
+		std::ifstream kFile(kPath, std::ios::binary);
+		if (!kFile)
+		{
+			kError = "Could not reopen the written FBX file.";
+			return false;
+		}
+
+		char acHeader[27] = {};
+		kFile.read(acHeader, sizeof(acHeader));
+		if (kFile.gcount() < static_cast<std::streamsize>(sizeof(acHeader)))
+		{
+			kError = "Written FBX file is too small.";
+			return false;
+		}
+
+		static constexpr char BINARY_PREFIX[] = "Kaydara FBX Binary";
+		if (std::memcmp(acHeader, BINARY_PREFIX,
+			sizeof(BINARY_PREFIX) - 1) == 0)
+		{
+			const unsigned char* p = reinterpret_cast<const unsigned char*>(
+				acHeader + 23);
+			uiVersion = static_cast<uint32_t>(p[0]) |
+				(static_cast<uint32_t>(p[1]) << 8u) |
+				(static_cast<uint32_t>(p[2]) << 16u) |
+				(static_cast<uint32_t>(p[3]) << 24u);
+			return true;
+		}
+
+		kFile.clear();
+		kFile.seekg(0);
+		std::string kFirstLine;
+		std::getline(kFile, kFirstLine);
+		const size_t stFbx = kFirstLine.find("FBX ");
+		if (stFbx == std::string::npos)
+		{
+			kError = "Written file does not contain an FBX header.";
+			return false;
+		}
+
+		unsigned int uiMajor = 0;
+		unsigned int uiMinor = 0;
+		unsigned int uiPatch = 0;
+		if (std::sscanf(kFirstLine.c_str() + stFbx, "FBX %u.%u.%u",
+			&uiMajor, &uiMinor, &uiPatch) != 3)
+		{
+			kError = "Could not parse the ASCII FBX version.";
+			return false;
+		}
+		uiVersion = uiMajor * 1000u + uiMinor * 100u + uiPatch * 10u;
+		return true;
+	}
+
+	bool GetMetadataInt(const aiMetadata* pkMetadata,
+		const char* pcKey, int32_t& iValue)
+	{
+		return pkMetadata && pkMetadata->Get(pcKey, iValue);
+	}
+
+	void CollectSkeletonNodeNames(const aiScene* pkScene,
+		std::set<std::string>& kOut)
+	{
+		if (!pkScene || !pkScene->mRootNode)
+			return;
+
+		for (unsigned int m = 0; m < pkScene->mNumMeshes; ++m)
+		{
+			const aiMesh* pkMesh = pkScene->mMeshes[m];
+			if (!pkMesh)
+				continue;
+			for (unsigned int b = 0; b < pkMesh->mNumBones; ++b)
+			{
+				const aiBone* pkBone = pkMesh->mBones[b];
+				if (!pkBone)
+					continue;
+				const aiNode* pkNode = pkScene->mRootNode->FindNode(pkBone->mName);
+				for (; pkNode && pkNode != pkScene->mRootNode;
+					pkNode = pkNode->mParent)
+				{
+					kOut.emplace(pkNode->mName.C_Str());
+				}
+			}
+		}
+	}
+
+	struct ScaleReadbackStats
+	{
+		unsigned int decomposedNonUniformKeys = 0;
+		float maximumRelativeMagnitudeSpread = 0.0f;
+		std::string firstNode;
+		std::string firstAnimation;
+		unsigned int firstKey = 0;
+		aiVector3D firstScale = aiVector3D(1.0f, 1.0f, 1.0f);
+	};
+
+	std::string FormatScale(const aiVector3D& kScale)
+	{
+		std::ostringstream kStream;
+		kStream << "(" << kScale.x << ", " << kScale.y << ", "
+			<< kScale.z << ")";
+		return kStream.str();
+	}
+
+	bool ValidateSourceScalarScaleTracks(const aiScene* pkScene,
+		std::string& kError)
+	{
+		std::set<std::string> kSkeletonNodes;
+		CollectSkeletonNodeNames(pkScene, kSkeletonNodes);
+		for (unsigned int a = 0; a < pkScene->mNumAnimations; ++a)
+		{
+			const aiAnimation* pkAnimation = pkScene->mAnimations[a];
+			if (!pkAnimation)
+				continue;
+			for (unsigned int c = 0; c < pkAnimation->mNumChannels; ++c)
+			{
+				const aiNodeAnim* pkChannel = pkAnimation->mChannels[c];
+				if (!pkChannel || kSkeletonNodes.find(
+					pkChannel->mNodeName.C_Str()) == kSkeletonNodes.end())
+				{
+					continue;
+				}
+
+				for (unsigned int i = 0; i < pkChannel->mNumScalingKeys; ++i)
+				{
+					const aiVector3D& kScale = pkChannel->mScalingKeys[i].mValue;
+					const float fScaleMagnitude = std::max({1.0f,
+						std::abs(kScale.x), std::abs(kScale.y),
+						std::abs(kScale.z)});
+					if (std::abs(kScale.x) > 1000.0f ||
+						std::abs(kScale.y) > 1000.0f ||
+						std::abs(kScale.z) > 1000.0f)
+					{
+						kError = "Exporter generated excessive source scale " +
+							FormatScale(kScale) + " for skeleton node '" +
+							std::string(pkChannel->mNodeName.C_Str()) +
+							"' in animation '" +
+							std::string(pkAnimation->mName.C_Str()) +
+							"' at key " + std::to_string(i) + ".";
+						return false;
+					}
+					const float fUniformTolerance = 0.000001f * fScaleMagnitude;
+					if (std::abs(kScale.x - kScale.y) > fUniformTolerance ||
+						std::abs(kScale.x - kScale.z) > fUniformTolerance)
+					{
+						kError = "Exporter generated non-uniform source scale " +
+							FormatScale(kScale) + " for scalar-scale NIF node '" +
+							std::string(pkChannel->mNodeName.C_Str()) +
+							"' in animation '" +
+							std::string(pkAnimation->mName.C_Str()) +
+							"' at key " + std::to_string(i) + ".";
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	bool ValidateReadbackSkeletonScales(const aiScene* pkScene,
+		ScaleReadbackStats& kStats, std::string& kError)
+	{
+		std::set<std::string> kSkeletonNodes;
+		CollectSkeletonNodeNames(pkScene, kSkeletonNodes);
+		for (unsigned int a = 0; a < pkScene->mNumAnimations; ++a)
+		{
+			const aiAnimation* pkAnimation = pkScene->mAnimations[a];
+			if (!pkAnimation)
+				continue;
+			for (unsigned int c = 0; c < pkAnimation->mNumChannels; ++c)
+			{
+				const aiNodeAnim* pkChannel = pkAnimation->mChannels[c];
+				if (!pkChannel || kSkeletonNodes.find(
+					pkChannel->mNodeName.C_Str()) == kSkeletonNodes.end())
+				{
+					continue;
+				}
+
+				for (unsigned int i = 0; i < pkChannel->mNumScalingKeys; ++i)
+				{
+					const aiVector3D& kScale = pkChannel->mScalingKeys[i].mValue;
+					const float fMaxAbs = std::max({std::abs(kScale.x),
+						std::abs(kScale.y), std::abs(kScale.z)});
+					if (fMaxAbs > 1000.0f)
+					{
+						kError = "Excessive animated skeleton scale " +
+							FormatScale(kScale) + " for node '" +
+							std::string(pkChannel->mNodeName.C_Str()) +
+							"' in animation '" +
+							std::string(pkAnimation->mName.C_Str()) +
+							"' at key " + std::to_string(i) + ".";
+						return false;
+					}
+
+					const float fMinAbs = std::min({std::abs(kScale.x),
+						std::abs(kScale.y), std::abs(kScale.z)});
+					const float fDenominator = std::max(0.000001f, fMaxAbs);
+					const float fRelativeSpread =
+						(fMaxAbs - fMinAbs) / fDenominator;
+					// FBX importers can redistribute the sign of a reflected
+					// uniform scale and introduce small decomposition drift. The
+					// source aiScene is validated strictly before writing, so only
+					// report meaningful magnitude drift during read-back.
+					const bool bMagnitudeUniform = fRelativeSpread <= 0.005f;
+					if (!bMagnitudeUniform)
+					{
+						if (kStats.decomposedNonUniformKeys == 0)
+						{
+							kStats.firstNode = pkChannel->mNodeName.C_Str();
+							kStats.firstAnimation = pkAnimation->mName.C_Str();
+							kStats.firstKey = i;
+							kStats.firstScale = kScale;
+						}
+						++kStats.decomposedNonUniformKeys;
+						kStats.maximumRelativeMagnitudeSpread = std::max(
+							kStats.maximumRelativeMagnitudeSpread, fRelativeSpread);
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	bool VerifyWrittenFbx(const std::string& kPath,
+		const AxisMetadata& kExpectedAxes,
+		unsigned int uiExpectedAnimations, bool bStrictAxisMetadata,
+		std::string& kError)
+	{
+		uint32_t uiFbxVersion = 0;
+		std::string kHeaderError;
+		if (!ReadWrittenFbxVersion(kPath, uiFbxVersion, kHeaderError))
+		{
+			kError = "FBX read-back verification failed: " + kHeaderError;
+			return false;
+		}
+
+		if (uiFbxVersion < 7400u)
+		{
+			std::ostringstream kMessage;
+			kMessage << "Written FBX version " << uiFbxVersion
+				<< " is older than FBX 7.4 and is not supported by the "
+					"post-export verifier.";
+			kError = kMessage.str();
+			return false;
+		}
+
+		if (uiFbxVersion < 7500u)
+		{
+			std::cerr << "Warning: linked Assimp wrote FBX " << uiFbxVersion
+				<< " instead of FBX 7500. Finite data, animation count, and "
+					"skeleton scale will still be validated." << std::endl;
+		}
+
+		Assimp::Importer kImporter;
+		const aiScene* pkImported = kImporter.ReadFile(kPath,
+			aiProcess_ValidateDataStructure);
+		if (!pkImported)
+		{
+			kError = std::string("FBX read-back import failed: ") +
+				kImporter.GetErrorString();
+			return false;
+		}
+
+		std::string kFiniteError;
+		if (!ValidateFiniteScene(pkImported, kFiniteError))
+		{
+			kError = "Written FBX contains invalid data after read-back: " +
+				kFiniteError;
+			return false;
+		}
+
+		ScaleReadbackStats kScaleReadbackStats;
+		std::string kScaleError;
+		if (!ValidateReadbackSkeletonScales(pkImported,
+			kScaleReadbackStats, kScaleError))
+		{
+			kError = "Written FBX failed skeleton-scale validation: " +
+				kScaleError;
+			return false;
+		}
+
+		if (kScaleReadbackStats.decomposedNonUniformKeys > 0)
+		{
+			std::cerr << "Warning: Assimp FBX read-back decomposed "
+				<< kScaleReadbackStats.decomposedNonUniformKeys
+				<< " scalar-scale key(s) into signed/non-uniform XYZ values. "
+				<< "The pre-export curves were verified strictly uniform; this "
+				<< "round-trip decomposition is not used to rewrite the FBX. "
+				<< "First: node='" << kScaleReadbackStats.firstNode
+				<< "' animation='" << kScaleReadbackStats.firstAnimation
+				<< "' key=" << kScaleReadbackStats.firstKey
+				<< " value=" << FormatScale(kScaleReadbackStats.firstScale)
+				<< "; maximum absolute-magnitude spread="
+				<< (kScaleReadbackStats.maximumRelativeMagnitudeSpread * 100.0f)
+				<< "%." << std::endl;
+		}
+
+		int32_t iUpAxis = 0;
+		int32_t iUpAxisSign = 0;
+		int32_t iFrontAxis = 0;
+		int32_t iFrontAxisSign = 0;
+		int32_t iCoordAxis = 0;
+		int32_t iCoordAxisSign = 0;
+		const bool bHasAxisMetadata =
+			GetMetadataInt(pkImported->mMetaData, "UpAxis", iUpAxis) &&
+			GetMetadataInt(pkImported->mMetaData, "UpAxisSign", iUpAxisSign) &&
+			GetMetadataInt(pkImported->mMetaData, "FrontAxis", iFrontAxis) &&
+			GetMetadataInt(pkImported->mMetaData, "FrontAxisSign", iFrontAxisSign) &&
+			GetMetadataInt(pkImported->mMetaData, "CoordAxis", iCoordAxis) &&
+			GetMetadataInt(pkImported->mMetaData, "CoordAxisSign", iCoordAxisSign);
+
+		if (!bHasAxisMetadata)
+		{
+			const char* pcMessage =
+				"Written FBX did not expose complete axis metadata during read-back.";
+			if (bStrictAxisMetadata)
+			{
+				kError = pcMessage;
+				return false;
+			}
+			std::cerr << "Warning: " << pcMessage
+				<< " Continuing because this Assimp version predates the "
+					"strict metadata requirement." << std::endl;
+		}
+
+		const bool bAxisMetadataMatches = bHasAxisMetadata &&
+			iUpAxis == kExpectedAxes.upAxis &&
+			iUpAxisSign == kExpectedAxes.upAxisSign &&
+			iFrontAxis == kExpectedAxes.frontAxis &&
+			iFrontAxisSign == kExpectedAxes.frontAxisSign &&
+			iCoordAxis == kExpectedAxes.coordAxis &&
+			iCoordAxisSign == kExpectedAxes.coordAxisSign;
+
+		if (bHasAxisMetadata && !bAxisMetadataMatches)
+		{
+			std::ostringstream kMessage;
+			kMessage << "Written FBX axis metadata mismatch: got Up="
+				<< iUpAxis << "/" << iUpAxisSign << " Front="
+				<< iFrontAxis << "/" << iFrontAxisSign << " Coord="
+				<< iCoordAxis << "/" << iCoordAxisSign << ", expected Up="
+				<< kExpectedAxes.upAxis << "/" << kExpectedAxes.upAxisSign
+				<< " Front=" << kExpectedAxes.frontAxis << "/"
+				<< kExpectedAxes.frontAxisSign << " Coord="
+				<< kExpectedAxes.coordAxis << "/"
+				<< kExpectedAxes.coordAxisSign << ".";
+			if (bStrictAxisMetadata)
+			{
+				kError = kMessage.str();
+				return false;
+			}
+			std::cerr << "Warning: " << kMessage.str()
+				<< " The FBX remains usable, but automatic axis conversion by "
+					"the destination application may differ." << std::endl;
+		}
+
+		if (pkImported->mNumAnimations != uiExpectedAnimations)
+		{
+			std::ostringstream kMessage;
+			kMessage << "Written FBX read-back animation count differs: got "
+				<< pkImported->mNumAnimations << ", expected "
+				<< uiExpectedAnimations << ".";
+
+			if (uiExpectedAnimations > 0 && pkImported->mNumAnimations == 0)
+			{
+				kError = kMessage.str() +
+					" The written file exposed no animation during verification.";
+				return false;
+			}
+
+			std::cerr << "Warning: " << kMessage.str()
+				<< " Assimp 6.0.x can omit or merge one AnimationStack during "
+					"its own FBX round-trip import. The file is retained because "
+					"geometry, finite transforms, source curves, and skeleton "
+					"scales passed validation. Read-back clips:";
+			for (unsigned int i = 0; i < pkImported->mNumAnimations; ++i)
+			{
+				const aiAnimation* pkAnimation = pkImported->mAnimations[i];
+				std::cerr << " '" << (pkAnimation ? pkAnimation->mName.C_Str() : "<null>")
+					<< "'";
+			}
+			std::cerr << "." << std::endl;
+		}
+
+		std::cout << "    Verified written FBX: version=" << uiFbxVersion;
+		if (bHasAxisMetadata)
+		{
+			std::cout << " axes=Up(" << iUpAxis << "," << iUpAxisSign
+				<< ") Front(" << iFrontAxis << "," << iFrontAxisSign
+				<< ") Coord(" << iCoordAxis << "," << iCoordAxisSign << ")";
+		}
+		else
+		{
+			std::cout << " axes=<not exposed by read-back importer>";
+		}
+		std::cout << " animations=" << pkImported->mNumAnimations << "."
+			<< std::endl;
+		return true;
+	}
+
+	enum class ReflectionAxis
+	{
+		X,
+		Y,
+		Z
+	};
+
+	ReflectionAxis GetLeftHandedReflectionAxis(ExportAxisPreset ePreset)
+	{
+		switch (ePreset)
+		{
+		case ExportAxisPreset::Unreal:
+			// Preserve +X forward and +Z up; change -Y right to +Y right.
+			return ReflectionAxis::Y;
+		case ExportAxisPreset::Unity:
+			// Preserve +X right and +Y up; change -Z forward to +Z forward.
+			return ReflectionAxis::Z;
+		case ExportAxisPreset::Native:
+		default:
+			// Preserve +Y forward and +Z up by reflecting the remaining X axis.
+			return ReflectionAxis::X;
+		}
+	}
+
+	void ReflectVector(aiVector3D& kValue, ReflectionAxis eAxis)
+	{
+		switch (eAxis)
+		{
+		case ReflectionAxis::X:
+			kValue.x = -kValue.x;
+			break;
+		case ReflectionAxis::Y:
+			kValue.y = -kValue.y;
+			break;
+		case ReflectionAxis::Z:
+			kValue.z = -kValue.z;
+			break;
+		}
+	}
+
+	void ReflectQuaternion(aiQuaternion& kValue, ReflectionAxis eAxis)
+	{
+		// A quaternion vector is an axial vector. For an improper orthogonal
+		// basis C, R' = C R C^-1 maps its vector part as det(C) * C * v.
+		switch (eAxis)
+		{
+		case ReflectionAxis::X:
+			kValue.y = -kValue.y;
+			kValue.z = -kValue.z;
+			break;
+		case ReflectionAxis::Y:
+			kValue.x = -kValue.x;
+			kValue.z = -kValue.z;
+			break;
+		case ReflectionAxis::Z:
+			kValue.x = -kValue.x;
+			kValue.y = -kValue.y;
+			break;
+		}
+	}
+
+	void ReflectMatrix(aiMatrix4x4& kValue, ReflectionAxis eAxis)
+	{
+		// Conjugate by the reflection matrix: M' = S * M * S. The diagonal
+		// intersection is negated twice and therefore remains unchanged.
+		switch (eAxis)
+		{
+		case ReflectionAxis::X:
+			kValue.a2 = -kValue.a2;
+			kValue.a3 = -kValue.a3;
+			kValue.a4 = -kValue.a4;
+			kValue.b1 = -kValue.b1;
+			kValue.c1 = -kValue.c1;
+			kValue.d1 = -kValue.d1;
+			break;
+		case ReflectionAxis::Y:
+			kValue.b1 = -kValue.b1;
+			kValue.b3 = -kValue.b3;
+			kValue.b4 = -kValue.b4;
+			kValue.a2 = -kValue.a2;
+			kValue.c2 = -kValue.c2;
+			kValue.d2 = -kValue.d2;
+			break;
+		case ReflectionAxis::Z:
+			kValue.c1 = -kValue.c1;
+			kValue.c2 = -kValue.c2;
+			kValue.c4 = -kValue.c4;
+			kValue.a3 = -kValue.a3;
+			kValue.b3 = -kValue.b3;
+			kValue.d3 = -kValue.d3;
+			break;
+		}
+	}
+
+	void ReflectNode(aiNode* pkNode, ReflectionAxis eAxis)
+	{
+		if (!pkNode)
+			return;
+
+		ReflectMatrix(pkNode->mTransformation, eAxis);
+		for (unsigned int i = 0; i < pkNode->mNumChildren; ++i)
+			ReflectNode(pkNode->mChildren[i], eAxis);
+	}
+
+	void ReflectMesh(aiMesh* pkMesh, ReflectionAxis eAxis)
+	{
+		if (!pkMesh)
+			return;
+
+		for (unsigned int i = 0; i < pkMesh->mNumVertices; ++i)
+		{
+			ReflectVector(pkMesh->mVertices[i], eAxis);
+			if (pkMesh->mNormals)
+				ReflectVector(pkMesh->mNormals[i], eAxis);
+			if (pkMesh->mTangents)
+				ReflectVector(pkMesh->mTangents[i], eAxis);
+			if (pkMesh->mBitangents)
+				ReflectVector(pkMesh->mBitangents[i], eAxis);
+		}
+
+		for (unsigned int i = 0; i < pkMesh->mNumBones; ++i)
+		{
+			if (pkMesh->mBones[i])
+				ReflectMatrix(pkMesh->mBones[i]->mOffsetMatrix, eAxis);
+		}
+
+		for (unsigned int a = 0; a < pkMesh->mNumAnimMeshes; ++a)
+		{
+			aiAnimMesh* pkAnimMesh = pkMesh->mAnimMeshes[a];
+			if (!pkAnimMesh)
+				continue;
+
+			for (unsigned int i = 0; i < pkAnimMesh->mNumVertices; ++i)
+			{
+				if (pkAnimMesh->mVertices)
+					ReflectVector(pkAnimMesh->mVertices[i], eAxis);
+				if (pkAnimMesh->mNormals)
+					ReflectVector(pkAnimMesh->mNormals[i], eAxis);
+				if (pkAnimMesh->mTangents)
+					ReflectVector(pkAnimMesh->mTangents[i], eAxis);
+				if (pkAnimMesh->mBitangents)
+					ReflectVector(pkAnimMesh->mBitangents[i], eAxis);
+			}
+		}
+	}
+
+	void ReflectAnimation(aiAnimation* pkAnimation, ReflectionAxis eAxis)
+	{
+		if (!pkAnimation)
+			return;
+
+		for (unsigned int c = 0; c < pkAnimation->mNumChannels; ++c)
+		{
+			aiNodeAnim* pkChannel = pkAnimation->mChannels[c];
+			if (!pkChannel)
+				continue;
+
+			for (unsigned int i = 0; i < pkChannel->mNumPositionKeys; ++i)
+				ReflectVector(pkChannel->mPositionKeys[i].mValue, eAxis);
+			for (unsigned int i = 0; i < pkChannel->mNumRotationKeys; ++i)
+				ReflectQuaternion(pkChannel->mRotationKeys[i].mValue, eAxis);
+		}
+	}
+
+	void ReflectSceneToLeftHanded(aiScene* pkScene, ExportAxisPreset ePreset)
+	{
+		if (!pkScene)
+			return;
+
+		const ReflectionAxis eAxis = GetLeftHandedReflectionAxis(ePreset);
+		ReflectNode(pkScene->mRootNode, eAxis);
+
+		for (unsigned int i = 0; i < pkScene->mNumMeshes; ++i)
+			ReflectMesh(pkScene->mMeshes[i], eAxis);
+		for (unsigned int i = 0; i < pkScene->mNumAnimations; ++i)
+			ReflectAnimation(pkScene->mAnimations[i], eAxis);
+
+		for (unsigned int i = 0; i < pkScene->mNumCameras; ++i)
+		{
+			aiCamera* pkCamera = pkScene->mCameras[i];
+			if (!pkCamera)
+				continue;
+			ReflectVector(pkCamera->mPosition, eAxis);
+			ReflectVector(pkCamera->mLookAt, eAxis);
+			ReflectVector(pkCamera->mUp, eAxis);
+		}
+
+		for (unsigned int i = 0; i < pkScene->mNumLights; ++i)
+		{
+			aiLight* pkLight = pkScene->mLights[i];
+			if (!pkLight)
+				continue;
+			ReflectVector(pkLight->mPosition, eAxis);
+			ReflectVector(pkLight->mDirection, eAxis);
+			ReflectVector(pkLight->mUp, eAxis);
+		}
+	}
 }
 
 //--------------------------------------------------------------------------------------------------
 FbxWriter::FbxWriter(const TextureExporter& kTexExporter, float fUnitScale,
-	bool bConvertToUnrealAxes)
+	ExportAxisPreset eAxisPreset, ExportHandedness eHandedness)
 	: m_kTexExporter(kTexExporter)
 	, m_fUnitScale(std::isfinite(fUnitScale) && fUnitScale > 0.0f
 		? fUnitScale : 1.0f)
-	, m_bConvertToUnrealAxes(bConvertToUnrealAxes)
+	, m_eAxisPreset(eAxisPreset)
+	, m_eHandedness(eHandedness)
 {
 }
 
@@ -148,8 +1016,8 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 			kIn.positions[i].x * m_fUnitScale,
 			kIn.positions[i].y * m_fUnitScale,
 			kIn.positions[i].z * m_fUnitScale);
-		pkMesh->mVertices[i] = AxisConversion::ToUnrealVector(
-			kScaledPosition, m_bConvertToUnrealAxes);
+		pkMesh->mVertices[i] = AxisConversion::ToTargetVector(
+			kScaledPosition, m_eAxisPreset);
 	}
 
 	// ---- Normals ----
@@ -163,8 +1031,8 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 	pkMesh->mNormals = new aiVector3D[uiVertCount];
 	for (unsigned int i = 0; i < uiVertCount; ++i)
 	{
-		pkMesh->mNormals[i] = AxisConversion::ToUnrealVector(
-			kNormals[i], m_bConvertToUnrealAxes);
+		pkMesh->mNormals[i] = AxisConversion::ToTargetVector(
+			kNormals[i], m_eAxisPreset);
 	}
 	if (uiGeneratedNormals != 0u || uiFallbackNormals != 0u)
 	{
@@ -226,6 +1094,9 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 		unsigned int uiFinalFallbackVertices = 0;
 		unsigned int uiFinalInvalidInfluences = 0;
 		unsigned int uiStillUnweighted = 0;
+		unsigned int uiMinInfluences = 4;
+		unsigned int uiMaxInfluences = 0;
+		float fMaxNormalizedWeightError = 0.0f;
 
 		for (unsigned int v = 0; v < uiVertCount; ++v)
 		{
@@ -287,12 +1158,31 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 					kWeight.weight *= fInvTotal;
 			}
 
+			float fFinalWeightSum = 0.0f;
 			for (const VertexBoneWeight& kWeight : kWeights)
 			{
+				fFinalWeightSum += kWeight.weight;
 				kBoneAccum[kWeight.boneIndex].weights.emplace_back(
 					v, kWeight.weight);
 			}
+
+			uiMinInfluences = std::min(uiMinInfluences,
+				static_cast<unsigned int>(kWeights.size()));
+			uiMaxInfluences = std::max(uiMaxInfluences,
+				static_cast<unsigned int>(kWeights.size()));
+			fMaxNormalizedWeightError = std::max(fMaxNormalizedWeightError,
+				std::abs(fFinalWeightSum - 1.0f));
 		}
+
+		if (uiVertCount > 0 && uiMinInfluences == 4 && uiMaxInfluences == 0)
+			uiMinInfluences = 0;
+
+		std::cerr << "    Final FBX skin weights for mesh '" << kIn.name
+			<< "': vertices=" << uiVertCount
+			<< " influences/vertex=" << uiMinInfluences << ".."
+			<< uiMaxInfluences
+			<< " maxSumError=" << fMaxNormalizedWeightError << "."
+			<< std::endl;
 
 		if (uiFinalInvalidInfluences > 0)
 		{
@@ -325,7 +1215,7 @@ aiMesh* FbxWriter::BuildAiMesh(const IntermediateMesh& kIn) const
 			aiBone* pkBone = new aiBone();
 			pkBone->mName = kIn.boneNames[b].c_str();
 			// MeshExtractor already applies both the unit conversion and the
-			// Unreal basis change to skin-to-bone matrices. Scaling the offset
+			// selected target-axis basis change to skin-to-bone matrices. Scaling the offset
 			// translation again here would apply the unit scale twice.
 			pkBone->mOffsetMatrix = (b < kIn.boneOffsetMatrices.size())
 				? kIn.boneOffsetMatrices[b] : aiMatrix4x4();
@@ -376,29 +1266,16 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 
 	// Assimp's FBX exporter reads these exact aiScene metadata keys when
 	// writing GlobalSettings. Without them it defaults to Y-up/Z-front,
-	// causing Blender/Unreal to add an unwanted X=90 degree conversion.
+	// causing importers to add an unwanted root-axis conversion.
 	pkScene->mMetaData = new aiMetadata();
-	if (m_bConvertToUnrealAxes)
-	{
-		// Blender's FBX axis table for Up=Z, Forward=X:
-		// Up (2,+1), Front (0,-1), Coord (1,-1).
-		pkScene->mMetaData->Add("UpAxis", int32_t(2));
-		pkScene->mMetaData->Add("UpAxisSign", int32_t(1));
-		pkScene->mMetaData->Add("FrontAxis", int32_t(0));
-		pkScene->mMetaData->Add("FrontAxisSign", int32_t(-1));
-		pkScene->mMetaData->Add("CoordAxis", int32_t(1));
-		pkScene->mMetaData->Add("CoordAxisSign", int32_t(-1));
-	}
-	else
-	{
-		// Native NIF convention used by these assets: Up=Z, Forward=Y.
-		pkScene->mMetaData->Add("UpAxis", int32_t(2));
-		pkScene->mMetaData->Add("UpAxisSign", int32_t(1));
-		pkScene->mMetaData->Add("FrontAxis", int32_t(1));
-		pkScene->mMetaData->Add("FrontAxisSign", int32_t(-1));
-		pkScene->mMetaData->Add("CoordAxis", int32_t(0));
-		pkScene->mMetaData->Add("CoordAxisSign", int32_t(1));
-	}
+	const AxisMetadata kExpectedAxes = GetExpectedAxisMetadata(
+		m_eAxisPreset, m_eHandedness);
+	pkScene->mMetaData->Add("UpAxis", kExpectedAxes.upAxis);
+	pkScene->mMetaData->Add("UpAxisSign", kExpectedAxes.upAxisSign);
+	pkScene->mMetaData->Add("FrontAxis", kExpectedAxes.frontAxis);
+	pkScene->mMetaData->Add("FrontAxisSign", kExpectedAxes.frontAxisSign);
+	pkScene->mMetaData->Add("CoordAxis", kExpectedAxes.coordAxis);
+	pkScene->mMetaData->Add("CoordAxisSign", kExpectedAxes.coordAxisSign);
 	pkScene->mMetaData->Add("OriginalUpAxis", int32_t(2));
 	pkScene->mMetaData->Add("OriginalUpAxisSign", int32_t(1));
 	pkScene->mMetaData->Add("UnitScaleFactor", 1.0);
@@ -486,7 +1363,7 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 	if (pkRoot)
 	{
 		MeshExtractor kDummy("", false, m_fUnitScale,
-			m_bConvertToUnrealAxes);
+			m_eAxisPreset);
 		aiNode* pkHierarchy = kDummy.BuildNodeHierarchy(pkRoot, kMeshAssignments);
 		if (pkHierarchy)
 		{
@@ -519,26 +1396,108 @@ bool FbxWriter::Write(const std::string& kOutputPath,
 
 
 	// ---- Export via Assimp ----
-	// Every intermediate mesh now carries a complete normal stream. The Assimp
-	// real-time preset can still generate tangents and validate the scene, while
-	// its non-forced smooth-normal step preserves the supplied normals.
-	// ConvertToLeftHanded handles final handedness, winding and V conversion.
-	const unsigned int uiPostProcessFlags =
-		aiProcessPreset_TargetRealtime_Quality |
-		aiProcess_ConvertToLeftHanded |
+	// Intermediate data and axis presets are right-handed. Left-handed output is
+	// applied here as an axis-aware scene reflection so +Z-up Unreal exports do
+	// not accidentally mirror their up axis. The winding order must be reversed
+	// after any reflection. UV V coordinates retain the legacy exporter behavior
+	// in both handedness modes.
+	// The intermediate scene is already triangulated, skinned, named, and
+	// animation-baked. The realtime preset is intended for imported runtime
+	// assets and includes destructive cleanup steps (notably
+	// aiProcess_FindInvalidData) that can collapse or remove baked animation
+	// tracks. Keep export post-processing deliberately minimal.
+	unsigned int uiPostProcessFlags =
+		aiProcess_FlipUVs |
 		aiProcess_ValidateDataStructure;
 
+	if (m_eHandedness == ExportHandedness::Left)
+	{
+		ReflectSceneToLeftHanded(pkScene, m_eAxisPreset);
+		uiPostProcessFlags |= aiProcess_FlipWindingOrder;
+	}
+
+	std::string kSourceScaleError;
+	if (!ValidateSourceScalarScaleTracks(pkScene, kSourceScaleError))
+	{
+		kError = "Refusing to export invalid scalar-scale animation: " +
+			kSourceScaleError;
+		std::cerr << "Error: " << kError << std::endl;
+		delete pkScene;
+		return false;
+	}
+
+	std::string kFiniteError;
+	if (!ValidateFiniteScene(pkScene, kFiniteError))
+	{
+		kError = "Refusing to export invalid FBX scene: " + kFiniteError;
+		std::cerr << "Error: " << kError << std::endl;
+		delete pkScene;
+		return false;
+	}
+
+
+	const bool bStrictAxisMetadata = IsAssimpVersionAtLeast(6, 0, 4);
+	if (!bStrictAxisMetadata)
+	{
+		std::cerr << "Warning: Assimp " << aiGetVersionMajor() << "."
+			<< aiGetVersionMinor() << "." << aiGetVersionRevision()
+			<< " predates the strict FBX 7.5/axis-metadata validation path. "
+				"Export will continue and the written FBX will still be checked "
+				"for finite geometry, readable animation data, and safe skeleton scales."
+			<< std::endl;
+		if (m_eAxisPreset != ExportAxisPreset::Unity ||
+			m_eHandedness != ExportHandedness::Left)
+		{
+			std::cerr << "Warning: for Unity with Assimp older than 6.0.4, "
+				"use -unity_axes -left-handed. Older FBX exporters may ignore "
+				"custom axis metadata." << std::endl;
+		}
+	}
+
 	Assimp::Exporter kExporter;
+	const aiExportFormatDesc* pkFbxFormat =
+		FindExporterFormat(kExporter, "fbx");
+	if (!pkFbxFormat)
+	{
+		kError = "The linked Assimp build does not provide the binary FBX exporter.";
+		delete pkScene;
+		return false;
+	}
+	std::cout << "    FBX animation safeguards: complete sampled local TRS, "
+		"exact scalar-scale isolation, missing-sample repair, and "
+		"post-write verification enabled."
+		<< std::endl;
+	std::cout << "    Assimp runtime " << aiGetVersionMajor() << "."
+		<< aiGetVersionMinor() << "." << aiGetVersionRevision()
+		<< ": exporter='" << pkFbxFormat->id << "' description='"
+		<< (pkFbxFormat->description ? pkFbxFormat->description : "<unknown>")
+		<< "' extension='"
+		<< (pkFbxFormat->fileExtension ? pkFbxFormat->fileExtension : "fbx")
+		<< "'." << std::endl;
+	const unsigned int uiExpectedAnimationCount = pkScene->mNumAnimations;
 	aiReturn eResult = kExporter.Export(pkScene, "fbx",
 		kOutputPath.c_str(), uiPostProcessFlags);
 
-	// Assimp takes ownership of the scene? No — we must delete it.
-	// Actually Assimp::Exporter::Export does NOT delete the scene.
+	// Assimp::Exporter::Export does not own the input scene.
 	delete pkScene;
 
 	if (eResult != aiReturn_SUCCESS)
 	{
 		kError = std::string("Assimp export failed: ") + kExporter.GetErrorString();
+		return false;
+	}
+
+	if (!VerifyWrittenFbx(kOutputPath, kExpectedAxes,
+		uiExpectedAnimationCount, bStrictAxisMetadata, kError))
+	{
+		std::cerr << "Error: " << kError << std::endl;
+		std::error_code kRemoveError;
+		fs::remove(kOutputPath, kRemoveError);
+		if (kRemoveError)
+		{
+			std::cerr << "Warning: could not remove rejected FBX file: "
+				<< kRemoveError.message() << std::endl;
+		}
 		return false;
 	}
 

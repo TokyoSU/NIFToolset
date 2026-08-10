@@ -34,6 +34,7 @@
 #include "D3D11ShaderProgramFactory.h"
 #include "D3D11ShadowWriteShader.h"
 #include "D3D11TextureData.h"
+#include "D3D11TextureTools.h"
 #include "ecrD3D11RendererSDM.h"
 
 #include <NiDirectionalShadowWriteMaterial.h>
@@ -48,9 +49,6 @@
 #include <NiTPointerMap.h>
 #include <NiVersion.h>
 
-// for _chdir
-#include <direct.h>
-
 using namespace ecr;
 
 //------------------------------------------------------------------------------------------------
@@ -62,6 +60,24 @@ static efd::Char acGamebryoVersion[] EE_UNUSED = GAMEBRYO_MODULE_VERSION_STRING(
 
 namespace
 {
+class ScopedCOMInitialization
+{
+public:
+    ScopedCOMInitialization() :
+        m_result(CoInitializeEx(NULL, COINIT_MULTITHREADED))
+    {
+    }
+
+    ~ScopedCOMInitialization()
+    {
+        if (SUCCEEDED(m_result))
+            CoUninitialize();
+    }
+
+private:
+    HRESULT m_result;
+};
+
 void LogRendererState(const char* pStage, const ecr::D3D11Renderer* pRenderer)
 {
     if (pRenderer == NULL)
@@ -3218,20 +3234,19 @@ efd::Bool D3D11Renderer::SaveScreenShot(
     const efd::Char* pFilename,
     EScreenshotFormat format)
 {
-    D3DX11_IMAGE_FILE_FORMAT formatD3D11;
+    const GUID* pContainerFormat = NULL;
+    const GUID* pTargetFormat = NULL;
     switch (format)
     {
     case FORMAT_PNG:
-        formatD3D11 = D3DX11_IFF_PNG;
+        pContainerFormat = &GUID_ContainerFormatPng;
         break;
     case FORMAT_JPEG:
-        formatD3D11 = D3DX11_IFF_JPG;
+        pContainerFormat = &GUID_ContainerFormatJpeg;
+        pTargetFormat = &GUID_WICPixelFormat24bppBGR;
         break;
     default:
-        Error(
-            "%s> Unsupported image format %d\n",
-            __FUNCTION__,
-            format);
+        Error("%s> Unsupported image format %d\n", __FUNCTION__, format);
         return false;
     }
 
@@ -3240,91 +3255,41 @@ efd::Bool D3D11Renderer::SaveScreenShot(
         pTarget = m_spDefaultRenderTargetGroup;
 
     ID3D11Resource* pScreenShot = GetBackBufferResource(pTarget, 0);
+    if (!pScreenShot)
+        return false;
 
-    // The rest of this code is to work around the fact that D3DX11SaveTextureToFile can only
-    // save to the current directory
-
-    // First get the full path to the destination file
     efd::Char absolutePath[efd::EE_MAX_PATH];
-
     EE_ASSERT(pFilename);
     if (efd::PathUtils::IsAbsolutePath(pFilename))
-    {
         efd::Strcpy(absolutePath, efd::EE_MAX_PATH, pFilename);
-    }
     else
-    {
         efd::PathUtils::ConvertToAbsolute(absolutePath, efd::EE_MAX_PATH, pFilename, NULL);
-    }
 
-    // Split off the directory from the file
     NiFilename filename(absolutePath);
-    efd::Char destPath[efd::EE_MAX_PATH];
-    efd::Char destFile[efd::EE_MAX_PATH];
-    efd::Sprintf(
-        destPath,
-        efd::EE_MAX_PATH,
-        "%s%s",
-        filename.GetDrive(),
-        filename.GetDir());
-    efd::Sprintf(
-        destFile,
-        efd::EE_MAX_PATH,
-        "%s%s",
-        filename.GetFilename(),
-        filename.GetExt());
+    efd::Char destinationDirectory[efd::EE_MAX_PATH];
+    efd::Sprintf(destinationDirectory, efd::EE_MAX_PATH, "%s%s",
+        filename.GetDrive(), filename.GetDir());
+    if (destinationDirectory[0] != '\0')
+        efd::MakeDir(destinationDirectory);
 
-    // Save off the current working directory
-    efd::Char currentPath[efd::EE_MAX_PATH];
-    EE_VERIFY(efd::PathUtils::GetWorkingDirectory(currentPath, efd::EE_MAX_PATH));
+    wchar_t widePath[efd::EE_MAX_PATH];
+    if (!D3D11TextureTools::ToWidePath(absolutePath, widePath, efd::EE_MAX_PATH))
+        return false;
 
-    // Ensure the new current directory exists.
-    efd::MakeDir(destPath);
-
-    // Set the new current directory
-    _chdir(destPath);
-
-    ID3DBlob* pBlob = NULL;
-    // Save the file to memory
-    HRESULT hr = D3DX11SaveTextureToMemory(
+    ScopedCOMInitialization comInitialization;
+    const HRESULT hr = DirectX::SaveWICTextureToFile(
         m_pCurrentD3D11DeviceContext,
         pScreenShot,
-        formatD3D11,
-        &pBlob,
-        0);
+        *pContainerFormat,
+        widePath,
+        pTargetFormat);
 
-    if (SUCCEEDED(hr) && pBlob != NULL)
+    if (FAILED(hr))
     {
-
-        SIZE_T size = pBlob->GetBufferSize();
-        EE_ASSERT(size > 0);
-        efd::Char fullPath[efd::EE_MAX_PATH];
-
-        // Open file and save the memory
-        if (filename.GetFullPath(fullPath, efd::EE_MAX_PATH))
-        {
-            EE_ASSERT(size > 0);
-            if (size > 0)
-            {
-                void* pMem = pBlob->GetBufferPointer();
-                EE_ASSERT(pMem != NULL);
-                efd::File* pFile = NULL;
-                if (pMem)
-                    pFile = efd::File::GetFile(fullPath, efd::File::WRITE_ONLY);
-                EE_ASSERT(pFile);
-                if (pFile)
-                {
-                    pFile->Write(pMem, (efd::UInt32) size);
-                    EE_DELETE pFile;
-                }
-            }
-        }
+        D3D11Error::ReportWarning(
+            "%s failed to save '%s' (HRESULT 0x%08X).",
+            __FUNCTION__, absolutePath, static_cast<efd::UInt32>(hr));
     }
-    if (pBlob)
-        pBlob->Release();
-    // Restore the original working directory
-    _chdir(currentPath);
-
     return SUCCEEDED(hr);
 }
 
@@ -3420,13 +3385,11 @@ efd::Bool D3D11Renderer::Copy(
     Ni2DBuffer::CopyFilterPreference filterPref)
 {
     EE_ASSERT_D3D11_DEVICE_THREAD;
-
     EE_ASSERT(pSrc != NULL);
     EE_ASSERT(pDest != NULL);
 
     D3D112DBufferData* pSrcRendData = (D3D112DBufferData*)pSrc->GetRendererData();
     D3D112DBufferData* pDestRendData = (D3D112DBufferData*)pDest->GetRendererData();
-
     if (pSrcRendData == NULL || pDestRendData == NULL)
     {
         D3D11Error::ReportWarning(__FUNCTION__ " failed - no RendererData found.");
@@ -3441,81 +3404,44 @@ efd::Bool D3D11Renderer::Copy(
 
     ID3D11Texture2D* pSourceSurface = pSrcRendData->GetTexture2D();
     ID3D11Texture2D* pDestSurface = pDestRendData->GetTexture2D();
-
     if (pSourceSurface == NULL || pDestSurface == NULL)
     {
         D3D11Error::ReportWarning(__FUNCTION__ " failed - NULL Surface found.");
         return false;
     }
 
-    D3DX11_FILTER_FLAG filterType;
-    switch (filterPref)
-    {
-    default:
-    case Ni2DBuffer::COPY_FILTER_NONE:
-        filterType = D3DX11_FILTER_NONE;
-        break;
-    case Ni2DBuffer::COPY_FILTER_POINT:
-        filterType = D3DX11_FILTER_POINT;
-        break;
-    case Ni2DBuffer::COPY_FILTER_LINEAR:
-        filterType = D3DX11_FILTER_LINEAR;
-        break;
-    }
+    DirectX::TEX_FILTER_FLAGS filter = DirectX::TEX_FILTER_POINT;
+    if (filterPref == Ni2DBuffer::COPY_FILTER_LINEAR)
+        filter = DirectX::TEX_FILTER_LINEAR;
 
-    D3DX11_TEXTURE_LOAD_INFO loadInfo;
-    loadInfo.pSrcBox = NULL;
-    loadInfo.pDstBox = NULL;
-    loadInfo.SrcFirstMip = 0;
-    loadInfo.DstFirstMip = 0;
-    loadInfo.NumMips = 1; // Only doing one mip level
-    loadInfo.SrcFirstElement = 0;
-    loadInfo.DstFirstElement = 0;
-    loadInfo.NumElements = 0;
-    loadInfo.Filter = filterType;
-    loadInfo.MipFilter = filterType;
-
-    D3D11_BOX srcBox;
+    D3D11_BOX sourceBox;
+    D3D11_BOX* pSourceBox = NULL;
     if (pSrcRect)
     {
-        srcBox.left = pSrcRect->m_left;
-        srcBox.right = pSrcRect->m_right;
-        srcBox.top = pSrcRect->m_top;
-        srcBox.bottom = pSrcRect->m_bottom;
-        srcBox.front = 0;
-        srcBox.back = 1;
-
-        loadInfo.pSrcBox = &srcBox;
+        sourceBox = { pSrcRect->m_left, pSrcRect->m_top, 0,
+            pSrcRect->m_right, pSrcRect->m_bottom, 1 };
+        pSourceBox = &sourceBox;
     }
 
-    D3D11_BOX destBox;
+    D3D11_BOX destinationBox;
+    D3D11_BOX* pDestinationBox = NULL;
     if (pDestRect)
     {
-        destBox.left = pDestRect->m_left;
-        destBox.right = pDestRect->m_right;
-        destBox.top = pDestRect->m_top;
-        destBox.bottom = pDestRect->m_bottom;
-        destBox.front = 0;
-        destBox.back = 1;
-
-        loadInfo.pDstBox = &destBox;
+        destinationBox = { pDestRect->m_left, pDestRect->m_top, 0,
+            pDestRect->m_right, pDestRect->m_bottom, 1 };
+        pDestinationBox = &destinationBox;
     }
 
-    HRESULT hr = D3DX11LoadTextureFromTexture(
-        m_pCurrentD3D11DeviceContext,
-        pSourceSurface,
-        &loadInfo,
-        pDestSurface);
-
+    const HRESULT hr = D3D11TextureTools::CopyTextureRegion(
+        m_pD3D11Device, m_pCurrentD3D11DeviceContext,
+        pSourceSurface, pDestSurface, pSourceBox, pDestinationBox, filter);
     if (FAILED(hr))
     {
         D3D11Error::ReportWarning(
-            "D3DX11LoadTextureFromTexture failed in " __FUNCTION__ " - "
-            "Error HRESULT = 0x%08X.",
-            (efd::UInt32)hr);
+            "%s failed to copy/resize texture data (HRESULT 0x%08X).",
+            __FUNCTION__, static_cast<efd::UInt32>(hr));
         return false;
     }
-
     return true;
 }
 

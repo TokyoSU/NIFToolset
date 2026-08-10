@@ -45,7 +45,7 @@ target_link_libraries(NIFToolset.Native
 		NiAnimation
 		NiParticle
 		NiPortal
-		ecrD3D11Renderer
+		NiBgfxRenderer
 )
 
 # Keep install behavior explicit for the bridge module.

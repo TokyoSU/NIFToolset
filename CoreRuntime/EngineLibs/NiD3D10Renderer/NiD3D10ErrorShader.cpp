@@ -217,7 +217,7 @@ bool NiD3D10ErrorShader::CreateShaders()
         NiShaderAttributeDesc::ATTRIB_TYPE_POINT4) |
         NiShaderConstantMapEntry::SCME_MAP_CONSTANT;
 
-    m_kMaterialColor = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
+    m_kMaterialColor = NiBgfxMath::Vec4(1.0f, 1.0f, 1.0f, 1.0f);
     spVSMap->AddEntry("MaterialColor",
         uiConstantPoint4Flags, 0, 10, 1, "MaterialColor",
         sizeof(m_kMaterialColor), sizeof(float), &m_kMaterialColor, false);

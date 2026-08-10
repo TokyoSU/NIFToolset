@@ -25,7 +25,7 @@ option(NI_BUILD_ASSIMP_EXPORTER
     "Build the AssimpExporter FBX export tool (requires Assimp via vcpkg x64-windows)"
     ON)
 # Shader libs
-option(NI_BUILD_D3DXEFFECT_SHADERLIB "Build NiD3DXEffectShaderLib" ON)
+option(NI_BUILD_D3DXEFFECT_SHADERLIB "Build legacy DX9 NiD3DXEffectShaderLib" OFF)
 
 # ── Dependency auto-activation ────────────────────────────────────────────────
 # If DEPENDENT is ON and a required option is OFF, force it ON.

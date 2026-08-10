@@ -1,4 +1,4 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
+# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
 cmake_minimum_required (VERSION 3.16)
@@ -37,6 +37,15 @@ endif()
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(ENABLE_SDM_SHUTDOWN_ASSERT "Enable SDM shutdown assert" OFF)
 
+# The active renderer is bgfx. Legacy Direct3D renderer sources remain in the
+# tree for reference/porting, but are no longer part of the default build.
+set(NI_RENDERER "BGFX" CACHE STRING "Renderer backend")
+set_property(CACHE NI_RENDERER PROPERTY STRINGS BGFX)
+if(NOT NI_RENDERER STREQUAL "BGFX")
+    message(FATAL_ERROR "NIFToolset now uses the BGFX renderer; NI_RENDERER must be BGFX.")
+endif()
+add_compile_definitions(NI_RENDERER_BGFX)
+
 # Use native MSVC STL instead of stlport
 add_compile_definitions(EE_USE_NATIVE_STL) # stlport is no longer supported, but this definition is still used in some places to conditionally compile code that depends on the STL.
 if(ENABLE_SDM_SHUTDOWN_ASSERT)
@@ -49,7 +58,12 @@ add_compile_definitions(EE_GAMEBRYO_VERSION="4.0.0.57") # Gamebryo version used 
 if(MSVC)
     # /MP: compile multiple source files in parallel within a single target.
     # Omit the number to let MSVC use all logical cores automatically.
-    add_compile_options(/MP)
+    # /Zc:__cplusplus: make __cplusplus report the selected C++ language
+    # standard. bx/bgfx requires this on MSVC and rejects the legacy 199711L
+    # value exposed without the switch.
+    # /Zc:preprocessor: enable the conforming MSVC preprocessor. bx also
+    # requires this mode and rejects the legacy preprocessor implementation.
+    add_compile_options(/MP /Zc:__cplusplus /Zc:preprocessor)
 endif()
 
 # Define global preprocessor definitions for all targets based on build configuration

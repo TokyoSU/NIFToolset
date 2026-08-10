@@ -104,7 +104,8 @@ inline float NiGetCurrentTimeInSec() { return (float)efd::GetCurrentTimeInSec();
 #define NiWriteToStdErr efd::WriteToStdErr
 
 #ifndef NiOutputDebugString
-#define NiOutputDebugString EE_OUTPUT_DEBUG_STRING
+#define NiOutputDebugString(x) \
+    NiLogWriteRaw(NI_LOG_DEBUG, "NiSystem", (x), __FILE__, __LINE__)
 #endif
 
 // Routines for setting up environment for test apps

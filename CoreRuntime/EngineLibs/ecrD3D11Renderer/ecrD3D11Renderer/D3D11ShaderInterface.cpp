@@ -39,7 +39,7 @@ D3D11ShaderInterface::~D3D11ShaderInterface()
 }
 
 //------------------------------------------------------------------------------------------------
-const D3DX11_STATE_BLOCK_MASK* D3D11ShaderInterface::GetStateBlockMask(
+const D3D11StateBlockMask* D3D11ShaderInterface::GetStateBlockMask(
     const NiRenderCallContext&) const
 {
     return NULL;

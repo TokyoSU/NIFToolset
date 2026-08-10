@@ -38,7 +38,6 @@ target_precompile_headers(NiInput
 target_link_libraries(NiInput
     PUBLIC
         NiMain
-        NiDX9Renderer
         dinput8
 )
 

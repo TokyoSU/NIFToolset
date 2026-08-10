@@ -16,12 +16,15 @@
 #define NIBASERENDERERSETUP_H
 
 #include "NiSettingsDialogLibType.h"
+#include "NiRendererSettings.h"
 
 #include <NiMemObject.h>
+#include <NiRenderer.h>
 #include <NiTList.h>
+#include <NiTPointerList.h>
+#include <NiUniversalTypes.h>
 
 class NiBaseRendererOptionsView;
-class NiRendererSettings;
 
 // Abstract class, defines interface for NiXXXRendererSetup classes
 class NISETTINGSDIALOG_ENTRY NiBaseRendererSetup : public NiMemObject

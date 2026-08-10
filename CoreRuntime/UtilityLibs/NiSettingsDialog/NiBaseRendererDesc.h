@@ -19,6 +19,8 @@
 
 #include "NiRendererSettings.h"
 #include <NiMemObject.h>
+#include <NiFixedString.h>
+#include <NiTArray.h>
 
 // Abstract class, defines interface for NiXXXRendererDesc classes
 class NISETTINGSDIALOG_ENTRY NiBaseRendererDesc : public NiMemObject

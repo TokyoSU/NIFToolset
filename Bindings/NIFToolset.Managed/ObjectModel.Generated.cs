@@ -3067,6 +3067,16 @@ public unsafe partial class NiRenderer : NiObject
         }
     }
 
+    public int BgfxResize(uint width, uint height, int vsync)
+    {
+        return NativeMethods.NIF_BgfxRenderer_Resize(NativeRendererHandle, width, height, vsync);
+    }
+
+    public int BgfxGetVSync()
+    {
+        return NativeMethods.NIF_BgfxRenderer_GetVSync(NativeRendererHandle);
+    }
+
     public string GetDriverInfo()
     {
         return NifNative.Utf8String(NativeMethods.NIF_Renderer_GetDriverInfo(NativeRendererHandle));
@@ -3132,21 +3142,6 @@ public unsafe partial class NiRenderer : NiObject
         return NativeMethods.NIF_Renderer_GetStencilClear(NativeRendererHandle);
     }
 
-    public uint GetSyncInterval()
-    {
-        return NativeMethods.NIF_Renderer_GetSyncInterval(NativeRendererHandle);
-    }
-
-    public void SetSyncInterval(uint syncInterval)
-    {
-        NativeMethods.NIF_Renderer_SetSyncInterval(NativeRendererHandle, syncInterval);
-    }
-
-    public int DX11ResizeBuffers(uint width, uint height, nint hwnd)
-    {
-        return NativeMethods.NIF_DX11Renderer_ResizeBuffers(NativeRendererHandle, width, height, hwnd);
-    }
-
     public int BeginDefaultScene(uint clearFlags)
     {
         return NativeMethods.NIF_Renderer_BeginDefaultScene(NativeRendererHandle, clearFlags);
@@ -3178,11 +3173,6 @@ public unsafe partial class NiRenderer : NiObject
     public void GetCameraData(NifVec3* worldLocation, NifVec3* worldDirection, NifVec3* worldUp, NifVec3* worldRight, NifFrustum* frustum, NifRect* viewport)
     {
         NativeMethods.NIF_Renderer_GetCameraData(NativeRendererHandle, worldLocation, worldDirection, worldUp, worldRight, frustum, viewport);
-    }
-
-    public void DX11SetDefaultViewport(uint width, uint height)
-    {
-        NativeMethods.NIF_DX11Renderer_SetDefaultViewport(NativeRendererHandle, width, height);
     }
 
 }

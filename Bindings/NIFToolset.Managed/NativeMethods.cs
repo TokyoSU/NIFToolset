@@ -1152,13 +1152,20 @@ public static unsafe partial class NativeMethods
     public static extern void NIF_RoomGroup_SetPortallingDisabled(int disabled);
     #endregion
 
-    #region NIF.Native.Renderer.DX11.h
+    #region NIF.Native.Renderer.Bgfx.h
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
-    public static extern void NIF_DX11Renderer_FillDefaultDesc(NifDx11RendererDesc* desc);
+    public static extern void NIF_BgfxRenderer_FillDefaultDesc(NifBgfxRendererDesc* desc);
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
-    public static extern void NIF_DX11Renderer_FillWindowedDesc(NifDx11RendererDesc* desc, nint hwnd);
+    public static extern void NIF_BgfxRenderer_FillWindowedDesc(NifBgfxRendererDesc* desc, nint nativeWindowHandle);
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
-    public static extern SafeRendererHandle NIF_DX11Renderer_Create(NifDx11RendererDesc* desc);
+    public static extern SafeRendererHandle NIF_BgfxRenderer_Create(NifBgfxRendererDesc* desc);
+    [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
+    public static extern int NIF_BgfxRenderer_Resize(SafeRendererHandle renderer, uint width, uint height, int vsync);
+    [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
+    public static extern int NIF_BgfxRenderer_GetVSync(SafeRendererHandle renderer);
+    #endregion
+
+    #region NIF.Native.Renderer.Utility.h
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
     internal static extern void NIF_Renderer_Destroy(nint handle);
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
@@ -1192,15 +1199,6 @@ public static unsafe partial class NativeMethods
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
     public static extern uint NIF_Renderer_GetStencilClear(SafeRendererHandle renderer);
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
-    public static extern uint NIF_Renderer_GetSyncInterval(SafeRendererHandle renderer);
-    [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
-    public static extern void NIF_Renderer_SetSyncInterval(SafeRendererHandle renderer, uint syncInterval);
-    [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
-    public static extern int NIF_DX11Renderer_ResizeBuffers(SafeRendererHandle renderer, uint width, uint height, nint hwnd);
-    #endregion
-
-    #region NIF.Native.Renderer.Utility.h
-    [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
     public static extern int NIF_Renderer_BeginDefaultScene(SafeRendererHandle renderer, uint clearFlags);
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
     public static extern int NIF_Renderer_EndScene(SafeRendererHandle renderer);
@@ -1212,8 +1210,6 @@ public static unsafe partial class NativeMethods
     public static extern void NIF_Renderer_SetCameraData(SafeRendererHandle renderer, SafeCameraHandle camera);
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
     public static extern void NIF_Renderer_GetCameraData(SafeRendererHandle renderer, NifVec3* worldLocation, NifVec3* worldDirection, NifVec3* worldUp, NifVec3* worldRight, NifFrustum* frustum, NifRect* viewport);
-    [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
-    public static extern void NIF_DX11Renderer_SetDefaultViewport(SafeRendererHandle renderer, uint width, uint height);
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]
     public static extern void NIF_RenderSubsystems_InitParticle();
     [DllImport(LibraryName, CallingConvention = CallConvention, ExactSpelling = true)]

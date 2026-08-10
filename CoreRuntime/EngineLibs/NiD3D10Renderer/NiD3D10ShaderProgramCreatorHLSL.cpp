@@ -83,8 +83,8 @@ bool NiD3D10ShaderProgramCreatorHLSL::CompileAndCreateVertexShader(
     uiFlags = pkRenderer->GetAllShaderCreationFlags("hlsl", uiFlags);
 
     // Compile the shader
-    HRESULT hr = D3DX10CompileFromMemory(
-        (char*)pkShaderCode->GetBufferPointer(),
+    HRESULT hr = D3DCompile(
+        pkShaderCode->GetBufferPointer(),
         pkShaderCode->GetBufferSize(),
         pcFileName,
         pkDefines,
@@ -93,10 +93,8 @@ bool NiD3D10ShaderProgramCreatorHLSL::CompileAndCreateVertexShader(
         pcShaderTarget,
         uiFlags,
         0,
-        NULL,
         &pkShaderByteCode,
-        &pkError,
-        NULL);
+        &pkError);
 
     if (FAILED(hr) || pkShaderByteCode == NULL)
     {
@@ -210,8 +208,8 @@ bool NiD3D10ShaderProgramCreatorHLSL::CompileAndCreateGeometryShader(
     uiFlags = pkRenderer->GetAllShaderCreationFlags("hlsl", uiFlags);
 
     // Compile the shader
-    HRESULT hr = D3DX10CompileFromMemory(
-        (char*)pkShaderCode->GetBufferPointer(),
+    HRESULT hr = D3DCompile(
+        pkShaderCode->GetBufferPointer(),
         pkShaderCode->GetBufferSize(),
         pcFileName,
         pkDefines,
@@ -220,10 +218,8 @@ bool NiD3D10ShaderProgramCreatorHLSL::CompileAndCreateGeometryShader(
         pcShaderTarget,
         uiFlags,
         0,
-        NULL,
         &pkShaderByteCode,
-        &pkError,
-        NULL);
+        &pkError);
 
     if (FAILED(hr) || pkShaderByteCode == NULL)
     {
@@ -376,8 +372,8 @@ bool NiD3D10ShaderProgramCreatorHLSL::CompileAndCreatePixelShader(
     uiFlags = pkRenderer->GetAllShaderCreationFlags("hlsl", uiFlags);
 
     // Compile the shader
-    HRESULT hr = D3DX10CompileFromMemory(
-        (char*)pkShaderCode->GetBufferPointer(),
+    HRESULT hr = D3DCompile(
+        pkShaderCode->GetBufferPointer(),
         pkShaderCode->GetBufferSize(),
         pcFileName,
         pkDefines,
@@ -386,10 +382,8 @@ bool NiD3D10ShaderProgramCreatorHLSL::CompileAndCreatePixelShader(
         pcShaderTarget,
         uiFlags,
         0,
-        NULL,
         &pkShaderByteCode,
-        &pkError,
-        NULL);
+        &pkError);
 
     if (FAILED(hr) || pkShaderByteCode == NULL)
     {

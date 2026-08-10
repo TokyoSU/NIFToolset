@@ -219,6 +219,7 @@ const NiPixelFormat*
     {
     case efd::SystemDesc::RENDERER_XBOX360:
     case efd::SystemDesc::RENDERER_PS3:
+    case efd::SystemDesc::RENDERER_BGFX:
         return pkConverter->FindClosestPixelFormat(
             eTargetRenderer, kPrefs, kSrcFmt, kSrcFmt);
     case efd::SystemDesc::RENDERER_D3D11:

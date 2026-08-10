@@ -36,17 +36,8 @@ target_link_libraries(NiApplication
         NiEnvironment
         NiParticle
         NiPortal
+        NiBgfxRenderer
         SDL3::SDL3
 )
-
-target_link_libraries(NiApplication
-    PUBLIC
-        NiDX9Renderer
-        NiD3D10Renderer
-        ecrD3D11Renderer
-)
-
-target_compile_definitions(NiApplication PRIVATE
-    $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:EE_ECRD3D11RENDERER_NO_IMPORT>)
 
 ni_install_target(NiApplication)

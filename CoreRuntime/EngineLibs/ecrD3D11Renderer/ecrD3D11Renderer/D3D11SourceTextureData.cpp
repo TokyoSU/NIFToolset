@@ -21,11 +21,34 @@
 #include "D3D11PersistentSrcTextureRendererData.h"
 #include "D3D11Error.h"
 
+#include <NiFilename.h>
+
 #include <NiImageConverter.h>
 #include <NiSourceCubeMap.h>
 #include <NiSourceTexture.h>
 
 using namespace ecr;
+
+namespace
+{
+class ScopedCOMInitialization
+{
+public:
+    ScopedCOMInitialization() :
+        m_result(CoInitializeEx(NULL, COINIT_MULTITHREADED))
+    {
+    }
+
+    ~ScopedCOMInitialization()
+    {
+        if (SUCCEEDED(m_result))
+            CoUninitialize();
+    }
+
+private:
+    HRESULT m_result;
+};
+}
 
 efd::UInt16 D3D11SourceTextureData::ms_skipLevels = 0;
 
@@ -796,7 +819,6 @@ efd::Bool D3D11SourceTextureData::LoadTextureFile(const efd::Char* pFilename,
     if (pD3D11Device == NULL)
         return false;
 
-    // Find file
     efd::Char standardFilename[efd::EE_MAX_PATH];
     efd::Strcpy(standardFilename, efd::EE_MAX_PATH, pFilename);
     efd::PathUtils::Standardize(standardFilename);
@@ -808,70 +830,132 @@ efd::Bool D3D11SourceTextureData::LoadTextureFile(const efd::Char* pFilename,
         return false;
     }
 
-    efd::UInt32 bufferLength = pIstr->GetFileSize();
+    const efd::UInt32 bufferLength = pIstr->GetFileSize();
     if (bufferLength == 0)
     {
         EE_DELETE pIstr;
         return false;
     }
 
-    // Read file into memory
     efd::UInt8* pBuffer = EE_ALLOC2(efd::UInt8, bufferLength, efd::MemHint::TEXTURE);
-    pIstr->Read(pBuffer, bufferLength);
+    if (!pBuffer)
+    {
+        EE_DELETE pIstr;
+        return false;
+    }
 
+    const efd::UInt32 bytesRead = pIstr->Read(pBuffer, bufferLength);
     EE_DELETE pIstr;
-
-    D3DX11_IMAGE_INFO imageInfo;
-    HRESULT hr = D3DX11GetImageInfoFromMemory(
-        (VOID*)pBuffer,
-        bufferLength,
-        NULL,
-        &imageInfo,
-        NULL);
-
-    if (FAILED(hr))
+    if (bytesRead != bufferLength)
     {
         EE_FREE(pBuffer);
         return false;
     }
 
-    // Special case: any bump maps not in a signed format
-    // must have data massaged in NiPixelData format
-    if (formatPrefs.m_ePixelLayout == NiTexture::FormatPrefs::BUMPMAP)
-    {
-        NiPixelFormat pixelFormat;
-        D3D11PixelFormat::InitFromDXGIFormat(imageInfo.Format, pixelFormat);
+    ID3D11Resource* pResource = NULL;
+    HRESULT hr = E_FAIL;
 
-        NiPixelFormat::Component formatComp;
-        NiPixelFormat::Representation formatRep;
-        efd::UInt8 bpc;
-        efd::Bool isSigned;
-        EE_VERIFY(pixelFormat.GetComponent(9, formatComp, formatRep, bpc, isSigned));
-        if (!isSigned)
+    NiFilename filename(standardFilename);
+    const efd::Char* pExtension = filename.GetExt();
+    if (pExtension && efd::Stricmp(pExtension, ".dds") == 0)
+    {
+        hr = DirectX::CreateDDSTextureFromMemory(
+            pD3D11Device, pBuffer, bufferLength,
+            &pResource, NULL);
+    }
+    else if (pExtension && efd::Stricmp(pExtension, ".tga") == 0)
+    {
+        DirectX::TexMetadata metadata;
+        DirectX::ScratchImage image;
+        hr = DirectX::LoadFromTGAMemory(
+            pBuffer, bufferLength, DirectX::TGA_FLAGS_NONE, &metadata, image);
+        if (SUCCEEDED(hr))
         {
-            EE_FREE(pBuffer);
-            return false;
+            hr = DirectX::CreateTexture(pD3D11Device, image.GetImages(),
+                image.GetImageCount(), metadata, &pResource);
         }
     }
-
-    ID3D11Resource* pResource = NULL;
-
-    hr = D3DX11CreateTextureFromMemory(
-        pD3D11Device,
-        pBuffer,
-        bufferLength,
-        NULL,
-        NULL,
-        &pResource,
-        NULL);
+    else if (pExtension && efd::Stricmp(pExtension, ".hdr") == 0)
+    {
+        DirectX::TexMetadata metadata;
+        DirectX::ScratchImage image;
+        hr = DirectX::LoadFromHDRMemory(pBuffer, bufferLength, &metadata, image);
+        if (SUCCEEDED(hr))
+        {
+            hr = DirectX::CreateTexture(pD3D11Device, image.GetImages(),
+                image.GetImageCount(), metadata, &pResource);
+        }
+    }
+    else
+    {
+        ScopedCOMInitialization comInitialization;
+        hr = DirectX::CreateWICTextureFromMemory(
+            pD3D11Device, pBuffer, bufferLength,
+            &pResource, NULL);
+    }
 
     EE_FREE(pBuffer);
 
     if (FAILED(hr) || pResource == NULL)
         return false;
 
-    // Create default resource view
-    efd::Bool success = InitializeFromD3D11Resource(pResource);
+    DXGI_FORMAT resourceFormat = DXGI_FORMAT_UNKNOWN;
+    D3D11_RESOURCE_DIMENSION dimension = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+    pResource->GetType(&dimension);
+    if (dimension == D3D11_RESOURCE_DIMENSION_TEXTURE1D)
+    {
+        ID3D11Texture1D* pTexture = NULL;
+        if (SUCCEEDED(pResource->QueryInterface(__uuidof(ID3D11Texture1D),
+            reinterpret_cast<void**>(&pTexture))))
+        {
+            D3D11_TEXTURE1D_DESC desc;
+            pTexture->GetDesc(&desc);
+            resourceFormat = desc.Format;
+            pTexture->Release();
+        }
+    }
+    else if (dimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D)
+    {
+        ID3D11Texture2D* pTexture = NULL;
+        if (SUCCEEDED(pResource->QueryInterface(__uuidof(ID3D11Texture2D),
+            reinterpret_cast<void**>(&pTexture))))
+        {
+            D3D11_TEXTURE2D_DESC desc;
+            pTexture->GetDesc(&desc);
+            resourceFormat = desc.Format;
+            pTexture->Release();
+        }
+    }
+    else if (dimension == D3D11_RESOURCE_DIMENSION_TEXTURE3D)
+    {
+        ID3D11Texture3D* pTexture = NULL;
+        if (SUCCEEDED(pResource->QueryInterface(__uuidof(ID3D11Texture3D),
+            reinterpret_cast<void**>(&pTexture))))
+        {
+            D3D11_TEXTURE3D_DESC desc;
+            pTexture->GetDesc(&desc);
+            resourceFormat = desc.Format;
+            pTexture->Release();
+        }
+    }
+
+    if (formatPrefs.m_ePixelLayout == NiTexture::FormatPrefs::BUMPMAP)
+    {
+        NiPixelFormat pixelFormat;
+        D3D11PixelFormat::InitFromDXGIFormat(resourceFormat, pixelFormat);
+
+        NiPixelFormat::Component formatComp;
+        NiPixelFormat::Representation formatRep;
+        efd::UInt8 bpc;
+        efd::Bool isSigned;
+        if (!pixelFormat.GetComponent(9, formatComp, formatRep, bpc, isSigned) || !isSigned)
+        {
+            pResource->Release();
+            return false;
+        }
+    }
+
+    const efd::Bool success = InitializeFromD3D11Resource(pResource);
     pResource->Release();
     return success;
 }

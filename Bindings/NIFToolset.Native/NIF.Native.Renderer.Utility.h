@@ -9,13 +9,29 @@ extern "C"
 {
 #endif
 
+NIFTOOLSET_NATIVE_ENTRY void NIF_Renderer_Destroy(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Renderer_AsObject(NIF_RendererHandle renderer, NIF_ObjectHandle* outObject);
+NIFTOOLSET_NATIVE_ENTRY const char* NIF_Renderer_GetDriverInfo(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Renderer_GetRendererID(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Renderer_BeginFrame(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Renderer_EndFrame(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY int NIF_Renderer_DisplayFrame(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Renderer_GetFrameID(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Renderer_GetFrameState(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Renderer_GetDefaultClearMode(void);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Renderer_SetBackgroundColor(NIF_RendererHandle renderer, NIF_ColorA color);
+NIFTOOLSET_NATIVE_ENTRY NIF_ColorA NIF_Renderer_GetBackgroundColor(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Renderer_SetDepthClear(NIF_RendererHandle renderer, float depthClear);
+NIFTOOLSET_NATIVE_ENTRY float NIF_Renderer_GetDepthClear(NIF_RendererHandle renderer);
+NIFTOOLSET_NATIVE_ENTRY void NIF_Renderer_SetStencilClear(NIF_RendererHandle renderer, unsigned int stencilClear);
+NIFTOOLSET_NATIVE_ENTRY unsigned int NIF_Renderer_GetStencilClear(NIF_RendererHandle renderer);
+
 NIFTOOLSET_NATIVE_ENTRY int NIF_Renderer_BeginDefaultScene(NIF_RendererHandle renderer, unsigned int clearFlags);
 NIFTOOLSET_NATIVE_ENTRY int NIF_Renderer_EndScene(NIF_RendererHandle renderer);
 NIFTOOLSET_NATIVE_ENTRY void NIF_Renderer_SetSorter(NIF_RendererHandle renderer, NIF_AlphaAccumulatorHandle accumulator);
 NIFTOOLSET_NATIVE_ENTRY int NIF_Renderer_GetSorter(NIF_RendererHandle renderer, NIF_AlphaAccumulatorHandle* outAccumulator);
 NIFTOOLSET_NATIVE_ENTRY void NIF_Renderer_SetCameraData(NIF_RendererHandle renderer, NIF_CameraHandle camera);
 NIFTOOLSET_NATIVE_ENTRY void NIF_Renderer_GetCameraData(NIF_RendererHandle renderer, NIF_Vec3* worldLocation, NIF_Vec3* worldDirection, NIF_Vec3* worldUp, NIF_Vec3* worldRight, NIF_Frustum* frustum, NIF_Rect* viewport);
-NIFTOOLSET_NATIVE_ENTRY void NIF_DX11Renderer_SetDefaultViewport(NIF_RendererHandle renderer, unsigned int width, unsigned int height);
 NIFTOOLSET_NATIVE_ENTRY void NIF_RenderSubsystems_InitParticle(void);
 NIFTOOLSET_NATIVE_ENTRY void NIF_RenderSubsystems_ShutdownParticle(void);
 NIFTOOLSET_NATIVE_ENTRY void NIF_RenderSubsystems_InitPortal(void);

@@ -21,15 +21,43 @@
 
 #include <efd/OS.h>
 
+#include <wincodec.h>
+
 // Include so _IID_ID3D11ShaderReflection is defined.
 #include <initguid.h>
 
 #include <D3D11.h>
-#include <dxsdk-d3dx/D3DX11.h>
 #include <D3DCompiler.h>
 #include <DXGI.h>
 #include <DirectXMath.h>
+#include <DirectXTex.h>
+#include <DDSTextureLoader.h>
+#include <WICTextureLoader.h>
+#include <ScreenGrab.h>
 using namespace DirectX;
 
+
+// Windows SDK intsafe.h defines aliases such as
+//     #define Int32ToUInt16 IntToUShort
+// These aliases also expand qualified identifiers, turning
+// efd::Int32ToUInt16 into the nonexistent efd::IntToUShort. DirectXTK and
+// DirectXTex can pull intsafe.h in indirectly, so remove only the aliases that
+// collide with the long-standing EFD safe-cast helpers after all DirectX
+// headers have been included.
+#ifdef Int32ToUInt8
+#undef Int32ToUInt8
+#endif
+#ifdef Int32ToUInt16
+#undef Int32ToUInt16
+#endif
+#ifdef Int32ToUInt32
+#undef Int32ToUInt32
+#endif
+#ifdef Int32ToInt8
+#undef Int32ToInt8
+#endif
+#ifdef Int32ToInt16
+#undef Int32ToInt16
+#endif
 
 #endif // EE_D3D11HEADERS_H

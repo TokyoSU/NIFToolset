@@ -39,8 +39,6 @@ add_library(ecr
 target_include_directories(ecr
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/CoreRuntime/EngineLibs/NiD3D10Renderer>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/CoreRuntime/EngineLibs/ecrD3D11Renderer>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/install/include>
         $<INSTALL_INTERFACE:include>
 )
@@ -74,17 +72,7 @@ if(NI_PLATFORM_SERVICE_SDL3)
     target_link_libraries(ecr PUBLIC SDL3::SDL3)
 endif()
 
-target_link_libraries(ecr
-    PUBLIC
-        NiDX9Renderer
-        NiD3D10Renderer
-        ecrD3D11Renderer
-)
-
-target_compile_definitions(ecr
-    PRIVATE
-        $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:EE_ECRD3D11RENDERER_NO_IMPORT>
-)
+target_link_libraries(ecr PUBLIC NiBgfxRenderer)
 
 # Precompiled header (ecrPCH.h already pulls in egfPCH.h)
 target_precompile_headers(ecr

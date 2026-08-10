@@ -38,6 +38,7 @@
 #include "NiD3D10ShaderProgramFactory.h"
 #include "NiD3D10SourceTextureData.h"
 #include "NiD3D10Utility.h"
+#include "NiD3D10TextureTools.h"
 
 #include <NiCubeMapDepthStencilBuffer.h>
 #include <NiDirectionalShadowWriteMaterial.h>
@@ -58,8 +59,29 @@
 #include <NiVersion.h>
 #include <NiVertexColorProperty.h>
 
-// for _chdir
+// for _mkdir
 #include <direct.h>
+
+namespace
+{
+class ScopedCOMInitialization
+{
+public:
+    ScopedCOMInitialization() :
+        m_result(CoInitializeEx(NULL, COINIT_MULTITHREADED))
+    {
+    }
+
+    ~ScopedCOMInitialization()
+    {
+        if (SUCCEEDED(m_result))
+            CoUninitialize();
+    }
+
+private:
+    HRESULT m_result;
+};
+}
 
 //------------------------------------------------------------------------------------------------
 // The following copyright notice may not be removed.
@@ -266,10 +288,10 @@ NiD3D10Renderer::NiD3D10Renderer() :
     memset(m_afBackgroundColor, 0, sizeof(m_afBackgroundColor));
     memset(m_auiFormatSupport, 0, sizeof(m_auiFormatSupport));
 
-    D3DXMatrixIdentity(&m_kD3DView);
-    D3DXMatrixIdentity(&m_kInvView);
-    D3DXMatrixIdentity(&m_kD3DProj);
-    D3DXMatrixIdentity(&m_kD3DModel);
+    NiBgfxMath::Identity(&m_kViewMatrix);
+    NiBgfxMath::Identity(&m_kInverseViewMatrix);
+    NiBgfxMath::Identity(&m_kProjectionMatrix);
+    NiBgfxMath::Identity(&m_kWorldMatrix);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -3080,20 +3102,19 @@ NiPixelData* NiD3D10Renderer::TakeScreenShot(
 bool NiD3D10Renderer::SaveScreenShot(const char* pcFilename,
     EScreenshotFormat eFormat)
 {
-    D3DX10_IMAGE_FILE_FORMAT eFormatD3D10;
+    const GUID* pkContainerFormat = NULL;
+    const GUID* pkTargetFormat = NULL;
     switch (eFormat)
     {
     case FORMAT_PNG:
-        eFormatD3D10 = D3DX10_IFF_PNG;
+        pkContainerFormat = &GUID_ContainerFormatPng;
         break;
     case FORMAT_JPEG:
-        eFormatD3D10 = D3DX10_IFF_JPG;
+        pkContainerFormat = &GUID_ContainerFormatJpeg;
+        pkTargetFormat = &GUID_WICPixelFormat24bppBGR;
         break;
     default:
-        Error(
-            "%s> Unsupported image format %d\n",
-            __FUNCTION__,
-            eFormat);
+        Error("%s> Unsupported image format %d\n", __FUNCTION__, eFormat);
         return false;
     }
 
@@ -3101,93 +3122,65 @@ bool NiD3D10Renderer::SaveScreenShot(const char* pcFilename,
     if (pkTarget == NULL)
         pkTarget = m_spDefaultRenderTargetGroup;
 
-    ID3D10Resource* pkScreenShot = GetBackBufferResource(pkTarget, 0);
+    ID3D10Texture2D* pkScreenShot = GetBackBufferResource(pkTarget, 0);
+    if (!pkScreenShot)
+        return false;
 
-    // The rest of this code is to work around the fact that D3DX10SaveTextureToFile can only
-    // save to the current directory
-
-    // First get the full path to the destination file
     char acAbsolutePath[NI_MAX_PATH];
-
     EE_ASSERT(pcFilename);
     if (NiPath::IsRelative(pcFilename))
-    {
-        NiPath::ConvertToAbsolute(acAbsolutePath, NI_MAX_PATH, pcFilename,
-            NULL);
-    }
+        NiPath::ConvertToAbsolute(acAbsolutePath, NI_MAX_PATH, pcFilename, NULL);
     else
-    {
         NiStrcpy(acAbsolutePath, NI_MAX_PATH, pcFilename);
+
+    NiFilename kFilename(acAbsolutePath);
+    char acDestinationDirectory[NI_MAX_PATH];
+    NiSprintf(acDestinationDirectory, NI_MAX_PATH, "%s%s",
+        kFilename.GetDrive(), kFilename.GetDir());
+    if (acDestinationDirectory[0] != '\0')
+        _mkdir(acDestinationDirectory);
+
+    wchar_t awcPath[NI_MAX_PATH];
+    if (!NiD3D10TextureTools::ToWidePath(acAbsolutePath, awcPath, NI_MAX_PATH))
+        return false;
+
+    ScopedCOMInitialization comInitialization;
+    DirectX::ScratchImage kCaptured;
+    HRESULT hr = NiD3D10TextureTools::CaptureTexture(
+        m_pkD3D10Device, pkScreenShot, kCaptured);
+    if (FAILED(hr))
+    {
+        Warning("%s> Failed to capture screenshot - %x", __FUNCTION__, hr);
+        return false;
     }
 
-    // Split off the directory from the file
-    NiFilename kFilename(acAbsolutePath);
-    char acDestPath[NI_MAX_PATH];
-    char acDestFile[NI_MAX_PATH];
-    NiSprintf(
-        acDestPath,
-        NI_MAX_PATH,
-        "%s%s",
-        kFilename.GetDrive(),
-        kFilename.GetDir());
-    NiSprintf(
-        acDestFile,
-        NI_MAX_PATH,
-        "%s%s",
-        kFilename.GetFilename(),
-        kFilename.GetExt());
+    const DirectX::Image* pkImage = kCaptured.GetImage(0, 0, 0);
+    if (!pkImage)
+        return false;
 
-    // Save off the current working directory
-    char acCurrentPath[NI_MAX_PATH];
-    EE_VERIFY(NiPath::GetCurrentWorkingDirectory(acCurrentPath, NI_MAX_PATH));
+    hr = DirectX::SaveToWICFile(*pkImage, DirectX::WIC_FLAGS_NONE,
+        *pkContainerFormat, awcPath, pkTargetFormat);
 
-    // Ensure the new current directory exists.
-    _mkdir(acDestPath);
-
-    // Set the new current directory
-    _chdir(acDestPath);
-
-    ID3D10Blob *pkBlob = NULL;
-    // Save the file to memory
-    HRESULT hr = D3DX10SaveTextureToMemory(
-        pkScreenShot,
-        eFormatD3D10,
-        &pkBlob, 0);
-
-    if (SUCCEEDED(hr) && pkBlob != NULL)
+    if (FAILED(hr))
     {
-
-        SIZE_T kSize = pkBlob->GetBufferSize();
-        EE_ASSERT(kSize > 0);
-        char akFullPath[MAX_PATH];
-
-        // Open file and save the memory
-        if (kFilename.GetFullPath(akFullPath,MAX_PATH))
+        DirectX::ScratchImage kConverted;
+        const HRESULT convertResult = DirectX::Convert(*pkImage,
+            DXGI_FORMAT_R8G8B8A8_UNORM, DirectX::TEX_FILTER_DEFAULT,
+            DirectX::TEX_THRESHOLD_DEFAULT, kConverted);
+        if (SUCCEEDED(convertResult))
         {
-            EE_ASSERT(kSize > 0);
-            if (kSize > 0)
+            const DirectX::Image* pkConverted = kConverted.GetImage(0, 0, 0);
+            if (pkConverted)
             {
-                void *pkMem = pkBlob->GetBufferPointer();
-                EE_ASSERT(pkMem != NULL);
-                efd::File* pkFile = NULL;
-                if (pkMem)
-                    pkFile = efd::File::GetFile(akFullPath,
-                        efd::File::WRITE_ONLY);
-                EE_ASSERT(pkFile);
-                if (pkFile)
-                {
-                    pkFile->Write(pkMem,
-                        (unsigned int) kSize);
-                    NiDelete pkFile;
-                }
+                hr = DirectX::SaveToWICFile(*pkConverted,
+                    DirectX::WIC_FLAGS_NONE, *pkContainerFormat,
+                    awcPath, pkTargetFormat);
             }
         }
     }
-    if (pkBlob)
-        pkBlob->Release();
-    // Restore the original working directory
-    _chdir(acCurrentPath);
 
+    if (FAILED(hr))
+        Warning("%s> Failed to save screenshot - %x", __FUNCTION__, hr);
     return SUCCEEDED(hr);
 }
 
@@ -3289,102 +3282,63 @@ bool NiD3D10Renderer::Copy(const Ni2DBuffer* pkSrc,
     Ni2DBuffer::CopyFilterPreference ePref)
 {
     NIASSERT_D3D10_DEVICE_THREAD;
-
     EE_ASSERT(pkSrc != NULL);
     EE_ASSERT(pkDest != NULL);
 
-    NiD3D102DBufferData* pkSrcRendData = (NiD3D102DBufferData*)
-        pkSrc->GetRendererData();
-    NiD3D102DBufferData* pkDestRendData = (NiD3D102DBufferData*)
-        pkDest->GetRendererData();
-
+    NiD3D102DBufferData* pkSrcRendData =
+        (NiD3D102DBufferData*)pkSrc->GetRendererData();
+    NiD3D102DBufferData* pkDestRendData =
+        (NiD3D102DBufferData*)pkDest->GetRendererData();
     if (pkSrcRendData == NULL || pkDestRendData == NULL)
     {
-        Warning("%s> Failed - %s",
-            __FUNCTION__,
-            "No RendererData found");
+        Warning("%s> Failed - %s", __FUNCTION__, "No RendererData found");
         return false;
     }
 
-    if (*(pkSrcRendData->GetPixelFormat()) !=
-        *(pkDestRendData->GetPixelFormat()))
+    if (*(pkSrcRendData->GetPixelFormat()) != *(pkDestRendData->GetPixelFormat()))
     {
-        Warning("%s> Failed - %s",
-            __FUNCTION__,
-            "Pixel formats do not match");
+        Warning("%s> Failed - %s", __FUNCTION__, "Pixel formats do not match");
         return false;
     }
 
     ID3D10Texture2D* pkSourceSurface = pkSrcRendData->GetTexture2D();
     ID3D10Texture2D* pkDestSurface = pkDestRendData->GetTexture2D();
-
-    D3DX10_FILTER_FLAG eFilterType;
-    switch (ePref)
+    if (pkSourceSurface == NULL || pkDestSurface == NULL)
     {
-    default:
-    case Ni2DBuffer::COPY_FILTER_NONE:
-        eFilterType = D3DX10_FILTER_NONE;
-        break;
-    case Ni2DBuffer::COPY_FILTER_POINT:
-        eFilterType = D3DX10_FILTER_POINT;
-        break;
-    case Ni2DBuffer::COPY_FILTER_LINEAR:
-        eFilterType = D3DX10_FILTER_LINEAR;
-        break;
-    }
-
-    D3DX10_TEXTURE_LOAD_INFO kLoadInfo;
-    kLoadInfo.pSrcBox = NULL;
-    kLoadInfo.pDstBox = NULL;
-    kLoadInfo.SrcFirstMip = 0;
-    kLoadInfo.DstFirstMip = 0;
-    kLoadInfo.NumMips = 1; // Only doing one mip level
-    kLoadInfo.SrcFirstElement = 0;
-    kLoadInfo.DstFirstElement = 0;
-    kLoadInfo.NumElements = 0;
-    kLoadInfo.Filter = eFilterType;
-    kLoadInfo.MipFilter = eFilterType;
-
-    D3D10_BOX kSrcBox;
-    if (pkSrcRect)
-    {
-        kSrcBox.left = pkSrcRect->m_left;
-        kSrcBox.right = pkSrcRect->m_right;
-        kSrcBox.top = pkSrcRect->m_top;
-        kSrcBox.bottom = pkSrcRect->m_bottom;
-        kSrcBox.front = 0;
-        kSrcBox.back = 1;
-
-        kLoadInfo.pSrcBox = &kSrcBox;
-    }
-
-    D3D10_BOX kDestBox;
-    if (pkDestRect)
-    {
-        kDestBox.left = pkDestRect->m_left;
-        kDestBox.right = pkDestRect->m_right;
-        kDestBox.top = pkDestRect->m_top;
-        kDestBox.bottom = pkDestRect->m_bottom;
-        kDestBox.front = 0;
-        kDestBox.back = 1;
-
-        kLoadInfo.pDstBox = &kDestBox;
-    }
-
-    HRESULT hr = D3DX10LoadTextureFromTexture(
-        pkSourceSurface,
-        &kLoadInfo,
-        pkDestSurface);
-
-    if (FAILED(hr))
-    {
-        Warning("%s> "
-            "Failed D3DX10LoadTextureFromTexture - %x",
-            __FUNCTION__,
-            hr);
+        Warning("%s> Failed - %s", __FUNCTION__, "NULL Surface found");
         return false;
     }
 
+    DirectX::TEX_FILTER_FLAGS eFilter = DirectX::TEX_FILTER_POINT;
+    if (ePref == Ni2DBuffer::COPY_FILTER_LINEAR)
+        eFilter = DirectX::TEX_FILTER_LINEAR;
+
+    D3D10_BOX kSourceBox;
+    D3D10_BOX* pkSourceBox = NULL;
+    if (pkSrcRect)
+    {
+        kSourceBox = { pkSrcRect->m_left, pkSrcRect->m_top, 0,
+            pkSrcRect->m_right, pkSrcRect->m_bottom, 1 };
+        pkSourceBox = &kSourceBox;
+    }
+
+    D3D10_BOX kDestinationBox;
+    D3D10_BOX* pkDestinationBox = NULL;
+    if (pkDestRect)
+    {
+        kDestinationBox = { pkDestRect->m_left, pkDestRect->m_top, 0,
+            pkDestRect->m_right, pkDestRect->m_bottom, 1 };
+        pkDestinationBox = &kDestinationBox;
+    }
+
+    const HRESULT hr = NiD3D10TextureTools::CopyTextureRegion(
+        m_pkD3D10Device, pkSourceSurface, pkDestSurface,
+        pkSourceBox, pkDestinationBox, eFilter);
+    if (FAILED(hr))
+    {
+        Warning("%s> Failed to copy/resize texture data - %x", __FUNCTION__, hr);
+        return false;
+    }
     return true;
 }
 
@@ -4170,39 +4124,39 @@ void NiD3D10Renderer::Do_SetCameraData(const NiPoint3& kWorldLoc,
     }
 
     // View matrix update
-    m_kD3DView._11 = kWorldRight.x;
-    m_kD3DView._12 = kWorldUp.x;
-    m_kD3DView._13 = kWorldDir.x;
-    m_kD3DView._14 = 0.0f;
-    m_kD3DView._21 = kWorldRight.y;
-    m_kD3DView._22 = kWorldUp.y;
-    m_kD3DView._23 = kWorldDir.y;
-    m_kD3DView._24 = 0.0f;
-    m_kD3DView._31 = kWorldRight.z;
-    m_kD3DView._32 = kWorldUp.z;
-    m_kD3DView._33 = kWorldDir.z;
-    m_kD3DView._34 = 0.0f;
-    m_kD3DView._41 = -(kWorldRight * kWorldLoc);
-    m_kD3DView._42 = -(kWorldUp * kWorldLoc);
-    m_kD3DView._43 = -(kWorldDir * kWorldLoc);
-    m_kD3DView._44 = 1.0f;
+    m_kViewMatrix[0] = kWorldRight.x;
+    m_kViewMatrix[1] = kWorldUp.x;
+    m_kViewMatrix[2] = kWorldDir.x;
+    m_kViewMatrix[3] = 0.0f;
+    m_kViewMatrix[4] = kWorldRight.y;
+    m_kViewMatrix[5] = kWorldUp.y;
+    m_kViewMatrix[6] = kWorldDir.y;
+    m_kViewMatrix[7] = 0.0f;
+    m_kViewMatrix[8] = kWorldRight.z;
+    m_kViewMatrix[9] = kWorldUp.z;
+    m_kViewMatrix[10] = kWorldDir.z;
+    m_kViewMatrix[11] = 0.0f;
+    m_kViewMatrix[12] = -(kWorldRight * kWorldLoc);
+    m_kViewMatrix[13] = -(kWorldUp * kWorldLoc);
+    m_kViewMatrix[14] = -(kWorldDir * kWorldLoc);
+    m_kViewMatrix[15] = 1.0f;
 
-    m_kInvView._11 = kWorldRight.x;
-    m_kInvView._12 = kWorldRight.y;
-    m_kInvView._13 = kWorldRight.z;
-    m_kInvView._14 = 0.0f;
-    m_kInvView._21 = kWorldUp.x;
-    m_kInvView._22 = kWorldUp.y;
-    m_kInvView._23 = kWorldUp.z;
-    m_kInvView._24 = 0.0f;
-    m_kInvView._31 = kWorldDir.x;
-    m_kInvView._32 = kWorldDir.y;
-    m_kInvView._33 = kWorldDir.z;
-    m_kInvView._34 = 0.0f;
-    m_kInvView._41 = kWorldLoc.x;
-    m_kInvView._42 = kWorldLoc.y;
-    m_kInvView._43 = kWorldLoc.z;
-    m_kInvView._44 = 1.0f;
+    m_kInverseViewMatrix[0] = kWorldRight.x;
+    m_kInverseViewMatrix[1] = kWorldRight.y;
+    m_kInverseViewMatrix[2] = kWorldRight.z;
+    m_kInverseViewMatrix[3] = 0.0f;
+    m_kInverseViewMatrix[4] = kWorldUp.x;
+    m_kInverseViewMatrix[5] = kWorldUp.y;
+    m_kInverseViewMatrix[6] = kWorldUp.z;
+    m_kInverseViewMatrix[7] = 0.0f;
+    m_kInverseViewMatrix[8] = kWorldDir.x;
+    m_kInverseViewMatrix[9] = kWorldDir.y;
+    m_kInverseViewMatrix[10] = kWorldDir.z;
+    m_kInverseViewMatrix[11] = 0.0f;
+    m_kInverseViewMatrix[12] = kWorldLoc.x;
+    m_kInverseViewMatrix[13] = kWorldLoc.y;
+    m_kInverseViewMatrix[14] = kWorldLoc.z;
+    m_kInverseViewMatrix[15] = 1.0f;
 
     float fDepthRange = kFrustum.m_fFar - kFrustum.m_fNear;
 
@@ -4217,64 +4171,64 @@ void NiD3D10Renderer::Do_SetCameraData(const NiPoint3& kWorldLoc,
     {
         if (m_bLeftRightSwap)
         {
-            m_kD3DProj._11 = -2.0f / fRmL;
-            m_kD3DProj._21 = 0.0f;
-            m_kD3DProj._31 = 0.0f;
-            m_kD3DProj._41 = fRpL / fRmL;
+            m_kProjectionMatrix[0] = -2.0f / fRmL;
+            m_kProjectionMatrix[4] = 0.0f;
+            m_kProjectionMatrix[8] = 0.0f;
+            m_kProjectionMatrix[12] = fRpL / fRmL;
         }
         else
         {
-            m_kD3DProj._11 = 2.0f / fRmL;
-            m_kD3DProj._21 = 0.0f;
-            m_kD3DProj._31 = 0.0f;
-            m_kD3DProj._41 = -fRpL / fRmL;
+            m_kProjectionMatrix[0] = 2.0f / fRmL;
+            m_kProjectionMatrix[4] = 0.0f;
+            m_kProjectionMatrix[8] = 0.0f;
+            m_kProjectionMatrix[12] = -fRpL / fRmL;
         }
 
-        m_kD3DProj._12 = 0.0f;
-        m_kD3DProj._22 = 2.0f / fTmB;
-        m_kD3DProj._32 = 0.0f;
-        m_kD3DProj._42 = -fTpB / fTmB;
-        m_kD3DProj._13 = 0.0f;
-        m_kD3DProj._23 = 0.0f;
-        m_kD3DProj._33 = fInvFmN;
-        m_kD3DProj._43 = -(kFrustum.m_fNear * fInvFmN);
+        m_kProjectionMatrix[1] = 0.0f;
+        m_kProjectionMatrix[5] = 2.0f / fTmB;
+        m_kProjectionMatrix[9] = 0.0f;
+        m_kProjectionMatrix[13] = -fTpB / fTmB;
+        m_kProjectionMatrix[2] = 0.0f;
+        m_kProjectionMatrix[6] = 0.0f;
+        m_kProjectionMatrix[10] = fInvFmN;
+        m_kProjectionMatrix[14] = -(kFrustum.m_fNear * fInvFmN);
 
         // A "w-friendly" projection matrix to make fog, w-buffering work
-        m_kD3DProj._14 = 0.0f;
-        m_kD3DProj._24 = 0.0f;
-        m_kD3DProj._34 = 0.0f;
-        m_kD3DProj._44 = 1.0f;
+        m_kProjectionMatrix[3] = 0.0f;
+        m_kProjectionMatrix[7] = 0.0f;
+        m_kProjectionMatrix[11] = 0.0f;
+        m_kProjectionMatrix[15] = 1.0f;
     }
     else
     {
         if (m_bLeftRightSwap)
         {
-            m_kD3DProj._11 = -2.0f / fRmL;
-            m_kD3DProj._21 = 0.0f;
-            m_kD3DProj._31 = fRpL / fRmL;
-            m_kD3DProj._41 = 0.0f;
+            m_kProjectionMatrix[0] = -2.0f / fRmL;
+            m_kProjectionMatrix[4] = 0.0f;
+            m_kProjectionMatrix[8] = fRpL / fRmL;
+            m_kProjectionMatrix[12] = 0.0f;
         }
         else
         {
-            m_kD3DProj._11 = 2.0f / fRmL;
-            m_kD3DProj._21 = 0.0f;
-            m_kD3DProj._31 = -fRpL / fRmL;
-            m_kD3DProj._41 = 0.0f;
+            m_kProjectionMatrix[0] = 2.0f / fRmL;
+            m_kProjectionMatrix[4] = 0.0f;
+            m_kProjectionMatrix[8] = -fRpL / fRmL;
+            m_kProjectionMatrix[12] = 0.0f;
         }
-        m_kD3DProj._12 = 0.0f;
-        m_kD3DProj._22 = 2.0f / fTmB;
-        m_kD3DProj._32 = -fTpB / fTmB;
-        m_kD3DProj._42 = 0.0f;
-        m_kD3DProj._13 = 0.0f;
-        m_kD3DProj._23 = 0.0f;
-        m_kD3DProj._33 = kFrustum.m_fFar * fInvFmN;
-        m_kD3DProj._43 = -(kFrustum.m_fNear * kFrustum.m_fFar * fInvFmN);
+        m_kProjectionMatrix[1] = 0.0f;
+        m_kProjectionMatrix[5] = 2.0f / fTmB;
+        m_kProjectionMatrix[9] = -fTpB / fTmB;
+        m_kProjectionMatrix[13] = 0.0f;
+        m_kProjectionMatrix[2] = 0.0f;
+        m_kProjectionMatrix[6] = 0.0f;
+        m_kProjectionMatrix[10] = kFrustum.m_fFar * fInvFmN;
+        m_kProjectionMatrix[14] = -(kFrustum.m_fNear * kFrustum.m_fFar * fInvFmN);
 
         // A "w-friendly" projection matrix to make fog, w-buffering work
-        m_kD3DProj._14 = 0.0f;
-        m_kD3DProj._24 = 0.0f;
-        m_kD3DProj._34 = 1.0f;
-        m_kD3DProj._44 = 0.0f;
+        m_kProjectionMatrix[3] = 0.0f;
+        m_kProjectionMatrix[7] = 0.0f;
+        m_kProjectionMatrix[11] = 1.0f;
+        m_kProjectionMatrix[15] = 0.0f;
     }
 
     // Viewport update
@@ -4331,65 +4285,65 @@ void NiD3D10Renderer::Do_SetScreenSpaceCameraData(const NiRect<float>* pkPort)
     //      Far:    10000
 
     // View matrix update
-    m_kD3DView._11 = 1.0f;
-    m_kD3DView._12 = 0.0f;
-    m_kD3DView._13 = 0.0f;
-    m_kD3DView._14 = 0.0f;
-    m_kD3DView._21 = 0.0f;
-    m_kD3DView._22 = -1.0f;
-    m_kD3DView._23 = 0.0f;
-    m_kD3DView._24 = 0.0f;
-    m_kD3DView._31 = 0.0f;
-    m_kD3DView._32 = 0.0f;
-    m_kD3DView._33 = 1.0f;
-    m_kD3DView._34 = 0.0f;
-    m_kD3DView._41 = -0.5f;
-    m_kD3DView._42 = 0.5f;
-    m_kD3DView._43 = 1.0f;
-    m_kD3DView._44 = 1.0f;
+    m_kViewMatrix[0] = 1.0f;
+    m_kViewMatrix[1] = 0.0f;
+    m_kViewMatrix[2] = 0.0f;
+    m_kViewMatrix[3] = 0.0f;
+    m_kViewMatrix[4] = 0.0f;
+    m_kViewMatrix[5] = -1.0f;
+    m_kViewMatrix[6] = 0.0f;
+    m_kViewMatrix[7] = 0.0f;
+    m_kViewMatrix[8] = 0.0f;
+    m_kViewMatrix[9] = 0.0f;
+    m_kViewMatrix[10] = 1.0f;
+    m_kViewMatrix[11] = 0.0f;
+    m_kViewMatrix[12] = -0.5f;
+    m_kViewMatrix[13] = 0.5f;
+    m_kViewMatrix[14] = 1.0f;
+    m_kViewMatrix[15] = 1.0f;
 
-    m_kInvView._11 = 1.0f;
-    m_kInvView._12 = 0.0f;
-    m_kInvView._13 = 0.0f;
-    m_kInvView._14 = 0.0f;
-    m_kInvView._21 = 0.0f;
-    m_kInvView._22 = -1.0f;
-    m_kInvView._23 = 0.0f;
-    m_kInvView._24 = 0.0f;
-    m_kInvView._31 = 0.0f;
-    m_kInvView._32 = 0.0f;
-    m_kInvView._33 = 1.0f;
-    m_kInvView._34 = 0.0f;
-    m_kInvView._41 = 0.5f;
-    m_kInvView._42 = 0.5f;
-    m_kInvView._43 = -1.0f;
-    m_kInvView._44 = 1.0f;
+    m_kInverseViewMatrix[0] = 1.0f;
+    m_kInverseViewMatrix[1] = 0.0f;
+    m_kInverseViewMatrix[2] = 0.0f;
+    m_kInverseViewMatrix[3] = 0.0f;
+    m_kInverseViewMatrix[4] = 0.0f;
+    m_kInverseViewMatrix[5] = -1.0f;
+    m_kInverseViewMatrix[6] = 0.0f;
+    m_kInverseViewMatrix[7] = 0.0f;
+    m_kInverseViewMatrix[8] = 0.0f;
+    m_kInverseViewMatrix[9] = 0.0f;
+    m_kInverseViewMatrix[10] = 1.0f;
+    m_kInverseViewMatrix[11] = 0.0f;
+    m_kInverseViewMatrix[12] = 0.5f;
+    m_kInverseViewMatrix[13] = 0.5f;
+    m_kInverseViewMatrix[14] = -1.0f;
+    m_kInverseViewMatrix[15] = 1.0f;
 
     const float fNearDepthDivDepthRange = 1.0f / 9999.0f;
 
     if (m_bLeftRightSwap)
     {
-        m_kD3DProj._11 = -2.0f;
+        m_kProjectionMatrix[0] = -2.0f;
     }
     else
     {
-        m_kD3DProj._11 = 2.0f;
+        m_kProjectionMatrix[0] = 2.0f;
     }
-    m_kD3DProj._21 = 0.0f;
-    m_kD3DProj._31 = 0.0f;
-    m_kD3DProj._41 = 0.0f;
-    m_kD3DProj._12 = 0.0f;
-    m_kD3DProj._22 = 2.0f;
-    m_kD3DProj._32 = 0.0f;
-    m_kD3DProj._42 = 0.0f;
-    m_kD3DProj._13 = 0.0f;
-    m_kD3DProj._23 = 0.0f;
-    m_kD3DProj._33 = fNearDepthDivDepthRange;
-    m_kD3DProj._43 = -fNearDepthDivDepthRange;
-    m_kD3DProj._14 = 0.0f;
-    m_kD3DProj._24 = 0.0f;
-    m_kD3DProj._34 = 0.0f;
-    m_kD3DProj._44 = 1.0f;
+    m_kProjectionMatrix[4] = 0.0f;
+    m_kProjectionMatrix[8] = 0.0f;
+    m_kProjectionMatrix[12] = 0.0f;
+    m_kProjectionMatrix[1] = 0.0f;
+    m_kProjectionMatrix[5] = 2.0f;
+    m_kProjectionMatrix[9] = 0.0f;
+    m_kProjectionMatrix[13] = 0.0f;
+    m_kProjectionMatrix[2] = 0.0f;
+    m_kProjectionMatrix[6] = 0.0f;
+    m_kProjectionMatrix[10] = fNearDepthDivDepthRange;
+    m_kProjectionMatrix[14] = -fNearDepthDivDepthRange;
+    m_kProjectionMatrix[3] = 0.0f;
+    m_kProjectionMatrix[7] = 0.0f;
+    m_kProjectionMatrix[11] = 0.0f;
+    m_kProjectionMatrix[15] = 1.0f;
 
     // Viewport update
     D3D10_VIEWPORT kViewPort;
@@ -4444,21 +4398,21 @@ void NiD3D10Renderer::Do_GetCameraData(NiPoint3& kWorldLoc,
 {
     NIASSERT_D3D10_DEVICE_THREAD;
 
-    kWorldRight.x = m_kInvView._11;
-    kWorldRight.y = m_kInvView._12;
-    kWorldRight.z = m_kInvView._13;
+    kWorldRight.x = m_kInverseViewMatrix[0];
+    kWorldRight.y = m_kInverseViewMatrix[1];
+    kWorldRight.z = m_kInverseViewMatrix[2];
 
-    kWorldUp.x = m_kInvView._21;
-    kWorldUp.y = m_kInvView._22;
-    kWorldUp.z = m_kInvView._23;
+    kWorldUp.x = m_kInverseViewMatrix[4];
+    kWorldUp.y = m_kInverseViewMatrix[5];
+    kWorldUp.z = m_kInverseViewMatrix[6];
 
-    kWorldDir.x = m_kInvView._31;
-    kWorldDir.y = m_kInvView._32;
-    kWorldDir.z = m_kInvView._33;
+    kWorldDir.x = m_kInverseViewMatrix[8];
+    kWorldDir.y = m_kInverseViewMatrix[9];
+    kWorldDir.z = m_kInverseViewMatrix[10];
 
-    kWorldLoc.x = m_kInvView._41;
-    kWorldLoc.y = m_kInvView._42;
-    kWorldLoc.z = m_kInvView._43;
+    kWorldLoc.x = m_kInverseViewMatrix[12];
+    kWorldLoc.y = m_kInverseViewMatrix[13];
+    kWorldLoc.z = m_kInverseViewMatrix[14];
 
     kFrustum = m_kCurrentFrustum;
     kPort = m_kCurrentViewPort;
@@ -5001,9 +4955,9 @@ HRESULT NiD3D10Renderer::D3D10CompileEffectFromMemory(void* pData,
 {
     if (ms_hD3D10_1 != NULL)
     {
-        return D3DX10CompileFromMemory((LPCSTR)pData, DataLength, pSrcFileName,
+        return D3DCompile(pData, DataLength, pSrcFileName,
             pDefines, pInclude, NULL, "fx_4_1", HLSLFlags, FXFlags,
-            NULL, ppCompiledEffect, ppErrors, NULL);
+            ppCompiledEffect, ppErrors);
     }
     else
     {

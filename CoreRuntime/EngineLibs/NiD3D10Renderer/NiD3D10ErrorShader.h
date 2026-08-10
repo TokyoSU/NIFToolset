@@ -37,7 +37,7 @@ protected:
 
     NiD3D10Pass* m_pkPass;
 
-    D3DXVECTOR4 m_kMaterialColor;
+    NiBgfxMath::Vec4 m_kMaterialColor;
 };
 
 typedef efd::SmartPointer<NiD3D10ErrorShader> NiD3D10ErrorShaderPtr;

@@ -29,7 +29,9 @@
 #if defined (EE_PLATFORM_XBOX360)
     #include <NiXenonRenderer.h>
 #elif defined (EE_PLATFORM_WIN32)
-    #if defined(NI_RENDERER_DX9)
+    #if defined(NI_RENDERER_BGFX)
+        #include <BgfxRenderer.h>
+    #elif defined(NI_RENDERER_DX9)
         #include <NiDX9Renderer.h>
     #elif defined(NI_RENDERER_DX10)
         #include <NiD3D10Renderer.h>

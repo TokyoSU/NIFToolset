@@ -81,8 +81,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateVertexShader(
         flags = pRenderer->GetAllShaderCreationFlags(pFileNameExtension, flags);
 
         ID3DBlob* pError = NULL;
-        HRESULT hr = D3DX11CompileFromMemory(
-            (efd::Char*)pShaderCode->GetBufferPointer(),
+        HRESULT hr = D3DCompile(
+            pShaderCode->GetBufferPointer(),
             pShaderCode->GetBufferSize(),
             pFileName,
             pDefines,
@@ -91,10 +91,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateVertexShader(
             pShaderTarget,
             flags,
             0,
-            NULL,
             &pShaderByteCode,
-            &pError,
-            NULL);
+            &pError);
 
         if (FAILED(hr) || pShaderByteCode == NULL)
         {
@@ -210,8 +208,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateHullShader(
         flags = pRenderer->GetAllShaderCreationFlags(pFileNameExtension, flags);
 
         ID3DBlob* pError = NULL;
-        HRESULT hr = D3DX11CompileFromMemory(
-            (efd::Char*)pShaderCode->GetBufferPointer(),
+        HRESULT hr = D3DCompile(
+            pShaderCode->GetBufferPointer(),
             pShaderCode->GetBufferSize(),
             pFileName,
             pDefines,
@@ -220,10 +218,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateHullShader(
             pShaderTarget,
             flags,
             0,
-            NULL,
             &pShaderByteCode,
-            &pError,
-            NULL);
+            &pError);
 
         if (FAILED(hr) || pShaderByteCode == NULL)
         {
@@ -339,8 +335,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateDomainShader(
         flags = pRenderer->GetAllShaderCreationFlags(pFileNameExtension, flags);
 
         ID3DBlob* pError = NULL;
-        HRESULT hr = D3DX11CompileFromMemory(
-            (efd::Char*)pShaderCode->GetBufferPointer(),
+        HRESULT hr = D3DCompile(
+            pShaderCode->GetBufferPointer(),
             pShaderCode->GetBufferSize(),
             pFileName,
             pDefines,
@@ -349,10 +345,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateDomainShader(
             pShaderTarget,
             flags,
             0,
-            NULL,
             &pShaderByteCode,
-            &pError,
-            NULL);
+            &pError);
 
         if (FAILED(hr) || pShaderByteCode == NULL)
         {
@@ -473,8 +467,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateGeometryShader(
         flags = pRenderer->GetAllShaderCreationFlags(pFileNameExtension, flags);
 
         ID3DBlob* pError = NULL;
-        HRESULT hr = D3DX11CompileFromMemory(
-            (efd::Char*)pShaderCode->GetBufferPointer(),
+        HRESULT hr = D3DCompile(
+            pShaderCode->GetBufferPointer(),
             pShaderCode->GetBufferSize(),
             pFileName,
             pDefines,
@@ -483,10 +477,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateGeometryShader(
             pShaderTarget,
             flags,
             0,
-            NULL,
             &pShaderByteCode,
-            &pError,
-            NULL);
+            &pError);
 
         if (FAILED(hr) || pShaderByteCode == NULL)
         {
@@ -631,8 +623,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreatePixelShader(
         flags = pRenderer->GetAllShaderCreationFlags(pFileNameExtension, flags);
 
         ID3DBlob* pError = NULL;
-        HRESULT hr = D3DX11CompileFromMemory(
-            (efd::Char*)pShaderCode->GetBufferPointer(),
+        HRESULT hr = D3DCompile(
+            pShaderCode->GetBufferPointer(),
             pShaderCode->GetBufferSize(),
             pFileName,
             pDefines,
@@ -641,10 +633,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreatePixelShader(
             pShaderTarget,
             flags,
             0,
-            NULL,
             &pShaderByteCode,
-            &pError,
-            NULL);
+            &pError);
 
         if (FAILED(hr) || pShaderByteCode == NULL)
         {
@@ -757,8 +747,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateComputeShader(
         flags = pRenderer->GetAllShaderCreationFlags(pFileNameExtension, flags);
 
         ID3DBlob* pError = NULL;
-        HRESULT hr = D3DX11CompileFromMemory(
-            (efd::Char*)pShaderCode->GetBufferPointer(),
+        HRESULT hr = D3DCompile(
+            pShaderCode->GetBufferPointer(),
             pShaderCode->GetBufferSize(),
             pFileName,
             pDefines,
@@ -767,10 +757,8 @@ efd::Bool D3D11ShaderProgramCreatorHLSL::CreateComputeShader(
             pShaderTarget,
             flags,
             0,
-            NULL,
             &pShaderByteCode,
-            &pError,
-            NULL);
+            &pError);
 
         if (FAILED(hr) || pShaderByteCode == NULL)
         {

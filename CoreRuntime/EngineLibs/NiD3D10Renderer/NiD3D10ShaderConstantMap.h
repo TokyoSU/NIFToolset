@@ -105,7 +105,7 @@ public:
     void ReleaseShaderConstantDataStream();
 
     // *** begin Emergent internal use only
-    static void SetupTextureTransformMatrix(D3DXMATRIXA16& kResult,
+    static void SetupTextureTransformMatrix(NiBgfxMath::Mat4A& kResult,
         const NiMatrix3* pkTexMatrix, bool bTrans = false);
 
     // UpdateConstantBufferPacking will update the register and register
@@ -186,42 +186,42 @@ protected:
 
     // Return the data that will be used to fill in the shader constant
     const void* ObtainDefinedConstantValue(NiShaderConstantMapEntry* pkEntry,
-        const NiRenderCallContext& kRCC, D3DXMATRIXA16& kTempMatrix);
+        const NiRenderCallContext& kRCC, NiBgfxMath::Mat4A& kTempMatrix);
     const void* ObtainConstantConstantValue(NiShaderConstantMapEntry* pkEntry,
-        const NiRenderCallContext& kRCC, D3DXMATRIXA16& kTempMatrix);
+        const NiRenderCallContext& kRCC, NiBgfxMath::Mat4A& kTempMatrix);
     const void* ObtainAttributeConstantValue(NiShaderConstantMapEntry* pkEntry,
         const NiRenderCallContext& kRCC, bool bGlobal,
-        NiExtraData* pkExtraData, D3DXMATRIXA16& kTempMatrix);
+        NiExtraData* pkExtraData, NiBgfxMath::Mat4A& kTempMatrix);
     const void* ObtainGlobalConstantValue(NiShaderConstantMapEntry* pkEntry,
-        const NiRenderCallContext& kRCC, D3DXMATRIXA16& kTempMatrix);
+        const NiRenderCallContext& kRCC, NiBgfxMath::Mat4A& kTempMatrix);
     const void* ObtainOperatorConstantValue(NiShaderConstantMapEntry* pkEntry,
         const NiRenderCallContext& kRCC, bool bGlobal,
-        NiExtraData* pkExtraData, D3DXMATRIXA16& kTempMatrix);
+        NiExtraData* pkExtraData, NiBgfxMath::Mat4A& kTempMatrix);
     const void* ObtainObjectConstantValue(NiShaderConstantMapEntry* pkEntry,
-        const NiRenderCallContext& kRCC, D3DXMATRIXA16* pkResult);
+        const NiRenderCallContext& kRCC, NiBgfxMath::Mat4A* pkResult);
 
     // Return the requested data from a specific dynamic effect
     static bool ObtainDataFromDynamicEffect(NiShaderConstantMapEntry* pkEntry,
         ObjectMappings eMapping, NiDynamicEffect* pkDynEffect,
-        const NiRenderCallContext& kRCC, D3DXMATRIXA16* pkResult);
+        const NiRenderCallContext& kRCC, NiBgfxMath::Mat4A* pkResult);
 
     // Perform the Operator operations
     static const void* PerformOperatorMultiply(
         const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
         const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-        bool bInverse, bool bTranspose, D3DXMATRIXA16& kTempMatrix);
+        bool bInverse, bool bTranspose, NiBgfxMath::Mat4A& kTempMatrix);
     static const void* PerformOperatorDivide(
         const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
         const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-        bool bInverse, bool bTranspose, D3DXMATRIXA16& kTempMatrix);
+        bool bInverse, bool bTranspose, NiBgfxMath::Mat4A& kTempMatrix);
     static const void* PerformOperatorAdd(
         const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
         const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-        bool bInverse, bool bTranspose, D3DXMATRIXA16& kTempMatrix);
+        bool bInverse, bool bTranspose, NiBgfxMath::Mat4A& kTempMatrix);
     static const void* PerformOperatorSubtract(
         const void* pvOperand1, NiShaderAttributeDesc::AttributeType eType1,
         const void* pvOperand2, NiShaderAttributeDesc::AttributeType eType2,
-        bool bInverse, bool bTranspose, D3DXMATRIXA16& kTempMatrix);
+        bool bInverse, bool bTranspose, NiBgfxMath::Mat4A& kTempMatrix);
 
     // Copy the shader constant data into the shader constant buffer
     static NiShaderError FillShaderConstantBuffer(void* pvShaderConstantBuffer,
