@@ -14,7 +14,7 @@ cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcp
 cmake --build build --config Release
 ```
 
-`NI_RENDERER` is intentionally fixed to `BGFX`. The old DX9/D3D10/D3D11 renderer source remains in the repository for reference and incremental porting, but it is not part of the active renderer build.
+bgfx is the only renderer backend in this tree. The legacy DX9/D3D10/D3D11 renderer modules and their compile-time selection macros have been removed.
 
 ## bgfx shaders
 

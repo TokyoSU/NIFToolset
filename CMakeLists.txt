@@ -37,13 +37,7 @@ endif()
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(ENABLE_SDM_SHUTDOWN_ASSERT "Enable SDM shutdown assert" OFF)
 
-# The active renderer is bgfx. Legacy Direct3D renderer sources remain in the
-# tree for reference/porting, but are no longer part of the default build.
-set(NI_RENDERER "BGFX" CACHE STRING "Renderer backend")
-set_property(CACHE NI_RENDERER PROPERTY STRINGS BGFX)
-if(NOT NI_RENDERER STREQUAL "BGFX")
-    message(FATAL_ERROR "NIFToolset now uses the BGFX renderer; NI_RENDERER must be BGFX.")
-endif()
+# bgfx is the only renderer backend supported by this tree.
 add_compile_definitions(NI_RENDERER_BGFX)
 
 # Use native MSVC STL instead of stlport

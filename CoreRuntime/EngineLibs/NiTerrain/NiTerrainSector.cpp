@@ -318,32 +318,6 @@ NiTerrainSector* NiTerrainSector::GetAdjacentSector(NiUInt32 uiBorder)
 }
 
 //--------------------------------------------------------------------------------------------------
-void NiTerrainSector::HandleDXDeviceReset()
-{
-    // Tell all blocks that their masks have changed to trigger a rebuild
-    // of their distribution mask textures. 
-    NiUInt32 uiMaxCell;
-    if (!GetMaxLoadedCellIndex(uiMaxCell))
-        return;
-
-    for (NiUInt32 ui = 0; ui <= uiMaxCell; ++ui)
-    {
-        NiTerrainCellLeaf* pkLeaf = 
-            NiDynamicCast(NiTerrainCellLeaf, m_kCellArray.GetAt(ui));
-
-        if (!pkLeaf)
-            continue;
-
-        pkLeaf->MarkSurfaceMasksChanged(true);
-        pkLeaf->Update();
-    }
-
-    // Regeneration of a rendered low detail texture is handled by the parent
-    // NiTerrain object. This is done in this order so other sectors may
-    // have their data regenerated before any rendering is performed.
-}
-
-//--------------------------------------------------------------------------------------------------
 bool NiTerrainSector::PrepareForPainting(const NiSurface* pkSurface, NiUInt32* puiErrorCode)
 {
     NiUInt32 uiDummyErrorCode;

@@ -24,8 +24,6 @@ option(NI_BUILD_INPUT     "Build NiInput"     ON)
 option(NI_BUILD_ASSIMP_EXPORTER
     "Build the AssimpExporter FBX export tool (requires Assimp via vcpkg x64-windows)"
     ON)
-# Shader libs
-option(NI_BUILD_D3DXEFFECT_SHADERLIB "Build legacy DX9 NiD3DXEffectShaderLib" OFF)
 
 # ── Dependency auto-activation ────────────────────────────────────────────────
 # If DEPENDENT is ON and a required option is OFF, force it ON.
@@ -57,7 +55,6 @@ ni_force_deps(NI_BUILD_LIGHTPREPASS NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOOD
 ni_force_deps(NI_BUILD_AUDIO        NI_BUILD_SYSTEM NI_BUILD_MAIN)
 ni_force_deps(NI_BUILD_CURSOR     NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGATE NI_BUILD_MESH)
 ni_force_deps(NI_BUILD_FONT       NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGATE NI_BUILD_MESH)
-ni_force_deps(NI_BUILD_D3DXEFFECT_SHADERLIB NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGATE NI_BUILD_MESH NI_BUILD_RENDERER)
 ni_force_deps(NI_BUILD_INPUT NI_BUILD_SYSTEM NI_BUILD_MAIN NI_BUILD_FLOODGATE NI_BUILD_MESH NI_BUILD_RENDERER)
 ni_force_deps(NI_BUILD_ASSIMP_EXPORTER
     NI_BUILD_SYSTEM
@@ -70,4 +67,3 @@ ni_force_deps(NI_BUILD_ASSIMP_EXPORTER
 
 add_subdirectory("EngineLibs")
 add_subdirectory("UtilityLibs")
-add_subdirectory("ShaderLibs")

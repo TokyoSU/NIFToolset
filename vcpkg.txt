@@ -1,18 +1,13 @@
-vcpkg install dxsdk-d3dx:x86-windows
-vcpkg install dxsdk-d3dx:x86-windows-static
-vcpkg install SDL3:x86-windows
-vcpkg install SDL3:x86-windows-static
+NIFToolset uses vcpkg manifest mode (vcpkg.json).
 
-or
+Required packages are:
+- bgfx[tools]
+- SDL3
+- assimp
+- tinyxml
 
-vcpkg install dxsdk-d3dx:x64-windows
-vcpkg install SDL3:x64-windows
-vcpkg install dxsdk-d3dx:x64-windows-static
-vcpkg install SDL3:x64-windows-static
+For manual classic-mode installation, use the matching triplet, for example:
 
-depending on the build you choose.
+    vcpkg install bgfx[tools]:x64-windows-static sdl3:x64-windows-static assimp:x64-windows-static tinyxml:x64-windows-static
 
-vcpkg install assimp:x86-windows
-vcpkg install assimp:x86-windows-static
-vcpkg install assimp:x64-windows
-vcpkg install assimp:x64-windows-static
+The legacy dxsdk-d3dx dependency was removed with the DX9/D3D10/D3D11 renderers.

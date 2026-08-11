@@ -46,11 +46,6 @@
 
 #include <NiFixedString.h>
 
-// Include DX9 Renderer for device reset callbacks
-#if defined(WIN32) && defined(NI_RENDERER_DX9)
-#include <NiDX9Renderer.h>
-#endif
-
 using namespace efd;
 
 //--------------------------------------------------------------------------------------------------
@@ -100,8 +95,6 @@ void NiTerrain::Initialize()
     // Create the terrain material
     m_spTerrainMaterial = NiTerrainMaterial::Create();
 
-    // Hook into the DX9 renderer for context events
-    SubscribeToDXDeviceResetNotification();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -116,8 +109,6 @@ void NiTerrain::DestroyData()
     // Make sure we aren't destroying the data twice
     if (m_bObjDestroyed)
         return;
-
-    UnsubscribeToDXDeviceResetNotification();
 
     // Wait for all loading/unloading tasks to complete
     m_kStreamingManager.WaitForAllTasksCompleted();
@@ -718,81 +709,6 @@ bool NiTerrain::Callback_EndUsingRenderTargetGroup(NiRenderStep* pkCurrentStep,
         return pkRenderer->EndUsingRenderTargetGroup();
     else
         return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void NiTerrain::SubscribeToDXDeviceResetNotification()
-{
-    m_uiDXDeviceResetCallbackIndex = 0;
-    m_bRegisteredDXDeviceResetCallback = false;
-
-#if defined(WIN32) && defined(NI_RENDERER_DX9)
-    NiDX9Renderer* pkRenderer = 
-        NiDynamicCast(NiDX9Renderer, NiRenderer::GetRenderer());
-    if (pkRenderer)
-    {
-        m_uiDXDeviceResetCallbackIndex = pkRenderer->AddResetNotificationFunc(
-            (NiDX9Renderer::RESETNOTIFYFUNC)&HandleDXDeviceReset, this);
-        m_bRegisteredDXDeviceResetCallback = true;
-    }
-#endif
-}
-
-//--------------------------------------------------------------------------------------------------
-void NiTerrain::UnsubscribeToDXDeviceResetNotification()
-{
-#if defined(WIN32) && defined(NI_RENDERER_DX9)
-    NiDX9Renderer* pkRenderer = 
-        NiDynamicCast(NiDX9Renderer, NiRenderer::GetRenderer());
-    if (pkRenderer && m_bRegisteredDXDeviceResetCallback)
-    {
-        pkRenderer->RemoveResetNotificationFunc(m_uiDXDeviceResetCallbackIndex);
-    }
-#endif
-}
-
-//--------------------------------------------------------------------------------------------------
-bool NiTerrain::HandleDXDeviceReset(bool bBeforeReset, void* pvVoid)
-{
-    if (!bBeforeReset) // Wait until after device reset
-    {
-        NiTerrain* pkTerrain = (NiTerrain*)pvVoid;
-        EE_ASSERT(pkTerrain);
-
-        // Reset all the referenced surfaces
-        SurfaceReferenceMap::iterator kIter;
-        for (kIter = pkTerrain->m_kSurfaces.begin(); kIter != pkTerrain->m_kSurfaces.end(); ++kIter)
-        {
-            SurfaceEntry* pkEntry = kIter->second;
-            if (!pkEntry)
-                continue;
-
-            NiSurface* pkSuface = const_cast<NiSurface*>(pkEntry->m_pkSurface);
-            if (!pkSuface)
-                continue;
-
-            pkSuface->SetTexturingProperty(0);
-            pkSuface->PrepareForUse();
-        }
-
-        // Loop through each sector and force regeneration of blend textures
-        NiTerrainSector* pkSector = NULL;
-        NiUInt32 ulIndex;
-        NiTMapIterator kIterator = pkTerrain->m_kSectors.GetFirstPos();
-        while (kIterator)
-        {
-            pkTerrain->m_kSectors.GetNext(kIterator, ulIndex, pkSector);
-            if (pkSector)
-            {
-                pkSector->HandleDXDeviceReset();
-            }
-        }
-        
-        // If low detail rendering has been initialised, re-render that too
-        if (pkTerrain->m_pkPaintingData)
-            pkTerrain->RenderLowDetailTextures();
-    }
-    return true;
 }
 
 //--------------------------------------------------------------------------------------------------
