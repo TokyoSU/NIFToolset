@@ -190,7 +190,7 @@ private:
         Ni2DBuffer::CopyFilterPreference pref);
     void BindMaterialAndTexture(NiMesh* mesh);
     bool BindTerrainMaterial(NiMesh* mesh);
-    bool BindExtendedMaterial(const NiMaterial* material);
+    bool BindExtendedMaterial(NiMesh* mesh, const NiMaterial* material);
     bool BindDecorationMaterial(NiMesh* mesh);
     bool BindSkyMaterial(NiMesh* mesh);
     uint64_t BuildRenderState(bool shadowWrite = false) const;

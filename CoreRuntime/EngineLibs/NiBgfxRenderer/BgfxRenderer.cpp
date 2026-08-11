@@ -4233,9 +4233,9 @@ bool BgfxRenderer::BindTerrainMaterial(NiMesh* mesh)
     return true;
 }
 
-bool BgfxRenderer::BindExtendedMaterial(const NiMaterial* material)
+bool BgfxRenderer::BindExtendedMaterial(NiMesh* mesh, const NiMaterial* material)
 {
-    if (!material || material->GetName() != "NiExtendedMaterial" ||
+    if (!mesh || !material || material->GetName() != "NiExtendedMaterial" ||
         !bgfx::isValid(m_extendedProgram))
     {
         return false;
@@ -4246,8 +4246,26 @@ bool BgfxRenderer::BindExtendedMaterial(const NiMaterial* material)
     if (!extended->GetTerrainEnabled())
         return false;
 
-    NiSourceTexture* diffuseArray = extended->GetTerrainTextureArray();
-    NiSourceTexture* alphaArray = extended->GetTerrainAlphaArray();
+    // Grand Fantasia authors the terrain resources per mesh: shader map 0 is
+    // the diffuse Texture2DArray, shader map 1 is the alpha Texture2DArray,
+    // and TerrainInfo/TerrainLayerData live in NiFloatsExtraData.  Prefer that
+    // per-mesh state over NiExtendedMaterial's optional shared fallback state;
+    // NiExtendedMaterial::Create() returns a shared material instance, so
+    // storing scene-specific arrays only on the material would be incorrect.
+    const NiTexturingProperty* texturing =
+        m_pkCurrProp ? m_pkCurrProp->GetTexturing() : nullptr;
+    const NiTexturingProperty::ShaderMap* diffuseMap =
+        texturing && texturing->GetShaderMapCount() > 0 ?
+        texturing->GetShaderMap(0) : nullptr;
+    const NiTexturingProperty::ShaderMap* alphaMap =
+        texturing && texturing->GetShaderMapCount() > 1 ?
+        texturing->GetShaderMap(1) : nullptr;
+
+    NiTexture* diffuseArray = diffuseMap && diffuseMap->GetTexture() ?
+        diffuseMap->GetTexture() : extended->GetTerrainTextureArray();
+    NiTexture* alphaArray = alphaMap && alphaMap->GetTexture() ?
+        alphaMap->GetTexture() : extended->GetTerrainAlphaArray();
+
     if (!diffuseArray || !alphaArray || !EnsureTexture(diffuseArray) ||
         !EnsureTexture(alphaArray))
     {
@@ -4256,51 +4274,116 @@ bool BgfxRenderer::BindExtendedMaterial(const NiMaterial* material)
 
     TextureData* diffuseData = GetTextureData(diffuseArray);
     TextureData* alphaData = GetTextureData(alphaArray);
-    const NiPixelData* diffusePixels = diffuseArray->GetSourcePixelData();
-    const NiPixelData* alphaPixels = alphaArray->GetSourcePixelData();
+    NiSourceTexture* diffuseSource = NiDynamicCast(NiSourceTexture, diffuseArray);
+    NiSourceTexture* alphaSource = NiDynamicCast(NiSourceTexture, alphaArray);
+    const NiPixelData* diffusePixels = diffuseSource ?
+        diffuseSource->GetSourcePixelData() : nullptr;
+    const NiPixelData* alphaPixels = alphaSource ?
+        alphaSource->GetSourcePixelData() : nullptr;
     if (!diffuseData || !alphaData || !diffusePixels || !alphaPixels ||
         !bgfx::isValid(diffuseData->m_handle) || !bgfx::isValid(alphaData->m_handle))
     {
         return false;
     }
 
-    unsigned int layerCount = extended->GetTerrainLayerCount();
-    layerCount = std::min(layerCount, diffusePixels->GetNumFaces());
-    layerCount = std::min(layerCount, alphaPixels->GetNumFaces());
-    layerCount = std::min<unsigned int>(layerCount,
-        NiExtendedMaterial::MAX_TERRAIN_LAYERS);
-    if (layerCount == 0)
-        return false;
-
-    // These reuse the standard base/dark sampler uniform names. Sampler
-    // uniforms are dimension-agnostic in bgfx; the dedicated fragment shader
-    // declares them as sampler2DArray instead of sampler2D.
-    bgfx::setTexture(0, m_textureUniforms[0], diffuseData->m_handle);
-    bgfx::setTexture(1, m_textureUniforms[1], alphaData->m_handle);
-
-    const float terrainInfo[4] =
+    // Start from NiExtendedMaterial's fallback values.  The mesh extra data
+    // below overrides these values when present, matching the Grand Fantasia
+    // custom TerrainSplatTextureArray node exactly.
+    float terrainInfo[4] =
     {
-        static_cast<float>(layerCount),
-        0.0f,   // The original NiExtendedMaterial exposes no blur-radius field.
-        0.001f, // Match the node's minimum edge-softness clamp.
+        static_cast<float>(extended->GetTerrainLayerCount()),
+        0.0f,
+        0.001f,
         0.0f
     };
-    const float alphaInfo[4] =
+
+    const auto copyExtraFloats = [mesh](const char* name, float* output,
+        unsigned int capacity, unsigned int* copied = nullptr)
     {
-        alphaPixels->GetWidth() ? 1.0f / static_cast<float>(alphaPixels->GetWidth()) : 0.0f,
-        alphaPixels->GetHeight() ? 1.0f / static_cast<float>(alphaPixels->GetHeight()) : 0.0f,
-        0.0f, 0.0f
+        NiFloatsExtraData* data = NiDynamicCast(NiFloatsExtraData,
+            mesh->GetExtraData(NiFixedString(name)));
+        if (!data)
+            return false;
+
+        unsigned int size = 0;
+        float* values = nullptr;
+        data->GetArray(size, values);
+        if (!values || size == 0)
+            return false;
+
+        const unsigned int count = std::min(size, capacity);
+        std::copy_n(values, count, output);
+        if (copied)
+            *copied = count;
+        return true;
     };
+
+    copyExtraFloats("TerrainInfo", terrainInfo, 4);
+
     std::array<NiBgfxMath::Vec4, NiExtendedMaterial::MAX_TERRAIN_LAYERS> layers{};
-    const NiPoint4* sourceLayers = extended->GetTerrainLayerData();
+    const NiPoint4* materialLayers = extended->GetTerrainLayerData();
     for (unsigned int i = 0; i < NiExtendedMaterial::MAX_TERRAIN_LAYERS; ++i)
     {
         layers[i] =
         {
-            sourceLayers[i].X(), sourceLayers[i].Y(),
-            sourceLayers[i].Z(), sourceLayers[i].W()
+            materialLayers[i].X(), materialLayers[i].Y(),
+            materialLayers[i].Z(), materialLayers[i].W()
         };
     }
+
+    std::array<float, NiExtendedMaterial::MAX_TERRAIN_LAYERS * 4> extraLayerData{};
+    unsigned int copiedLayerFloats = 0;
+    if (copyExtraFloats("TerrainLayerData", extraLayerData.data(),
+        static_cast<unsigned int>(extraLayerData.size()), &copiedLayerFloats))
+    {
+        const unsigned int extraLayerCount = copiedLayerFloats / 4;
+        for (unsigned int i = 0; i < extraLayerCount; ++i)
+        {
+            layers[i] =
+            {
+                extraLayerData[i * 4 + 0],
+                extraLayerData[i * 4 + 1],
+                extraLayerData[i * 4 + 2],
+                extraLayerData[i * 4 + 3]
+            };
+        }
+
+        // Hand-authored users may provide TerrainLayerData without the
+        // companion TerrainInfo. Infer a usable layer count in that case.
+        if (terrainInfo[0] <= 0.0f)
+            terrainInfo[0] = static_cast<float>(extraLayerCount);
+    }
+
+    unsigned int layerCount = terrainInfo[0] > 0.0f ?
+        static_cast<unsigned int>(terrainInfo[0] + 0.5f) : 0u;
+    layerCount = std::min<unsigned int>(layerCount,
+        NiExtendedMaterial::MAX_TERRAIN_LAYERS);
+    layerCount = std::min(layerCount, diffusePixels->GetNumFaces());
+    layerCount = std::min(layerCount, alphaPixels->GetNumFaces());
+    if (layerCount == 0)
+        return false;
+
+    // Clamp the value sent to the shader to the actual available array slices.
+    terrainInfo[0] = static_cast<float>(layerCount);
+    terrainInfo[1] = std::max(terrainInfo[1], 0.0f);
+    terrainInfo[2] = std::max(terrainInfo[2], 0.001f);
+
+    // Preserve the sampler semantics authored by SceneTerrainBuilder:
+    // diffuse = wrap + anisotropic, alpha = clamp + trilinear.
+    bgfx::setTexture(0, m_textureUniforms[0], diffuseData->m_handle,
+        SamplerFlags(diffuseMap));
+    bgfx::setTexture(1, m_textureUniforms[1], alphaData->m_handle,
+        SamplerFlags(alphaMap));
+
+    const float alphaInfo[4] =
+    {
+        alphaPixels->GetWidth() ?
+            1.0f / static_cast<float>(alphaPixels->GetWidth()) : 0.0f,
+        alphaPixels->GetHeight() ?
+            1.0f / static_cast<float>(alphaPixels->GetHeight()) : 0.0f,
+        0.0f,
+        0.0f
+    };
 
     bgfx::setUniform(m_extendedTerrainInfoUniform, terrainInfo);
     bgfx::setUniform(m_extendedAlphaInfoUniform, alphaInfo);
@@ -5512,7 +5595,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         const bool terrainBound = terrainMaterial && !shadowWrite && !vsmBlur &&
             BindTerrainMaterial(mesh);
         const bool extendedBound = extendedMaterial && !shadowWrite && !vsmBlur &&
-            !terrainBound && BindExtendedMaterial(activeMaterial);
+            !terrainBound && BindExtendedMaterial(mesh, activeMaterial);
         const bool decorationBound = decorationMaterial && !shadowWrite && !vsmBlur &&
             !terrainBound && !extendedBound && BindDecorationMaterial(mesh);
         const bool skyBound = skyMaterial && !shadowWrite && !vsmBlur &&
