@@ -2903,6 +2903,13 @@ bool BgfxRenderer::Do_BeginUsingRenderTargetGroup(NiRenderTargetGroup* target,
     bgfx::setViewRect(m_viewId, 0, 0,
         ClampCast<std::uint16_t>(target->GetWidth(0)),
         ClampCast<std::uint16_t>(target->GetHeight(0)));
+
+    NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+        "Begin render-target view=%u target=%s size=%ux%u clearMode=0x%08x.",
+        static_cast<unsigned int>(m_viewId),
+        target == m_defaultTargetGroup ? "default" : "offscreen",
+        target->GetWidth(0), target->GetHeight(0), clearMode);
+
     Do_ClearBuffer(nullptr, clearMode);
     return true;
 }
@@ -3050,15 +3057,16 @@ void BgfxRenderer::SetModelTransform(const NiTransform& transform) const
 bool BgfxRenderer::AllocateAuxiliaryView(bgfx::ViewId& viewId,
     const char* name)
 {
-    // bgfx defaults to 256 views. Reserve the final slot as a guard rather
-    // than submitting an invalid ID if an unexpectedly large click graph is
-    // generated in one frame. Auxiliary blit/readback passes deliberately do
-    // not replace m_viewId, so a copy cannot corrupt a still-active render
-    // pass's framebuffer/camera state.
-    constexpr std::uint16_t kMaxUsableViews = 255;
-    if (m_nextViewId >= kMaxUsableViews)
+    // Views 240-255 are intentionally reserved for external renderers such as
+    // CEGUI. The CEGUI bgfx renderer uses view 240 as its default base and may
+    // consume up to 16 views, so Gamebryo must never allocate into that range.
+    // Auxiliary blit/readback passes deliberately do not replace m_viewId, so
+    // a copy cannot corrupt a still-active render pass's framebuffer/camera
+    // state.
+    constexpr std::uint16_t kFirstExternalView = 240;
+    if (m_nextViewId >= kFirstExternalView)
     {
-        Warning("BgfxRenderer: exhausted bgfx views for the current frame.");
+        Warning("BgfxRenderer: exhausted reserved Gamebryo bgfx views (0-239) for the current frame; views 240-255 are reserved for external renderers.");
         return false;
     }
 
