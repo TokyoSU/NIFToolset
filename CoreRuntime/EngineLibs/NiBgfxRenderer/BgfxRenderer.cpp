@@ -38,6 +38,7 @@
 #include <NiSpecularProperty.h>
 #include <NiShadeProperty.h>
 #include <NiMaterial.h>
+#include <NiMaterialInstance.h>
 #include <NiShadowTechnique.h>
 #include <NiVSMShadowTechnique.h>
 #include <NiShadowGenerator.h>
@@ -1535,6 +1536,57 @@ unsigned int BgfxRenderer::GetMaxBuffersPerRenderTargetGroup() const
 
 bool BgfxRenderer::GetIndependentBufferBitDepths() const { return true; }
 void BgfxRenderer::UseLegacyPipelineAsDefaultMaterial() {}
+
+bool BgfxRenderer::PrecacheShader(NiRenderObject* renderObject)
+{
+    if (!renderObject || !NiIsKindOf(NiMesh, renderObject))
+        return false;
+
+    NiMesh* mesh = static_cast<NiMesh*>(renderObject);
+
+    // NiShaderSortProcessor relies on PrecacheShader() guaranteeing that the
+    // active material instance owns a valid cached NiShader before the mesh is
+    // inserted into a shader bucket. The legacy DX renderers did this through
+    // GetShaderAndVertexDecl(); bgfx has no D3D vertex declaration object, but
+    // it must still preserve the Gamebryo material-cache contract.
+    if (!mesh->GetActiveMaterial())
+    {
+        NiMaterial* defaultMaterial = GetDefaultMaterial();
+        if (!defaultMaterial)
+            defaultMaterial = GetInitialDefaultMaterial();
+
+        if (!defaultMaterial)
+            return false;
+
+        mesh->ApplyAndSetActiveMaterial(defaultMaterial);
+    }
+
+    const NiMaterialInstance* materialInstance =
+        mesh->GetActiveMaterialInstance();
+    if (!materialInstance || !materialInstance->GetMaterial())
+        return false;
+
+    // GetShader() is the fast path when the cached descriptor is still valid.
+    // GetShaderFromMaterial() resolves/generates the BgfxMaterialShader cache
+    // entry when the material is dirty or has never been resolved.
+    NiShader* shader = mesh->GetShader();
+    if (!shader)
+        shader = mesh->GetShaderFromMaterial();
+
+    if (!shader)
+    {
+        const char* meshName = static_cast<const char*>(mesh->GetName());
+        const char* materialName = static_cast<const char*>(
+            materialInstance->GetMaterial()->GetName());
+        NiLogWriteFormat(NI_LOG_WARNING, "NiBgfxRenderer", __FILE__, __LINE__,
+            "Failed to precache shader for mesh '%s' material '%s'.",
+            meshName && *meshName ? meshName : "<unnamed>",
+            materialName && *materialName ? materialName : "<unnamed>");
+        return false;
+    }
+
+    return true;
+}
 
 bool BgfxRenderer::PrecacheTexture(NiTexture* texture)
 {

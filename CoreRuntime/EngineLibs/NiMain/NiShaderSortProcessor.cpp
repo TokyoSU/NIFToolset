@@ -145,6 +145,13 @@ void NiShaderSortProcessor::PreRenderProcessList(
 
         NiMaterialInstance* pkSrcMatInst =
             (NiMaterialInstance*)kMesh.GetActiveMaterialInstance();
+        if (!pkSrcMatInst || !pkSrcMatInst->GetCachedShader())
+        {
+            // PrecacheShader() is required to leave a valid material/shader
+            // cache entry. Treat a failed renderer/material contract as a
+            // non-renderable object instead of inserting a null-shader bucket.
+            continue;
+        }
 
         // Find a bucket with a matching NiShader.
         // TODO: mbailey 3/10/09 If this method starts showing up in performance
@@ -252,11 +259,18 @@ void NiShaderSortProcessor::PreRenderProcessList(
             }
 
             {
-                EE_PROFILER_ZONE(Renderer, 0, pkMatInst->GetMaterial()->GetName());
+                const NiMaterial* pkMaterial = pkMatInst->GetMaterial();
                 NiShader* pkShader = pkMatInst->GetCachedShader();
-                EE_ASSERT(pkShader);
+                if (!pkMaterial || !pkShader)
+                {
+                    // The material may have been invalidated after precaching.
+                    // Never dereference a stale/null shader cache entry.
+                    continue;
+                }
+
+                EE_PROFILER_ZONE(Renderer, 0, pkMaterial->GetName());
                 pkShader->RenderMeshes(&m_kTempVisibleArray);
-            }   
+            }
         }
     }
     MARKER_POP();

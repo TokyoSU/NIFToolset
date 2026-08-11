@@ -65,6 +65,7 @@ public:
     bool GetIndependentBufferBitDepths() const override;
 
     void UseLegacyPipelineAsDefaultMaterial() override;
+    bool PrecacheShader(NiRenderObject* renderObject) override;
     bool PrecacheTexture(NiTexture* texture) override;
     bool SetMipmapSkipLevel(unsigned int skip) override;
     unsigned int GetMipmapSkipLevel() const override;
