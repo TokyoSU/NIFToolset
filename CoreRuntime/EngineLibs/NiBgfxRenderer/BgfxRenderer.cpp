@@ -3039,15 +3039,15 @@ uint64_t BgfxRenderer::BuildRenderState(bool shadowWrite) const
         // here made nearly every ordinary mesh double-sided in the bgfx port.
         case NiStencilProperty::DRAW_CCW_OR_BOTH:
         case NiStencilProperty::DRAW_CCW:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         case NiStencilProperty::DRAW_CW:
-            state |= BGFX_STATE_CULL_CW;
+            state |= BGFX_STATE_CULL_CCW;
             break;
         case NiStencilProperty::DRAW_BOTH:
             break;
         default:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         }
     }
