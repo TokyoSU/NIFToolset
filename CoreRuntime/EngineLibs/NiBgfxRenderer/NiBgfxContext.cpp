@@ -195,14 +195,11 @@ bool NiBgfxContext::Initialize(void* nativeWindowHandle, unsigned int width,
         "Initializing bgfx: window=%p size=%ux%u vsync=%s.",
         nativeWindowHandle, width, height, vsync ? "true" : "false");
 
-    bgfx::PlatformData platformData{};
-    platformData.nwh = nativeWindowHandle;
-    bgfx::setPlatformData(platformData);
-
     m_callback = std::make_unique<NiBgfxCallback>();
 
     bgfx::Init init{};
     init.type = bgfx::RendererType::Count;
+    init.platformData.nwh = nativeWindowHandle;
     init.callback = m_callback.get();
     init.resolution.width = width;
     init.resolution.height = height;
