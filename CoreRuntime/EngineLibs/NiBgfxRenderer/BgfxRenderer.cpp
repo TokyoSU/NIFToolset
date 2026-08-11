@@ -4057,10 +4057,37 @@ void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
                 if (config->GetSliceTransitionEnabled() &&
                     config->GetPackedTransitionMatrix())
                 {
-                    std::memcpy(pssmTransitionRows.data(),
-                        config->GetPackedTransitionMatrix(), sizeof(float) * 16u);
-                    pssmTransitionParams[0] = 1.0f;
-                    pssmTransitionParams[1] = config->GetSliceTransitionSize();
+                    // The legacy D3D11 path binds the PSSM generator's real
+                    // NiNoiseTexture (wrap + nearest) for screen-door cascade
+                    // transitions. The old bgfx port used a procedural hash,
+                    // which changes abruptly as the transition matrix moves and
+                    // causes visible foliage shimmer/blinking. Reuse one of the
+                    // dynamically available 2D sampler stages instead.
+                    NiTexturingProperty::Map* noiseMap =
+                        pssmGenerator->GetNoiseTextureMap();
+                    NiTexture* noiseTexture = noiseMap ? noiseMap->GetTexture() : nullptr;
+                    if (noiseTexture && EnsureTexture(noiseTexture))
+                    {
+                        TextureData* noiseData = GetTextureData(noiseTexture);
+                        const int noiseSlot = noiseData && bgfx::isValid(noiseData->m_handle) ?
+                            reserve2DShadowSlot() : -1;
+                        if (noiseSlot >= 0)
+                        {
+                            bgfx::UniformHandle noiseSampler = samplerUniformFor2DSlot(
+                                static_cast<unsigned int>(noiseSlot));
+                            if (bgfx::isValid(noiseSampler))
+                            {
+                                bgfx::setTexture(static_cast<std::uint8_t>(noiseSlot),
+                                    noiseSampler, noiseData->m_handle,
+                                    SamplerFlags(noiseMap));
+                                std::memcpy(pssmTransitionRows.data(),
+                                    config->GetPackedTransitionMatrix(), sizeof(float) * 16u);
+                                pssmTransitionParams[0] = 1.0f;
+                                pssmTransitionParams[1] = config->GetSliceTransitionSize();
+                                pssmTransitionParams[2] = static_cast<float>(noiseSlot);
+                            }
+                        }
+                    }
                 }
 
                 pssmParams[0] = 1.0f;

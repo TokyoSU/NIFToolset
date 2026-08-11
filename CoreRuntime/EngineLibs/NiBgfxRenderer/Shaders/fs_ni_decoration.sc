@@ -58,7 +58,7 @@ uniform vec4 u_pssmSplitDistances[4];
 uniform vec4 u_pssmSplitRows[64];
 uniform vec4 u_pssmViewports[16];
 uniform vec4 u_pssmTransitionRows[4];
-// x=transition enabled, y=transition world-size, z/w reserved
+// x=transition enabled, y=transition world-size, z=noise sampler stage, w=reserved
 uniform vec4 u_pssmTransitionParams;
 uniform vec4 u_fogColor;
 uniform vec4 u_fogParams;
@@ -320,10 +320,11 @@ float pssmTransitionNoise(vec3 worldPos)
             p.z * u_pssmTransitionRows[2].x + p.w * u_pssmTransitionRows[3].x,
         p.x * u_pssmTransitionRows[0].y + p.y * u_pssmTransitionRows[1].y +
             p.z * u_pssmTransitionRows[2].y + p.w * u_pssmTransitionRows[3].y);
-    // The original path samples NiNoiseTexture. A deterministic screen-door
-    // hash preserves the same transition semantics without consuming a 17th
-    // sampler on a fully populated standard material.
-    float noise = fract(sin(dot(scr, vec2(12.9898, 78.233))) * 43758.5453);
+    // Match the original Gamebryo PSSM path: sample the transition generator's
+    // 128x128 NiNoiseTexture. The renderer dynamically lends an unused 2D
+    // sampler stage to this draw and stores that stage in params.z.
+    int noiseStage = int(u_pssmTransitionParams.z + 0.5);
+    float noise = sampleShadow2DStage(noiseStage, scr).r;
     return noise * u_pssmTransitionParams.y;
 }
 
