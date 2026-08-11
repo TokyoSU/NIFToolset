@@ -300,6 +300,36 @@ namespace
         return bgfx::TextureFormat::Unknown;
     }
 
+    const NiPixelFormat& GetNiPixelFormatForBgfx(bgfx::TextureFormat::Enum format)
+    {
+        switch (format)
+        {
+        case bgfx::TextureFormat::RGBA8:   return NiPixelFormat::RGBA32;
+        case bgfx::TextureFormat::BGRA8:   return NiPixelFormat::BGRA8888;
+        case bgfx::TextureFormat::BC1:     return NiPixelFormat::DXT1;
+        case bgfx::TextureFormat::BC2:     return NiPixelFormat::DXT3;
+        case bgfx::TextureFormat::BC3:     return NiPixelFormat::DXT5;
+        case bgfx::TextureFormat::A8:      return NiPixelFormat::A8;
+        case bgfx::TextureFormat::R8:      return NiPixelFormat::L8;
+        case bgfx::TextureFormat::R16F:    return NiPixelFormat::R16;
+        case bgfx::TextureFormat::R32F:    return NiPixelFormat::R32;
+        case bgfx::TextureFormat::RG16F:   return NiPixelFormat::RG32;
+        case bgfx::TextureFormat::RG32F:   return NiPixelFormat::RG64;
+        case bgfx::TextureFormat::RGBA16F: return NiPixelFormat::RGBA64;
+        case bgfx::TextureFormat::RGBA32F: return NiPixelFormat::RGBA128;
+
+        // Gamebryo has no native BC4/BC5/BC6/BC7 descriptors. Keep those
+        // resources renderer-specific; bgfx still knows their real GPU format.
+        case bgfx::TextureFormat::BC4:
+        case bgfx::TextureFormat::BC5:
+        case bgfx::TextureFormat::BC6H:
+        case bgfx::TextureFormat::BC7:
+            return NiPixelFormat::RENDERERSPECIFICCOMPRESSED;
+        default:
+            return NiPixelFormat::RENDERERSPECIFIC32;
+        }
+    }
+
     bool IsCompressedSupportedFormat(const NiPixelFormat& format)
     {
         return format == NiPixelFormat::DXT1 || format == NiPixelFormat::DXT3 ||
@@ -387,12 +417,12 @@ class BgfxRenderer::TextureData final : public NiTexture::RendererData
 public:
     TextureData(NiTexture* texture, bgfx::TextureHandle handle,
         bgfx::TextureFormat::Enum format, const NiPixelFormat& pixelFormat,
-        bool owned = true)
+        bool owned = true, unsigned int width = 0, unsigned int height = 0)
         : NiTexture::RendererData(texture), m_handle(handle),
           m_format(format), m_owned(owned)
     {
-        m_uiWidth = texture ? texture->GetWidth() : 0;
-        m_uiHeight = texture ? texture->GetHeight() : 0;
+        m_uiWidth = width ? width : (texture ? texture->GetWidth() : 0);
+        m_uiHeight = height ? height : (texture ? texture->GetHeight() : 0);
         m_kPixelFormat = pixelFormat;
     }
 
@@ -410,6 +440,8 @@ public:
     unsigned int m_sourceRevision = 0;
     unsigned int m_paletteRevision = 0;
     unsigned int m_mipmapSkip = 0;
+    unsigned int m_layers = 1;
+    unsigned int m_mipCount = 1;
     std::vector<std::uint8_t> m_staging;
 };
 
@@ -2258,6 +2290,8 @@ bool BgfxRenderer::CreateTextureFromPixelData(NiTexture* texture,
         pixels->GetPixelFormat());
     rendererData->m_sourceRevision = sourcePixels->GetRevisionID();
     rendererData->m_mipmapSkip = mipSkip;
+    rendererData->m_layers = faceCount;
+    rendererData->m_mipCount = uploadMipCount;
     const NiPalette* palette = sourcePixels->GetPalette();
     rendererData->m_paletteRevision = palette ? palette->GetRevisionID() : 0;
     texture->SetRendererData(rendererData);
@@ -2265,6 +2299,73 @@ bool BgfxRenderer::CreateTextureFromPixelData(NiTexture* texture,
         "Uploaded texture '%s' (%ux%u, faces=%u, mips=%u, skipped=%u, format=%s).",
         GetTextureDebugName(texture), uploadWidth, uploadHeight, faceCount,
         uploadMipCount, mipSkip, GetPixelFormatName(pixels->GetPixelFormat()));
+    return true;
+}
+
+bool BgfxRenderer::CreateTextureFromContainerFile(NiSourceTexture* texture)
+{
+    if (!texture)
+        return false;
+
+    const char* filename = texture->GetPlatformSpecificFilename();
+    if (!filename || !*filename)
+        return false;
+
+    std::ifstream input(filename, std::ios::binary | std::ios::ate);
+    if (!input)
+        return false;
+
+    const std::streamoff end = input.tellg();
+    if (end <= 0 || static_cast<unsigned long long>(end) >
+        std::numeric_limits<std::uint32_t>::max())
+    {
+        return false;
+    }
+
+    std::vector<std::uint8_t> fileData(static_cast<size_t>(end));
+    input.seekg(0, std::ios::beg);
+    if (!input.read(reinterpret_cast<char*>(fileData.data()),
+        static_cast<std::streamsize>(end)))
+        return false;
+
+    // bgfx's container loader parses DDS/KTX/PVR itself. This is important
+    // for Texture2DArray DDS files because NiImageConverter/NiPixelData only
+    // covers the legacy Gamebryo image path and cannot represent every modern
+    // container format (Grand Fantasia's alpha array is BC4, for example).
+    bgfx::TextureInfo info{};
+    const bgfx::Memory* memory = bgfx::copy(fileData.data(),
+        static_cast<std::uint32_t>(fileData.size()));
+    const bgfx::TextureHandle handle = bgfx::createTexture(memory,
+        BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+        static_cast<std::uint8_t>(std::min<unsigned int>(m_mipmapSkip, 255u)),
+        &info);
+
+    if (!bgfx::isValid(handle))
+        return false;
+
+    if (info.width == 0 || info.height == 0 || info.numLayers == 0)
+    {
+        bgfx::destroy(handle);
+        return false;
+    }
+
+    const NiPixelFormat& pixelFormat = GetNiPixelFormatForBgfx(info.format);
+    TextureData* rendererData = NiNew TextureData(texture, handle, info.format,
+        pixelFormat, true, info.width, info.height);
+    rendererData->m_mipmapSkip = m_mipmapSkip;
+    rendererData->m_layers = info.numLayers;
+    rendererData->m_mipCount = info.numMips;
+    texture->SetRendererData(rendererData);
+
+    NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+        "Loaded texture container '%s' directly through bgfx "
+        "(%ux%u, layers=%u, mips=%u, format=%u).",
+        GetTextureDebugName(texture),
+        static_cast<unsigned int>(info.width),
+        static_cast<unsigned int>(info.height),
+        static_cast<unsigned int>(info.numLayers),
+        static_cast<unsigned int>(info.numMips),
+        static_cast<unsigned int>(info.format));
     return true;
 }
 
@@ -2279,16 +2380,31 @@ bool BgfxRenderer::CreateSourceTextureRendererData(NiSourceTexture* texture)
     if (texture->GetRendererData())
         return true;
 
+    // Match the old D3D renderer contract: when the source texture requests
+    // direct-to-renderer loading, give the backend the original file before
+    // forcing it through NiImageConverter. bgfx can parse DDS texture arrays
+    // directly, including BC4 alpha arrays used by Grand Fantasia terrain.
+    if (!texture->GetSourcePixelData() && texture->GetLoadDirectToRendererHint() &&
+        CreateTextureFromContainerFile(texture))
+    {
+        return true;
+    }
+
     if (!texture->GetSourcePixelData())
         texture->LoadPixelDataFromFile();
-    if (!texture->GetSourcePixelData())
-    {
-        NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
-            "Failed to load source pixel data for texture '%s'.",
-            GetTextureDebugName(texture));
-        return false;
-    }
-    return CreateTextureFromPixelData(texture, texture->GetSourcePixelData(), false);
+
+    if (texture->GetSourcePixelData())
+        return CreateTextureFromPixelData(texture, texture->GetSourcePixelData(), false);
+
+    // Also try the container path as a fallback. This covers external DDS
+    // arrays even if callers did not explicitly set the direct-load hint.
+    if (CreateTextureFromContainerFile(texture))
+        return true;
+
+    NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+        "Failed to load texture '%s' through both NiPixelData and bgfx's container loader.",
+        GetTextureDebugName(texture));
+    return false;
 }
 
 bool BgfxRenderer::CreateSourceCubeMapRendererData(NiSourceCubeMap* cubeMap)
@@ -2301,6 +2417,16 @@ bool BgfxRenderer::CreateSourceCubeMapRendererData(NiSourceCubeMap* cubeMap)
     }
     if (cubeMap->GetRendererData())
         return true;
+
+    // Single-file DDS/KTX/PVR cubemaps can use the same direct container path.
+    // Multi-file legacy cubemaps simply fall through to NiSourceCubeMap's
+    // existing application-pixel-data loader.
+    if (!cubeMap->GetSourcePixelData() && cubeMap->GetLoadDirectToRendererHint() &&
+        CreateTextureFromContainerFile(cubeMap))
+    {
+        return true;
+    }
+
     if (!cubeMap->GetSourcePixelData())
         cubeMap->LoadPixelDataFromFile();
     if (!cubeMap->GetSourcePixelData())
@@ -4274,13 +4400,7 @@ bool BgfxRenderer::BindExtendedMaterial(NiMesh* mesh, const NiMaterial* material
 
     TextureData* diffuseData = GetTextureData(diffuseArray);
     TextureData* alphaData = GetTextureData(alphaArray);
-    NiSourceTexture* diffuseSource = NiDynamicCast(NiSourceTexture, diffuseArray);
-    NiSourceTexture* alphaSource = NiDynamicCast(NiSourceTexture, alphaArray);
-    const NiPixelData* diffusePixels = diffuseSource ?
-        diffuseSource->GetSourcePixelData() : nullptr;
-    const NiPixelData* alphaPixels = alphaSource ?
-        alphaSource->GetSourcePixelData() : nullptr;
-    if (!diffuseData || !alphaData || !diffusePixels || !alphaPixels ||
+    if (!diffuseData || !alphaData ||
         !bgfx::isValid(diffuseData->m_handle) || !bgfx::isValid(alphaData->m_handle))
     {
         return false;
@@ -4358,8 +4478,8 @@ bool BgfxRenderer::BindExtendedMaterial(NiMesh* mesh, const NiMaterial* material
         static_cast<unsigned int>(terrainInfo[0] + 0.5f) : 0u;
     layerCount = std::min<unsigned int>(layerCount,
         NiExtendedMaterial::MAX_TERRAIN_LAYERS);
-    layerCount = std::min(layerCount, diffusePixels->GetNumFaces());
-    layerCount = std::min(layerCount, alphaPixels->GetNumFaces());
+    layerCount = std::min(layerCount, diffuseData->m_layers);
+    layerCount = std::min(layerCount, alphaData->m_layers);
     if (layerCount == 0)
         return false;
 
@@ -4377,10 +4497,10 @@ bool BgfxRenderer::BindExtendedMaterial(NiMesh* mesh, const NiMaterial* material
 
     const float alphaInfo[4] =
     {
-        alphaPixels->GetWidth() ?
-            1.0f / static_cast<float>(alphaPixels->GetWidth()) : 0.0f,
-        alphaPixels->GetHeight() ?
-            1.0f / static_cast<float>(alphaPixels->GetHeight()) : 0.0f,
+        alphaData->GetWidth() ?
+            1.0f / static_cast<float>(alphaData->GetWidth()) : 0.0f,
+        alphaData->GetHeight() ?
+            1.0f / static_cast<float>(alphaData->GetHeight()) : 0.0f,
         0.0f,
         0.0f
     };

@@ -174,6 +174,7 @@ private:
     BufferData* GetBufferData(const Ni2DBuffer* buffer) const;
     bool CreateTextureFromPixelData(NiTexture* texture,
         const NiPixelData* pixels, bool cubeMap);
+    bool CreateTextureFromContainerFile(NiSourceTexture* texture);
     bool EnsureTexture(NiTexture* texture);
     bool AllocateView(const char* name = nullptr);
     bool AllocateAuxiliaryView(bgfx::ViewId& viewId,
