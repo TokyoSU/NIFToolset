@@ -2848,13 +2848,49 @@ bool BgfxRenderer::Do_BeginUsingRenderTargetGroup(NiRenderTargetGroup* target,
 {
     if (!ValidateRenderTargetGroup(target))
         return false;
-    if (!AllocateView(target == m_defaultTargetGroup ?
+
+    const bool isDefaultTarget = target == m_defaultTargetGroup;
+
+    // Keep the default back-buffer clear in a dedicated bgfx view. Views are
+    // executed in ascending ViewId order, so this guarantees that the clear
+    // happens before every Gamebryo draw pass and before CEGUI's reserved
+    // 240-255 views. It also prevents later camera/framebuffer setup from
+    // accidentally changing the view that owns the clear operation.
+    if (isDefaultTarget && clearMode != CLEAR_NONE)
+    {
+        bgfx::ViewId clearView = 0;
+        if (!AllocateAuxiliaryView(clearView, "NiBgfx Default Backbuffer Clear"))
+            return false;
+
+        bgfx::setViewFrameBuffer(clearView, BGFX_INVALID_HANDLE);
+        bgfx::setViewRect(clearView, 0, 0,
+            ClampCast<std::uint16_t>(target->GetWidth(0)),
+            ClampCast<std::uint16_t>(target->GetHeight(0)));
+
+        std::uint16_t clearFlags = BGFX_CLEAR_NONE;
+        if (clearMode & CLEAR_BACKBUFFER) clearFlags |= BGFX_CLEAR_COLOR;
+        if (clearMode & CLEAR_ZBUFFER) clearFlags |= BGFX_CLEAR_DEPTH;
+        if (clearMode & CLEAR_STENCIL) clearFlags |= BGFX_CLEAR_STENCIL;
+
+        const std::uint32_t clearColor = ToBgfxClearColor(m_backgroundColor);
+        bgfx::setViewClear(clearView, clearFlags, clearColor, m_depthClear,
+            static_cast<std::uint8_t>(m_stencilClear));
+        bgfx::touch(clearView);
+
+        NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+            "Backbuffer clear view=%u size=%ux%u clearMode=0x%08x bgfxFlags=0x%04x color=0x%08x.",
+            static_cast<unsigned int>(clearView), target->GetWidth(0),
+            target->GetHeight(0), clearMode,
+            static_cast<unsigned int>(clearFlags), clearColor);
+    }
+
+    if (!AllocateView(isDefaultTarget ?
         "NiBgfx Default Backbuffer" : "NiBgfx Render Target"))
     {
         return false;
     }
 
-    if (target == m_defaultTargetGroup)
+    if (isDefaultTarget)
     {
         bgfx::setViewFrameBuffer(m_viewId, BGFX_INVALID_HANDLE);
     }
@@ -2919,10 +2955,15 @@ bool BgfxRenderer::Do_BeginUsingRenderTargetGroup(NiRenderTargetGroup* target,
     NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
         "Begin render-target view=%u target=%s size=%ux%u clearMode=0x%08x.",
         static_cast<unsigned int>(m_viewId),
-        target == m_defaultTargetGroup ? "default" : "offscreen",
+        isDefaultTarget ? "default" : "offscreen",
         target->GetWidth(0), target->GetHeight(0), clearMode);
 
-    Do_ClearBuffer(nullptr, clearMode);
+    // The default target's requested clear was already submitted through its
+    // dedicated lower-numbered clear view above. Offscreen targets still clear
+    // their own draw view because their attachments are unique to that pass.
+    if (!isDefaultTarget)
+        Do_ClearBuffer(nullptr, clearMode);
+
     return true;
 }
 
