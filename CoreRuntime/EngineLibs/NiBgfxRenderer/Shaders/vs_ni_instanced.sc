@@ -3,20 +3,25 @@ $output v_color0, v_texcoord01, v_texcoord23, v_texcoord45, v_texcoord67, v_worl
 
 #include <bgfx_shader.sh>
 
-vec3 instancePoint(vec3 p, vec4 row0, vec4 row1, vec4 row2)
+// Gamebryo packs INSTANCETRANSFORMS as three matrix columns, not rows:
+//   i_data0 = (R00, R10, R20, Tx)
+//   i_data1 = (R01, R11, R21, Ty)
+//   i_data2 = (R02, R12, R22, Tz)
+// Reconstruct the same transform used by the original HLSL row-vector path.
+vec3 instancePoint(vec3 p, vec4 col0, vec4 col1, vec4 col2)
 {
     return vec3(
-        dot(row0.xyz, p) + row0.w,
-        dot(row1.xyz, p) + row1.w,
-        dot(row2.xyz, p) + row2.w);
+        col0.x * p.x + col1.x * p.y + col2.x * p.z + col0.w,
+        col0.y * p.x + col1.y * p.y + col2.y * p.z + col1.w,
+        col0.z * p.x + col1.z * p.y + col2.z * p.z + col2.w);
 }
 
-vec3 instanceVector(vec3 v, vec4 row0, vec4 row1, vec4 row2)
+vec3 instanceVector(vec3 v, vec4 col0, vec4 col1, vec4 col2)
 {
     return vec3(
-        dot(row0.xyz, v),
-        dot(row1.xyz, v),
-        dot(row2.xyz, v));
+        col0.x * v.x + col1.x * v.y + col2.x * v.z,
+        col0.y * v.x + col1.y * v.y + col2.y * v.z,
+        col0.z * v.x + col1.z * v.y + col2.z * v.z);
 }
 
 void main()

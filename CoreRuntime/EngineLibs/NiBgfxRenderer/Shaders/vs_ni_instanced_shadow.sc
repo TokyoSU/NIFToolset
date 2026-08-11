@@ -6,10 +6,12 @@ $output v_color0, v_texcoord01, v_texcoord23, v_texcoord45, v_texcoord67, v_worl
 void main()
 {
     vec3 p = a_position;
+    // INSTANCETRANSFORMS contains the three columns of Gamebryo's
+    // world rotation with translation stored in each column's W component.
     vec3 world = vec3(
-        dot(i_data0.xyz, p) + i_data0.w,
-        dot(i_data1.xyz, p) + i_data1.w,
-        dot(i_data2.xyz, p) + i_data2.w);
+        i_data0.x * p.x + i_data1.x * p.y + i_data2.x * p.z + i_data0.w,
+        i_data0.y * p.x + i_data1.y * p.y + i_data2.y * p.z + i_data1.w,
+        i_data0.z * p.x + i_data1.z * p.y + i_data2.z * p.z + i_data2.w);
     vec4 projected = mul(u_viewProj, vec4(world, 1.0));
     gl_Position = projected;
     v_worldPos = world;

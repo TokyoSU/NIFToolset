@@ -3039,15 +3039,15 @@ uint64_t BgfxRenderer::BuildRenderState(bool shadowWrite) const
         // here made nearly every ordinary mesh double-sided in the bgfx port.
         case NiStencilProperty::DRAW_CCW_OR_BOTH:
         case NiStencilProperty::DRAW_CCW:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         case NiStencilProperty::DRAW_CW:
-            state |= BGFX_STATE_CULL_CW;
+            state |= BGFX_STATE_CULL_CCW;
             break;
         case NiStencilProperty::DRAW_BOTH:
             break;
         default:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         }
     }
@@ -6177,11 +6177,16 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                                 const float* rows = reinterpret_cast<const float*>(
                                     instanceSource +
                                     static_cast<size_t>(instance) * INSTANCE_STRIDE);
+                                // NiInstancingUtilities::PackTransform stores
+                                // three matrix columns: (R00,R10,R20,Tx),
+                                // (R01,R11,R21,Ty), (R02,R12,R22,Tz).
+                                // bgfx::setTransform consumes the equivalent
+                                // column-major 4x4 matrix directly.
                                 float matrix[16] =
                                 {
-                                    rows[0], rows[4], rows[8],  0.0f,
-                                    rows[1], rows[5], rows[9],  0.0f,
-                                    rows[2], rows[6], rows[10], 0.0f,
+                                    rows[0], rows[1], rows[2],  0.0f,
+                                    rows[4], rows[5], rows[6],  0.0f,
+                                    rows[8], rows[9], rows[10], 0.0f,
                                     rows[3], rows[7], rows[11], 1.0f
                                 };
                                 bgfx::setTransform(matrix);
