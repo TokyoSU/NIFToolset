@@ -2876,12 +2876,6 @@ bool BgfxRenderer::Do_BeginUsingRenderTargetGroup(NiRenderTargetGroup* target,
         bgfx::setViewClear(clearView, clearFlags, clearColor, m_depthClear,
             static_cast<std::uint8_t>(m_stencilClear));
         bgfx::touch(clearView);
-
-        NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
-            "Backbuffer clear view=%u size=%ux%u clearMode=0x%08x bgfxFlags=0x%04x color=0x%08x.",
-            static_cast<unsigned int>(clearView), target->GetWidth(0),
-            target->GetHeight(0), clearMode,
-            static_cast<unsigned int>(clearFlags), clearColor);
     }
 
     if (!AllocateView(isDefaultTarget ?
@@ -2951,12 +2945,6 @@ bool BgfxRenderer::Do_BeginUsingRenderTargetGroup(NiRenderTargetGroup* target,
     bgfx::setViewRect(m_viewId, 0, 0,
         ClampCast<std::uint16_t>(target->GetWidth(0)),
         ClampCast<std::uint16_t>(target->GetHeight(0)));
-
-    NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
-        "Begin render-target view=%u target=%s size=%ux%u clearMode=0x%08x.",
-        static_cast<unsigned int>(m_viewId),
-        isDefaultTarget ? "default" : "offscreen",
-        target->GetWidth(0), target->GetHeight(0), clearMode);
 
     // The default target's requested clear was already submitted through its
     // dedicated lower-numbered clear view above. Offscreen targets still clear
