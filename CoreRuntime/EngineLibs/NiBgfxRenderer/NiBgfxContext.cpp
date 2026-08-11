@@ -199,8 +199,8 @@ bool NiBgfxContext::Initialize(void* nativeWindowHandle, unsigned int width,
 
     bgfx::Init init{};
     init.type = bgfx::RendererType::Count;
-    init.platformData.nwh = nativeWindowHandle;
     init.callback = m_callback.get();
+    init.platformData.nwh = nativeWindowHandle;
     init.resolution.width = width;
     init.resolution.height = height;
     init.resolution.reset = vsync ? BGFX_RESET_VSYNC : BGFX_RESET_NONE;

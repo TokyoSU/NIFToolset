@@ -3,6 +3,10 @@ $input v_texcoord01
 #include <bgfx_shader.sh>
 
 SAMPLER2D(s_baseTexture, 0);
+// NiVSMBlurMaterial can apply a Base map transform on the vertical pass.
+// These uniforms are already populated by BindMaterialAndTexture.
+uniform vec4 u_mapTransform0[11];
+uniform vec4 u_mapTransform1[11];
 // x/y = inverse source texture size, z = kernel size, w = direction
 // (0 = horizontal, 1 = vertical).
 uniform vec4 u_vsmBlurParams;
@@ -15,7 +19,11 @@ void main()
     vec2 stepUV = u_vsmBlurParams.w > 0.5
         ? vec2(0.0, u_vsmBlurParams.y)
         : vec2(u_vsmBlurParams.x, 0.0);
-    vec2 uv = v_texcoord01.xy - stepUV * halfKernel;
+    vec3 baseUv = vec3(v_texcoord01.xy, 1.0);
+    vec2 transformedUv = vec2(
+        dot(u_mapTransform0[0].xyz, baseUv),
+        dot(u_mapTransform1[0].xyz, baseUv));
+    vec2 uv = transformedUv - stepUV * halfKernel;
     float blurWeight = 2.0;
     vec4 totalColor = vec4(0.0, 0.0, 0.0, 0.0);
 

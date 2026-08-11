@@ -5796,7 +5796,7 @@ bool BgfxRenderer::LoadShadowPrograms()
 
 bool BgfxRenderer::LoadVsmBlurProgram()
 {
-    bgfx::ShaderHandle vs = LoadShader("vs_ni_basic.bin");
+    bgfx::ShaderHandle vs = LoadShader("vs_ni_vsm_blur.bin");
     bgfx::ShaderHandle fs = LoadShader("fs_ni_vsm_blur.bin");
     if (!bgfx::isValid(vs) || !bgfx::isValid(fs))
     {
