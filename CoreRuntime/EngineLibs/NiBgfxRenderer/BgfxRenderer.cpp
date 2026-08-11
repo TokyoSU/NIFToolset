@@ -1174,65 +1174,160 @@ unsigned int BgfxRenderer::GetStencilClear() const { return m_stencilClear; }
 
 bool BgfxRenderer::ValidateRenderTargetGroup(NiRenderTargetGroup* target)
 {
+    // Do not call NiRenderTargetGroup::IsValid() here. IsValid() delegates
+    // straight back to the active renderer's ValidateRenderTargetGroup(), so
+    // doing so would recurse until the stack is exhausted. Renderer validation
+    // is the implementation behind NiRenderTargetGroup::IsValid().
     if (!target)
     {
         NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
             "Render-target validation failed: target is null.", __FILE__, __LINE__);
         return false;
     }
-    if (!target->IsValid())
-    {
-        NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
-            "Render-target validation failed: NiRenderTargetGroup::IsValid returned false.",
-            __FILE__, __LINE__);
-        return false;
-    }
-    if (target->GetBufferCount() == 0)
-    {
-        NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
-            "Render-target validation failed: group contains no color buffers.",
-            __FILE__, __LINE__);
-        return false;
-    }
-    if (target->GetBufferCount() > GetMaxBuffersPerRenderTargetGroup())
+
+    const unsigned int bufferCount = target->GetBufferCount();
+    const unsigned int maxBuffers = GetMaxBuffersPerRenderTargetGroup();
+    if (bufferCount > maxBuffers)
     {
         NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
             "Render-target validation failed: %u color buffers requested, bgfx supports %u.",
-            target->GetBufferCount(), GetMaxBuffersPerRenderTargetGroup());
+            bufferCount, maxBuffers);
         return false;
     }
 
-    const unsigned int width = target->GetWidth(0);
-    const unsigned int height = target->GetHeight(0);
-    for (unsigned int i = 1; i < target->GetBufferCount(); ++i)
+    // bgfx supports depth-only framebuffers, but an RTG with no attachments at
+    // all cannot be used as a framebuffer.
+    if (bufferCount == 0 && !target->HasDepthStencil())
     {
-        if (target->GetWidth(i) != width || target->GetHeight(i) != height)
+        NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
+            "Render-target validation failed: group contains no attachments.",
+            __FILE__, __LINE__);
+        return false;
+    }
+
+    unsigned int width = 0;
+    unsigned int height = 0;
+    Ni2DBuffer::MultiSamplePreference msaa = Ni2DBuffer::MULTISAMPLE_NONE;
+    bool haveAttachment = false;
+
+    for (unsigned int i = 0; i < bufferCount; ++i)
+    {
+        Ni2DBuffer* buffer = target->GetBuffer(i);
+        if (!buffer)
         {
             NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
-                "Render-target validation failed: color buffer %u is %ux%u but buffer 0 is %ux%u.",
-                i, target->GetWidth(i), target->GetHeight(i), width, height);
+                "Render-target validation failed: color buffer %u is null.", i);
             return false;
+        }
+
+        if (!buffer->GetRendererData())
+        {
+            NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                "Render-target validation failed: color buffer %u has no renderer data.", i);
+            return false;
+        }
+
+        const unsigned int bufferWidth = buffer->GetWidth();
+        const unsigned int bufferHeight = buffer->GetHeight();
+        if (bufferWidth == 0 || bufferHeight == 0)
+        {
+            NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                "Render-target validation failed: color buffer %u has invalid dimensions %ux%u.",
+                i, bufferWidth, bufferHeight);
+            return false;
+        }
+
+        if (!haveAttachment)
+        {
+            width = bufferWidth;
+            height = bufferHeight;
+            msaa = buffer->GetMSAAPref();
+            haveAttachment = true;
+        }
+        else
+        {
+            if (bufferWidth != width || bufferHeight != height)
+            {
+                NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                    "Render-target validation failed: color buffer %u is %ux%u but the first attachment is %ux%u.",
+                    i, bufferWidth, bufferHeight, width, height);
+                return false;
+            }
+
+            if (buffer->GetMSAAPref() != msaa)
+            {
+                NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                    "Render-target validation failed: color buffer %u has a different MSAA preference.", i);
+                return false;
+            }
         }
     }
 
-    if (target->HasDepthStencil() &&
-        (target->GetDepthStencilWidth() != width ||
-         target->GetDepthStencilHeight() != height))
+    if (target->HasDepthStencil())
     {
-        NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
-            "Render-target validation failed: depth buffer is %ux%u but color buffers are %ux%u.",
-            target->GetDepthStencilWidth(), target->GetDepthStencilHeight(), width, height);
-        return false;
+        NiDepthStencilBuffer* depthBuffer = target->GetDepthStencilBuffer();
+        if (!depthBuffer || !depthBuffer->GetRendererData())
+        {
+            NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
+                "Render-target validation failed: depth/stencil buffer has no renderer data.",
+                __FILE__, __LINE__);
+            return false;
+        }
+
+        const unsigned int depthWidth = depthBuffer->GetWidth();
+        const unsigned int depthHeight = depthBuffer->GetHeight();
+        if (depthWidth == 0 || depthHeight == 0)
+        {
+            NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                "Render-target validation failed: depth/stencil buffer has invalid dimensions %ux%u.",
+                depthWidth, depthHeight);
+            return false;
+        }
+
+        if (!haveAttachment)
+        {
+            width = depthWidth;
+            height = depthHeight;
+            msaa = depthBuffer->GetMSAAPref();
+            haveAttachment = true;
+        }
+        else
+        {
+            if (depthWidth != width || depthHeight != height)
+            {
+                NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                    "Render-target validation failed: depth buffer is %ux%u but color attachments are %ux%u.",
+                    depthWidth, depthHeight, width, height);
+                return false;
+            }
+
+            if (depthBuffer->GetMSAAPref() != msaa)
+            {
+                NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
+                    "Render-target validation failed: depth/stencil MSAA preference does not match the color attachments.",
+                    __FILE__, __LINE__);
+                return false;
+            }
+        }
     }
 
-    return true;
+    return haveAttachment;
 }
 
 bool BgfxRenderer::IsDepthBufferCompatible(Ni2DBuffer* buffer,
     NiDepthStencilBuffer* depthBuffer)
 {
-    return buffer && depthBuffer && buffer->GetWidth() == depthBuffer->GetWidth() &&
-        buffer->GetHeight() == depthBuffer->GetHeight();
+    if (!buffer)
+        return false;
+
+    // A missing depth buffer is valid; it simply means depth/stencil is not
+    // requested for the target.
+    if (!depthBuffer)
+        return true;
+
+    return buffer->GetWidth() == depthBuffer->GetWidth() &&
+        buffer->GetHeight() == depthBuffer->GetHeight() &&
+        buffer->GetMSAAPref() == depthBuffer->GetMSAAPref();
 }
 
 NiRenderTargetGroup* BgfxRenderer::GetDefaultRenderTargetGroup() const
