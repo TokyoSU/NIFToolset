@@ -182,6 +182,8 @@ private:
     bool IsMeshGpuCacheable(const NiMesh* mesh) const;
     std::uint64_t BuildMeshCacheSignature(const NiMesh* mesh,
         unsigned int submesh) const;
+    std::uint64_t BuildMeshDataRevision(const NiMesh* mesh,
+        unsigned int usage) const;
     MeshCache* GetOrCreateMeshCache(NiMesh* mesh);
     void PurgeGpuMeshCache(bool forceAll = false);
 

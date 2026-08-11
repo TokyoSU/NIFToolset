@@ -125,29 +125,35 @@ namespace
         std::uint32_t color;
     };
 
-    bgfx::VertexLayout GetStandardVertexLayout()
+    const bgfx::VertexLayout& GetStandardVertexLayout()
     {
-        bgfx::VertexLayout layout;
-        layout.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Bitangent, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord1, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord2, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord3, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord4, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord5, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord6, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord7, 2, bgfx::AttribType::Float)
-            // Store palette-local bone indices as floats. This is portable
-            // across the D3D/OpenGL/Vulkan bgfx backends and avoids backend-
-            // specific integer vertex attribute behavior.
-            .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
+        // The layout is identical for every Gamebryo draw. Building all 15
+        // attributes again in Do_RenderMesh is measurable in Debug builds.
+        static const bgfx::VertexLayout layout = []
+        {
+            bgfx::VertexLayout value;
+            value.begin()
+                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Bitangent, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord1, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord2, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord3, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord4, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord5, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord6, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord7, 2, bgfx::AttribType::Float)
+                // Store palette-local bone indices as floats. This is portable
+                // across the D3D/OpenGL/Vulkan bgfx backends and avoids backend-
+                // specific integer vertex attribute behavior.
+                .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+                .end();
+            return value;
+        }();
         return layout;
     }
 
@@ -169,9 +175,15 @@ namespace
 
     std::uint32_t PackColor(float r, float g, float b, float a)
     {
+        // This runs per vertex when a mutable stream really changes. Avoid
+        // std::clamp/std::less here: in MSVC Debug builds those tiny helpers
+        // showed up as a surprisingly large renderer hot path.
         const auto toByte = [](float value) -> std::uint32_t
         {
-            value = std::clamp(value, 0.0f, 1.0f);
+            if (value <= 0.0f)
+                return 0u;
+            if (value >= 1.0f)
+                return 255u;
             return static_cast<std::uint32_t>(value * 255.0f + 0.5f);
         };
         return toByte(r) | (toByte(g) << 8) | (toByte(b) << 16) | (toByte(a) << 24);
@@ -498,6 +510,9 @@ public:
         std::uint32_t m_vertexCount = 0;
         std::uint32_t m_indexCount = 0;
         std::uint32_t m_wireIndexCount = 0;
+        std::uint64_t m_vertexRevision = 0;
+        std::uint64_t m_indexRevision = 0;
+        std::uint64_t m_wireIndexRevision = 0;
         bool m_index32 = false;
         bool m_wireIndex32 = false;
 
@@ -525,6 +540,9 @@ public:
             m_vertexCount = 0;
             m_indexCount = 0;
             m_wireIndexCount = 0;
+            m_vertexRevision = 0;
+            m_indexRevision = 0;
+            m_wireIndexRevision = 0;
             m_index32 = false;
             m_wireIndex32 = false;
         }
@@ -3263,6 +3281,40 @@ std::uint64_t BgfxRenderer::BuildMeshCacheSignature(const NiMesh* mesh,
     return hash == 0 ? 1 : hash;
 }
 
+std::uint64_t BgfxRenderer::BuildMeshDataRevision(const NiMesh* mesh,
+    unsigned int usage) const
+{
+    if (!mesh)
+        return 0;
+
+    // Hash only runtime content revisions. Legacy meshes are frequently
+    // marked CPU_WRITE_MUTABLE even though their data stays unchanged for
+    // long periods. This lets dynamic bgfx buffers remain cached until an
+    // actual write lock is released.
+    std::uint64_t hash = 1469598103934665603ull;
+    bool found = false;
+    const unsigned int streamCount = mesh->GetStreamRefCount();
+    for (unsigned int i = 0; i < streamCount; ++i)
+    {
+        const NiDataStreamRef* ref = mesh->GetStreamRefAt(i);
+        if (!ref || ref->IsPerInstance())
+            continue;
+
+        const NiDataStream* stream = ref->GetDataStream();
+        if (!stream || static_cast<unsigned int>(stream->GetUsage()) != usage)
+            continue;
+
+        found = true;
+        const std::uint64_t address = static_cast<std::uint64_t>(
+            reinterpret_cast<std::uintptr_t>(stream));
+        const std::uint64_t revision = stream->GetRevisionID();
+        hash ^= address + 0x9e3779b97f4a7c15ull + (hash << 6) + (hash >> 2);
+        hash ^= revision + 0xc2b2ae3d27d4eb4full + (hash << 6) + (hash >> 2);
+    }
+
+    return found ? (hash == 0 ? 1 : hash) : 0;
+}
+
 BgfxRenderer::MeshCache* BgfxRenderer::GetOrCreateMeshCache(NiMesh* mesh)
 {
     // Stream-out meshes are produced by the GPU and cannot be repacked from
@@ -3327,21 +3379,25 @@ bool BgfxRenderer::EnsureTexture(NiTexture* texture)
         if (NiIsKindOf(NiSourceCubeMap, texture))
         {
             NiSourceCubeMap* sourceCube = static_cast<NiSourceCubeMap*>(texture);
-            if (!sourceCube->GetSourcePixelData())
-                sourceCube->LoadPixelDataFromFile();
             sourcePixels = sourceCube->GetSourcePixelData();
         }
         else
         {
             NiSourceTexture* sourceTexture = static_cast<NiSourceTexture*>(texture);
-            if (!sourceTexture->GetSourcePixelData())
-                sourceTexture->LoadPixelDataFromFile();
             sourcePixels = sourceTexture->GetSourcePixelData();
         }
 
         TextureData* data = GetTextureData(texture);
-        if (!sourcePixels || !data)
-            return data != nullptr;
+        if (!data)
+            return false;
+
+        // Static NiSourceTexture instances intentionally discard application
+        // pixel data after their renderer copy is created. Reloading the file
+        // here turns every material bind into disk/image-decoder work. If the
+        // source pixels are not resident, the existing renderer data remains
+        // authoritative until the texture is explicitly released/recreated.
+        if (!sourcePixels)
+            return true;
 
         const NiPalette* palette = sourcePixels->GetPalette();
         const unsigned int paletteRevision = palette ? palette->GetRevisionID() : 0;
@@ -4978,7 +5034,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
     const NiFixedString& binormalSemantic = hardwareSkinned ?
         NiCommonSemantics::BINORMAL_BP() : NiCommonSemantics::BINORMAL();
 
-    const bgfx::VertexLayout layout = GetStandardVertexLayout();
+    const bgfx::VertexLayout& layout = GetStandardVertexLayout();
     const unsigned int submeshCount = mesh->GetSubmeshCount();
     const bool staticGpuCacheable = IsMeshGpuCacheable(mesh);
     MeshCache* meshCache = GetOrCreateMeshCache(mesh);
@@ -5018,9 +5074,13 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         if (vertexCount == 0)
             continue;
 
-        const bool cachedVertex = staticGpuCacheable && gpuSubmesh &&
-            bgfx::isValid(gpuSubmesh->m_vertexBuffer) &&
-            gpuSubmesh->m_vertexCount == vertexCount;
+        const std::uint64_t vertexRevision = BuildMeshDataRevision(mesh,
+            static_cast<unsigned int>(NiDataStream::USAGE_VERTEX));
+        const bool cachedVertex = gpuSubmesh &&
+            gpuSubmesh->m_vertexCount == vertexCount &&
+            gpuSubmesh->m_vertexRevision == vertexRevision &&
+            (staticGpuCacheable ? bgfx::isValid(gpuSubmesh->m_vertexBuffer) :
+                bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer));
 
         bgfx::TransientVertexBuffer vertexBuffer = {};
         std::vector<StandardVertex> packedVertices;
@@ -5047,9 +5107,13 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 vertices = reinterpret_cast<StandardVertex*>(vertexBuffer.data);
             }
 
+            // std::vector::resize value-initializes StandardVertex, so cached
+            // CPU packing is already zeroed. Transient storage is not, hence
+            // only clear it explicitly for that fallback path.
+            if (!gpuSubmesh)
+                std::memset(vertices, 0, sizeof(StandardVertex) * vertexCount);
             for (unsigned int i = 0; i < vertexCount; ++i)
             {
-                vertices[i] = {};
                 vertices[i].nz = 1.0f;
                 vertices[i].tx = 1.0f;
                 vertices[i].by = 1.0f;
@@ -5455,10 +5519,11 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 }
                 else
                 {
-                    // Mutable/volatile Gamebryo streams must be refreshed, but
-                    // they should not consume the per-frame transient arena.
-                    // Keep one persistent dynamic buffer per submesh and
-                    // update it from the repacked CPU data each draw.
+                    // Mutable/volatile Gamebryo streams must remain updateable,
+                    // but they should not consume the per-frame transient arena
+                    // or upload again when no CPU write actually occurred. Keep
+                    // one persistent dynamic buffer and update it only when the
+                    // NiDataStream revision changes.
                     if (!bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer))
                     {
                         gpuSubmesh->m_dynamicVertexBuffer =
@@ -5482,6 +5547,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                 gpuSubmesh->m_signature = cacheSignature;
                 gpuSubmesh->m_vertexCount = vertexCount;
+                gpuSubmesh->m_vertexRevision = vertexRevision;
             }
             else
             {
@@ -5490,7 +5556,10 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         }
         else
         {
-            bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer);
+            if (staticGpuCacheable)
+                bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer);
+            else
+                bgfx::setVertexBuffer(0, gpuSubmesh->m_dynamicVertexBuffer);
 
             // Vertex weights/indices are immutable and live in the cached GPU
             // buffer, but the palette matrices are animation state and must be
@@ -5608,22 +5677,35 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
             submesh < indexLock.GetSubmeshCount() && indexLock.count(submesh) > 0;
 
         bool cachedWireBound = false;
-        if (useWireframe && staticGpuCacheable && gpuSubmesh &&
-            bgfx::isValid(gpuSubmesh->m_wireIndexBuffer) &&
-            gpuSubmesh->m_wireIndexCount > 0)
-        {
-            bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer);
-            cachedWireBound = true;
-        }
 
         if (hasIndexStream)
         {
             const unsigned int indexCount = indexLock.count(submesh);
+            const std::uint64_t indexRevision = BuildMeshDataRevision(mesh,
+                static_cast<unsigned int>(NiDataStream::USAGE_VERTEX_INDEX));
             const auto indexFormat = indexLock.GetDataStreamElement().GetFormat();
             const bool sourceIndex32 =
                 indexFormat == NiDataStreamElement::F_UINT32_1;
             if (!sourceIndex32 && indexFormat != NiDataStreamElement::F_UINT16_1)
                 continue;
+
+            if (useWireframe && gpuSubmesh &&
+                gpuSubmesh->m_wireIndexRevision == indexRevision &&
+                gpuSubmesh->m_wireIndexCount > 0)
+            {
+                if (staticGpuCacheable &&
+                    bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
+                {
+                    bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer);
+                    cachedWireBound = true;
+                }
+                else if (!staticGpuCacheable &&
+                    bgfx::isValid(gpuSubmesh->m_dynamicWireIndexBuffer))
+                {
+                    bgfx::setIndexBuffer(gpuSubmesh->m_dynamicWireIndexBuffer);
+                    cachedWireBound = true;
+                }
+            }
 
             if (useWireframe)
             {
@@ -5644,12 +5726,17 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     }
                 }
             }
-            else if (staticGpuCacheable && gpuSubmesh &&
-                bgfx::isValid(gpuSubmesh->m_indexBuffer) &&
+            else if (gpuSubmesh &&
                 gpuSubmesh->m_indexCount == indexCount &&
-                gpuSubmesh->m_index32 == sourceIndex32)
+                gpuSubmesh->m_index32 == sourceIndex32 &&
+                gpuSubmesh->m_indexRevision == indexRevision &&
+                (staticGpuCacheable ? bgfx::isValid(gpuSubmesh->m_indexBuffer) :
+                    bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer)))
             {
-                bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer);
+                if (staticGpuCacheable)
+                    bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer);
+                else
+                    bgfx::setIndexBuffer(gpuSubmesh->m_dynamicIndexBuffer);
             }
             else if (gpuSubmesh)
             {
@@ -5723,6 +5810,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                 gpuSubmesh->m_indexCount = indexCount;
                 gpuSubmesh->m_index32 = sourceIndex32;
+                gpuSubmesh->m_indexRevision = indexRevision;
             }
             else
             {
@@ -5854,6 +5942,9 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 gpuSubmesh->m_wireIndexCount =
                     static_cast<std::uint32_t>(wireIndices.size());
                 gpuSubmesh->m_wireIndex32 = wireIndex32;
+                gpuSubmesh->m_wireIndexRevision = hasIndexStream ?
+                    BuildMeshDataRevision(mesh, static_cast<unsigned int>(
+                        NiDataStream::USAGE_VERTEX_INDEX)) : vertexRevision;
             }
             else
             {

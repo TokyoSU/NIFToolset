@@ -342,6 +342,11 @@ public:
     /// Get the access rights on the stream.
     inline NiUInt8 GetAccessMask() const;
 
+    /// Monotonically changes whenever CPU/tool write access is unlocked.
+    /// Render backends can use this to avoid re-uploading mutable streams
+    /// whose contents have not actually changed since the previous draw.
+    inline NiUInt32 GetRevisionID() const;
+
     /// Gets the usage of the stream (index, vertex, constant).
     Usage GetUsage() const;
 
@@ -601,6 +606,10 @@ protected:
 
     /// Aggregate lock flags to support NiSPDataStream locking.
     NiUInt8 m_uiLockFlags;
+
+    /// CPU-side content revision. Not serialized; it is only a runtime cache
+    /// invalidation token for render backends.
+    NiUInt32 m_uiRevisionID;
 
     /// Data stream currently locked?
     bool m_bLocked;
