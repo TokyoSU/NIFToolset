@@ -48,6 +48,10 @@
 #include <NiPSSMShadowClickGenerator.h>
 #include <NiPSSMConfiguration.h>
 #include <NiSkinningMeshModifier.h>
+#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+#include <NiPSParticleSystem.h>
+#include <NiPSFacingQuadGenerator.h>
+#endif
 #include <NiExtendedMaterial.h>
 #include <NiLog.h>
 
@@ -62,6 +66,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <numeric>
 #include <vector>
 
 #if defined(EE_PLATFORM_WIN32)
@@ -124,6 +129,43 @@ namespace
         float skinWeights[4];
         std::uint32_t color;
     };
+
+    struct ParticleVertex
+    {
+        float x, y, z;
+        float u, v;
+    };
+
+    const bgfx::VertexLayout& GetParticleVertexLayout()
+    {
+        static const bgfx::VertexLayout layout = []
+        {
+            bgfx::VertexLayout value;
+            value.begin()
+                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+                .end();
+            return value;
+        }();
+        return layout;
+    }
+
+    const bgfx::VertexLayout& GetParticleInstanceLayout()
+    {
+        // bgfx maps i_data0..i_data4 onto TEXCOORD7 downwards when a
+        // vertex/dynamic vertex buffer is used as the instance source.
+        static const bgfx::VertexLayout layout = []
+        {
+            bgfx::VertexLayout value;
+            value.begin()
+                .add(bgfx::Attrib::TexCoord7, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord6, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord5, 4, bgfx::AttribType::Float)
+                .end();
+            return value;
+        }();
+        return layout;
+    }
 
     const bgfx::VertexLayout& GetStandardVertexLayout()
     {
@@ -705,6 +747,8 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
     m_bumpParamsUniform = bgfx::createUniform("u_bumpParams", bgfx::UniformType::Vec4);
     m_cameraPositionUniform = bgfx::createUniform("u_cameraPosition", bgfx::UniformType::Vec4);
     m_cameraDirectionUniform = bgfx::createUniform("u_cameraDirection", bgfx::UniformType::Vec4);
+    m_particleCameraRightUniform = bgfx::createUniform("u_particleCameraRight", bgfx::UniformType::Vec4);
+    m_particleCameraUpUniform = bgfx::createUniform("u_particleCameraUp", bgfx::UniformType::Vec4);
     m_sceneAmbientUniform = bgfx::createUniform("u_sceneAmbient", bgfx::UniformType::Vec4);
     m_lightCountUniform = bgfx::createUniform("u_lightCount", bgfx::UniformType::Vec4);
     m_lightPositionTypeUniform = bgfx::createUniform("u_lightPositionType", bgfx::UniformType::Vec4, MAX_STANDARD_LIGHTS);
@@ -827,6 +871,8 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
         bgfx::isValid(m_bumpParamsUniform) &&
         bgfx::isValid(m_cameraPositionUniform) &&
         bgfx::isValid(m_cameraDirectionUniform) &&
+        bgfx::isValid(m_particleCameraRightUniform) &&
+        bgfx::isValid(m_particleCameraUpUniform) &&
         bgfx::isValid(m_sceneAmbientUniform) &&
         bgfx::isValid(m_lightCountUniform) &&
         bgfx::isValid(m_lightPositionTypeUniform) &&
@@ -923,6 +969,19 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
             GetBackendShaderDirectory().c_str());
         return false;
     }
+#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+    if (!LoadParticlePrograms())
+    {
+        Error("BgfxRenderer: failed to load particle billboard shader program from '%s'.",
+            GetBackendShaderDirectory().c_str());
+        return false;
+    }
+    if (!CreateParticleResources())
+    {
+        Error("BgfxRenderer: failed to create shared particle billboard geometry.");
+        return false;
+    }
+#endif
     if (!LoadSkinnedPrograms())
     {
         Error("BgfxRenderer: failed to load skinned shader programs from '%s'.",
@@ -1003,10 +1062,28 @@ void BgfxRenderer::ShutdownBgfxResources()
     m_defaultDepthBuffer = nullptr;
     m_defaultBackBuffer = nullptr;
 
+    for (ParticleInstancePage& page : m_particleInstancePages)
+    {
+        if (bgfx::isValid(page.m_handle))
+            bgfx::destroy(page.m_handle);
+        page.m_handle = BGFX_INVALID_HANDLE;
+        page.m_capacity = 0;
+        page.m_cursor = 0;
+    }
+    m_particleInstancePages.clear();
+    m_particleInstanceScratch.clear();
+    m_particleOrderScratch.clear();
+    if (bgfx::isValid(m_particleQuadVertexBuffer))
+        bgfx::destroy(m_particleQuadVertexBuffer);
+    if (bgfx::isValid(m_particleQuadIndexBuffer))
+        bgfx::destroy(m_particleQuadIndexBuffer);
+
     if (bgfx::isValid(m_basicProgram))
         bgfx::destroy(m_basicProgram);
     if (bgfx::isValid(m_instancedProgram))
         bgfx::destroy(m_instancedProgram);
+    if (bgfx::isValid(m_particleProgram))
+        bgfx::destroy(m_particleProgram);
     if (bgfx::isValid(m_skinnedProgram))
         bgfx::destroy(m_skinnedProgram);
     if (bgfx::isValid(m_skinnedShadowProgram))
@@ -1070,7 +1147,9 @@ void BgfxRenderer::ShutdownBgfxResources()
         &m_materialSpecularUniform, &m_materialEmissiveUniform,
         &m_alphaParamsUniform, &m_textureParamsUniform, &m_mapParamsUniform,
         &m_mapTransform0Uniform, &m_mapTransform1Uniform, &m_bumpParamsUniform,
-        &m_cameraPositionUniform, &m_cameraDirectionUniform, &m_sceneAmbientUniform, &m_lightCountUniform,
+        &m_cameraPositionUniform, &m_cameraDirectionUniform,
+        &m_particleCameraRightUniform, &m_particleCameraUpUniform,
+        &m_sceneAmbientUniform, &m_lightCountUniform,
         &m_lightPositionTypeUniform, &m_lightDirectionRangeUniform,
         &m_lightDiffuseDimmerUniform, &m_lightAmbientFalloffUniform,
         &m_lightSpecularSpotUniform, &m_lightSpotParamsUniform,
@@ -1123,6 +1202,7 @@ void BgfxRenderer::ShutdownBgfxResources()
 
     m_basicProgram = BGFX_INVALID_HANDLE;
     m_instancedProgram = BGFX_INVALID_HANDLE;
+    m_particleProgram = BGFX_INVALID_HANDLE;
     m_skinnedProgram = BGFX_INVALID_HANDLE;
     m_skinnedShadowProgram = BGFX_INVALID_HANDLE;
     m_terrainProgram = BGFX_INVALID_HANDLE;
@@ -1143,6 +1223,8 @@ void BgfxRenderer::ShutdownBgfxResources()
     m_whiteCubeTexture = BGFX_INVALID_HANDLE;
     m_blackTexture = BGFX_INVALID_HANDLE;
     m_flatNormalTexture = BGFX_INVALID_HANDLE;
+    m_particleQuadVertexBuffer = BGFX_INVALID_HANDLE;
+    m_particleQuadIndexBuffer = BGFX_INVALID_HANDLE;
 }
 
 bool BgfxRenderer::CreateDefaultTargets(unsigned int width, unsigned int height)
@@ -2758,6 +2840,9 @@ bool BgfxRenderer::Do_BeginFrame()
         return false;
 
     ++m_frameSerial;
+    for (ParticleInstancePage& page : m_particleInstancePages)
+        page.m_cursor = 0;
+
     // Mutable meshes use bgfx dynamic-buffer handles, whose pool is much
     // smaller than the number of meshes a large streamed scene can visit.
     // Reclaim caches that have left the visible set regularly instead of
@@ -3033,17 +3118,21 @@ uint64_t BgfxRenderer::BuildRenderState(bool shadowWrite) const
     {
         switch (stencil->GetDrawMode())
         {
+        // Match the legacy D3D11 renderer exactly. DRAW_CCW_OR_BOTH is the
+        // default Gamebryo mode, but on D3D11 it behaves as DRAW_CCW (back-face
+        // culling), not as a two-sided material. Falling through to no culling
+        // here made nearly every ordinary mesh double-sided in the bgfx port.
         case NiStencilProperty::DRAW_CCW_OR_BOTH:
         case NiStencilProperty::DRAW_CCW:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         case NiStencilProperty::DRAW_CW:
-            state |= BGFX_STATE_CULL_CW;
+            state |= BGFX_STATE_CULL_CCW;
             break;
         case NiStencilProperty::DRAW_BOTH:
             break;
         default:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         }
     }
@@ -5068,6 +5157,17 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         bgfx::setUniform(m_shadowWriteParamsUniform, shadowWriteParams);
     }
 
+    // Phase 1 particle instancing: NiPSFacingQuadGenerator systems are
+    // expanded from one shared quad in the vertex shader. The existing
+    // Gamebryo simulation/generator remains attached as a correctness
+    // fallback for unsupported particle variants while this path is proven.
+    if (!vsmBlur && !terrainMaterial && !extendedMaterial &&
+        !decorationMaterial && !skyMaterial &&
+        TryRenderFacingQuadParticles(mesh, shadowWrite))
+    {
+        return;
+    }
+
     NiSkinningMeshModifier* skinModifier =
         NiGetModifier(NiSkinningMeshModifier, mesh);
     const bool hardwareSkinned = !skyMaterial && skinModifier &&
@@ -6203,6 +6303,220 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
     }
 }
 
+bool BgfxRenderer::CreateParticleResources()
+{
+    const ParticleVertex vertices[4] =
+    {
+        {-1.0f,  1.0f, 0.0f, 0.0f, 0.0f},
+        {-1.0f, -1.0f, 0.0f, 0.0f, 1.0f},
+        { 1.0f, -1.0f, 0.0f, 1.0f, 1.0f},
+        { 1.0f,  1.0f, 0.0f, 1.0f, 0.0f}
+    };
+    const std::uint16_t indices[6] = {0, 1, 2, 2, 3, 0};
+
+    m_particleQuadVertexBuffer = bgfx::createVertexBuffer(
+        bgfx::copy(vertices, sizeof(vertices)), GetParticleVertexLayout());
+    m_particleQuadIndexBuffer = bgfx::createIndexBuffer(
+        bgfx::copy(indices, sizeof(indices)));
+
+    if (!bgfx::isValid(m_particleQuadVertexBuffer) ||
+        !bgfx::isValid(m_particleQuadIndexBuffer))
+    {
+        return false;
+    }
+
+    bgfx::setName(m_particleQuadVertexBuffer, "NiPS shared billboard quad");
+    bgfx::setName(m_particleQuadIndexBuffer, "NiPS shared billboard indices");
+    return true;
+}
+
+bool BgfxRenderer::UploadParticleInstances(const void* data,
+    std::uint32_t count, bgfx::DynamicVertexBufferHandle& handle,
+    std::uint32_t& startVertex)
+{
+    static_assert(sizeof(ParticleInstance) == sizeof(float) * 12u,
+        "Particle instance data must stay aligned to three vec4 values.");
+    handle = BGFX_INVALID_HANDLE;
+    startVertex = 0;
+    if (!data || count == 0)
+        return false;
+
+    ParticleInstancePage* selected = nullptr;
+    for (ParticleInstancePage& page : m_particleInstancePages)
+    {
+        if (bgfx::isValid(page.m_handle) &&
+            page.m_capacity - page.m_cursor >= count)
+        {
+            selected = &page;
+            break;
+        }
+    }
+
+    if (!selected)
+    {
+        ParticleInstancePage page;
+        page.m_capacity = std::max(PARTICLE_INSTANCE_PAGE_SIZE, count);
+        page.m_handle = bgfx::createDynamicVertexBuffer(page.m_capacity,
+            GetParticleInstanceLayout());
+        if (!bgfx::isValid(page.m_handle))
+            return false;
+
+        m_particleInstancePages.push_back(page);
+        selected = &m_particleInstancePages.back();
+    }
+
+    const std::uint64_t byteCount64 = static_cast<std::uint64_t>(count) *
+        sizeof(ParticleInstance);
+    if (byteCount64 > std::numeric_limits<std::uint32_t>::max())
+        return false;
+
+    startVertex = selected->m_cursor;
+    const bgfx::Memory* memory = bgfx::copy(data,
+        static_cast<std::uint32_t>(byteCount64));
+    bgfx::update(selected->m_handle, startVertex, memory);
+    selected->m_cursor += count;
+    handle = selected->m_handle;
+    return true;
+}
+
+bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
+    bool shadowWrite)
+{
+#if !defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+    EE_UNUSED_ARG(mesh);
+    EE_UNUSED_ARG(shadowWrite);
+    return false;
+#else
+    if (!mesh || (bgfx::getCaps()->supported & BGFX_CAPS_INSTANCING) == 0 ||
+        !bgfx::isValid(m_particleProgram) ||
+        !bgfx::isValid(m_particleQuadVertexBuffer) ||
+        !bgfx::isValid(m_particleQuadIndexBuffer))
+    {
+        return false;
+    }
+
+    // Facing quads are generated against the main culling camera. During a
+    // shadow click the renderer camera is the light camera, so rebuilding the
+    // billboard basis here would rotate the particles differently from the
+    // legacy Gamebryo geometry. Keep the generated-quad path for shadow writes
+    // in phase 1 and instance only the normal camera-facing pass.
+    if (shadowWrite)
+        return false;
+
+    NiPSParticleSystem* particles = NiDynamicCast(NiPSParticleSystem, mesh);
+    if (!particles || !NiGetModifier(NiPSFacingQuadGenerator, particles) ||
+        particles->GetNumParticles() == 0 || mesh->GetSubmeshCount() != 1 ||
+        mesh->GetInstanced())
+    {
+        return false;
+    }
+
+    // Animated-UV particle systems are left on the original generated-quad
+    // path for phase 1. NiPSAlignedQuadGenerator/mesh particles are also not
+    // matched above and therefore retain their existing behavior.
+    if (particles->HasAnimatedTextures())
+        return false;
+
+    const NiWireframeProperty* wireframe =
+        m_pkCurrProp ? m_pkCurrProp->GetWireframe() : nullptr;
+    if (!wireframe)
+        wireframe = NiWireframeProperty::GetDefault();
+    if (wireframe && wireframe->GetWireframe())
+        return false;
+
+    const std::uint32_t count = particles->GetNumParticles();
+    const NiPoint3* positions = particles->GetPositions();
+    const float* initialSizes = particles->GetInitialSizes();
+    const float* sizes = particles->GetSizes();
+    if (!positions || !initialSizes || !sizes)
+        return false;
+
+    const NiRGBA* colors = particles->GetColors();
+    const float* rotations = particles->GetRotationAngles();
+
+    const NiMatrix3& worldRotate = particles->GetWorldRotate();
+    NiPoint3 modelCameraUp = m_worldUp * worldRotate;
+    NiPoint3 modelCameraRight = m_worldRight * worldRotate;
+    NiPoint3 modelNormal = modelCameraRight.Cross(modelCameraUp);
+
+    m_particleOrderScratch.resize(count);
+    std::iota(m_particleOrderScratch.begin(), m_particleOrderScratch.end(), 0u);
+    if (particles->IsSorted() && count > 1)
+    {
+        NiTransform inverseWorld;
+        particles->GetWorldTransform().Invert(inverseWorld);
+        const NiPoint3 modelCameraPosition = inverseWorld * m_worldLoc;
+
+        std::stable_sort(m_particleOrderScratch.begin(),
+            m_particleOrderScratch.end(),
+            [&](std::uint32_t lhs, std::uint32_t rhs)
+            {
+                const float lhsDistance = NiAbs(
+                    (positions[lhs] - modelCameraPosition).Dot(modelNormal));
+                const float rhsDistance = NiAbs(
+                    (positions[rhs] - modelCameraPosition).Dot(modelNormal));
+                return lhsDistance > rhsDistance;
+            });
+    }
+
+    m_particleInstanceScratch.resize(count);
+    constexpr float inv255 = 1.0f / 255.0f;
+    for (std::uint32_t dst = 0; dst < count; ++dst)
+    {
+        const std::uint32_t src = m_particleOrderScratch[dst];
+        const NiPoint3& position = positions[src];
+        ParticleInstance& instance = m_particleInstanceScratch[dst];
+        instance.px = position.x;
+        instance.py = position.y;
+        instance.pz = position.z;
+        instance.size = initialSizes[src] * sizes[src];
+        instance.rotation = rotations ? rotations[src] : 0.0f;
+        instance.pad0 = instance.pad1 = instance.pad2 = 0.0f;
+
+        if (colors)
+        {
+            instance.r = static_cast<float>(colors[src].r()) * inv255;
+            instance.g = static_cast<float>(colors[src].g()) * inv255;
+            instance.b = static_cast<float>(colors[src].b()) * inv255;
+            instance.a = static_cast<float>(colors[src].a()) * inv255;
+        }
+        else
+        {
+            instance.r = instance.g = instance.b = instance.a = 1.0f;
+        }
+    }
+
+    bgfx::DynamicVertexBufferHandle instanceBuffer = BGFX_INVALID_HANDLE;
+    std::uint32_t instanceStart = 0;
+    if (!UploadParticleInstances(m_particleInstanceScratch.data(), count,
+        instanceBuffer, instanceStart))
+    {
+        return false;
+    }
+
+    const float cameraRight[4] =
+    {
+        modelCameraRight.x, modelCameraRight.y, modelCameraRight.z, 0.0f
+    };
+    const float cameraUp[4] =
+    {
+        modelCameraUp.x, modelCameraUp.y, modelCameraUp.z, 0.0f
+    };
+    bgfx::setUniform(m_particleCameraRightUniform, cameraRight);
+    bgfx::setUniform(m_particleCameraUpUniform, cameraUp);
+
+    SetModelTransform(mesh->GetWorldTransform());
+    BindMaterialAndTexture(mesh);
+    bgfx::setVertexBuffer(0, m_particleQuadVertexBuffer);
+    bgfx::setIndexBuffer(m_particleQuadIndexBuffer);
+    bgfx::setInstanceDataBuffer(instanceBuffer, instanceStart, count);
+    bgfx::setState(BuildRenderState(shadowWrite));
+    bgfx::setStencil(BuildStencilState());
+    bgfx::submit(m_viewId, m_particleProgram);
+    return true;
+#endif
+}
+
 std::string BgfxRenderer::GetBackendShaderDirectory() const
 {
     const char* backend = nullptr;
@@ -6375,6 +6689,27 @@ bool BgfxRenderer::LoadInstancedProgram()
     if (!bgfx::isValid(m_instancedProgram))
         NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer", "bgfx::createProgram failed for the instanced material program.", __FILE__, __LINE__);
     return bgfx::isValid(m_instancedProgram);
+}
+
+bool BgfxRenderer::LoadParticlePrograms()
+{
+    bgfx::ShaderHandle vs = LoadShader("vs_ni_particle.bin");
+    bgfx::ShaderHandle fs = LoadShader("fs_ni_basic.bin");
+    if (!bgfx::isValid(vs) || !bgfx::isValid(fs))
+    {
+        if (bgfx::isValid(vs)) bgfx::destroy(vs);
+        if (bgfx::isValid(fs)) bgfx::destroy(fs);
+        return false;
+    }
+
+    m_particleProgram = bgfx::createProgram(vs, fs, true);
+    if (!bgfx::isValid(m_particleProgram))
+    {
+        NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
+            "bgfx::createProgram failed for the particle billboard program.",
+            __FILE__, __LINE__);
+    }
+    return bgfx::isValid(m_particleProgram);
 }
 
 bool BgfxRenderer::LoadSkinnedPrograms()

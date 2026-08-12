@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 class BgfxDataStreamFactory;
 
@@ -150,6 +151,29 @@ private:
     class TargetGroupData;
     class MeshCache;
 
+    struct ParticleInstance
+    {
+        float px = 0.0f;
+        float py = 0.0f;
+        float pz = 0.0f;
+        float size = 0.0f;
+        float r = 1.0f;
+        float g = 1.0f;
+        float b = 1.0f;
+        float a = 1.0f;
+        float rotation = 0.0f;
+        float pad0 = 0.0f;
+        float pad1 = 0.0f;
+        float pad2 = 0.0f;
+    };
+
+    struct ParticleInstancePage
+    {
+        bgfx::DynamicVertexBufferHandle m_handle = BGFX_INVALID_HANDLE;
+        std::uint32_t m_capacity = 0;
+        std::uint32_t m_cursor = 0;
+    };
+
     bool Initialize(void* nativeWindowHandle, unsigned int width,
         unsigned int height, bool vsync, const char* shaderRoot);
     void ShutdownBgfxResources();
@@ -158,6 +182,7 @@ private:
 
     bool LoadBasicProgram();
     bool LoadInstancedProgram();
+    bool LoadParticlePrograms();
     bool LoadSkinnedPrograms();
     bool LoadTerrainProgram();
     bool LoadExtendedPrograms();
@@ -167,6 +192,7 @@ private:
     bool LoadShadowPrograms();
     bool LoadVsmBlurProgram();
     bool LoadCopyProgram();
+    bool CreateParticleResources();
     bgfx::ShaderHandle LoadShader(const char* name) const;
     std::string GetBackendShaderDirectory() const;
 
@@ -199,6 +225,9 @@ private:
     uint64_t BuildRenderState(bool shadowWrite = false) const;
     uint32_t BuildStencilState() const;
     void SetModelTransform(const NiTransform& transform) const;
+    bool TryRenderFacingQuadParticles(NiMesh* mesh, bool shadowWrite);
+    bool UploadParticleInstances(const void* data, std::uint32_t count,
+        bgfx::DynamicVertexBufferHandle& handle, std::uint32_t& startVertex);
 
     NiBgfxContext m_context;
     unsigned int m_width = 0;
@@ -237,9 +266,11 @@ private:
     static constexpr unsigned int MAX_SKY_STAGES = 5;
     static constexpr unsigned int MAX_PSSM_SLICES = 16;
     static constexpr unsigned int PSSM_DISTANCE_VECS = (MAX_PSSM_SLICES + 3) / 4;
+    static constexpr std::uint32_t PARTICLE_INSTANCE_PAGE_SIZE = 16384u;
 
     bgfx::ProgramHandle m_basicProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_instancedProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle m_particleProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_skinnedProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_skinnedShadowProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_terrainProgram = BGFX_INVALID_HANDLE;
@@ -284,6 +315,8 @@ private:
     bgfx::UniformHandle m_bumpParamsUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_cameraPositionUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_cameraDirectionUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle m_particleCameraRightUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle m_particleCameraUpUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_sceneAmbientUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_lightCountUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_lightPositionTypeUniform = BGFX_INVALID_HANDLE;
@@ -372,6 +405,11 @@ private:
     bgfx::TextureHandle m_whiteCubeTexture = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle m_blackTexture = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle m_flatNormalTexture = BGFX_INVALID_HANDLE;
+    bgfx::VertexBufferHandle m_particleQuadVertexBuffer = BGFX_INVALID_HANDLE;
+    bgfx::IndexBufferHandle m_particleQuadIndexBuffer = BGFX_INVALID_HANDLE;
+    std::vector<ParticleInstancePage> m_particleInstancePages;
+    std::vector<ParticleInstance> m_particleInstanceScratch;
+    std::vector<std::uint32_t> m_particleOrderScratch;
     bgfx::TextureHandle m_currentPssmTexture = BGFX_INVALID_HANDLE;
     std::uint32_t m_currentPssmSamplerFlags = BGFX_SAMPLER_NONE;
     bool m_currentPssmActive = false;
