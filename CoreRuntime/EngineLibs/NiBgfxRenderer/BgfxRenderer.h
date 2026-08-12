@@ -174,6 +174,20 @@ private:
         std::uint32_t m_cursor = 0;
     };
 
+    struct ParticleInstancingDebugStats
+    {
+        std::uint64_t m_candidateChecks = 0;
+        std::uint64_t m_instancedBatches = 0;
+        std::uint64_t m_instancedParticles = 0;
+        std::uint64_t m_rendererUnavailable = 0;
+        std::uint64_t m_shadowFallbacks = 0;
+        std::uint64_t m_layoutFallbacks = 0;
+        std::uint64_t m_animatedUvFallbacks = 0;
+        std::uint64_t m_wireframeFallbacks = 0;
+        std::uint64_t m_missingDataFallbacks = 0;
+        std::uint64_t m_uploadFallbacks = 0;
+    };
+
     bool Initialize(void* nativeWindowHandle, unsigned int width,
         unsigned int height, bool vsync, const char* shaderRoot);
     void ShutdownBgfxResources();
@@ -410,6 +424,8 @@ private:
     std::vector<ParticleInstancePage> m_particleInstancePages;
     std::vector<ParticleInstance> m_particleInstanceScratch;
     std::vector<std::uint32_t> m_particleOrderScratch;
+    ParticleInstancingDebugStats m_particleInstancingDebugStats;
+    bool m_particleInstancingFirstSuccessLogged = false;
     bgfx::TextureHandle m_currentPssmTexture = BGFX_INVALID_HANDLE;
     std::uint32_t m_currentPssmSamplerFlags = BGFX_SAMPLER_NONE;
     bool m_currentPssmActive = false;

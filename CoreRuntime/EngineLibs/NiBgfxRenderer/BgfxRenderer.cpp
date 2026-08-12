@@ -981,6 +981,12 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
         Error("BgfxRenderer: failed to create shared particle billboard geometry.");
         return false;
     }
+    NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+        "[ParticleInstancing] Debug enabled. Phase-1 facing-quad path is ready; "
+        "bgfx instancing capability=%s. The first successful batch will emit "
+        "an ACTIVE line, followed by 120-frame TRACE summaries.",
+        (bgfx::getCaps()->supported & BGFX_CAPS_INSTANCING) != 0 ?
+            "yes" : "no");
 #endif
     if (!LoadSkinnedPrograms())
     {
@@ -2860,6 +2866,35 @@ bool BgfxRenderer::Do_BeginFrame()
 
 bool BgfxRenderer::Do_EndFrame()
 {
+#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+    // Keep particle-instancing diagnostics useful without producing one log
+    // line per system per frame.  The counters aggregate 120 frames and only
+    // emit while at least one facing-quad particle system was actually seen.
+    if ((m_frameSerial % 120u) == 0u &&
+        m_particleInstancingDebugStats.m_candidateChecks != 0u)
+    {
+        const ParticleInstancingDebugStats& stats =
+            m_particleInstancingDebugStats;
+        NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+            "[ParticleInstancing] 120-frame summary: candidateChecks=%llu "
+            "instancedBatches=%llu instancedParticles=%llu pages=%u "
+            "fallbacks{renderer=%llu shadow=%llu layout=%llu animatedUV=%llu "
+            "wireframe=%llu missingData=%llu upload=%llu}.",
+            static_cast<unsigned long long>(stats.m_candidateChecks),
+            static_cast<unsigned long long>(stats.m_instancedBatches),
+            static_cast<unsigned long long>(stats.m_instancedParticles),
+            static_cast<unsigned int>(m_particleInstancePages.size()),
+            static_cast<unsigned long long>(stats.m_rendererUnavailable),
+            static_cast<unsigned long long>(stats.m_shadowFallbacks),
+            static_cast<unsigned long long>(stats.m_layoutFallbacks),
+            static_cast<unsigned long long>(stats.m_animatedUvFallbacks),
+            static_cast<unsigned long long>(stats.m_wireframeFallbacks),
+            static_cast<unsigned long long>(stats.m_missingDataFallbacks),
+            static_cast<unsigned long long>(stats.m_uploadFallbacks));
+
+        m_particleInstancingDebugStats = ParticleInstancingDebugStats{};
+    }
+#endif
     return m_context.IsInitialized();
 }
 
@@ -6387,11 +6422,20 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     EE_UNUSED_ARG(shadowWrite);
     return false;
 #else
-    if (!mesh || (bgfx::getCaps()->supported & BGFX_CAPS_INSTANCING) == 0 ||
+    // Identify the supported Gamebryo particle type first so the diagnostics
+    // only count systems that phase 1 could potentially instance.
+    NiPSParticleSystem* particles = NiDynamicCast(NiPSParticleSystem, mesh);
+    if (!particles || !NiGetModifier(NiPSFacingQuadGenerator, particles))
+        return false;
+
+    ++m_particleInstancingDebugStats.m_candidateChecks;
+
+    if ((bgfx::getCaps()->supported & BGFX_CAPS_INSTANCING) == 0 ||
         !bgfx::isValid(m_particleProgram) ||
         !bgfx::isValid(m_particleQuadVertexBuffer) ||
         !bgfx::isValid(m_particleQuadIndexBuffer))
     {
+        ++m_particleInstancingDebugStats.m_rendererUnavailable;
         return false;
     }
 
@@ -6401,13 +6445,15 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     // legacy Gamebryo geometry. Keep the generated-quad path for shadow writes
     // in phase 1 and instance only the normal camera-facing pass.
     if (shadowWrite)
+    {
+        ++m_particleInstancingDebugStats.m_shadowFallbacks;
         return false;
+    }
 
-    NiPSParticleSystem* particles = NiDynamicCast(NiPSParticleSystem, mesh);
-    if (!particles || !NiGetModifier(NiPSFacingQuadGenerator, particles) ||
-        particles->GetNumParticles() == 0 || mesh->GetSubmeshCount() != 1 ||
+    if (particles->GetNumParticles() == 0 || mesh->GetSubmeshCount() != 1 ||
         mesh->GetInstanced())
     {
+        ++m_particleInstancingDebugStats.m_layoutFallbacks;
         return false;
     }
 
@@ -6415,21 +6461,30 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     // path for phase 1. NiPSAlignedQuadGenerator/mesh particles are also not
     // matched above and therefore retain their existing behavior.
     if (particles->HasAnimatedTextures())
+    {
+        ++m_particleInstancingDebugStats.m_animatedUvFallbacks;
         return false;
+    }
 
     const NiWireframeProperty* wireframe =
         m_pkCurrProp ? m_pkCurrProp->GetWireframe() : nullptr;
     if (!wireframe)
         wireframe = NiWireframeProperty::GetDefault();
     if (wireframe && wireframe->GetWireframe())
+    {
+        ++m_particleInstancingDebugStats.m_wireframeFallbacks;
         return false;
+    }
 
     const std::uint32_t count = particles->GetNumParticles();
     const NiPoint3* positions = particles->GetPositions();
     const float* initialSizes = particles->GetInitialSizes();
     const float* sizes = particles->GetSizes();
     if (!positions || !initialSizes || !sizes)
+    {
+        ++m_particleInstancingDebugStats.m_missingDataFallbacks;
         return false;
+    }
 
     const NiRGBA* colors = particles->GetColors();
     const float* rotations = particles->GetRotationAngles();
@@ -6491,6 +6546,7 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     if (!UploadParticleInstances(m_particleInstanceScratch.data(), count,
         instanceBuffer, instanceStart))
     {
+        ++m_particleInstancingDebugStats.m_uploadFallbacks;
         return false;
     }
 
@@ -6513,6 +6569,25 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     bgfx::setState(BuildRenderState(shadowWrite));
     bgfx::setStencil(BuildStencilState());
     bgfx::submit(m_viewId, m_particleProgram);
+
+    ++m_particleInstancingDebugStats.m_instancedBatches;
+    m_particleInstancingDebugStats.m_instancedParticles += count;
+
+    // One unmistakable INFO line confirms that the optimized path has really
+    // been used. All later activity is summarized at TRACE level.
+    if (!m_particleInstancingFirstSuccessLogged)
+    {
+        const char* name = static_cast<const char*>(mesh->GetName());
+        if (!name || !name[0])
+            name = "<unnamed>";
+        NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+            "[ParticleInstancing] ACTIVE: first instanced facing-quad system "
+            "'%s', particles=%u, sorted=%s, instancePages=%u.",
+            name, count, particles->IsSorted() ? "yes" : "no",
+            static_cast<unsigned int>(m_particleInstancePages.size()));
+        m_particleInstancingFirstSuccessLogged = true;
+    }
+
     return true;
 #endif
 }
