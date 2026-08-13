@@ -182,7 +182,7 @@ private:
         std::uint64_t m_rendererUnavailable = 0;
         std::uint64_t m_shadowFallbacks = 0;
         std::uint64_t m_layoutFallbacks = 0;
-        std::uint64_t m_animatedUvFallbacks = 0;
+        std::uint64_t m_animatedTextureFlagsSeen = 0;
         std::uint64_t m_wireframeFallbacks = 0;
         std::uint64_t m_missingDataFallbacks = 0;
         std::uint64_t m_uploadFallbacks = 0;

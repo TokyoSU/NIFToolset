@@ -2878,16 +2878,17 @@ bool BgfxRenderer::Do_EndFrame()
         NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
             "[ParticleInstancing] 120-frame summary: candidateChecks=%llu "
             "instancedBatches=%llu instancedParticles=%llu pages=%u "
-            "fallbacks{renderer=%llu shadow=%llu layout=%llu animatedUV=%llu "
-            "wireframe=%llu missingData=%llu upload=%llu}.",
+            "flags{animatedTexture=%llu} "
+            "fallbacks{renderer=%llu shadow=%llu layout=%llu wireframe=%llu "
+            "missingData=%llu upload=%llu}.",
             static_cast<unsigned long long>(stats.m_candidateChecks),
             static_cast<unsigned long long>(stats.m_instancedBatches),
             static_cast<unsigned long long>(stats.m_instancedParticles),
             static_cast<unsigned int>(m_particleInstancePages.size()),
+            static_cast<unsigned long long>(stats.m_animatedTextureFlagsSeen),
             static_cast<unsigned long long>(stats.m_rendererUnavailable),
             static_cast<unsigned long long>(stats.m_shadowFallbacks),
             static_cast<unsigned long long>(stats.m_layoutFallbacks),
-            static_cast<unsigned long long>(stats.m_animatedUvFallbacks),
             static_cast<unsigned long long>(stats.m_wireframeFallbacks),
             static_cast<unsigned long long>(stats.m_missingDataFallbacks),
             static_cast<unsigned long long>(stats.m_uploadFallbacks));
@@ -6457,14 +6458,14 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
         return false;
     }
 
-    // Animated-UV particle systems are left on the original generated-quad
-    // path for phase 1. NiPSAlignedQuadGenerator/mesh particles are also not
-    // matched above and therefore retain their existing behavior.
+    // HasAnimatedTextures() only means the particle system allocated the
+    // per-particle variance array. NiPSFacingQuadGenerator itself always
+    // creates a static shared TEXCOORD stream (0,0 / 0,1 / 1,1 / 1,0) and
+    // never schedules the NiPSAlignedQuadTextureKernel. Therefore this flag
+    // must not disqualify facing-quad instancing. The animated-UV path lives
+    // in NiPSAlignedQuadGenerator, which is not matched by this phase-1 path.
     if (particles->HasAnimatedTextures())
-    {
-        ++m_particleInstancingDebugStats.m_animatedUvFallbacks;
-        return false;
-    }
+        ++m_particleInstancingDebugStats.m_animatedTextureFlagsSeen;
 
     const NiWireframeProperty* wireframe =
         m_pkCurrProp ? m_pkCurrProp->GetWireframe() : nullptr;
