@@ -24,6 +24,25 @@ endif()
 
 project ("NIFToolset")
 
+# Consistent, low-noise configure/build diagnostics used by all subdirectories.
+function(nif_status TEXT)
+    message(STATUS "[NIFToolset] ${TEXT}")
+endfunction()
+
+nif_status("============================================================")
+nif_status("Configuring NIFToolset")
+nif_status("Generator       : ${CMAKE_GENERATOR}")
+nif_status("C++ compiler    : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+if(CMAKE_CONFIGURATION_TYPES)
+    nif_status("Configurations  : ${CMAKE_CONFIGURATION_TYPES}")
+elseif(CMAKE_BUILD_TYPE)
+    nif_status("Build type      : ${CMAKE_BUILD_TYPE}")
+else()
+    nif_status("Build type      : <not specified>")
+endif()
+nif_status("Source directory : ${NIFToolset_SOURCE_DIR}")
+nif_status("Binary directory : ${NIFToolset_BINARY_DIR}")
+
 # Register custom Find modules (FindBASS.cmake, etc.)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -91,8 +110,29 @@ endif()
 # Include install helper function (ni_install_target)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NiInstall.cmake")
 
+# Configuration summary before descending into the library tree.
+if(BUILD_SHARED_LIBS)
+    set(_nif_library_mode "shared libraries (.dll)")
+else()
+    set(_nif_library_mode "static libraries (.lib)")
+endif()
+nif_status("Library mode     : ${_nif_library_mode}")
+nif_status("Renderer         : bgfx (NI_RENDERER_BGFX)")
+nif_status("Gamebryo version : 4.0.0.57")
+nif_status("Install prefix   : ${CMAKE_INSTALL_PREFIX}")
+if(ENABLE_SDM_SHUTDOWN_ASSERT)
+    nif_status("SDM shutdown assert: enabled")
+else()
+    nif_status("SDM shutdown assert: disabled")
+endif()
+nif_status("------------------------------------------------------------")
+
 # Include sub-projects
 add_subdirectory("Foundation")
 add_subdirectory("CoreRuntime")
 add_subdirectory("GameFramework")
 add_subdirectory("Bindings")
+
+# Keep the final configure result easy to spot in large FetchContent builds.
+nif_status("Configuration complete. Build files are ready in: ${NIFToolset_BINARY_DIR}")
+nif_status("============================================================")

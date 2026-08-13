@@ -1,5 +1,8 @@
 find_package(bgfx CONFIG REQUIRED)
 
+nif_status("NiBgfxRenderer    : configuring bgfx renderer")
+nif_status("  bgfx shaderc    : required (bgfx[tools])")
+
 add_library(NiBgfxRenderer
     BgfxDataStreamFactory.cpp
     BgfxDataStreamFactory.h
@@ -28,6 +31,9 @@ if(TARGET NiParticle)
     target_link_libraries(NiBgfxRenderer PRIVATE NiParticle)
     target_compile_definitions(NiBgfxRenderer PRIVATE
         NIBGFX_ENABLE_PARTICLE_INSTANCING=1)
+    nif_status("  particle instancing: enabled (NiParticle available)")
+else()
+    nif_status("  particle instancing: disabled (NiParticle not built)")
 endif()
 
 target_compile_definitions(NiBgfxRenderer
@@ -61,6 +67,13 @@ endif()
 set(NIBGFX_SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Shaders")
 set(NIBGFX_SHADER_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Shaders/bgfx")
 set(NIBGFX_VARYING_DEF "${NIBGFX_SHADER_SOURCE_DIR}/varying.def.sc")
+
+if(WIN32)
+    nif_status("  shader backends : Direct3D 11 + GLSL")
+else()
+    nif_status("  shader backends : GLSL + SPIR-V")
+endif()
+nif_status("  shader output   : ${NIBGFX_SHADER_BINARY_DIR}")
 
 function(nibgfx_compile_shader OUTPUT_VAR SOURCE TYPE BACKEND PLATFORM PROFILE)
     get_filename_component(_name "${SOURCE}" NAME_WE)
@@ -258,8 +271,17 @@ else()
     list(APPEND NIBGFX_COMPILED_SHADERS "${_vs_lpp_light_spv}" "${_fs_lpp_g_spv}" "${_fs_lpp_f_spv}" "${_fs_lpp_light_spv}" "${_fs_terrain_lpp_g_spv}" "${_fs_terrain_lpp_f_spv}" "${_fs_deco_lpp_g_spv}" "${_fs_deco_lpp_f_spv}")
 endif()
 
+list(LENGTH NIBGFX_COMPILED_SHADERS _nibgfx_shader_count)
+nif_status("  compiled shaders: ${_nibgfx_shader_count} backend binaries")
+
 add_custom_target(NiBgfxShaders DEPENDS ${NIBGFX_COMPILED_SHADERS})
 add_dependencies(NiBgfxRenderer NiBgfxShaders)
+
+# One concise build-time marker when this target reaches the link stage.
+add_custom_command(TARGET NiBgfxRenderer PRE_LINK
+    COMMAND ${CMAKE_COMMAND} -E echo
+        "[NIFToolset] Linking NiBgfxRenderer (bgfx renderer)"
+    VERBATIM)
 
 target_compile_definitions(NiBgfxRenderer PRIVATE
     NIBGFX_DEFAULT_SHADER_ROOT="${NIBGFX_SHADER_BINARY_DIR}"
