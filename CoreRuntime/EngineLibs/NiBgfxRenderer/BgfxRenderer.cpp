@@ -3379,21 +3379,21 @@ uint64_t BgfxRenderer::BuildRenderState(bool shadowWrite) const
     {
         switch (stencil->GetDrawMode())
         {
-        // Match the legacy D3D11 renderer exactly. DRAW_CCW_OR_BOTH is the
-        // default Gamebryo mode, but on D3D11 it behaves as DRAW_CCW (back-face
-        // culling), not as a two-sided material. Falling through to no culling
-        // here made nearly every ordinary mesh double-sided in the bgfx port.
+        // Gamebryo's DRAW_CCW/DRAW_CW winding names map directly to the
+        // corresponding bgfx cull mode for this renderer's current handedness.
+        // DRAW_CCW_OR_BOTH follows the normal DRAW_CCW/default path, while
+        // DRAW_BOTH remains explicitly two-sided.
         case NiStencilProperty::DRAW_CCW_OR_BOTH:
         case NiStencilProperty::DRAW_CCW:
-            state |= BGFX_STATE_CULL_CW;
+            state |= BGFX_STATE_CULL_CCW;
             break;
         case NiStencilProperty::DRAW_CW:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         case NiStencilProperty::DRAW_BOTH:
             break;
         default:
-            state |= BGFX_STATE_CULL_CW;
+            state |= BGFX_STATE_CULL_CCW;
             break;
         }
     }
