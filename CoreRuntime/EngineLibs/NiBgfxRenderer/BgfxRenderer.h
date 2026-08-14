@@ -301,6 +301,9 @@ private:
     bgfx::ProgramHandle m_softParticleProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_softParticleFallbackProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_softDepthProgram = BGFX_INVALID_HANDLE;
+    // Texture-free depth writer for opaque materials whose slot 0 is not a
+    // Texture2D (Grand Fantasia extended terrain uses Texture2DArray).
+    bgfx::ProgramHandle m_softDepthOpaqueProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_softDepthInstancedProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_softDepthSkinnedProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_softDepthTerrainProgram = BGFX_INVALID_HANDLE;

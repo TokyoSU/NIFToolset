@@ -2,6 +2,7 @@ $input v_color0, v_texcoord01, v_texcoord23, v_texcoord45, v_texcoord67, v_world
 
 #include <bgfx_shader.sh>
 
+#ifndef SOFT_DEPTH_OPAQUE
 #define MAX_MAPS 11
 #define MAP_BASE 0
 
@@ -14,11 +15,13 @@ uniform vec4 u_textureParams;
 uniform vec4 u_mapParams[MAX_MAPS];
 uniform vec4 u_mapTransform0[MAX_MAPS];
 uniform vec4 u_mapTransform1[MAX_MAPS];
+#endif
 uniform vec4 u_cameraPosition;
 uniform vec4 u_cameraDirection;
 // x=fade distance, y=1/target width, z=1/target height, w=far plane.
 uniform vec4 u_softParticleParams;
 
+#ifndef SOFT_DEPTH_OPAQUE
 vec2 selectUV(float index, vec4 uv01, vec4 uv23, vec4 uv45, vec4 uv67)
 {
     if (index < 0.5) return uv01.xy;
@@ -56,9 +59,11 @@ bool alphaTestPass(float alpha)
     if (mode == 6) return alpha >= refValue;
     return false;
 }
+#endif
 
 void main()
 {
+#ifndef SOFT_DEPTH_OPAQUE
     int sourceMode = int(u_textureParams.y + 0.5);
     int lightingMode = int(u_textureParams.z + 0.5);
     bool replaceMode = int(u_textureParams.x + 0.5) == 0;
@@ -74,6 +79,7 @@ void main()
 
     if (!alphaTestPass(opacity))
         discard;
+#endif
 
     vec3 cameraDir = normalize(u_cameraDirection.xyz);
     float farPlane = max(u_softParticleParams.w, 1e-4);

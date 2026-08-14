@@ -1109,6 +1109,8 @@ void BgfxRenderer::ShutdownBgfxResources()
         bgfx::destroy(m_softParticleFallbackProgram);
     if (bgfx::isValid(m_softDepthProgram))
         bgfx::destroy(m_softDepthProgram);
+    if (bgfx::isValid(m_softDepthOpaqueProgram))
+        bgfx::destroy(m_softDepthOpaqueProgram);
     if (bgfx::isValid(m_softDepthInstancedProgram))
         bgfx::destroy(m_softDepthInstancedProgram);
     if (bgfx::isValid(m_softDepthSkinnedProgram))
@@ -1238,6 +1240,7 @@ void BgfxRenderer::ShutdownBgfxResources()
     m_softParticleProgram = BGFX_INVALID_HANDLE;
     m_softParticleFallbackProgram = BGFX_INVALID_HANDLE;
     m_softDepthProgram = BGFX_INVALID_HANDLE;
+    m_softDepthOpaqueProgram = BGFX_INVALID_HANDLE;
     m_softDepthInstancedProgram = BGFX_INVALID_HANDLE;
     m_softDepthSkinnedProgram = BGFX_INVALID_HANDLE;
     m_softDepthTerrainProgram = BGFX_INVALID_HANDLE;
@@ -1380,6 +1383,7 @@ bool BgfxRenderer::GetSoftParticlesSupported() const
     return bgfx::isValid(m_softParticleProgram) &&
         bgfx::isValid(m_softParticleFallbackProgram) &&
         bgfx::isValid(m_softDepthProgram) &&
+        bgfx::isValid(m_softDepthOpaqueProgram) &&
         bgfx::isValid(m_softDepthInstancedProgram) &&
         bgfx::isValid(m_softDepthSkinnedProgram) &&
         bgfx::isValid(m_softDepthTerrainProgram) &&
@@ -3381,15 +3385,15 @@ uint64_t BgfxRenderer::BuildRenderState(bool shadowWrite) const
         // here made nearly every ordinary mesh double-sided in the bgfx port.
         case NiStencilProperty::DRAW_CCW_OR_BOTH:
         case NiStencilProperty::DRAW_CCW:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         case NiStencilProperty::DRAW_CW:
-            state |= BGFX_STATE_CULL_CW;
+            state |= BGFX_STATE_CULL_CCW;
             break;
         case NiStencilProperty::DRAW_BOTH:
             break;
         default:
-            state |= BGFX_STATE_CULL_CCW;
+            state |= BGFX_STATE_CULL_CW;
             break;
         }
     }
@@ -6632,9 +6636,15 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         const std::uint64_t softDepthState =
             (state & ~(BGFX_STATE_BLEND_MASK | BGFX_STATE_WRITE_A)) |
             BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_Z;
+        // The regular alpha-tested soft-depth shader declares slot 0 as
+        // Texture2D. Grand Fantasia's NiExtendedMaterial terrain binds a
+        // Texture2DArray there, so using that shader produces D3D11
+        // DEVICE_DRAW_VIEW_DIMENSION_MISMATCH. Extended terrain is opaque;
+        // mirror it with the texture-free depth writer instead.
         const bgfx::ProgramHandle softDepthDrawProgram = hardwareSkinned ?
             m_softDepthSkinnedProgram :
-            (terrainBound ? m_softDepthTerrainProgram : m_softDepthProgram);
+            (terrainBound ? m_softDepthTerrainProgram :
+                (extendedBound ? m_softDepthOpaqueProgram : m_softDepthProgram));
 
         const auto submitSoftDepth = [&](bgfx::ProgramHandle program)
         {
@@ -7204,6 +7214,9 @@ bool BgfxRenderer::LoadParticlePrograms()
             "the generated-geometry soft-particle program") &&
         makeProgram("vs_ni_basic.bin", "fs_ni_soft_depth.bin",
             m_softDepthProgram, "the soft-particle depth program") &&
+        makeProgram("vs_ni_basic.bin", "fs_ni_soft_depth_opaque.bin",
+            m_softDepthOpaqueProgram,
+            "the opaque soft-particle depth program") &&
         makeProgram("vs_ni_instanced.bin", "fs_ni_soft_depth.bin",
             m_softDepthInstancedProgram,
             "the instanced soft-particle depth program") &&
@@ -7219,7 +7232,8 @@ bool BgfxRenderer::LoadParticlePrograms()
         bgfx::ProgramHandle* optionalPrograms[] =
         {
             &m_softParticleProgram, &m_softParticleFallbackProgram,
-            &m_softDepthProgram, &m_softDepthInstancedProgram,
+            &m_softDepthProgram, &m_softDepthOpaqueProgram,
+            &m_softDepthInstancedProgram,
             &m_softDepthSkinnedProgram, &m_softDepthTerrainProgram
         };
         for (bgfx::ProgramHandle* program : optionalPrograms)
