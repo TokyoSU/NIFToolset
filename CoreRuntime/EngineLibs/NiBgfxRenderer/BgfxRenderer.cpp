@@ -5914,6 +5914,12 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
             if (gpuSubmesh)
             {
+                // Always bind the logical Gamebryo region length explicitly.
+                // bgfx's short setVertexBuffer/setIndexBuffer overloads use
+                // UINT32_MAX ("remaining allocation"). Dynamic buffers created
+                // with BGFX_BUFFER_ALLOW_RESIZE may keep a larger allocation after
+                // a stream shrinks, which would otherwise draw stale vertices or
+                // indices from the old contents.
                 const std::uint64_t byteCount64 =
                     static_cast<std::uint64_t>(packedVertices.size()) *
                     sizeof(StandardVertex);
@@ -5929,6 +5935,17 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                 if (staticGpuCacheable)
                 {
+                    // A cache can move back to the immutable path after being
+                    // dynamic. Do not leave the old handle alive: cached binds
+                    // prefer the dynamic handle, which would otherwise retain
+                    // stale contents.
+                    if (bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer))
+                    {
+                        bgfx::destroy(gpuSubmesh->m_dynamicVertexBuffer);
+                        gpuSubmesh->m_dynamicVertexBuffer = BGFX_INVALID_HANDLE;
+                    }
+                    if (bgfx::isValid(gpuSubmesh->m_vertexBuffer))
+                        bgfx::destroy(gpuSubmesh->m_vertexBuffer);
                     gpuSubmesh->m_vertexBuffer = bgfx::createVertexBuffer(
                         vertexMemory, layout);
                     if (!bgfx::isValid(gpuSubmesh->m_vertexBuffer))
@@ -5936,7 +5953,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         gpuSubmesh->Reset();
                         continue;
                     }
-                    bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer);
+                    bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer,
+                        0, vertexCount);
                 }
                 else if (bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer))
                 {
@@ -5946,7 +5964,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     bgfx::update(gpuSubmesh->m_dynamicVertexBuffer, 0,
                         vertexMemory);
                     bgfx::setVertexBuffer(0,
-                        gpuSubmesh->m_dynamicVertexBuffer);
+                        gpuSubmesh->m_dynamicVertexBuffer, 0, vertexCount);
                 }
                 else if (bgfx::isValid(gpuSubmesh->m_vertexBuffer))
                 {
@@ -5966,7 +5984,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         continue;
                     }
                     bgfx::setVertexBuffer(0,
-                        gpuSubmesh->m_dynamicVertexBuffer);
+                        gpuSubmesh->m_dynamicVertexBuffer, 0, vertexCount);
                 }
                 else
                 {
@@ -5981,7 +5999,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         gpuSubmesh->Reset();
                         continue;
                     }
-                    bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer);
+                    bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer,
+                        0, vertexCount);
                 }
 
                 gpuSubmesh->m_signature = cacheSignature;
@@ -5990,15 +6009,17 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
             }
             else
             {
-                bgfx::setVertexBuffer(0, &vertexBuffer);
+                bgfx::setVertexBuffer(0, &vertexBuffer, 0, vertexCount);
             }
         }
         else
         {
             if (bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer))
-                bgfx::setVertexBuffer(0, gpuSubmesh->m_dynamicVertexBuffer);
+                bgfx::setVertexBuffer(0, gpuSubmesh->m_dynamicVertexBuffer,
+                    0, vertexCount);
             else
-                bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer);
+                bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer,
+                    0, vertexCount);
 
             // Vertex weights/indices are immutable and live in the cached GPU
             // buffer, but the palette matrices are animation state and must be
@@ -6128,6 +6149,18 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
             if (!sourceIndex32 && indexFormat != NiDataStreamElement::F_UINT16_1)
                 continue;
 
+            const bool stripCutAllowed =
+                primitiveType == NiPrimitiveType::PRIMITIVE_TRISTRIPS ||
+                primitiveType == NiPrimitiveType::PRIMITIVE_LINESTRIPS;
+            const std::uint32_t stripCutIndex = sourceIndex32 ?
+                std::numeric_limits<std::uint32_t>::max() :
+                std::numeric_limits<std::uint16_t>::max();
+            const auto isIndexInVertexRegion = [&](std::uint32_t value)
+            {
+                return value < vertexCount ||
+                    (stripCutAllowed && value == stripCutIndex);
+            };
+
             if (useWireframe && gpuSubmesh &&
                 gpuSubmesh->m_wireIndexRevision == indexRevision &&
                 gpuSubmesh->m_wireIndexCount > 0)
@@ -6135,12 +6168,14 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 if (bgfx::isValid(gpuSubmesh->m_dynamicWireIndexBuffer))
                 {
                     bgfx::setIndexBuffer(
-                        gpuSubmesh->m_dynamicWireIndexBuffer);
+                        gpuSubmesh->m_dynamicWireIndexBuffer, 0,
+                        gpuSubmesh->m_wireIndexCount);
                     cachedWireBound = true;
                 }
                 else if (bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
                 {
-                    bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer);
+                    bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer, 0,
+                        gpuSubmesh->m_wireIndexCount);
                     cachedWireBound = true;
                 }
             }
@@ -6172,9 +6207,11 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer)))
             {
                 if (bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer))
-                    bgfx::setIndexBuffer(gpuSubmesh->m_dynamicIndexBuffer);
+                    bgfx::setIndexBuffer(gpuSubmesh->m_dynamicIndexBuffer,
+                        0, indexCount);
                 else
-                    bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer);
+                    bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer, 0,
+                        indexCount);
             }
             else if (gpuSubmesh)
             {
@@ -6186,19 +6223,53 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                 std::vector<std::uint8_t> packedIndices(
                     static_cast<size_t>(bytes64));
+                bool invalidIndexRange = false;
+                std::uint32_t firstInvalidIndex = 0;
                 if (sourceIndex32)
                 {
                     auto src = indexLock.begin<std::uint32_t>(submesh);
                     auto* dst = reinterpret_cast<std::uint32_t*>(packedIndices.data());
                     for (unsigned int i = 0; i < indexCount; ++i, ++src)
-                        dst[i] = *src;
+                    {
+                        const std::uint32_t value = *src;
+                        dst[i] = value;
+                        if (!invalidIndexRange &&
+                            !isIndexInVertexRegion(value))
+                        {
+                            invalidIndexRange = true;
+                            firstInvalidIndex = value;
+                        }
+                    }
                 }
                 else
                 {
                     auto src = indexLock.begin<std::uint16_t>(submesh);
                     auto* dst = reinterpret_cast<std::uint16_t*>(packedIndices.data());
                     for (unsigned int i = 0; i < indexCount; ++i, ++src)
-                        dst[i] = *src;
+                    {
+                        const std::uint32_t value = *src;
+                        dst[i] = static_cast<std::uint16_t>(value);
+                        if (!invalidIndexRange &&
+                            !isIndexInVertexRegion(value))
+                        {
+                            invalidIndexRange = true;
+                            firstInvalidIndex = value;
+                        }
+                    }
+                }
+
+                if (invalidIndexRange)
+                {
+                    const char* meshName =
+                        static_cast<const char*>(mesh->GetName());
+                    if (!meshName || !meshName[0])
+                        meshName = "<unnamed>";
+                    NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer",
+                        __FILE__, __LINE__,
+                        "[DrawValidation] Skipping mesh '%s' submesh %u: "
+                        "index %u is outside the packed vertex region [0,%u).",
+                        meshName, submesh, firstInvalidIndex, vertexCount);
+                    continue;
                 }
 
                 const bgfx::Memory* indexMemory = bgfx::copy(
@@ -6206,6 +6277,11 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                 if (staticGpuCacheable)
                 {
+                    if (bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer))
+                    {
+                        bgfx::destroy(gpuSubmesh->m_dynamicIndexBuffer);
+                        gpuSubmesh->m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
+                    }
                     if (bgfx::isValid(gpuSubmesh->m_indexBuffer))
                         bgfx::destroy(gpuSubmesh->m_indexBuffer);
                     gpuSubmesh->m_indexBuffer = bgfx::createIndexBuffer(
@@ -6213,7 +6289,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         sourceIndex32 ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE);
                     if (!bgfx::isValid(gpuSubmesh->m_indexBuffer))
                         continue;
-                    bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer);
+                    bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer, 0,
+                        indexCount);
                 }
                 else
                 {
@@ -6235,7 +6312,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         bgfx::update(gpuSubmesh->m_dynamicIndexBuffer, 0,
                             indexMemory);
                         bgfx::setIndexBuffer(
-                            gpuSubmesh->m_dynamicIndexBuffer);
+                            gpuSubmesh->m_dynamicIndexBuffer, 0, indexCount);
                     }
                     else if (bgfx::isValid(gpuSubmesh->m_indexBuffer))
                     {
@@ -6249,7 +6326,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         if (!bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer))
                             continue;
                         bgfx::setIndexBuffer(
-                            gpuSubmesh->m_dynamicIndexBuffer);
+                            gpuSubmesh->m_dynamicIndexBuffer, 0, indexCount);
                     }
                     else
                     {
@@ -6257,7 +6334,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                             indexMemory, staticFlags);
                         if (!bgfx::isValid(gpuSubmesh->m_indexBuffer))
                             continue;
-                        bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer);
+                        bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer, 0,
+                            indexCount);
                     }
                 }
 
@@ -6276,21 +6354,55 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 bgfx::TransientIndexBuffer indexBuffer;
                 bgfx::allocTransientIndexBuffer(&indexBuffer, indexCount,
                     sourceIndex32);
+                bool invalidIndexRange = false;
+                std::uint32_t firstInvalidIndex = 0;
                 if (sourceIndex32)
                 {
                     auto src = indexLock.begin<std::uint32_t>(submesh);
                     auto* dst = reinterpret_cast<std::uint32_t*>(indexBuffer.data);
                     for (unsigned int i = 0; i < indexCount; ++i, ++src)
-                        dst[i] = *src;
+                    {
+                        const std::uint32_t value = *src;
+                        dst[i] = value;
+                        if (!invalidIndexRange &&
+                            !isIndexInVertexRegion(value))
+                        {
+                            invalidIndexRange = true;
+                            firstInvalidIndex = value;
+                        }
+                    }
                 }
                 else
                 {
                     auto src = indexLock.begin<std::uint16_t>(submesh);
                     auto* dst = reinterpret_cast<std::uint16_t*>(indexBuffer.data);
                     for (unsigned int i = 0; i < indexCount; ++i, ++src)
-                        dst[i] = *src;
+                    {
+                        const std::uint32_t value = *src;
+                        dst[i] = static_cast<std::uint16_t>(value);
+                        if (!invalidIndexRange &&
+                            !isIndexInVertexRegion(value))
+                        {
+                            invalidIndexRange = true;
+                            firstInvalidIndex = value;
+                        }
+                    }
                 }
-                bgfx::setIndexBuffer(&indexBuffer);
+                if (invalidIndexRange)
+                {
+                    const char* meshName =
+                        static_cast<const char*>(mesh->GetName());
+                    if (!meshName || !meshName[0])
+                        meshName = "<unnamed>";
+                    NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer",
+                        __FILE__, __LINE__,
+                        "[DrawValidation] Skipping transient mesh '%s' "
+                        "submesh %u: index %u is outside the packed vertex "
+                        "region [0,%u).",
+                        meshName, submesh, firstInvalidIndex, vertexCount);
+                    continue;
+                }
+                bgfx::setIndexBuffer(&indexBuffer, 0, indexCount);
             }
         }
 
@@ -6355,6 +6467,11 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                 if (staticGpuCacheable)
                 {
+                    if (bgfx::isValid(gpuSubmesh->m_dynamicWireIndexBuffer))
+                    {
+                        bgfx::destroy(gpuSubmesh->m_dynamicWireIndexBuffer);
+                        gpuSubmesh->m_dynamicWireIndexBuffer = BGFX_INVALID_HANDLE;
+                    }
                     if (bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
                         bgfx::destroy(gpuSubmesh->m_wireIndexBuffer);
                     gpuSubmesh->m_wireIndexBuffer = bgfx::createIndexBuffer(
@@ -6362,7 +6479,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         wireIndex32 ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE);
                     if (!bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
                         continue;
-                    bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer);
+                    bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer, 0,
+                        static_cast<std::uint32_t>(wireIndices.size()));
                 }
                 else
                 {
@@ -6382,7 +6500,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         bgfx::update(gpuSubmesh->m_dynamicWireIndexBuffer, 0,
                             wireMemory);
                         bgfx::setIndexBuffer(
-                            gpuSubmesh->m_dynamicWireIndexBuffer);
+                            gpuSubmesh->m_dynamicWireIndexBuffer, 0,
+                            static_cast<std::uint32_t>(wireIndices.size()));
                     }
                     else if (bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
                     {
@@ -6399,7 +6518,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                             continue;
                         }
                         bgfx::setIndexBuffer(
-                            gpuSubmesh->m_dynamicWireIndexBuffer);
+                            gpuSubmesh->m_dynamicWireIndexBuffer, 0,
+                            static_cast<std::uint32_t>(wireIndices.size()));
                     }
                     else
                     {
@@ -6407,7 +6527,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                             wireMemory, staticFlags);
                         if (!bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
                             continue;
-                        bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer);
+                        bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer, 0,
+                            static_cast<std::uint32_t>(wireIndices.size()));
                     }
                 }
 
@@ -6442,7 +6563,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     for (size_t i = 0; i < wireIndices.size(); ++i)
                         dst[i] = static_cast<std::uint16_t>(wireIndices[i]);
                 }
-                bgfx::setIndexBuffer(&wireBuffer);
+                bgfx::setIndexBuffer(&wireBuffer, 0, wireCount);
             }
         }
 
@@ -6840,8 +6961,8 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     const bool useSoftParticles = CanUseSoftParticles();
     if (useSoftParticles)
         BindSoftParticleDepth();
-    bgfx::setVertexBuffer(0, m_particleQuadVertexBuffer);
-    bgfx::setIndexBuffer(m_particleQuadIndexBuffer);
+    bgfx::setVertexBuffer(0, m_particleQuadVertexBuffer, 0, 4);
+    bgfx::setIndexBuffer(m_particleQuadIndexBuffer, 0, 6);
     bgfx::setInstanceDataBuffer(instanceBuffer, instanceStart, count);
     bgfx::setState(BuildRenderState(shadowWrite));
     bgfx::setStencil(BuildStencilState());
