@@ -31,10 +31,10 @@ vec2 selectUV(float index, vec4 uv01, vec4 uv23, vec4 uv45, vec4 uv67)
     return uv67.zw;
 }
 
-vec2 baseMapUV()
+vec2 baseMapUV(vec4 uv01, vec4 uv23, vec4 uv45, vec4 uv67)
 {
     vec2 uv = selectUV(u_mapParams[MAP_BASE].y,
-        v_texcoord01, v_texcoord23, v_texcoord45, v_texcoord67);
+        uv01, uv23, uv45, uv67);
     vec3 p = vec3(uv, 1.0);
     return vec2(dot(u_mapTransform0[MAP_BASE].xyz, p),
                 dot(u_mapTransform1[MAP_BASE].xyz, p));
@@ -70,7 +70,7 @@ void main()
 
     float opacity = replaceMode ? 1.0 : materialOpacity;
     if (u_mapParams[MAP_BASE].x > 0.5)
-        opacity *= texture2D(s_baseTexture, baseMapUV()).a;
+        opacity *= texture2D(s_baseTexture, baseMapUV(v_texcoord01, v_texcoord23, v_texcoord45, v_texcoord67)).a;
 
     if (!alphaTestPass(opacity))
         discard;
