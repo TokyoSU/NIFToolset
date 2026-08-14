@@ -21,7 +21,11 @@ SAMPLER2D(s_envTexture2D, 11);
 SAMPLERCUBE(s_envTextureCube, 12);
 SAMPLER2D(s_projectedTexture0, 13);
 SAMPLER2D(s_projectedTexture1, 14);
+#ifdef SOFT_PARTICLES
+SAMPLER2D(s_softParticleDepth, 15);
+#else
 SAMPLER2D(s_projectedTexture2, 15);
+#endif
 
 uniform vec4 u_materialAmbient;
 uniform vec4 u_materialDiffuse;
@@ -79,6 +83,10 @@ uniform vec4 u_lppPosScale;
 uniform vec4 u_lppProjectionSwitch;
 uniform vec4 u_lppCameraRight;
 uniform vec4 u_lppCameraUp;
+#ifdef SOFT_PARTICLES
+// x=fade distance, y=1/depth width, z=1/depth height, w=far plane.
+uniform vec4 u_softParticleParams;
+#endif
 
 vec2 selectUV(float index, vec4 uv01, vec4 uv23, vec4 uv45, vec4 uv67)
 {
@@ -126,7 +134,13 @@ vec4 sampleProjectedTexture(int slot, vec2 uv)
 {
     if (slot == 0) return texture2D(s_projectedTexture0, uv);
     if (slot == 1) return texture2D(s_projectedTexture1, uv);
+#ifdef SOFT_PARTICLES
+    // Sampler 15 is reserved for the soft-particle scene-depth texture in this
+    // shader variant. A third projected effect is intentionally ignored.
+    return vec4(1.0, 1.0, 1.0, 1.0);
+#else
     return texture2D(s_projectedTexture2, uv);
+#endif
 }
 
 vec4 sampleShadow2DStage(int stage, vec2 uv)
@@ -145,7 +159,11 @@ vec4 sampleShadow2DStage(int stage, vec2 uv)
     if (stage == 11) return texture2D(s_envTexture2D, uv);
     if (stage == 13) return texture2D(s_projectedTexture0, uv);
     if (stage == 14) return texture2D(s_projectedTexture1, uv);
+#ifdef SOFT_PARTICLES
+    return vec4(1.0, 1.0, 1.0, 1.0);
+#else
     return texture2D(s_projectedTexture2, uv);
+#endif
 }
 
 vec4 transformShadowPosition(vec3 worldPos, vec4 row0, vec4 row1,
@@ -848,6 +866,26 @@ void main()
 #ifdef LPP_GBUFFER
     gl_FragColor = lppEncodeGBuffer(normal, v_worldPos, u_materialSpecular.w);
     return;
+#endif
+
+#ifdef SOFT_PARTICLES
+    // Compare normalized linear view depth against the lightweight scene-depth
+    // prepass. This is backend-independent and avoids D3D/OpenGL raw-depth
+    // convention differences.
+    vec2 softUV = gl_FragCoord.xy * u_softParticleParams.yz;
+    float sceneDepth = texture2D(s_softParticleDepth, softUV).r;
+    vec3 softCameraDir = safeNormalize(u_cameraDirection.xyz,
+        vec3(0.0, 0.0, 1.0));
+    float softFar = max(u_softParticleParams.w, 1e-4);
+    float particleDepth = saturate(dot(v_worldPos - u_cameraPosition.xyz,
+        softCameraDir) / softFar);
+    float fadeWidth = max(u_softParticleParams.x / softFar, 1e-6);
+    float softFade = saturate((sceneDepth - particleDepth) / fadeWidth);
+    color.a *= softFade;
+    // ONE/ONE-style particles do not use alpha as a source factor, so the
+    // renderer marks those in u_alphaParams.w and we fade RGB explicitly.
+    if (u_alphaParams.w > 0.5)
+        color.rgb *= softFade;
 #endif
 
     if (u_fogParams.x > 0.5)

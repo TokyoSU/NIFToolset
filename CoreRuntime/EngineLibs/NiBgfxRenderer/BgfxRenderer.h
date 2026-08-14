@@ -32,6 +32,14 @@ public:
     bool IsInitialized() const;
     bool GetVSync() const { return m_vsync; }
 
+    // Soft particles are a renderer-level quality option. When disabled, the
+    // additional scene-depth prepass and particle depth sampling are skipped.
+    void SetSoftParticlesEnabled(bool enabled);
+    bool GetSoftParticlesEnabled() const { return m_softParticlesEnabled; }
+    void SetSoftParticleFadeDistance(float distance);
+    float GetSoftParticleFadeDistance() const { return m_softParticleFadeDistance; }
+    bool GetSoftParticlesSupported() const;
+
     const char* GetDriverInfo() const override;
     unsigned int GetFlags() const override;
     NiSystemDesc::RendererID GetRendererID() const override;
@@ -207,6 +215,11 @@ private:
     bool LoadVsmBlurProgram();
     bool LoadCopyProgram();
     bool CreateParticleResources();
+    bool CreateSoftParticleTargets(unsigned int width, unsigned int height);
+    void DestroySoftParticleTargets();
+    bool CanUseSoftParticles() const;
+    void BindSoftParticleDepth();
+    void SetSoftParticleParams() const;
     bgfx::ShaderHandle LoadShader(const char* name) const;
     std::string GetBackendShaderDirectory() const;
 
@@ -285,6 +298,12 @@ private:
     bgfx::ProgramHandle m_basicProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_instancedProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_particleProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle m_softParticleProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle m_softParticleFallbackProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle m_softDepthProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle m_softDepthInstancedProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle m_softDepthSkinnedProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle m_softDepthTerrainProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_skinnedProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_skinnedShadowProgram = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle m_terrainProgram = BGFX_INVALID_HANDLE;
@@ -331,6 +350,8 @@ private:
     bgfx::UniformHandle m_cameraDirectionUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_particleCameraRightUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_particleCameraUpUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle m_softParticleDepthUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle m_softParticleParamsUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_sceneAmbientUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_lightCountUniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_lightPositionTypeUniform = BGFX_INVALID_HANDLE;
@@ -416,6 +437,14 @@ private:
     bgfx::UniformHandle m_projectedTransform2Uniform = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle m_projectedClipPlaneUniform = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle m_whiteTexture = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle m_softParticleDepthColor = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle m_softParticleDepthZ = BGFX_INVALID_HANDLE;
+    bgfx::FrameBufferHandle m_softParticleDepthFrameBuffer = BGFX_INVALID_HANDLE;
+    bgfx::ViewId m_softParticleDepthViewId = 0;
+    bool m_softParticleDepthViewActive = false;
+    bool m_softParticleDepthClearedThisFrame = false;
+    bool m_softParticlesEnabled = true;
+    float m_softParticleFadeDistance = 8.0f;
     bgfx::TextureHandle m_whiteCubeTexture = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle m_blackTexture = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle m_flatNormalTexture = BGFX_INVALID_HANDLE;

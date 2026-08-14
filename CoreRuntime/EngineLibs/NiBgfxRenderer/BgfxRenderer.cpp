@@ -749,6 +749,8 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
     m_cameraDirectionUniform = bgfx::createUniform("u_cameraDirection", bgfx::UniformType::Vec4);
     m_particleCameraRightUniform = bgfx::createUniform("u_particleCameraRight", bgfx::UniformType::Vec4);
     m_particleCameraUpUniform = bgfx::createUniform("u_particleCameraUp", bgfx::UniformType::Vec4);
+    m_softParticleDepthUniform = bgfx::createUniform("s_softParticleDepth", bgfx::UniformType::Sampler);
+    m_softParticleParamsUniform = bgfx::createUniform("u_softParticleParams", bgfx::UniformType::Vec4);
     m_sceneAmbientUniform = bgfx::createUniform("u_sceneAmbient", bgfx::UniformType::Vec4);
     m_lightCountUniform = bgfx::createUniform("u_lightCount", bgfx::UniformType::Vec4);
     m_lightPositionTypeUniform = bgfx::createUniform("u_lightPositionType", bgfx::UniformType::Vec4, MAX_STANDARD_LIGHTS);
@@ -873,6 +875,8 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
         bgfx::isValid(m_cameraDirectionUniform) &&
         bgfx::isValid(m_particleCameraRightUniform) &&
         bgfx::isValid(m_particleCameraUpUniform) &&
+        bgfx::isValid(m_softParticleDepthUniform) &&
+        bgfx::isValid(m_softParticleParamsUniform) &&
         bgfx::isValid(m_sceneAmbientUniform) &&
         bgfx::isValid(m_lightCountUniform) &&
         bgfx::isValid(m_lightPositionTypeUniform) &&
@@ -981,6 +985,13 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
         Error("BgfxRenderer: failed to create shared particle billboard geometry.");
         return false;
     }
+    if (bgfx::isValid(m_softParticleProgram) &&
+        !CreateSoftParticleTargets(width, height))
+    {
+        NiLogWrite(NI_LOG_WARNING, "NiBgfxRenderer",
+            "Soft-particle render targets are unavailable; particles will use the normal hard-intersection path.",
+            __FILE__, __LINE__);
+    }
     NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
         "[ParticleInstancing] Debug enabled. Phase-1 facing-quad path is ready; "
         "bgfx instancing capability=%s. The first successful batch will emit "
@@ -1061,6 +1072,8 @@ void BgfxRenderer::ShutdownBgfxResources()
     }
     m_windowTargets.clear();
 
+    DestroySoftParticleTargets();
+
     if (m_defaultTargetGroup)
         m_defaultTargetGroup->SetRendererData(nullptr);
 
@@ -1090,6 +1103,18 @@ void BgfxRenderer::ShutdownBgfxResources()
         bgfx::destroy(m_instancedProgram);
     if (bgfx::isValid(m_particleProgram))
         bgfx::destroy(m_particleProgram);
+    if (bgfx::isValid(m_softParticleProgram))
+        bgfx::destroy(m_softParticleProgram);
+    if (bgfx::isValid(m_softParticleFallbackProgram))
+        bgfx::destroy(m_softParticleFallbackProgram);
+    if (bgfx::isValid(m_softDepthProgram))
+        bgfx::destroy(m_softDepthProgram);
+    if (bgfx::isValid(m_softDepthInstancedProgram))
+        bgfx::destroy(m_softDepthInstancedProgram);
+    if (bgfx::isValid(m_softDepthSkinnedProgram))
+        bgfx::destroy(m_softDepthSkinnedProgram);
+    if (bgfx::isValid(m_softDepthTerrainProgram))
+        bgfx::destroy(m_softDepthTerrainProgram);
     if (bgfx::isValid(m_skinnedProgram))
         bgfx::destroy(m_skinnedProgram);
     if (bgfx::isValid(m_skinnedShadowProgram))
@@ -1155,6 +1180,7 @@ void BgfxRenderer::ShutdownBgfxResources()
         &m_mapTransform0Uniform, &m_mapTransform1Uniform, &m_bumpParamsUniform,
         &m_cameraPositionUniform, &m_cameraDirectionUniform,
         &m_particleCameraRightUniform, &m_particleCameraUpUniform,
+        &m_softParticleDepthUniform, &m_softParticleParamsUniform,
         &m_sceneAmbientUniform, &m_lightCountUniform,
         &m_lightPositionTypeUniform, &m_lightDirectionRangeUniform,
         &m_lightDiffuseDimmerUniform, &m_lightAmbientFalloffUniform,
@@ -1209,6 +1235,12 @@ void BgfxRenderer::ShutdownBgfxResources()
     m_basicProgram = BGFX_INVALID_HANDLE;
     m_instancedProgram = BGFX_INVALID_HANDLE;
     m_particleProgram = BGFX_INVALID_HANDLE;
+    m_softParticleProgram = BGFX_INVALID_HANDLE;
+    m_softParticleFallbackProgram = BGFX_INVALID_HANDLE;
+    m_softDepthProgram = BGFX_INVALID_HANDLE;
+    m_softDepthInstancedProgram = BGFX_INVALID_HANDLE;
+    m_softDepthSkinnedProgram = BGFX_INVALID_HANDLE;
+    m_softDepthTerrainProgram = BGFX_INVALID_HANDLE;
     m_skinnedProgram = BGFX_INVALID_HANDLE;
     m_skinnedShadowProgram = BGFX_INVALID_HANDLE;
     m_terrainProgram = BGFX_INVALID_HANDLE;
@@ -1267,6 +1299,132 @@ void BgfxRenderer::ResetDefaultTargetDimensions(unsigned int width,
         m_defaultDepthBuffer->ResetDimensions(width, height);
 }
 
+void BgfxRenderer::DestroySoftParticleTargets()
+{
+    if (bgfx::isValid(m_softParticleDepthFrameBuffer))
+        bgfx::destroy(m_softParticleDepthFrameBuffer);
+    if (bgfx::isValid(m_softParticleDepthColor))
+        bgfx::destroy(m_softParticleDepthColor);
+    if (bgfx::isValid(m_softParticleDepthZ))
+        bgfx::destroy(m_softParticleDepthZ);
+
+    m_softParticleDepthFrameBuffer = BGFX_INVALID_HANDLE;
+    m_softParticleDepthColor = BGFX_INVALID_HANDLE;
+    m_softParticleDepthZ = BGFX_INVALID_HANDLE;
+    m_softParticleDepthViewActive = false;
+    m_softParticleDepthClearedThisFrame = false;
+}
+
+bool BgfxRenderer::CreateSoftParticleTargets(unsigned int width,
+    unsigned int height)
+{
+    DestroySoftParticleTargets();
+    if (!m_context.IsInitialized() || width == 0 || height == 0)
+        return false;
+
+    const std::uint64_t colorFlags = BGFX_TEXTURE_RT |
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP |
+        BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT |
+        BGFX_SAMPLER_MIP_POINT;
+
+    m_softParticleDepthColor = bgfx::createTexture2D(
+        ClampCast<std::uint16_t>(width), ClampCast<std::uint16_t>(height),
+        false, 1, bgfx::TextureFormat::R32F, colorFlags);
+    if (!bgfx::isValid(m_softParticleDepthColor))
+    {
+        // R16F is sufficient because depth is normalized to [0,1]. Keep this
+        // fallback for older GL/D3D feature levels.
+        m_softParticleDepthColor = bgfx::createTexture2D(
+            ClampCast<std::uint16_t>(width), ClampCast<std::uint16_t>(height),
+            false, 1, bgfx::TextureFormat::R16F, colorFlags);
+    }
+
+    const std::uint64_t depthFlags = BGFX_TEXTURE_RT;
+    m_softParticleDepthZ = bgfx::createTexture2D(
+        ClampCast<std::uint16_t>(width), ClampCast<std::uint16_t>(height),
+        false, 1, bgfx::TextureFormat::D32F, depthFlags);
+    if (!bgfx::isValid(m_softParticleDepthZ))
+    {
+        m_softParticleDepthZ = bgfx::createTexture2D(
+            ClampCast<std::uint16_t>(width), ClampCast<std::uint16_t>(height),
+            false, 1, bgfx::TextureFormat::D24S8, depthFlags);
+    }
+
+    if (!bgfx::isValid(m_softParticleDepthColor) ||
+        !bgfx::isValid(m_softParticleDepthZ))
+    {
+        DestroySoftParticleTargets();
+        return false;
+    }
+
+    const bgfx::TextureHandle attachments[2] =
+    {
+        m_softParticleDepthColor, m_softParticleDepthZ
+    };
+    m_softParticleDepthFrameBuffer = bgfx::createFrameBuffer(
+        2, attachments, false);
+    if (!bgfx::isValid(m_softParticleDepthFrameBuffer))
+    {
+        DestroySoftParticleTargets();
+        return false;
+    }
+
+    bgfx::setName(m_softParticleDepthColor, "NiBgfx soft-particle linear depth");
+    bgfx::setName(m_softParticleDepthZ, "NiBgfx soft-particle depth test");
+    return true;
+}
+
+bool BgfxRenderer::GetSoftParticlesSupported() const
+{
+#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+    return bgfx::isValid(m_softParticleProgram) &&
+        bgfx::isValid(m_softParticleFallbackProgram) &&
+        bgfx::isValid(m_softDepthProgram) &&
+        bgfx::isValid(m_softDepthInstancedProgram) &&
+        bgfx::isValid(m_softDepthSkinnedProgram) &&
+        bgfx::isValid(m_softDepthTerrainProgram) &&
+        bgfx::isValid(m_softParticleDepthUniform) &&
+        bgfx::isValid(m_softParticleParamsUniform) &&
+        bgfx::isValid(m_softParticleDepthColor) &&
+        bgfx::isValid(m_softParticleDepthFrameBuffer);
+#else
+    return false;
+#endif
+}
+
+bool BgfxRenderer::CanUseSoftParticles() const
+{
+    return m_softParticlesEnabled && GetSoftParticlesSupported() &&
+        m_softParticleDepthViewActive &&
+        m_softParticleDepthClearedThisFrame;
+}
+
+void BgfxRenderer::SetSoftParticleParams() const
+{
+    const float farPlane = std::max(m_frustum.m_fFar, 0.001f);
+    const float params[4] =
+    {
+        std::max(m_softParticleFadeDistance, 0.001f),
+        1.0f / static_cast<float>(std::max(1u, m_width)),
+        1.0f / static_cast<float>(std::max(1u, m_height)),
+        farPlane
+    };
+    bgfx::setUniform(m_softParticleParamsUniform, params);
+}
+
+void BgfxRenderer::BindSoftParticleDepth()
+{
+    if (!CanUseSoftParticles())
+        return;
+
+    SetSoftParticleParams();
+    bgfx::setTexture(15, m_softParticleDepthUniform,
+        m_softParticleDepthColor,
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP |
+        BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT |
+        BGFX_SAMPLER_MIP_POINT);
+}
+
 bool BgfxRenderer::Resize(unsigned int width, unsigned int height, bool vsync)
 {
     if (!m_context.IsInitialized())
@@ -1291,12 +1449,31 @@ bool BgfxRenderer::Resize(unsigned int width, unsigned int height, bool vsync)
         vsync ? "true" : "false");
     m_context.Reset(width, height, vsync);
     ResetDefaultTargetDimensions(width, height);
+#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+    if (bgfx::isValid(m_softParticleProgram) &&
+        !CreateSoftParticleTargets(width, height))
+    {
+        NiLogWrite(NI_LOG_WARNING, "NiBgfxRenderer",
+            "Soft-particle depth targets could not be recreated after resize; soft particles will fall back to hard intersections.",
+            __FILE__, __LINE__);
+    }
+#endif
     return true;
 }
 
 bool BgfxRenderer::IsInitialized() const
 {
     return m_context.IsInitialized();
+}
+
+void BgfxRenderer::SetSoftParticlesEnabled(bool enabled)
+{
+    m_softParticlesEnabled = enabled;
+}
+
+void BgfxRenderer::SetSoftParticleFadeDistance(float distance)
+{
+    m_softParticleFadeDistance = std::max(distance, 0.001f);
 }
 
 const char* BgfxRenderer::GetDriverInfo() const
@@ -2861,6 +3038,8 @@ bool BgfxRenderer::Do_BeginFrame()
     // and camera state from one click cannot overwrite another.
     m_nextViewId = 0;
     m_viewId = 0;
+    m_softParticleDepthViewActive = false;
+    m_softParticleDepthClearedThisFrame = false;
     return true;
 }
 
@@ -2965,6 +3144,8 @@ void BgfxRenderer::Do_SetCameraData(const NiPoint3& worldLoc,
     }
 
     bgfx::setViewTransform(m_viewId, view, proj);
+    if (m_softParticleDepthViewActive)
+        bgfx::setViewTransform(m_softParticleDepthViewId, view, proj);
 
     const NiRenderTargetGroup* target = m_pkCurrentRenderTargetGroup ?
         m_pkCurrentRenderTargetGroup : m_defaultTargetGroup.data();
@@ -2975,10 +3156,17 @@ void BgfxRenderer::Do_SetCameraData(const NiPoint3& worldLoc,
     const float y = (1.0f - port.m_top) * height;
     const float w = (port.m_right - port.m_left) * width;
     const float h = (port.m_top - port.m_bottom) * height;
-    bgfx::setViewRect(m_viewId, ClampCast<std::uint16_t>(static_cast<unsigned int>(std::max(0.0f, x))),
-        ClampCast<std::uint16_t>(static_cast<unsigned int>(std::max(0.0f, y))),
-        ClampCast<std::uint16_t>(static_cast<unsigned int>(std::max(1.0f, w))),
-        ClampCast<std::uint16_t>(static_cast<unsigned int>(std::max(1.0f, h))));
+    const std::uint16_t viewX = ClampCast<std::uint16_t>(
+        static_cast<unsigned int>(std::max(0.0f, x)));
+    const std::uint16_t viewY = ClampCast<std::uint16_t>(
+        static_cast<unsigned int>(std::max(0.0f, y)));
+    const std::uint16_t viewW = ClampCast<std::uint16_t>(
+        static_cast<unsigned int>(std::max(1.0f, w)));
+    const std::uint16_t viewH = ClampCast<std::uint16_t>(
+        static_cast<unsigned int>(std::max(1.0f, h)));
+    bgfx::setViewRect(m_viewId, viewX, viewY, viewW, viewH);
+    if (m_softParticleDepthViewActive)
+        bgfx::setViewRect(m_softParticleDepthViewId, viewX, viewY, viewW, viewH);
 }
 
 void BgfxRenderer::Do_SetScreenSpaceCameraData(const NiRect<float>* port)
@@ -3015,6 +3203,7 @@ bool BgfxRenderer::Do_BeginUsingRenderTargetGroup(NiRenderTargetGroup* target,
         return false;
 
     const bool isDefaultTarget = target == m_defaultTargetGroup;
+    m_softParticleDepthViewActive = false;
 
     // Keep the default back-buffer clear in a dedicated bgfx view. Views are
     // executed in ascending ViewId order, so this guarantees that the clear
@@ -3041,6 +3230,38 @@ bool BgfxRenderer::Do_BeginUsingRenderTargetGroup(NiRenderTargetGroup* target,
         bgfx::setViewClear(clearView, clearFlags, clearColor, m_depthClear,
             static_cast<std::uint8_t>(m_stencilClear));
         bgfx::touch(clearView);
+    }
+
+    // The default swap-chain depth buffer cannot be sampled by bgfx. When
+    // soft particles are enabled, reserve an earlier view that mirrors only
+    // depth-writing scene geometry into a tiny-purpose R32F linear-depth
+    // target. The regular scene still renders directly to the swap chain.
+    if (isDefaultTarget && m_softParticlesEnabled && GetSoftParticlesSupported())
+    {
+        if (!AllocateAuxiliaryView(m_softParticleDepthViewId,
+            "NiBgfx Soft Particle Depth"))
+        {
+            return false;
+        }
+        m_softParticleDepthViewActive = true;
+        bgfx::setViewFrameBuffer(m_softParticleDepthViewId,
+            m_softParticleDepthFrameBuffer);
+        bgfx::setViewRect(m_softParticleDepthViewId, 0, 0,
+            ClampCast<std::uint16_t>(target->GetWidth(0)),
+            ClampCast<std::uint16_t>(target->GetHeight(0)));
+
+        const bool clearSoftDepth = !m_softParticleDepthClearedThisFrame ||
+            (clearMode & CLEAR_ZBUFFER) != 0;
+        if (clearSoftDepth)
+        {
+            // White means normalized far depth (1.0). The real depth buffer is
+            // cleared normally so the nearest mirrored surface wins.
+            bgfx::setViewClear(m_softParticleDepthViewId,
+                BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
+                0xffffffffu, 1.0f, 0);
+            bgfx::touch(m_softParticleDepthViewId);
+            m_softParticleDepthClearedThisFrame = true;
+        }
     }
 
     if (!AllocateView(isDefaultTarget ?
@@ -3782,6 +4003,14 @@ void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
         alphaParams[0] = static_cast<float>(alpha->GetTestRef()) / 255.0f;
         alphaParams[1] = 1.0f;
         alphaParams[2] = static_cast<float>(alpha->GetTestMode());
+    }
+    // Soft-particle shader variants use w to identify blend modes whose
+    // source contribution does not depend on source alpha (notably ONE/ONE).
+    // Those need RGB fading in addition to alpha fading.
+    if (alpha && alpha->GetAlphaBlending() &&
+        alpha->GetSrcBlendMode() == NiAlphaProperty::ALPHA_ONE)
+    {
+        alphaParams[3] = 1.0f;
     }
     bgfx::setUniform(m_alphaParamsUniform, alphaParams);
 
@@ -5193,6 +5422,12 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         bgfx::setUniform(m_shadowWriteParamsUniform, shadowWriteParams);
     }
 
+#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+    const bool isParticleSystem = NiDynamicCast(NiPSParticleSystem, mesh) != nullptr;
+#else
+    const bool isParticleSystem = false;
+#endif
+
     // Phase 1 particle instancing: NiPSFacingQuadGenerator systems are
     // expanded from one shared quad in the vertex shader. The existing
     // Gamebryo simulation/generator remains attached as a correctness
@@ -6239,10 +6474,19 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
             !terrainBound && !extendedBound && BindDecorationMaterial(mesh);
         const bool skyBound = skyMaterial && !shadowWrite && !vsmBlur &&
             !terrainBound && !extendedBound && !decorationBound && BindSkyMaterial(mesh);
-        bgfx::setState(state);
-        bgfx::setStencil(BuildStencilState());
+        const bool softParticleFallback = isParticleSystem &&
+            !hardwareSkinned && !shadowWrite && !vsmBlur && !terrainBound &&
+            !extendedBound && !decorationBound && !skyBound &&
+            CanUseSoftParticles();
+        if (softParticleFallback)
+            BindSoftParticleDepth();
 
-        const bgfx::ProgramHandle drawProgram = hardwareSkinned ?
+        const std::uint32_t stencilState = BuildStencilState();
+        bgfx::setState(state);
+        bgfx::setStencil(stencilState);
+
+        const bgfx::ProgramHandle drawProgram = softParticleFallback ?
+            m_softParticleFallbackProgram : (hardwareSkinned ?
             (shadowWrite ? m_skinnedShadowProgram :
                 (extendedBound ? m_extendedSkinnedProgram :
                     (decorationBound ? m_decorationSkinnedProgram : m_skinnedProgram))) :
@@ -6254,11 +6498,35 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                             m_terrainCubeShadowProgram : m_terrainProgram) :
                         (extendedBound ? m_extendedProgram :
                             (decorationBound ? m_decorationProgram :
-                                (skyBound ? m_skyProgram : m_basicProgram))))));
+                                (skyBound ? m_skyProgram : m_basicProgram)))))));
         const bgfx::ProgramHandle instancedDrawProgram = shadowWrite ?
             m_instancedShadowProgram :
             (extendedBound ? m_extendedInstancedProgram :
                 (decorationBound ? m_decorationInstancedProgram : m_instancedProgram));
+
+        const bool mirrorSoftDepth = m_softParticleDepthViewActive &&
+            m_softParticlesEnabled && m_softParticleDepthClearedThisFrame &&
+            !isParticleSystem && !shadowWrite && !vsmBlur && !skyBound &&
+            (state & BGFX_STATE_WRITE_Z) != 0;
+        const std::uint64_t softDepthState =
+            (state & ~(BGFX_STATE_BLEND_MASK | BGFX_STATE_WRITE_A)) |
+            BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_Z;
+        const bgfx::ProgramHandle softDepthDrawProgram = hardwareSkinned ?
+            m_softDepthSkinnedProgram :
+            (terrainBound ? m_softDepthTerrainProgram : m_softDepthProgram);
+
+        const auto submitSoftDepth = [&](bgfx::ProgramHandle program)
+        {
+            if (!mirrorSoftDepth || !bgfx::isValid(program))
+                return;
+            SetSoftParticleParams();
+            bgfx::setState(softDepthState);
+            bgfx::setStencil(BGFX_STENCIL_NONE);
+            bgfx::submit(m_softParticleDepthViewId, program, 0,
+                BGFX_DISCARD_NONE);
+            bgfx::setState(state);
+            bgfx::setStencil(stencilState);
+        };
 
         bool submitted = false;
         if (!hardwareSkinned && !skyBound && mesh->GetInstanced() &&
@@ -6294,6 +6562,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                             std::memcpy(instanceBuffer.data, instanceSource,
                                 static_cast<size_t>(instanceCount) * INSTANCE_STRIDE);
                             bgfx::setInstanceDataBuffer(&instanceBuffer);
+                            submitSoftDepth(m_softDepthInstancedProgram);
                             bgfx::submit(m_viewId, instancedDrawProgram);
                             submitted = true;
                         }
@@ -6322,6 +6591,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                                     rows[3], rows[7], rows[11], 1.0f
                                 };
                                 bgfx::setTransform(matrix);
+                                submitSoftDepth(softDepthDrawProgram);
                                 const bool last = instance + 1u == instanceCount;
                                 bgfx::submit(m_viewId, drawProgram, 0,
                                     last ? BGFX_DISCARD_ALL : BGFX_DISCARD_NONE);
@@ -6335,7 +6605,10 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         }
 
         if (!submitted)
+        {
+            submitSoftDepth(softDepthDrawProgram);
             bgfx::submit(m_viewId, drawProgram);
+        }
     }
 }
 
@@ -6564,12 +6837,16 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
 
     SetModelTransform(mesh->GetWorldTransform());
     BindMaterialAndTexture(mesh);
+    const bool useSoftParticles = CanUseSoftParticles();
+    if (useSoftParticles)
+        BindSoftParticleDepth();
     bgfx::setVertexBuffer(0, m_particleQuadVertexBuffer);
     bgfx::setIndexBuffer(m_particleQuadIndexBuffer);
     bgfx::setInstanceDataBuffer(instanceBuffer, instanceStart, count);
     bgfx::setState(BuildRenderState(shadowWrite));
     bgfx::setStencil(BuildStencilState());
-    bgfx::submit(m_viewId, m_particleProgram);
+    bgfx::submit(m_viewId, useSoftParticles ?
+        m_softParticleProgram : m_particleProgram);
 
     ++m_particleInstancingDebugStats.m_instancedBatches;
     m_particleInstancingDebugStats.m_instancedParticles += count;
@@ -6769,23 +7046,73 @@ bool BgfxRenderer::LoadInstancedProgram()
 
 bool BgfxRenderer::LoadParticlePrograms()
 {
-    bgfx::ShaderHandle vs = LoadShader("vs_ni_particle.bin");
-    bgfx::ShaderHandle fs = LoadShader("fs_ni_basic.bin");
-    if (!bgfx::isValid(vs) || !bgfx::isValid(fs))
+    const auto makeProgram = [this](const char* vertexName,
+        const char* fragmentName, bgfx::ProgramHandle& output,
+        const char* label)
     {
-        if (bgfx::isValid(vs)) bgfx::destroy(vs);
-        if (bgfx::isValid(fs)) bgfx::destroy(fs);
+        bgfx::ShaderHandle vs = LoadShader(vertexName);
+        bgfx::ShaderHandle fs = LoadShader(fragmentName);
+        if (!bgfx::isValid(vs) || !bgfx::isValid(fs))
+        {
+            if (bgfx::isValid(vs)) bgfx::destroy(vs);
+            if (bgfx::isValid(fs)) bgfx::destroy(fs);
+            return false;
+        }
+
+        output = bgfx::createProgram(vs, fs, true);
+        if (!bgfx::isValid(output))
+        {
+            NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                "bgfx::createProgram failed for %s.", label);
+            return false;
+        }
+        return true;
+    };
+
+    if (!makeProgram("vs_ni_particle.bin", "fs_ni_basic.bin",
+        m_particleProgram, "the particle billboard program"))
+    {
         return false;
     }
 
-    m_particleProgram = bgfx::createProgram(vs, fs, true);
-    if (!bgfx::isValid(m_particleProgram))
+    const bool softProgramsValid =
+        makeProgram("vs_ni_particle.bin", "fs_ni_particle.bin",
+            m_softParticleProgram, "the soft-particle billboard program") &&
+        makeProgram("vs_ni_basic.bin", "fs_ni_particle.bin",
+            m_softParticleFallbackProgram,
+            "the generated-geometry soft-particle program") &&
+        makeProgram("vs_ni_basic.bin", "fs_ni_soft_depth.bin",
+            m_softDepthProgram, "the soft-particle depth program") &&
+        makeProgram("vs_ni_instanced.bin", "fs_ni_soft_depth.bin",
+            m_softDepthInstancedProgram,
+            "the instanced soft-particle depth program") &&
+        makeProgram("vs_ni_skinned.bin", "fs_ni_soft_depth.bin",
+            m_softDepthSkinnedProgram,
+            "the skinned soft-particle depth program") &&
+        makeProgram("vs_ni_terrain.bin", "fs_ni_soft_depth.bin",
+            m_softDepthTerrainProgram,
+            "the terrain soft-particle depth program");
+
+    if (!softProgramsValid)
     {
-        NiLogWrite(NI_LOG_ERROR, "NiBgfxRenderer",
-            "bgfx::createProgram failed for the particle billboard program.",
+        bgfx::ProgramHandle* optionalPrograms[] =
+        {
+            &m_softParticleProgram, &m_softParticleFallbackProgram,
+            &m_softDepthProgram, &m_softDepthInstancedProgram,
+            &m_softDepthSkinnedProgram, &m_softDepthTerrainProgram
+        };
+        for (bgfx::ProgramHandle* program : optionalPrograms)
+        {
+            if (bgfx::isValid(*program))
+                bgfx::destroy(*program);
+            *program = BGFX_INVALID_HANDLE;
+        }
+        NiLogWrite(NI_LOG_WARNING, "NiBgfxRenderer",
+            "Soft-particle shaders are unavailable. Normal particle rendering remains enabled.",
             __FILE__, __LINE__);
     }
-    return bgfx::isValid(m_particleProgram);
+
+    return true;
 }
 
 bool BgfxRenderer::LoadSkinnedPrograms()
