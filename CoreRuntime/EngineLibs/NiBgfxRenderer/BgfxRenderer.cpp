@@ -1473,11 +1473,16 @@ bool BgfxRenderer::IsInitialized() const
 void BgfxRenderer::SetSoftParticlesEnabled(bool enabled)
 {
     m_softParticlesEnabled = enabled;
+    NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+        "[SoftParticles] enabled=%s supported=%s.",
+        enabled ? "true" : "false", GetSoftParticlesSupported() ? "true" : "false");
 }
 
 void BgfxRenderer::SetSoftParticleFadeDistance(float distance)
 {
     m_softParticleFadeDistance = std::max(distance, 0.001f);
+    NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+        "[SoftParticles] fadeDistance=%.3f.", m_softParticleFadeDistance);
 }
 
 const char* BgfxRenderer::GetDriverInfo() const
@@ -3703,14 +3708,51 @@ std::uint64_t BgfxRenderer::BuildMeshDataRevision(const NiMesh* mesh,
 BgfxRenderer::MeshCache* BgfxRenderer::GetOrCreateMeshCache(NiMesh* mesh)
 {
     // Stream-out meshes are produced by the GPU and cannot be repacked from
-    // their CPU streams here. Every other mesh gets a cache entry. Immutable
-    // meshes use static bgfx buffers. Mutable/volatile meshes also start
-    // static and are promoted to dynamic only after a stream revision really
-    // changes. This avoids consuming bgfx's finite transient arenas and its
-    // finite dynamic-handle pool for legacy meshes that never actually mutate.
+    // their CPU streams here.
     if (!mesh || mesh->GetInputDataIsFromStreamOut())
         return nullptr;
 
+    // CPU_WRITE_VOLATILE has immediate-mode semantics: the same NiDataStream
+    // may be rewritten and submitted several times before bgfx::frame().
+    // NiImmediateModeAdapter relies on exactly this behaviour when it flushes
+    // a chunk with EndDrawing(), relocks the same streams, and continues.
+    //
+    // Do not put these streams in the persistent dynamic-buffer cache. bgfx
+    // executes resource updates before the frame's draw list, so several
+    // bgfx::update() calls to the same dynamic handle can make earlier draws
+    // observe the final contents. The transient path allocates a distinct
+    // per-frame range for every submission and therefore preserves every
+    // immediate-mode draw.
+    const unsigned int streamCount = mesh->GetStreamRefCount();
+    for (unsigned int i = 0; i < streamCount; ++i)
+    {
+        const NiDataStreamRef* ref = mesh->GetStreamRefAt(i);
+        if (!ref || ref->IsPerInstance())
+            continue;
+
+        const NiDataStream* stream = ref->GetDataStream();
+        if (!stream)
+            continue;
+
+        const NiDataStream::Usage usage = stream->GetUsage();
+        if (usage != NiDataStream::USAGE_VERTEX &&
+            usage != NiDataStream::USAGE_VERTEX_INDEX)
+        {
+            continue;
+        }
+
+        if ((stream->GetAccessMask() &
+            NiDataStream::ACCESS_CPU_WRITE_VOLATILE) != 0)
+        {
+            return nullptr;
+        }
+    }
+
+    // All remaining meshes get a cache entry. Immutable meshes use static
+    // bgfx buffers. CPU_WRITE_MUTABLE meshes start static and are promoted to
+    // dynamic only after a stream revision really changes. This avoids
+    // consuming bgfx's finite transient arenas and dynamic-handle pool for
+    // legacy meshes that are mutable in metadata but rarely change.
     auto found = m_meshCache.find(mesh);
     MeshCache* cache = found != m_meshCache.end() ? found->second : nullptr;
     if (!cache)
@@ -4008,14 +4050,12 @@ void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
         alphaParams[1] = 1.0f;
         alphaParams[2] = static_cast<float>(alpha->GetTestMode());
     }
-    // Soft-particle shader variants use w to identify blend modes whose
-    // source contribution does not depend on source alpha (notably ONE/ONE).
-    // Those need RGB fading in addition to alpha fading.
-    if (alpha && alpha->GetAlphaBlending() &&
-        alpha->GetSrcBlendMode() == NiAlphaProperty::ALPHA_ONE)
-    {
-        alphaParams[3] = 1.0f;
-    }
+    // Soft-particle variants need to know the actual source blend factor.
+    // Store srcMode+1 in w (0 means blending disabled). Fading only alpha is
+    // sufficient for SRC_ALPHA/SRC_ALPHA_SAT, but it is visually ineffective
+    // for ONE, SRC_COLOR and destination-driven source factors.
+    if (alpha && alpha->GetAlphaBlending())
+        alphaParams[3] = static_cast<float>(alpha->GetSrcBlendMode()) + 1.0f;
     bgfx::setUniform(m_alphaParamsUniform, alphaParams);
 
     const float cameraPosition[4] = { m_worldLoc.x, m_worldLoc.y, m_worldLoc.z, 1.0f };
@@ -6603,6 +6643,30 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
             !hardwareSkinned && !shadowWrite && !vsmBlur && !terrainBound &&
             !extendedBound && !decorationBound && !skyBound &&
             CanUseSoftParticles();
+        if (isParticleSystem && !m_softParticleFirstDrawLogged)
+        {
+            const NiAlphaProperty* softAlpha =
+                m_pkCurrProp ? m_pkCurrProp->GetAlpha() : nullptr;
+            if (!softAlpha)
+                softAlpha = NiAlphaProperty::GetDefault();
+            const char* particleName = static_cast<const char*>(mesh->GetName());
+            if (!particleName || !particleName[0])
+                particleName = "<unnamed>";
+            NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+                "[SoftParticles] PARTICLE FALLBACK: mesh='%s' use=%s enabled=%s "
+                "supported=%s depthView=%s cleared=%s fade=%.3f alphaBlend=%s "
+                "src=%d dst=%d.",
+                particleName, softParticleFallback ? "YES" : "NO",
+                m_softParticlesEnabled ? "true" : "false",
+                GetSoftParticlesSupported() ? "true" : "false",
+                m_softParticleDepthViewActive ? "true" : "false",
+                m_softParticleDepthClearedThisFrame ? "true" : "false",
+                m_softParticleFadeDistance,
+                softAlpha && softAlpha->GetAlphaBlending() ? "true" : "false",
+                softAlpha ? static_cast<int>(softAlpha->GetSrcBlendMode()) : -1,
+                softAlpha ? static_cast<int>(softAlpha->GetDestBlendMode()) : -1);
+            m_softParticleFirstDrawLogged = true;
+        }
         if (softParticleFallback)
             BindSoftParticleDepth();
 
@@ -6650,6 +6714,19 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         {
             if (!mirrorSoftDepth || !bgfx::isValid(program))
                 return;
+            if (!m_softParticleFirstDepthSubmitLogged)
+            {
+                const char* meshName = static_cast<const char*>(mesh->GetName());
+                if (!meshName || !meshName[0])
+                    meshName = "<unnamed>";
+                NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+                    "[SoftParticles] DEPTH ACTIVE: first mirrored mesh='%s' view=%u "
+                    "terrain=%s extended=%s skinned=%s.",
+                    meshName, static_cast<unsigned int>(m_softParticleDepthViewId),
+                    terrainBound ? "yes" : "no", extendedBound ? "yes" : "no",
+                    hardwareSkinned ? "yes" : "no");
+                m_softParticleFirstDepthSubmitLogged = true;
+            }
             SetSoftParticleParams();
             bgfx::setState(softDepthState);
             bgfx::setStencil(BGFX_STENCIL_NONE);
@@ -6969,6 +7046,29 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     SetModelTransform(mesh->GetWorldTransform());
     BindMaterialAndTexture(mesh);
     const bool useSoftParticles = CanUseSoftParticles();
+    if (!m_softParticleFirstDrawLogged)
+    {
+        const NiAlphaProperty* softAlpha =
+            m_pkCurrProp ? m_pkCurrProp->GetAlpha() : nullptr;
+        if (!softAlpha)
+            softAlpha = NiAlphaProperty::GetDefault();
+        const char* particleName = static_cast<const char*>(mesh->GetName());
+        if (!particleName || !particleName[0])
+            particleName = "<unnamed>";
+        NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+            "[SoftParticles] PARTICLE: mesh='%s' use=%s enabled=%s supported=%s "
+            "depthView=%s cleared=%s fade=%.3f alphaBlend=%s src=%d dst=%d.",
+            particleName, useSoftParticles ? "YES" : "NO",
+            m_softParticlesEnabled ? "true" : "false",
+            GetSoftParticlesSupported() ? "true" : "false",
+            m_softParticleDepthViewActive ? "true" : "false",
+            m_softParticleDepthClearedThisFrame ? "true" : "false",
+            m_softParticleFadeDistance,
+            softAlpha && softAlpha->GetAlphaBlending() ? "true" : "false",
+            softAlpha ? static_cast<int>(softAlpha->GetSrcBlendMode()) : -1,
+            softAlpha ? static_cast<int>(softAlpha->GetDestBlendMode()) : -1);
+        m_softParticleFirstDrawLogged = true;
+    }
     if (useSoftParticles)
         BindSoftParticleDepth();
     bgfx::setVertexBuffer(0, m_particleQuadVertexBuffer, 0, 4);
