@@ -2489,47 +2489,20 @@ bool BgfxRenderer::CreateTextureFromPixelData(NiTexture* texture,
             "Texture '%s' contains zero mip levels.", GetTextureDebugName(texture));
         return false;
     }
+
     const unsigned int mipSkip = std::min(m_mipmapSkip, mipCount - 1);
     const unsigned int uploadMipCount = mipCount - mipSkip;
-    const bool hasMips = uploadMipCount > 1;
     const unsigned int uploadWidth = pixels->GetWidth(mipSkip);
     const unsigned int uploadHeight = pixels->GetHeight(mipSkip);
+    const unsigned int faceCount = pixels->GetNumFaces();
 
-    // NiPixelData stores each face as a chain of mip levels. When skipping
-    // the largest mips, repack only the surviving chain(s) so bgfx sees the
-    // requested mip as level zero.
-    std::vector<std::uint8_t> skippedMipData;
-    const void* uploadPixels = pixels->GetPixels();
-    size_t uploadSize = pixels->GetTotalSizeInBytes();
-    if (mipSkip != 0)
-    {
-        uploadSize = 0;
-        for (unsigned int face = 0; face < pixels->GetNumFaces(); ++face)
-            for (unsigned int mip = mipSkip; mip < mipCount; ++mip)
-                uploadSize += pixels->GetSizeInBytes(mip, face);
-
-        skippedMipData.reserve(uploadSize);
-        for (unsigned int face = 0; face < pixels->GetNumFaces(); ++face)
-        {
-            for (unsigned int mip = mipSkip; mip < mipCount; ++mip)
-            {
-                const std::uint8_t* begin = pixels->GetPixels(mip, face);
-                const size_t size = pixels->GetSizeInBytes(mip, face);
-                skippedMipData.insert(skippedMipData.end(), begin, begin + size);
-            }
-        }
-        uploadPixels = skippedMipData.data();
-        uploadSize = skippedMipData.size();
-    }
-
-    if (uploadSize > std::numeric_limits<std::uint32_t>::max())
+    if (uploadWidth == 0 || uploadHeight == 0)
     {
         NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
-            "Texture '%s' upload is too large for bgfx (%llu bytes).",
-            GetTextureDebugName(texture), static_cast<unsigned long long>(uploadSize));
+            "Texture '%s' has invalid upload dimensions %ux%u at mip %u.",
+            GetTextureDebugName(texture), uploadWidth, uploadHeight, mipSkip);
         return false;
     }
-    const unsigned int faceCount = pixels->GetNumFaces();
     if (cubeMap && (faceCount != 6 || uploadWidth != uploadHeight))
     {
         NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
@@ -2543,6 +2516,143 @@ bool BgfxRenderer::CreateTextureFromPixelData(NiTexture* texture,
             "Texture '%s' has invalid face/layer count %u.",
             GetTextureDebugName(texture), faceCount);
         return false;
+    }
+
+    // bgfx's hasMips flag means that a COMPLETE mip chain is present, all the
+    // way down to 1x1. Some legacy Gamebryo assets intentionally contain only
+    // the first few mip levels. Passing those bytes with hasMips=true makes
+    // recent bgfx/bimg versions calculate a larger storage size and assert while
+    // reading past the supplied memory. Only advertise mipmaps when the chain
+    // is complete; otherwise upload the first surviving mip only.
+    const auto calculateFullMipCount = [](unsigned int width, unsigned int height)
+    {
+        unsigned int count = 1;
+        while (width > 1 || height > 1)
+        {
+            width = std::max(1u, width >> 1u);
+            height = std::max(1u, height >> 1u);
+            ++count;
+        }
+        return count;
+    };
+
+    const unsigned int fullMipCount = calculateFullMipCount(uploadWidth, uploadHeight);
+    const bool completeMipChain = uploadMipCount == fullMipCount;
+    bool hasMips = uploadMipCount > 1 && completeMipChain;
+
+    // NiPixelData stores each face as a chain of mip levels. When skipping
+    // the largest mips, repack only the surviving chain(s) so bgfx sees the
+    // requested mip as level zero.
+    std::vector<std::uint8_t> packedMipData;
+    const void* uploadPixels = pixels->GetPixels();
+    size_t uploadSize = pixels->GetTotalSizeInBytes();
+    if (mipSkip != 0)
+    {
+        uploadSize = 0;
+        for (unsigned int face = 0; face < faceCount; ++face)
+            for (unsigned int mip = mipSkip; mip < mipCount; ++mip)
+                uploadSize += pixels->GetSizeInBytes(mip, face);
+
+        packedMipData.reserve(uploadSize);
+        for (unsigned int face = 0; face < faceCount; ++face)
+        {
+            for (unsigned int mip = mipSkip; mip < mipCount; ++mip)
+            {
+                const std::uint8_t* begin = pixels->GetPixels(mip, face);
+                const size_t size = pixels->GetSizeInBytes(mip, face);
+                packedMipData.insert(packedMipData.end(), begin, begin + size);
+            }
+        }
+        uploadPixels = packedMipData.data();
+        uploadSize = packedMipData.size();
+    }
+
+    if (!completeMipChain && uploadMipCount > 1)
+    {
+        bgfx::TextureInfo fullInfo = {};
+        bgfx::calcTextureSize(fullInfo,
+            ClampCast<std::uint16_t>(uploadWidth),
+            ClampCast<std::uint16_t>(uploadHeight),
+            1,
+            cubeMap,
+            true,
+            cubeMap ? 1 : ClampCast<std::uint16_t>(faceCount),
+            format);
+
+        NiLogWriteFormat(NI_LOG_WARNING, "NiBgfxRenderer", __FILE__, __LINE__,
+            "Texture '%s' has a partial mip chain: %ux%u, format=%s, faces=%u, "
+            "providedMips=%u, fullMips=%u, providedBytes=%llu, fullChainBytes=%u. "
+            "Uploading the base mip only to satisfy bgfx storage requirements.",
+            GetTextureDebugName(texture), uploadWidth, uploadHeight,
+            GetPixelFormatName(pixels->GetPixelFormat()), faceCount,
+            uploadMipCount, fullMipCount,
+            static_cast<unsigned long long>(uploadSize), fullInfo.storageSize);
+
+        // A base-only cube must still contain one face image for every cube
+        // side. Repack those six base images because NiPixelData is face-major
+        // and the original buffer may contain additional mip levels between
+        // consecutive faces.
+        if (cubeMap)
+        {
+            packedMipData.clear();
+            size_t baseSize = 0;
+            for (unsigned int face = 0; face < faceCount; ++face)
+                baseSize += pixels->GetSizeInBytes(mipSkip, face);
+
+            packedMipData.reserve(baseSize);
+            for (unsigned int face = 0; face < faceCount; ++face)
+            {
+                const std::uint8_t* begin = pixels->GetPixels(mipSkip, face);
+                const size_t size = pixels->GetSizeInBytes(mipSkip, face);
+                packedMipData.insert(packedMipData.end(), begin, begin + size);
+            }
+            uploadPixels = packedMipData.data();
+            uploadSize = packedMipData.size();
+        }
+        else if (faceCount == 1)
+        {
+            uploadPixels = pixels->GetPixels(mipSkip, 0);
+            uploadSize = pixels->GetSizeInBytes(mipSkip, 0);
+        }
+
+        hasMips = false;
+    }
+
+    if (uploadSize > std::numeric_limits<std::uint32_t>::max())
+    {
+        NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+            "Texture '%s' upload is too large for bgfx (%llu bytes).",
+            GetTextureDebugName(texture), static_cast<unsigned long long>(uploadSize));
+        return false;
+    }
+
+    // Validate the exact memory size before calling createTexture2D/Cube with
+    // initial data. This turns a bgfx assertion into a useful renderer error if
+    // a malformed/unsupported NiPixelData layout slips through in the future.
+    if (cubeMap || faceCount == 1)
+    {
+        bgfx::TextureInfo uploadInfo = {};
+        bgfx::calcTextureSize(uploadInfo,
+            ClampCast<std::uint16_t>(uploadWidth),
+            ClampCast<std::uint16_t>(uploadHeight),
+            1,
+            cubeMap,
+            hasMips,
+            1,
+            format);
+
+        if (static_cast<size_t>(uploadInfo.storageSize) != uploadSize)
+        {
+            NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+                "Texture '%s' upload storage mismatch: %ux%u, format=%s, faces=%u, "
+                "mips=%u, hasMips=%s, provided=%llu bytes, bgfxExpected=%u bytes. "
+                "Texture upload rejected before bgfx::createTexture*().",
+                GetTextureDebugName(texture), uploadWidth, uploadHeight,
+                GetPixelFormatName(pixels->GetPixelFormat()), faceCount,
+                hasMips ? uploadMipCount : 1u, hasMips ? "true" : "false",
+                static_cast<unsigned long long>(uploadSize), uploadInfo.storageSize);
+            return false;
+        }
     }
 
     bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
@@ -2564,17 +2674,18 @@ bool BgfxRenderer::CreateTextureFromPixelData(NiTexture* texture,
     else
     {
         // D3D10/11 treated a non-cube NiPixelData with multiple faces as a
-        // Texture2DArray. Create the same resource in bgfx. Upload each
-        // layer/mip explicitly so we do not depend on backend-specific packed
-        // initial-data ordering.
+        // Texture2DArray. Create the same resource in bgfx. Upload each layer
+        // explicitly. If the source only contains a partial mip chain, the
+        // texture is created base-only and only mipSkip is uploaded.
         handle = bgfx::createTexture2D(ClampCast<std::uint16_t>(uploadWidth),
             ClampCast<std::uint16_t>(uploadHeight), hasMips,
             ClampCast<std::uint16_t>(faceCount), format, BGFX_SAMPLER_NONE);
         if (bgfx::isValid(handle))
         {
+            const unsigned int lastMip = hasMips ? mipCount : (mipSkip + 1u);
             for (unsigned int face = 0; face < faceCount; ++face)
             {
-                for (unsigned int mip = mipSkip; mip < mipCount; ++mip)
+                for (unsigned int mip = mipSkip; mip < lastMip; ++mip)
                 {
                     const size_t size = pixels->GetSizeInBytes(mip, face);
                     if (size > std::numeric_limits<std::uint32_t>::max())
