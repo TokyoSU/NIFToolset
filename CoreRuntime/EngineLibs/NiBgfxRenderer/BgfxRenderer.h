@@ -447,6 +447,8 @@ private:
     bool m_softParticleDepthViewActive = false;
     bool m_softParticleDepthClearedThisFrame = false;
     bool m_softParticlesEnabled = true;
+    bool m_softParticleFirstDepthSubmitLogged = false;
+    bool m_softParticleFirstDrawLogged = false;
     float m_softParticleFadeDistance = 8.0f;
     bgfx::TextureHandle m_whiteCubeTexture = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle m_blackTexture = BGFX_INVALID_HANDLE;
