@@ -1223,9 +1223,11 @@ NiGPUProgram* NiFragmentMaterial::GenerateShaderProgram(
     {
         case NiGPUProgram::PROGRAM_VERTEX:
             {
+#if defined(NIDEBUG)
                 NiOutputDebugString("Generating vertex shader for object \"");
                 NiOutputDebugString((const char*)m_kDebugIdentifier);
                 NiOutputDebugString("\":\n");
+#endif
 
                 bShadeTreeGenerated = GenerateVertexShadeTree(kContext,
                     pkDesc);
@@ -1233,19 +1235,23 @@ NiGPUProgram* NiFragmentMaterial::GenerateShaderProgram(
             break;
         case NiGPUProgram::PROGRAM_PIXEL:
             {
+#if defined(NIDEBUG)
                 NiOutputDebugString("Generating pixel shader for object \"");
                 NiOutputDebugString((const char*)m_kDebugIdentifier);
                 NiOutputDebugString("\":\n");
+#endif
 
                 bShadeTreeGenerated = GeneratePixelShadeTree(kContext, pkDesc);
             }
             break;
         case NiGPUProgram::PROGRAM_GEOMETRY:
             {
+#if defined(NIDEBUG)
                 NiOutputDebugString("Generating geometry shader for object"
                     " \"");
                 NiOutputDebugString((const char*)m_kDebugIdentifier);
                 NiOutputDebugString("\":\n");
+#endif
 
                 bShadeTreeGenerated = GenerateGeometryShadeTree(kContext,
                     pkDesc);
