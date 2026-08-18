@@ -745,11 +745,10 @@ void NiPixelFormat::ConvertOldPixelFormat(Format eFormat, unsigned char ucBPP,
     SetBit(true, ENDIAN_MASK);
     m_eTiling = TILE_NONE;
 
-#ifdef NIDEBUG
+    // This warning is referenced in all build configurations below.
     const char* pcInvalidString =
         "Invalid Pre-Gamebryo 2.0 pixel format found!\n"
         "Please re-export this asset.\n";
-#endif
 
     switch (eFormat)
     {
