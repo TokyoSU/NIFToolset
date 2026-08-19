@@ -1669,64 +1669,7 @@ bool NiStream::Save(efd::BinaryStream* pkOstr)
 void NiStream::FreeLoadData()
 {
     ms_kCleanupCriticalSection.Lock();
-#ifdef NIDEBUG
-    // m_kObjects has a smart pointer reference to each of its objects.
-    // There should be at least one more smart pointer reference to each
-    // object. If there isn't, then the object shouldn't be in the NIF file.
-
-    NiTStringPointerMap<unsigned int> kTypeToCount;
-
-    char acRTTIName[MAX_RTTI_LEN];
-
-    unsigned int i;
-    for (i = 0; i < m_kObjects.GetSize(); i++)
-    {
-        const StreamObjectArrayElement &kObject = m_kObjects.GetAt(i);
-        NiObject *pkObject = kObject;
-        NiObject *pkObjectToLink = kObject.GetObjectToLink();
-        unsigned uiReferencesHeldByNiStream = pkObjectToLink == pkObject?
-            2 : 1;
-
-        if (pkObject && pkObject->GetRefCount() == uiReferencesHeldByNiStream)
-        {
-            if (NiSourceTexture::GetDestroyAppDataFlag() &&
-                NiSourceTexture::GetUsePreloading() &&
-                NiIsKindOf(NiPixelData, pkObject))
-            {
-                // NiPixelData may have been released intentionally
-                // when the NiSourceTexture was precached
-                continue;
-            }
-            unsigned int uiCount;
-            EE_VERIFY(pkObject->GetStreamableRTTIName(acRTTIName,
-                MAX_RTTI_LEN));
-
-            if (kTypeToCount.GetAt(acRTTIName, uiCount))
-            {
-                kTypeToCount.SetAt(acRTTIName, uiCount + 1);
-            }
-            else
-            {
-                kTypeToCount.SetAt(acRTTIName, 1);
-            }
-        }
-    }
-    char acMsg[2 * NI_MAX_PATH];
-    NiTMapIterator pos = kTypeToCount.GetFirstPos();
-    while (pos)
-    {
-        const char* pcRTTIName;
-        unsigned int uiCount;
-        kTypeToCount.GetNext(pos, pcRTTIName, uiCount);
-
-        NiSprintf(acMsg, 2 * NI_MAX_PATH,
-            "Warning: %s contains %d unreferenced %s "
-            "objects. These objects will be NiDeleted. Re-exporting the NIF "
-            "file will usually eliminate this warning.\n", m_acFileName,
-            uiCount, pcRTTIName);
-        NiOutputDebugString(acMsg);
-    }
-#endif //NIDEBUG
+    // Unreferenced-stream-object warnings are intentionally suppressed.
 
     m_kObjects.RemoveAll();
     m_kLinkIDs.RemoveAll();

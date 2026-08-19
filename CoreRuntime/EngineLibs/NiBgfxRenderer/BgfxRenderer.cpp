@@ -992,12 +992,6 @@ bool BgfxRenderer::Initialize(void* nativeWindowHandle, unsigned int width,
             "Soft-particle render targets are unavailable; particles will use the normal hard-intersection path.",
             __FILE__, __LINE__);
     }
-    NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
-        "[ParticleInstancing] Debug enabled. Phase-1 facing-quad path is ready; "
-        "bgfx instancing capability=%s. The first successful batch will emit "
-        "an ACTIVE line, followed by 120-frame TRACE summaries.",
-        (bgfx::getCaps()->supported & BGFX_CAPS_INSTANCING) != 0 ?
-            "yes" : "no");
 #endif
     if (!LoadSkinnedPrograms())
     {
@@ -3165,36 +3159,6 @@ bool BgfxRenderer::Do_BeginFrame()
 
 bool BgfxRenderer::Do_EndFrame()
 {
-#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
-    // Keep particle-instancing diagnostics useful without producing one log
-    // line per system per frame.  The counters aggregate 120 frames and only
-    // emit while at least one facing-quad particle system was actually seen.
-    if ((m_frameSerial % 120u) == 0u &&
-        m_particleInstancingDebugStats.m_candidateChecks != 0u)
-    {
-        const ParticleInstancingDebugStats& stats =
-            m_particleInstancingDebugStats;
-        NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
-            "[ParticleInstancing] 120-frame summary: candidateChecks=%llu "
-            "instancedBatches=%llu instancedParticles=%llu pages=%u "
-            "flags{animatedTexture=%llu} "
-            "fallbacks{renderer=%llu shadow=%llu layout=%llu wireframe=%llu "
-            "missingData=%llu upload=%llu}.",
-            static_cast<unsigned long long>(stats.m_candidateChecks),
-            static_cast<unsigned long long>(stats.m_instancedBatches),
-            static_cast<unsigned long long>(stats.m_instancedParticles),
-            static_cast<unsigned int>(m_particleInstancePages.size()),
-            static_cast<unsigned long long>(stats.m_animatedTextureFlagsSeen),
-            static_cast<unsigned long long>(stats.m_rendererUnavailable),
-            static_cast<unsigned long long>(stats.m_shadowFallbacks),
-            static_cast<unsigned long long>(stats.m_layoutFallbacks),
-            static_cast<unsigned long long>(stats.m_wireframeFallbacks),
-            static_cast<unsigned long long>(stats.m_missingDataFallbacks),
-            static_cast<unsigned long long>(stats.m_uploadFallbacks));
-
-        m_particleInstancingDebugStats = ParticleInstancingDebugStats{};
-    }
-#endif
     return m_context.IsInitialized();
 }
 
