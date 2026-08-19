@@ -7010,7 +7010,7 @@ bool BgfxRenderer::UploadParticleInstances(const void* data,
 bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     bool shadowWrite)
 {
-#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+#if !defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
     EE_UNUSED_ARG(mesh);
     EE_UNUSED_ARG(shadowWrite);
     return false;
