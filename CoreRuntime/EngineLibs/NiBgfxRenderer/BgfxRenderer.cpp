@@ -6804,10 +6804,26 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
             (extendedBound ? m_extendedInstancedProgram :
                 (decorationBound ? m_decorationInstancedProgram : m_instancedProgram));
 
+        // Soft particles need scene depth for opaque geometry and for
+        // alpha-tested/cutout geometry such as foliage. Some legacy
+        // Gamebryo materials disable Z writes in their normal blended pass
+        // while still using alpha testing; mirror those meshes into the
+        // soft-depth pass and let the depth shader discard transparent texels.
+        // Pure alpha-blended geometry without alpha testing remains excluded
+        // because a single depth value cannot represent partial transparency.
+        const NiAlphaProperty* softDepthAlpha =
+            m_pkCurrProp ? m_pkCurrProp->GetAlpha() : nullptr;
+        if (!softDepthAlpha)
+            softDepthAlpha = NiAlphaProperty::GetDefault();
+        const bool softDepthAlphaTested =
+            softDepthAlpha && softDepthAlpha->GetAlphaTesting();
+        const bool softDepthOccluder =
+            (state & BGFX_STATE_WRITE_Z) != 0 || softDepthAlphaTested;
+
         const bool mirrorSoftDepth = m_softParticleDepthViewActive &&
             m_softParticlesEnabled && m_softParticleDepthClearedThisFrame &&
             !isParticleSystem && !shadowWrite && !vsmBlur && !skyBound &&
-            (state & BGFX_STATE_WRITE_Z) != 0;
+            softDepthOccluder;
         const std::uint64_t softDepthState =
             (state & ~(BGFX_STATE_BLEND_MASK | BGFX_STATE_WRITE_A)) |
             BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_Z;
