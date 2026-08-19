@@ -7032,12 +7032,6 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
         return false;
     }
 
-    if (particles->GetPreRPIParticleSystem() ||
-        particles->GetWorldSpace())
-    {
-        return false;
-    }
-
     // Facing quads are generated against the main culling camera. During a
     // shadow click the renderer camera is the light camera, so rebuilding the
     // billboard basis here would rotate the particles differently from the

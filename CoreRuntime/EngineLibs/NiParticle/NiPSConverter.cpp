@@ -186,13 +186,15 @@ NiPSParticleSystem* NiPSConverter::ConvertOldPSys(
         NiPoint3::ZERO,
         NiPSParticleSystem::ALIGN_CAMERA,
         NiPoint3::ZERO,
-        false,
+        false, // bHasLivingSpawner
         pkOldPSysData->GetColors() != NULL,
         pkOldPSysData->GetRotationAngles() != NULL,
+        false, // bHasAnimatedTextures
         pkOldPSys->GetWorldSpace(),
-        false,
-        true,
-        bAttachModifiers);
+        false, // bDynamicBounds
+        true,  // bCreateDefaultGenerator
+        bAttachModifiers,
+        false); // bSorted
 
     // Set the flag for pre-RPI
     pkNewPSys->SetPreRPIParticleSystem(true);
