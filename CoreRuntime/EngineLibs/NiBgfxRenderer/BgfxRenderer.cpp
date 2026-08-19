@@ -7010,7 +7010,7 @@ bool BgfxRenderer::UploadParticleInstances(const void* data,
 bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     bool shadowWrite)
 {
-#if !defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
+#if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
     EE_UNUSED_ARG(mesh);
     EE_UNUSED_ARG(shadowWrite);
     return false;
@@ -7029,6 +7029,12 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
         !bgfx::isValid(m_particleQuadIndexBuffer))
     {
         ++m_particleInstancingDebugStats.m_rendererUnavailable;
+        return false;
+    }
+
+    if (particles->GetPreRPIParticleSystem() ||
+        particles->GetWorldSpace())
+    {
         return false;
     }
 
