@@ -12,6 +12,7 @@
 #include <bgfx/bgfx.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -159,6 +160,38 @@ private:
     class BufferData;
     class TargetGroupData;
     class MeshCache;
+    class SharedVertexBuffer;
+    class SharedIndexBuffer;
+
+    struct SharedBufferKey
+    {
+        std::uint64_t m_hashA = 0;
+        std::uint64_t m_hashB = 0;
+        std::uint32_t m_size = 0;
+        std::uint32_t m_flags = 0;
+
+        bool operator==(const SharedBufferKey& other) const
+        {
+            return m_hashA == other.m_hashA &&
+                m_hashB == other.m_hashB &&
+                m_size == other.m_size && m_flags == other.m_flags;
+        }
+
+        bool IsValid() const { return m_size != 0; }
+    };
+
+    struct SharedBufferKeyHasher
+    {
+        std::size_t operator()(const SharedBufferKey& key) const noexcept
+        {
+            std::uint64_t hash = key.m_hashA;
+            hash ^= key.m_hashB + 0x9e3779b97f4a7c15ull +
+                (hash << 6) + (hash >> 2);
+            hash ^= static_cast<std::uint64_t>(key.m_size) << 32;
+            hash ^= static_cast<std::uint64_t>(key.m_flags);
+            return static_cast<std::size_t>(hash);
+        }
+    };
 
     struct SourceTextureCacheEntry
     {
@@ -256,6 +289,17 @@ private:
         unsigned int submesh) const;
     std::uint64_t BuildMeshDataRevision(const NiMesh* mesh,
         unsigned int usage) const;
+    SharedBufferKey BuildSharedBufferKey(const void* data,
+        std::uint32_t size, std::uint32_t flags) const;
+    bool AcquireSharedVertexBuffer(const SharedBufferKey& key,
+        const void* data, std::uint32_t size, const bgfx::VertexLayout& layout,
+        std::uint32_t vertexCount, bgfx::VertexBufferHandle& handle);
+    bool AcquireSharedIndexBuffer(const SharedBufferKey& key,
+        const void* data, std::uint32_t size, bool index32,
+        std::uint32_t indexCount, bgfx::IndexBufferHandle& handle);
+    void ReleaseSharedVertexBuffer(const SharedBufferKey& key);
+    void ReleaseSharedIndexBuffer(const SharedBufferKey& key);
+    void DestroySharedGeometryCache();
     MeshCache* GetOrCreateMeshCache(NiMesh* mesh);
     void PurgeGpuMeshCache(bool forceAll = false);
 
@@ -488,6 +532,14 @@ private:
     bool m_currentTerrainShadowCube = false;
     BgfxDataStreamFactory* m_dataStreamFactory = nullptr;
     std::unordered_map<const NiMesh*, MeshCache*> m_meshCache;
+    std::unordered_map<SharedBufferKey, SharedVertexBuffer*,
+        SharedBufferKeyHasher> m_sharedVertexBuffers;
+    std::unordered_map<SharedBufferKey, SharedIndexBuffer*,
+        SharedBufferKeyHasher> m_sharedIndexBuffers;
+    std::uint64_t m_sharedVertexBufferHits = 0;
+    std::uint64_t m_sharedVertexBufferMisses = 0;
+    std::uint64_t m_sharedIndexBufferHits = 0;
+    std::uint64_t m_sharedIndexBufferMisses = 0;
     std::unordered_map<std::string, SourceTextureCacheEntry> m_sourceTextureCache;
     std::mutex m_sourceTextureCacheMutex;
     std::uint64_t m_sourceTextureCacheHits = 0;

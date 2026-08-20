@@ -546,6 +546,23 @@ public:
     bgfx::FrameBufferHandle m_handle = BGFX_INVALID_HANDLE;
 };
 
+class BgfxRenderer::SharedVertexBuffer final : public NiMemObject
+{
+public:
+    bgfx::VertexBufferHandle m_handle = BGFX_INVALID_HANDLE;
+    std::uint32_t m_vertexCount = 0;
+    std::uint32_t m_refCount = 0;
+};
+
+class BgfxRenderer::SharedIndexBuffer final : public NiMemObject
+{
+public:
+    bgfx::IndexBufferHandle m_handle = BGFX_INVALID_HANDLE;
+    std::uint32_t m_indexCount = 0;
+    std::uint32_t m_refCount = 0;
+    bool m_index32 = false;
+};
+
 class BgfxRenderer::MeshCache final : public NiMemObject
 {
 public:
@@ -558,6 +575,12 @@ public:
         bgfx::DynamicVertexBufferHandle m_dynamicVertexBuffer = BGFX_INVALID_HANDLE;
         bgfx::DynamicIndexBufferHandle m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
         bgfx::DynamicIndexBufferHandle m_dynamicWireIndexBuffer = BGFX_INVALID_HANDLE;
+        SharedBufferKey m_sharedVertexKey;
+        SharedBufferKey m_sharedIndexKey;
+        SharedBufferKey m_sharedWireIndexKey;
+        bool m_vertexBufferShared = false;
+        bool m_indexBufferShared = false;
+        bool m_wireIndexBufferShared = false;
         std::uint32_t m_vertexCount = 0;
         std::uint32_t m_indexCount = 0;
         std::uint32_t m_wireIndexCount = 0;
@@ -567,23 +590,59 @@ public:
         bool m_index32 = false;
         bool m_wireIndex32 = false;
 
-        void Reset()
+        void ReleaseVertexBuffer(BgfxRenderer* owner)
         {
             if (bgfx::isValid(m_vertexBuffer))
-                bgfx::destroy(m_vertexBuffer);
+            {
+                if (m_vertexBufferShared && owner)
+                    owner->ReleaseSharedVertexBuffer(m_sharedVertexKey);
+                else
+                    bgfx::destroy(m_vertexBuffer);
+            }
+            m_vertexBuffer = BGFX_INVALID_HANDLE;
+            m_sharedVertexKey = SharedBufferKey();
+            m_vertexBufferShared = false;
+        }
+
+        void ReleaseIndexBuffer(BgfxRenderer* owner)
+        {
             if (bgfx::isValid(m_indexBuffer))
-                bgfx::destroy(m_indexBuffer);
+            {
+                if (m_indexBufferShared && owner)
+                    owner->ReleaseSharedIndexBuffer(m_sharedIndexKey);
+                else
+                    bgfx::destroy(m_indexBuffer);
+            }
+            m_indexBuffer = BGFX_INVALID_HANDLE;
+            m_sharedIndexKey = SharedBufferKey();
+            m_indexBufferShared = false;
+        }
+
+        void ReleaseWireIndexBuffer(BgfxRenderer* owner)
+        {
             if (bgfx::isValid(m_wireIndexBuffer))
-                bgfx::destroy(m_wireIndexBuffer);
+            {
+                if (m_wireIndexBufferShared && owner)
+                    owner->ReleaseSharedIndexBuffer(m_sharedWireIndexKey);
+                else
+                    bgfx::destroy(m_wireIndexBuffer);
+            }
+            m_wireIndexBuffer = BGFX_INVALID_HANDLE;
+            m_sharedWireIndexKey = SharedBufferKey();
+            m_wireIndexBufferShared = false;
+        }
+
+        void Reset(BgfxRenderer* owner)
+        {
+            ReleaseVertexBuffer(owner);
+            ReleaseIndexBuffer(owner);
+            ReleaseWireIndexBuffer(owner);
             if (bgfx::isValid(m_dynamicVertexBuffer))
                 bgfx::destroy(m_dynamicVertexBuffer);
             if (bgfx::isValid(m_dynamicIndexBuffer))
                 bgfx::destroy(m_dynamicIndexBuffer);
             if (bgfx::isValid(m_dynamicWireIndexBuffer))
                 bgfx::destroy(m_dynamicWireIndexBuffer);
-            m_vertexBuffer = BGFX_INVALID_HANDLE;
-            m_indexBuffer = BGFX_INVALID_HANDLE;
-            m_wireIndexBuffer = BGFX_INVALID_HANDLE;
             m_dynamicVertexBuffer = BGFX_INVALID_HANDLE;
             m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
             m_dynamicWireIndexBuffer = BGFX_INVALID_HANDLE;
@@ -599,10 +658,12 @@ public:
         }
     };
 
+    explicit MeshCache(BgfxRenderer* owner) : m_owner(owner) {}
+
     ~MeshCache()
     {
         for (Submesh& submesh : m_submeshes)
-            submesh.Reset();
+            submesh.Reset(m_owner);
     }
 
     bool HasDynamicBuffers() const
@@ -619,6 +680,7 @@ public:
         return false;
     }
 
+    BgfxRenderer* m_owner = nullptr;
     std::vector<Submesh> m_submeshes;
     std::uint64_t m_lastUsedFrame = 0;
     bool m_shortLived = false;
@@ -1064,6 +1126,7 @@ void BgfxRenderer::ShutdownBgfxResources()
     if (m_context.IsInitialized())
     {
         PurgeGpuMeshCache(true);
+        DestroySharedGeometryCache();
         PurgeAllTextures(true);
         DestroySourceTextureCache();
     }
@@ -4015,6 +4078,204 @@ std::uint64_t BgfxRenderer::BuildMeshDataRevision(const NiMesh* mesh,
     return found ? (hash == 0 ? 1 : hash) : 0;
 }
 
+BgfxRenderer::SharedBufferKey BgfxRenderer::BuildSharedBufferKey(
+    const void* data, std::uint32_t size, std::uint32_t flags) const
+{
+    SharedBufferKey key;
+    if (!data || size == 0)
+        return key;
+
+    // Two independent 64-bit hashes make accidental content aliasing
+    // vanishingly unlikely while keeping lookup substantially cheaper than
+    // retaining/copying the CPU vertex payload in the cache.
+    const std::uint8_t* bytes = static_cast<const std::uint8_t*>(data);
+    std::uint64_t hashA = 1469598103934665603ull; // FNV-1a
+    std::uint64_t hashB = 0x9e3779b97f4a7c15ull;
+    for (std::uint32_t i = 0; i < size; ++i)
+    {
+        const std::uint64_t value = bytes[i];
+        hashA ^= value;
+        hashA *= 1099511628211ull;
+
+        hashB ^= value + 0x9e3779b97f4a7c15ull +
+            (hashB << 6) + (hashB >> 2);
+        hashB *= 0xbf58476d1ce4e5b9ull;
+    }
+
+    key.m_hashA = hashA ? hashA : 1ull;
+    key.m_hashB = hashB ? hashB : 1ull;
+    key.m_size = size;
+    key.m_flags = flags;
+    return key;
+}
+
+bool BgfxRenderer::AcquireSharedVertexBuffer(const SharedBufferKey& key,
+    const void* data, std::uint32_t size, const bgfx::VertexLayout& layout,
+    std::uint32_t vertexCount, bgfx::VertexBufferHandle& handle)
+{
+    handle = BGFX_INVALID_HANDLE;
+    if (!key.IsValid() || !data || size == 0 || vertexCount == 0)
+        return false;
+
+    auto found = m_sharedVertexBuffers.find(key);
+    if (found != m_sharedVertexBuffers.end() && found->second &&
+        bgfx::isValid(found->second->m_handle) &&
+        found->second->m_vertexCount == vertexCount)
+    {
+        ++found->second->m_refCount;
+        ++m_sharedVertexBufferHits;
+        handle = found->second->m_handle;
+        if ((m_sharedVertexBufferHits & 0x1ffull) == 0)
+        {
+            NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+                "Shared geometry cache: VB hits=%llu misses=%llu liveUnique=%zu.",
+                static_cast<unsigned long long>(m_sharedVertexBufferHits),
+                static_cast<unsigned long long>(m_sharedVertexBufferMisses),
+                m_sharedVertexBuffers.size());
+        }
+        return true;
+    }
+
+    const bgfx::Memory* memory = bgfx::copy(data, size);
+    bgfx::VertexBufferHandle created = bgfx::createVertexBuffer(memory, layout);
+    if (!bgfx::isValid(created))
+    {
+        NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
+            "Shared geometry vertex-buffer allocation failed (%u vertices, "
+            "%u bytes; cache hits=%llu misses=%llu liveUnique=%zu).",
+            vertexCount, size,
+            static_cast<unsigned long long>(m_sharedVertexBufferHits),
+            static_cast<unsigned long long>(m_sharedVertexBufferMisses),
+            m_sharedVertexBuffers.size());
+        return false;
+    }
+
+    SharedVertexBuffer* entry = NiNew SharedVertexBuffer();
+    entry->m_handle = created;
+    entry->m_vertexCount = vertexCount;
+    entry->m_refCount = 1;
+    m_sharedVertexBuffers[key] = entry;
+    ++m_sharedVertexBufferMisses;
+    handle = created;
+    return true;
+}
+
+bool BgfxRenderer::AcquireSharedIndexBuffer(const SharedBufferKey& key,
+    const void* data, std::uint32_t size, bool index32,
+    std::uint32_t indexCount, bgfx::IndexBufferHandle& handle)
+{
+    handle = BGFX_INVALID_HANDLE;
+    if (!key.IsValid() || !data || size == 0 || indexCount == 0)
+        return false;
+
+    auto found = m_sharedIndexBuffers.find(key);
+    if (found != m_sharedIndexBuffers.end() && found->second &&
+        bgfx::isValid(found->second->m_handle) &&
+        found->second->m_indexCount == indexCount &&
+        found->second->m_index32 == index32)
+    {
+        ++found->second->m_refCount;
+        ++m_sharedIndexBufferHits;
+        handle = found->second->m_handle;
+        return true;
+    }
+
+    const bgfx::Memory* memory = bgfx::copy(data, size);
+    bgfx::IndexBufferHandle created = bgfx::createIndexBuffer(memory,
+        index32 ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE);
+    if (!bgfx::isValid(created))
+        return false;
+
+    SharedIndexBuffer* entry = NiNew SharedIndexBuffer();
+    entry->m_handle = created;
+    entry->m_indexCount = indexCount;
+    entry->m_refCount = 1;
+    entry->m_index32 = index32;
+    m_sharedIndexBuffers[key] = entry;
+    ++m_sharedIndexBufferMisses;
+    handle = created;
+    return true;
+}
+
+void BgfxRenderer::ReleaseSharedVertexBuffer(const SharedBufferKey& key)
+{
+    if (!key.IsValid())
+        return;
+
+    auto found = m_sharedVertexBuffers.find(key);
+    if (found == m_sharedVertexBuffers.end() || !found->second)
+        return;
+
+    SharedVertexBuffer* entry = found->second;
+    if (entry->m_refCount > 0)
+        --entry->m_refCount;
+    if (entry->m_refCount != 0)
+        return;
+
+    if (bgfx::isValid(entry->m_handle))
+        bgfx::destroy(entry->m_handle);
+    NiDelete entry;
+    m_sharedVertexBuffers.erase(found);
+}
+
+void BgfxRenderer::ReleaseSharedIndexBuffer(const SharedBufferKey& key)
+{
+    if (!key.IsValid())
+        return;
+
+    auto found = m_sharedIndexBuffers.find(key);
+    if (found == m_sharedIndexBuffers.end() || !found->second)
+        return;
+
+    SharedIndexBuffer* entry = found->second;
+    if (entry->m_refCount > 0)
+        --entry->m_refCount;
+    if (entry->m_refCount != 0)
+        return;
+
+    if (bgfx::isValid(entry->m_handle))
+        bgfx::destroy(entry->m_handle);
+    NiDelete entry;
+    m_sharedIndexBuffers.erase(found);
+}
+
+void BgfxRenderer::DestroySharedGeometryCache()
+{
+    const std::size_t remainingVertices = m_sharedVertexBuffers.size();
+    const std::size_t remainingIndices = m_sharedIndexBuffers.size();
+
+    for (auto& pair : m_sharedVertexBuffers)
+    {
+        SharedVertexBuffer* entry = pair.second;
+        if (!entry)
+            continue;
+        if (bgfx::isValid(entry->m_handle))
+            bgfx::destroy(entry->m_handle);
+        NiDelete entry;
+    }
+    m_sharedVertexBuffers.clear();
+
+    for (auto& pair : m_sharedIndexBuffers)
+    {
+        SharedIndexBuffer* entry = pair.second;
+        if (!entry)
+            continue;
+        if (bgfx::isValid(entry->m_handle))
+            bgfx::destroy(entry->m_handle);
+        NiDelete entry;
+    }
+    m_sharedIndexBuffers.clear();
+
+    NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+        "Shared geometry cache shutdown: VB hits=%llu misses=%llu, "
+        "IB hits=%llu misses=%llu, forced remaining VB=%zu IB=%zu.",
+        static_cast<unsigned long long>(m_sharedVertexBufferHits),
+        static_cast<unsigned long long>(m_sharedVertexBufferMisses),
+        static_cast<unsigned long long>(m_sharedIndexBufferHits),
+        static_cast<unsigned long long>(m_sharedIndexBufferMisses),
+        remainingVertices, remainingIndices);
+}
+
 BgfxRenderer::MeshCache* BgfxRenderer::GetOrCreateMeshCache(NiMesh* mesh)
 {
     // Stream-out meshes are produced by the GPU and cannot be repacked from
@@ -4067,7 +4328,7 @@ BgfxRenderer::MeshCache* BgfxRenderer::GetOrCreateMeshCache(NiMesh* mesh)
     MeshCache* cache = found != m_meshCache.end() ? found->second : nullptr;
     if (!cache)
     {
-        cache = NiNew MeshCache();
+        cache = NiNew MeshCache(this);
         m_meshCache[mesh] = cache;
     }
 
@@ -5841,7 +6102,7 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         }
         if (gpuSubmesh && gpuSubmesh->m_signature != cacheSignature)
         {
-            gpuSubmesh->Reset();
+            gpuSubmesh->Reset(this);
             gpuSubmesh->m_signature = cacheSignature;
         }
 
@@ -6279,42 +6540,44 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     sizeof(StandardVertex);
                 if (byteCount64 > std::numeric_limits<std::uint32_t>::max())
                 {
-                    gpuSubmesh->Reset();
+                    gpuSubmesh->Reset(this);
                     continue;
                 }
 
-                const bgfx::Memory* vertexMemory = bgfx::copy(
-                    packedVertices.data(),
-                    static_cast<std::uint32_t>(byteCount64));
+                const std::uint32_t byteCount =
+                    static_cast<std::uint32_t>(byteCount64);
+                const SharedBufferKey sharedVertexKey = BuildSharedBufferKey(
+                    packedVertices.data(), byteCount, 0x53545631u); // "STV1"
 
                 if (staticGpuCacheable)
                 {
-                    // A cache can move back to the immutable path after being
-                    // dynamic. Do not leave the old handle alive: cached binds
-                    // prefer the dynamic handle, which would otherwise retain
-                    // stale contents.
+                    // Immutable geometry is globally shared by packed content,
+                    // not by NiMesh pointer. Deep-copied NIF instances therefore
+                    // reuse the same bgfx handle transparently.
                     if (bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer))
                     {
                         bgfx::destroy(gpuSubmesh->m_dynamicVertexBuffer);
                         gpuSubmesh->m_dynamicVertexBuffer = BGFX_INVALID_HANDLE;
                     }
-                    if (bgfx::isValid(gpuSubmesh->m_vertexBuffer))
-                        bgfx::destroy(gpuSubmesh->m_vertexBuffer);
-                    gpuSubmesh->m_vertexBuffer = bgfx::createVertexBuffer(
-                        vertexMemory, layout);
-                    if (!bgfx::isValid(gpuSubmesh->m_vertexBuffer))
+                    gpuSubmesh->ReleaseVertexBuffer(this);
+                    if (!AcquireSharedVertexBuffer(sharedVertexKey,
+                        packedVertices.data(), byteCount, layout, vertexCount,
+                        gpuSubmesh->m_vertexBuffer))
                     {
-                        gpuSubmesh->Reset();
+                        gpuSubmesh->Reset(this);
                         continue;
                     }
+                    gpuSubmesh->m_sharedVertexKey = sharedVertexKey;
+                    gpuSubmesh->m_vertexBufferShared = true;
                     bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer,
                         0, vertexCount);
                 }
                 else if (bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer))
                 {
-                    // This stream has demonstrated runtime mutation already.
-                    // Keep its dynamic allocation and refresh only on revision
-                    // changes.
+                    // Software skinning/morphing/runtime writes have already
+                    // detached this instance from the shared immutable geometry.
+                    const bgfx::Memory* vertexMemory = bgfx::copy(
+                        packedVertices.data(), byteCount);
                     bgfx::update(gpuSubmesh->m_dynamicVertexBuffer, 0,
                         vertexMemory);
                     bgfx::setVertexBuffer(0,
@@ -6323,18 +6586,17 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 else if (bgfx::isValid(gpuSubmesh->m_vertexBuffer))
                 {
                     // A mutable-marked stream changed after its initial upload.
-                    // Promote it to a dynamic buffer only now. This avoids
-                    // spending one of bgfx's 4096 dynamic VB handles on the
-                    // many legacy meshes marked mutable that never actually
-                    // change at runtime.
-                    bgfx::destroy(gpuSubmesh->m_vertexBuffer);
-                    gpuSubmesh->m_vertexBuffer = BGFX_INVALID_HANDLE;
+                    // Release the shared snapshot (if any) and promote only this
+                    // NiMesh instance to a dynamic buffer.
+                    gpuSubmesh->ReleaseVertexBuffer(this);
+                    const bgfx::Memory* vertexMemory = bgfx::copy(
+                        packedVertices.data(), byteCount);
                     gpuSubmesh->m_dynamicVertexBuffer =
                         bgfx::createDynamicVertexBuffer(vertexMemory, layout,
                             BGFX_BUFFER_ALLOW_RESIZE);
                     if (!bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer))
                     {
-                        gpuSubmesh->Reset();
+                        gpuSubmesh->Reset(this);
                         continue;
                     }
                     bgfx::setVertexBuffer(0,
@@ -6342,17 +6604,19 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 }
                 else
                 {
-                    // First observation of a mutable-marked stream: store the
-                    // current contents in an ordinary immutable buffer. If a
-                    // later write changes the stream revision it will be
-                    // promoted to a dynamic handle above.
-                    gpuSubmesh->m_vertexBuffer = bgfx::createVertexBuffer(
-                        vertexMemory, layout);
-                    if (!bgfx::isValid(gpuSubmesh->m_vertexBuffer))
+                    // First observation of a mutable-marked stream still gets
+                    // a shared immutable snapshot. Legacy data is often marked
+                    // mutable but never changes. If it does change later, the
+                    // branch above safely detaches just that instance.
+                    if (!AcquireSharedVertexBuffer(sharedVertexKey,
+                        packedVertices.data(), byteCount, layout, vertexCount,
+                        gpuSubmesh->m_vertexBuffer))
                     {
-                        gpuSubmesh->Reset();
+                        gpuSubmesh->Reset(this);
                         continue;
                     }
+                    gpuSubmesh->m_sharedVertexKey = sharedVertexKey;
+                    gpuSubmesh->m_vertexBufferShared = true;
                     bgfx::setVertexBuffer(0, gpuSubmesh->m_vertexBuffer,
                         0, vertexCount);
                 }
@@ -6626,8 +6890,11 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     continue;
                 }
 
-                const bgfx::Memory* indexMemory = bgfx::copy(
-                    packedIndices.data(), static_cast<std::uint32_t>(bytes64));
+                const std::uint32_t byteCount =
+                    static_cast<std::uint32_t>(bytes64);
+                const SharedBufferKey sharedIndexKey = BuildSharedBufferKey(
+                    packedIndices.data(), byteCount,
+                    sourceIndex32 ? 0x49445832u : 0x49445816u);
 
                 if (staticGpuCacheable)
                 {
@@ -6636,33 +6903,31 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         bgfx::destroy(gpuSubmesh->m_dynamicIndexBuffer);
                         gpuSubmesh->m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
                     }
-                    if (bgfx::isValid(gpuSubmesh->m_indexBuffer))
-                        bgfx::destroy(gpuSubmesh->m_indexBuffer);
-                    gpuSubmesh->m_indexBuffer = bgfx::createIndexBuffer(
-                        indexMemory,
-                        sourceIndex32 ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE);
-                    if (!bgfx::isValid(gpuSubmesh->m_indexBuffer))
+                    gpuSubmesh->ReleaseIndexBuffer(this);
+                    if (!AcquireSharedIndexBuffer(sharedIndexKey,
+                        packedIndices.data(), byteCount, sourceIndex32,
+                        indexCount, gpuSubmesh->m_indexBuffer))
+                    {
                         continue;
+                    }
+                    gpuSubmesh->m_sharedIndexKey = sharedIndexKey;
+                    gpuSubmesh->m_indexBufferShared = true;
                     bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer, 0,
                         indexCount);
                 }
                 else
                 {
-                    const std::uint16_t staticFlags = sourceIndex32 ?
-                        BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE;
-
-                    if (bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer))
+                    if (bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer) &&
+                        gpuSubmesh->m_index32 != sourceIndex32)
                     {
-                        if (gpuSubmesh->m_index32 != sourceIndex32)
-                        {
-                            bgfx::destroy(gpuSubmesh->m_dynamicIndexBuffer);
-                            gpuSubmesh->m_dynamicIndexBuffer =
-                                BGFX_INVALID_HANDLE;
-                        }
+                        bgfx::destroy(gpuSubmesh->m_dynamicIndexBuffer);
+                        gpuSubmesh->m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
                     }
 
                     if (bgfx::isValid(gpuSubmesh->m_dynamicIndexBuffer))
                     {
+                        const bgfx::Memory* indexMemory = bgfx::copy(
+                            packedIndices.data(), byteCount);
                         bgfx::update(gpuSubmesh->m_dynamicIndexBuffer, 0,
                             indexMemory);
                         bgfx::setIndexBuffer(
@@ -6670,8 +6935,11 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     }
                     else if (bgfx::isValid(gpuSubmesh->m_indexBuffer))
                     {
-                        bgfx::destroy(gpuSubmesh->m_indexBuffer);
-                        gpuSubmesh->m_indexBuffer = BGFX_INVALID_HANDLE;
+                        // Index data really changed. Detach from its shared
+                        // immutable snapshot and promote only this instance.
+                        gpuSubmesh->ReleaseIndexBuffer(this);
+                        const bgfx::Memory* indexMemory = bgfx::copy(
+                            packedIndices.data(), byteCount);
                         std::uint16_t flags = BGFX_BUFFER_ALLOW_RESIZE;
                         if (sourceIndex32)
                             flags |= BGFX_BUFFER_INDEX32;
@@ -6684,10 +6952,16 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                     }
                     else
                     {
-                        gpuSubmesh->m_indexBuffer = bgfx::createIndexBuffer(
-                            indexMemory, staticFlags);
-                        if (!bgfx::isValid(gpuSubmesh->m_indexBuffer))
+                        // Even a mesh with mutable vertices can normally share
+                        // its immutable topology until that topology changes.
+                        if (!AcquireSharedIndexBuffer(sharedIndexKey,
+                            packedIndices.data(), byteCount, sourceIndex32,
+                            indexCount, gpuSubmesh->m_indexBuffer))
+                        {
                             continue;
+                        }
+                        gpuSubmesh->m_sharedIndexKey = sharedIndexKey;
+                        gpuSubmesh->m_indexBufferShared = true;
                         bgfx::setIndexBuffer(gpuSubmesh->m_indexBuffer, 0,
                             indexCount);
                     }
@@ -6816,8 +7090,13 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         dst[i] = static_cast<std::uint16_t>(wireIndices[i]);
                 }
 
-                const bgfx::Memory* wireMemory = bgfx::copy(
-                    packedWire.data(), static_cast<std::uint32_t>(bytes64));
+                const std::uint32_t byteCount =
+                    static_cast<std::uint32_t>(bytes64);
+                const std::uint32_t wireCount =
+                    static_cast<std::uint32_t>(wireIndices.size());
+                const SharedBufferKey sharedWireKey = BuildSharedBufferKey(
+                    packedWire.data(), byteCount,
+                    wireIndex32 ? 0x57495232u : 0x57495216u);
 
                 if (staticGpuCacheable)
                 {
@@ -6826,21 +7105,20 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                         bgfx::destroy(gpuSubmesh->m_dynamicWireIndexBuffer);
                         gpuSubmesh->m_dynamicWireIndexBuffer = BGFX_INVALID_HANDLE;
                     }
-                    if (bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
-                        bgfx::destroy(gpuSubmesh->m_wireIndexBuffer);
-                    gpuSubmesh->m_wireIndexBuffer = bgfx::createIndexBuffer(
-                        wireMemory,
-                        wireIndex32 ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE);
-                    if (!bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
+                    gpuSubmesh->ReleaseWireIndexBuffer(this);
+                    if (!AcquireSharedIndexBuffer(sharedWireKey,
+                        packedWire.data(), byteCount, wireIndex32, wireCount,
+                        gpuSubmesh->m_wireIndexBuffer))
+                    {
                         continue;
+                    }
+                    gpuSubmesh->m_sharedWireIndexKey = sharedWireKey;
+                    gpuSubmesh->m_wireIndexBufferShared = true;
                     bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer, 0,
-                        static_cast<std::uint32_t>(wireIndices.size()));
+                        wireCount);
                 }
                 else
                 {
-                    const std::uint16_t staticFlags = wireIndex32 ?
-                        BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE;
-
                     if (bgfx::isValid(gpuSubmesh->m_dynamicWireIndexBuffer) &&
                         gpuSubmesh->m_wireIndex32 != wireIndex32)
                     {
@@ -6851,16 +7129,18 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                     if (bgfx::isValid(gpuSubmesh->m_dynamicWireIndexBuffer))
                     {
+                        const bgfx::Memory* wireMemory = bgfx::copy(
+                            packedWire.data(), byteCount);
                         bgfx::update(gpuSubmesh->m_dynamicWireIndexBuffer, 0,
                             wireMemory);
                         bgfx::setIndexBuffer(
-                            gpuSubmesh->m_dynamicWireIndexBuffer, 0,
-                            static_cast<std::uint32_t>(wireIndices.size()));
+                            gpuSubmesh->m_dynamicWireIndexBuffer, 0, wireCount);
                     }
                     else if (bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
                     {
-                        bgfx::destroy(gpuSubmesh->m_wireIndexBuffer);
-                        gpuSubmesh->m_wireIndexBuffer = BGFX_INVALID_HANDLE;
+                        gpuSubmesh->ReleaseWireIndexBuffer(this);
+                        const bgfx::Memory* wireMemory = bgfx::copy(
+                            packedWire.data(), byteCount);
                         std::uint16_t flags = BGFX_BUFFER_ALLOW_RESIZE;
                         if (wireIndex32)
                             flags |= BGFX_BUFFER_INDEX32;
@@ -6872,17 +7152,20 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                             continue;
                         }
                         bgfx::setIndexBuffer(
-                            gpuSubmesh->m_dynamicWireIndexBuffer, 0,
-                            static_cast<std::uint32_t>(wireIndices.size()));
+                            gpuSubmesh->m_dynamicWireIndexBuffer, 0, wireCount);
                     }
                     else
                     {
-                        gpuSubmesh->m_wireIndexBuffer = bgfx::createIndexBuffer(
-                            wireMemory, staticFlags);
-                        if (!bgfx::isValid(gpuSubmesh->m_wireIndexBuffer))
+                        if (!AcquireSharedIndexBuffer(sharedWireKey,
+                            packedWire.data(), byteCount, wireIndex32, wireCount,
+                            gpuSubmesh->m_wireIndexBuffer))
+                        {
                             continue;
+                        }
+                        gpuSubmesh->m_sharedWireIndexKey = sharedWireKey;
+                        gpuSubmesh->m_wireIndexBufferShared = true;
                         bgfx::setIndexBuffer(gpuSubmesh->m_wireIndexBuffer, 0,
-                            static_cast<std::uint32_t>(wireIndices.size()));
+                            wireCount);
                     }
                 }
 
