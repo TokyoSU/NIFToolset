@@ -545,6 +545,7 @@ public:
     {
         m_pfnFunction = NULL;
         m_pcArgs = NULL;
+        m_uiNumArgs = 0;
     }
 
     ~LoadRTTIHelper()
