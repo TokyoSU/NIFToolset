@@ -775,6 +775,189 @@ bool NiStream::LoadObjectSizeTable()
     return true;
 }
 //--------------------------------------------------------------------------------------------------
+namespace
+{
+    // Grand Fantasia / X-Legend 20.3.2.3 uses the same DJB1 hash that
+    // NifSkope documents for X-Legend's earlier hashed RTTI streams.
+    unsigned int XLegendDJB1Hash(const char* pcText)
+    {
+        unsigned int uiHash = 0;
+        while (pcText && *pcText)
+        {
+            uiHash = uiHash * 33u +
+                static_cast<unsigned char>(*pcText++);
+        }
+        return uiHash;
+    }
+}
+//--------------------------------------------------------------------------------------------------
+bool NiStream::LoadXLegend20323FixedStringTable()
+{
+    unsigned int uiStringCount = 0;
+    NiStreamLoadBinary(*this, uiStringCount);
+
+    // Fixed-string references in this stream are one byte, with 0xFF as
+    // the null value, so at most 255 table entries can be addressed.
+    if (uiStringCount > 0xFFu)
+    {
+        m_uiLastError = NOT_NIF_FILE;
+        NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH,
+            "Invalid X-Legend 20.3.2.3 fixed-string count.");
+        return false;
+    }
+
+    unsigned short usMaxStringSize = 0;
+    NiStreamLoadBinary(*this, usMaxStringSize);
+    m_kFixedStrings.SetSize(uiStringCount);
+
+    char* pcString = NiAlloc(char, static_cast<unsigned int>(usMaxStringSize) + 1u);
+    if (!pcString)
+    {
+        m_uiLastError = FILE_NOT_LOADED;
+        NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH,
+            "Unable to allocate X-Legend fixed-string buffer.");
+        return false;
+    }
+
+    for (unsigned int ui = 0; ui < uiStringCount; ++ui)
+    {
+        unsigned short usLength = 0;
+        NiStreamLoadBinary(*this, usLength);
+        if (usLength > usMaxStringSize)
+        {
+            NiFree(pcString);
+            m_uiLastError = NOT_NIF_FILE;
+            NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH,
+                "Invalid X-Legend 20.3.2.3 fixed-string length.");
+            return false;
+        }
+
+        if (usLength > 0)
+            m_pkIstr->Read(pcString, usLength);
+
+        // X-Legend stores each character as:
+        //   encoded[i] = plain[i] - (0x28 + i)
+        // Arithmetic intentionally wraps to 8 bits.
+        for (unsigned int uj = 0; uj < usLength; ++uj)
+        {
+            const unsigned char ucEncoded =
+                static_cast<unsigned char>(pcString[uj]);
+            pcString[uj] = static_cast<char>(
+                static_cast<unsigned char>(ucEncoded + 0x28u + uj));
+        }
+
+        pcString[usLength] = 0;
+        m_kFixedStrings.SetAt(ui, NiFixedString(pcString));
+    }
+
+    NiFree(pcString);
+    return true;
+}
+//--------------------------------------------------------------------------------------------------
+bool NiStream::LoadXLegend20323RTTI()
+{
+    unsigned short usRTTICount = 0;
+    NiStreamLoadBinary(*this, usRTTICount);
+    if (usRTTICount == 0 || usRTTICount > 0x80u)
+    {
+        m_uiLastError = NOT_NIF_FILE;
+        NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH,
+            "Invalid X-Legend 20.3.2.3 RTTI count.");
+        return false;
+    }
+
+    LoadRTTIHelper* pkRTTICreate = NiNew LoadRTTIHelper[usRTTICount];
+    if (!pkRTTICreate)
+        return false;
+
+    for (unsigned int ui = 0; ui < usRTTICount; ++ui)
+    {
+        unsigned int uiRTTIHash = 0;
+        NiStreamLoadBinary(*this, uiRTTIHash);
+
+        bool bFound = false;
+        NiTMapIterator kPos = ms_pkLoaders->GetFirstPos();
+        while (kPos)
+        {
+            const char* pcLoaderName = NULL;
+            CreateFunction pfnCreate = NULL;
+            ms_pkLoaders->GetNext(kPos, pcLoaderName, pfnCreate);
+            if (pcLoaderName && XLegendDJB1Hash(pcLoaderName) == uiRTTIHash)
+            {
+                pkRTTICreate[ui].m_pfnFunction = pfnCreate;
+                bFound = true;
+                break;
+            }
+        }
+
+        if (!bFound)
+        {
+            char acError[NI_MAX_PATH];
+            NiSprintf(acError, NI_MAX_PATH,
+                "X-Legend RTTI hash 0x%08X has no registered loader.",
+                uiRTTIHash);
+            NiOutputDebugString(acError);
+            NiOutputDebugString("\n");
+            m_uiLastError = NO_CREATE_FUNCTION;
+            NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH, acError);
+        }
+    }
+
+    for (unsigned int ui = 0; ui < m_kObjects.GetAllocatedSize(); ++ui)
+    {
+        unsigned char ucRTTI = 0;
+        NiStreamLoadBinary(*this, ucRTTI);
+
+        // The compact stream keeps the skippable bit in the high bit of the
+        // one-byte type index instead of the high bit of a uint16.
+        const bool bSkippable = (ucRTTI & 0x80u) != 0;
+        ucRTTI &= 0x7Fu;
+
+        if (ucRTTI >= usRTTICount)
+        {
+            NiDelete [] pkRTTICreate;
+            m_uiLastError = NOT_NIF_FILE;
+            NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH,
+                "Invalid X-Legend 20.3.2.3 block type index.");
+            return false;
+        }
+
+        const bool bFound = pkRTTICreate[ucRTTI].IsValid();
+        if (!bFound && !bSkippable)
+        {
+            NiDelete [] pkRTTICreate;
+            return false;
+        }
+        else if (!bFound)
+        {
+            m_kObjects.SetAt(ui, NULL);
+        }
+        else
+        {
+            m_kObjects.SetAt(ui, pkRTTICreate[ucRTTI].CreateObject());
+        }
+    }
+
+    NiDelete [] pkRTTICreate;
+    return true;
+}
+//--------------------------------------------------------------------------------------------------
+bool NiStream::LoadXLegend20323ObjectSizeTable()
+{
+    m_kObjectSizes.SetSize(m_kObjects.GetSize());
+    for (unsigned int ui = 0; ui < m_kObjects.GetSize(); ++ui)
+    {
+        unsigned char aucSize[3] = { 0, 0, 0 };
+        m_pkIstr->Read(aucSize, 3);
+        const unsigned int uiSizeInBytes =
+            static_cast<unsigned int>(aucSize[0]) |
+            (static_cast<unsigned int>(aucSize[1]) << 8) |
+            (static_cast<unsigned int>(aucSize[2]) << 16);
+        m_kObjectSizes.SetAt(ui, uiSizeInBytes);
+    }
+    return true;
+}
+//--------------------------------------------------------------------------------------------------
 bool NiStream::LoadFixedStringTable()
 {
     unsigned int uiStringCount;
@@ -881,22 +1064,39 @@ bool NiStream::LoadStream()
     }
 
     bool bNew = (GetFileVersion() >= GetVersion(5, 0, 0, 1));
-    if (bNew)
+    const bool bXLegend20323 =
+        (GetFileVersion() == GetVersion(20, 3, 2, 3));
+
+    if (bXLegend20323)
     {
-        if (!LoadRTTI())
+        // X-Legend moved the fixed-string table before RTTI and compacted
+        // all of the header's per-block fields.
+        if (!LoadXLegend20323FixedStringTable())
+            return false;
+        if (!LoadXLegend20323RTTI())
+            return false;
+        if (!LoadXLegend20323ObjectSizeTable())
             return false;
     }
-
-    if (GetFileVersion() >= GetVersion(20, 2, 0, 5))
+    else
     {
-        if (!LoadObjectSizeTable())
-            return false;
-    }
+        if (bNew)
+        {
+            if (!LoadRTTI())
+                return false;
+        }
 
-    if (GetFileVersion() >= GetVersion(20, 1, 0, 1))
-    {
-        if (!LoadFixedStringTable())
-            return false;
+        if (GetFileVersion() >= GetVersion(20, 2, 0, 5))
+        {
+            if (!LoadObjectSizeTable())
+                return false;
+        }
+
+        if (GetFileVersion() >= GetVersion(20, 1, 0, 1))
+        {
+            if (!LoadFixedStringTable())
+                return false;
+        }
     }
 
     // read object groups
@@ -1729,8 +1929,19 @@ void NiStream::SaveCString(const char* pcString)
 //--------------------------------------------------------------------------------------------------
 void NiStream::LoadFixedString(NiFixedString& kString)
 {
-    unsigned int uiStringID;
-    NiStreamLoadBinary(*this, uiStringID);
+    unsigned int uiStringID = NULL_LINKID;
+
+    if (GetFileVersion() == GetVersion(20, 3, 2, 3))
+    {
+        unsigned char ucStringID = 0xFF;
+        NiStreamLoadBinary(*this, ucStringID);
+        if (ucStringID != 0xFF)
+            uiStringID = ucStringID;
+    }
+    else
+    {
+        NiStreamLoadBinary(*this, uiStringID);
+    }
 
     if (NULL_LINKID == uiStringID)
     {
