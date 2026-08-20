@@ -1126,20 +1126,74 @@ bool NiStream::LoadStream()
             NiObject* pkObject = m_kObjects.GetAt(m_uiLoad);
             if (pkObject)
             {
-            #if NIDEBUG
+                // X-Legend 20.3.2.3 keeps reliable per-block byte sizes, but
+                // some engine classes have small proprietary tails that are not
+                // represented by the stock Gamebryo class definition. Track the
+                // block unconditionally for that format so release builds stay
+                // aligned too. Standard NIFs keep the original debug validation.
+#if NIDEBUG
                 unsigned int uiCurrentPos = m_pkIstr->GetPosition();
-            #endif
+#else
+                unsigned int uiCurrentPos = bXLegend20323 ?
+                    m_pkIstr->GetPosition() : 0;
+#endif
                 pkObject->LoadBinary(*this);
-            #if NIDEBUG
-                if (m_kObjectSizes.GetSize() != 0)
+
+                if (bXLegend20323 && m_kObjectSizes.GetSize() != 0)
                 {
-                    unsigned int uiBytesRead = m_pkIstr->GetPosition() -
+                    const unsigned int uiBytesRead = m_pkIstr->GetPosition() -
                         uiCurrentPos;
-                    unsigned int uiStreamedSizeInBytes =
+                    const unsigned int uiStreamedSizeInBytes =
+                        m_kObjectSizes.GetAt(m_uiLoad);
+
+                    if (uiBytesRead > uiStreamedSizeInBytes)
+                    {
+                        char acError[NI_MAX_PATH];
+                        NiSprintf(acError, NI_MAX_PATH,
+                            "X-Legend block %u over-read: consumed %u bytes, "
+                            "declared size is %u bytes.",
+                            m_uiLoad, uiBytesRead, uiStreamedSizeInBytes);
+                        m_uiLastError = NOT_NIF_FILE;
+                        NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH, acError);
+                        NiOutputDebugString(acError);
+                        NiOutputDebugString("\n");
+                        FreeLoadData();
+                        return false;
+                    }
+
+                    if (uiBytesRead < uiStreamedSizeInBytes)
+                    {
+                        const unsigned int uiTrailingBytes =
+                            uiStreamedSizeInBytes - uiBytesRead;
+                        if (!m_pkIstr->Seek(uiTrailingBytes))
+                        {
+                            m_uiLastError = FILE_NOT_LOADED;
+                            NiStrcpy(m_acLastErrorMessage, NI_MAX_PATH,
+                                "Failed to skip X-Legend proprietary block tail.");
+                            FreeLoadData();
+                            return false;
+                        }
+
+#if NIDEBUG
+                        char acTrace[NI_MAX_PATH];
+                        NiSprintf(acTrace, NI_MAX_PATH,
+                            "X-Legend block %u: skipped %u proprietary "
+                            "trailing byte(s).\n",
+                            m_uiLoad, uiTrailingBytes);
+                        NiOutputDebugString(acTrace);
+#endif
+                    }
+                }
+#if NIDEBUG
+                else if (m_kObjectSizes.GetSize() != 0)
+                {
+                    const unsigned int uiBytesRead =
+                        m_pkIstr->GetPosition() - uiCurrentPos;
+                    const unsigned int uiStreamedSizeInBytes =
                         m_kObjectSizes.GetAt(m_uiLoad);
                     EE_ASSERT(uiBytesRead == uiStreamedSizeInBytes);
                 }
-            #endif
+#endif
             }
             else
             {
