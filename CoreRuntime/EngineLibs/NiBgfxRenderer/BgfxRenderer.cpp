@@ -3498,7 +3498,7 @@ void BgfxRenderer::Do_SetCameraData(const NiPoint3& worldLoc,
     const bx::Vec3 up = { worldUp.x, worldUp.y, worldUp.z };
 
     float view[16];
-    bx::mtxLookAt(view, eye, at, up, bx::Handedness::Left);
+    bx::mtxLookAt(view, eye, at, up, bx::Handedness::Right);
 
     const bool homogeneousDepth = bgfx::getCaps()->homogeneousDepth;
     float proj[16];
@@ -3510,7 +3510,7 @@ void BgfxRenderer::Do_SetCameraData(const NiPoint3& worldLoc,
             std::swap(left, right);
         bx::mtxOrtho(proj, left, right, frustum.m_fBottom, frustum.m_fTop,
             frustum.m_fNear, frustum.m_fFar, 0.0f, homogeneousDepth,
-            bx::Handedness::Left);
+            bx::Handedness::Right);
     }
     else
     {
@@ -3522,7 +3522,7 @@ void BgfxRenderer::Do_SetCameraData(const NiPoint3& worldLoc,
         bx::mtxProj(proj, frustum.m_fTop * nearPlane,
             frustum.m_fBottom * nearPlane, left, right,
             nearPlane, frustum.m_fFar, homogeneousDepth,
-            bx::Handedness::Left);
+            bx::Handedness::Right);
     }
 
     bgfx::setViewTransform(m_viewId, view, proj);
