@@ -13,6 +13,7 @@
 
 #include <array>
 #include <cstdint>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -159,6 +160,18 @@ private:
     class TargetGroupData;
     class MeshCache;
 
+    struct SourceTextureCacheEntry
+    {
+        bgfx::TextureHandle m_handle = BGFX_INVALID_HANDLE;
+        bgfx::TextureFormat::Enum m_format = bgfx::TextureFormat::Unknown;
+        unsigned int m_width = 0;
+        unsigned int m_height = 0;
+        unsigned int m_mipmapSkip = 0;
+        unsigned int m_layers = 1;
+        unsigned int m_mipCount = 1;
+        unsigned int m_refCount = 0;
+    };
+
     struct ParticleInstance
     {
         float px = 0.0f;
@@ -225,6 +238,12 @@ private:
 
     TextureData* GetTextureData(const NiTexture* texture) const;
     BufferData* GetBufferData(const Ni2DBuffer* buffer) const;
+    std::string BuildSourceTextureCacheKey(const NiSourceTexture* texture,
+        bool cubeMap) const;
+    bool TryReuseCachedSourceTexture(NiSourceTexture* texture, bool cubeMap);
+    void CacheSourceTexture(NiSourceTexture* texture, bool cubeMap);
+    void ReleaseCachedSourceTexture(const std::string& cacheKey);
+    void DestroySourceTextureCache();
     bool CreateTextureFromPixelData(NiTexture* texture,
         const NiPixelData* pixels, bool cubeMap);
     bool CreateTextureFromContainerFile(NiSourceTexture* texture);
@@ -469,6 +488,10 @@ private:
     bool m_currentTerrainShadowCube = false;
     BgfxDataStreamFactory* m_dataStreamFactory = nullptr;
     std::unordered_map<const NiMesh*, MeshCache*> m_meshCache;
+    std::unordered_map<std::string, SourceTextureCacheEntry> m_sourceTextureCache;
+    std::mutex m_sourceTextureCacheMutex;
+    std::uint64_t m_sourceTextureCacheHits = 0;
+    std::uint64_t m_sourceTextureCacheMisses = 0;
     std::uint64_t m_frameSerial = 0;
     std::string m_shaderRoot;
 };

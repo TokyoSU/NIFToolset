@@ -61,6 +61,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cctype>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -482,6 +483,12 @@ public:
 
     ~TextureData() override
     {
+        if (m_cacheOwner && !m_cacheKey.empty())
+        {
+            m_cacheOwner->ReleaseCachedSourceTexture(m_cacheKey);
+            return;
+        }
+
         if (m_owned && bgfx::isValid(m_handle))
             bgfx::destroy(m_handle);
     }
@@ -489,6 +496,8 @@ public:
     bgfx::TextureHandle m_handle = BGFX_INVALID_HANDLE;
     bgfx::TextureFormat::Enum m_format = bgfx::TextureFormat::Unknown;
     bool m_owned = true;
+    BgfxRenderer* m_cacheOwner = nullptr;
+    std::string m_cacheKey;
     bool m_dynamic = false;
     unsigned int m_pitch = 0;
     unsigned int m_sourceRevision = 0;
@@ -1056,6 +1065,7 @@ void BgfxRenderer::ShutdownBgfxResources()
     {
         PurgeGpuMeshCache(true);
         PurgeAllTextures(true);
+        DestroySourceTextureCache();
     }
 
     // Destroy swap-chain/offscreen framebuffer objects while bgfx is alive.
@@ -2426,6 +2436,208 @@ BgfxRenderer::BufferData* BgfxRenderer::GetBufferData(const Ni2DBuffer* buffer) 
     return buffer ? static_cast<BufferData*>(buffer->GetRendererData()) : nullptr;
 }
 
+std::string BgfxRenderer::BuildSourceTextureCacheKey(
+    const NiSourceTexture* texture, bool cubeMap) const
+{
+    if (!texture || !texture->GetStatic())
+        return {};
+
+    const char* filename = static_cast<const char*>(
+        texture->GetPlatformSpecificFilename());
+    if (!filename || !*filename)
+        filename = static_cast<const char*>(texture->GetFilename());
+    if (!filename || !*filename)
+        return {};
+
+    std::filesystem::path path(filename);
+    std::error_code ec;
+    std::filesystem::path absolutePath = std::filesystem::absolute(path, ec);
+    if (!ec)
+        path = absolutePath;
+    path = path.lexically_normal();
+
+    std::string normalized = path.generic_string();
+#if defined(EE_PLATFORM_WIN32)
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+        [](unsigned char value)
+        {
+            return static_cast<char>(std::tolower(value));
+        });
+#endif
+
+    const NiTexture::FormatPrefs& prefs = texture->GetFormatPreferences();
+    normalized += cubeMap ? "|cube=1" : "|cube=0";
+    normalized += "|mipSkip=" + std::to_string(m_mipmapSkip);
+    normalized += "|layout=" + std::to_string(
+        static_cast<unsigned int>(prefs.m_ePixelLayout));
+    normalized += "|alpha=" + std::to_string(
+        static_cast<unsigned int>(prefs.m_eAlphaFmt));
+    normalized += "|mipped=" + std::to_string(
+        static_cast<unsigned int>(prefs.m_eMipMapped));
+    return normalized;
+}
+
+bool BgfxRenderer::TryReuseCachedSourceTexture(NiSourceTexture* texture,
+    bool cubeMap)
+{
+    const std::string cacheKey = BuildSourceTextureCacheKey(texture, cubeMap);
+    if (cacheKey.empty())
+        return false;
+
+    std::lock_guard<std::mutex> lock(m_sourceTextureCacheMutex);
+    auto found = m_sourceTextureCache.find(cacheKey);
+    if (found == m_sourceTextureCache.end() ||
+        !bgfx::isValid(found->second.m_handle))
+    {
+        ++m_sourceTextureCacheMisses;
+        if (found != m_sourceTextureCache.end())
+            m_sourceTextureCache.erase(found);
+        return false;
+    }
+
+    SourceTextureCacheEntry& entry = found->second;
+    const NiPixelFormat& pixelFormat = GetNiPixelFormatForBgfx(entry.m_format);
+    TextureData* rendererData = NiNew TextureData(texture, entry.m_handle,
+        entry.m_format, pixelFormat, false, entry.m_width, entry.m_height);
+    rendererData->m_mipmapSkip = entry.m_mipmapSkip;
+    rendererData->m_layers = entry.m_layers;
+    rendererData->m_mipCount = entry.m_mipCount;
+    rendererData->m_cacheOwner = this;
+    rendererData->m_cacheKey = cacheKey;
+
+    if (const NiPixelData* sourcePixels = texture->GetSourcePixelData())
+    {
+        rendererData->m_sourceRevision = sourcePixels->GetRevisionID();
+        const NiPalette* palette = sourcePixels->GetPalette();
+        rendererData->m_paletteRevision = palette ? palette->GetRevisionID() : 0;
+    }
+
+    ++entry.m_refCount;
+    ++m_sourceTextureCacheHits;
+    texture->SetRendererData(rendererData);
+
+    NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+        "Reused cached bgfx texture '%s' (handle=%u, refs=%u, cacheHits=%llu).",
+        GetTextureDebugName(texture),
+        static_cast<unsigned int>(entry.m_handle.idx), entry.m_refCount,
+        static_cast<unsigned long long>(m_sourceTextureCacheHits));
+    return true;
+}
+
+void BgfxRenderer::CacheSourceTexture(NiSourceTexture* texture, bool cubeMap)
+{
+    if (!texture)
+        return;
+
+    const std::string cacheKey = BuildSourceTextureCacheKey(texture, cubeMap);
+    if (cacheKey.empty())
+        return;
+
+    TextureData* rendererData = GetTextureData(texture);
+    if (!rendererData || !bgfx::isValid(rendererData->m_handle))
+        return;
+
+    std::lock_guard<std::mutex> lock(m_sourceTextureCacheMutex);
+    auto found = m_sourceTextureCache.find(cacheKey);
+    if (found != m_sourceTextureCache.end() &&
+        bgfx::isValid(found->second.m_handle))
+    {
+        // A second loader may have populated the same key between the initial
+        // lookup and GPU creation. Prefer the already-cached resource and
+        // immediately discard the redundant handle we just created.
+        SourceTextureCacheEntry& entry = found->second;
+        if (rendererData->m_owned &&
+            rendererData->m_handle.idx != entry.m_handle.idx &&
+            bgfx::isValid(rendererData->m_handle))
+        {
+            bgfx::destroy(rendererData->m_handle);
+        }
+
+        rendererData->m_handle = entry.m_handle;
+        rendererData->m_format = entry.m_format;
+        rendererData->m_mipmapSkip = entry.m_mipmapSkip;
+        rendererData->m_layers = entry.m_layers;
+        rendererData->m_mipCount = entry.m_mipCount;
+        rendererData->m_owned = false;
+        rendererData->m_cacheOwner = this;
+        rendererData->m_cacheKey = cacheKey;
+        ++entry.m_refCount;
+        ++m_sourceTextureCacheHits;
+
+        NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+            "Collapsed duplicate bgfx texture '%s' onto cached handle=%u (refs=%u).",
+            GetTextureDebugName(texture),
+            static_cast<unsigned int>(entry.m_handle.idx), entry.m_refCount);
+        return;
+    }
+
+    SourceTextureCacheEntry entry;
+    entry.m_handle = rendererData->m_handle;
+    entry.m_format = rendererData->m_format;
+    entry.m_width = rendererData->GetWidth();
+    entry.m_height = rendererData->GetHeight();
+    entry.m_mipmapSkip = rendererData->m_mipmapSkip;
+    entry.m_layers = rendererData->m_layers;
+    entry.m_mipCount = rendererData->m_mipCount;
+    entry.m_refCount = 1;
+    m_sourceTextureCache[cacheKey] = entry;
+
+    // Ownership moves from this NiTexture::RendererData instance to the cache.
+    // Every TextureData referencing the cached handle releases one ref in its
+    // destructor; the final ref destroys the bgfx texture.
+    rendererData->m_owned = false;
+    rendererData->m_cacheOwner = this;
+    rendererData->m_cacheKey = cacheKey;
+
+    NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+        "Cached bgfx texture '%s' (handle=%u, cacheEntries=%u).",
+        GetTextureDebugName(texture),
+        static_cast<unsigned int>(rendererData->m_handle.idx),
+        static_cast<unsigned int>(m_sourceTextureCache.size()));
+}
+
+void BgfxRenderer::ReleaseCachedSourceTexture(const std::string& cacheKey)
+{
+    if (cacheKey.empty())
+        return;
+
+    std::lock_guard<std::mutex> lock(m_sourceTextureCacheMutex);
+    auto found = m_sourceTextureCache.find(cacheKey);
+    if (found == m_sourceTextureCache.end())
+        return;
+
+    SourceTextureCacheEntry& entry = found->second;
+    if (entry.m_refCount > 1)
+    {
+        --entry.m_refCount;
+        return;
+    }
+
+    if (bgfx::isValid(entry.m_handle))
+        bgfx::destroy(entry.m_handle);
+    m_sourceTextureCache.erase(found);
+}
+
+void BgfxRenderer::DestroySourceTextureCache()
+{
+    std::lock_guard<std::mutex> lock(m_sourceTextureCacheMutex);
+    if (!m_sourceTextureCache.empty())
+    {
+        NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+            "Destroying %u remaining cached source textures (hits=%llu, misses=%llu).",
+            static_cast<unsigned int>(m_sourceTextureCache.size()),
+            static_cast<unsigned long long>(m_sourceTextureCacheHits),
+            static_cast<unsigned long long>(m_sourceTextureCacheMisses));
+    }
+
+    for (auto& item : m_sourceTextureCache)
+    {
+        if (bgfx::isValid(item.second.m_handle))
+            bgfx::destroy(item.second.m_handle);
+    }
+    m_sourceTextureCache.clear();
+}
+
 bool BgfxRenderer::CreateTextureFromPixelData(NiTexture* texture,
     const NiPixelData* sourcePixels, bool cubeMap)
 {
@@ -2809,6 +3021,12 @@ bool BgfxRenderer::CreateSourceTextureRendererData(NiSourceTexture* texture)
     if (texture->GetRendererData())
         return true;
 
+    // Static file-backed textures are shared by normalized filename. This
+    // prevents separate NiSourceTexture instances created by different NIFs
+    // from allocating duplicate bgfx TextureHandles for identical assets.
+    if (TryReuseCachedSourceTexture(texture, false))
+        return true;
+
     // Match the old D3D renderer contract: when the source texture requests
     // direct-to-renderer loading, give the backend the original file before
     // forcing it through NiImageConverter. bgfx can parse DDS texture arrays
@@ -2816,19 +3034,27 @@ bool BgfxRenderer::CreateSourceTextureRendererData(NiSourceTexture* texture)
     if (!texture->GetSourcePixelData() && texture->GetLoadDirectToRendererHint() &&
         CreateTextureFromContainerFile(texture))
     {
+        CacheSourceTexture(texture, false);
         return true;
     }
 
     if (!texture->GetSourcePixelData())
         texture->LoadPixelDataFromFile();
 
-    if (texture->GetSourcePixelData())
-        return CreateTextureFromPixelData(texture, texture->GetSourcePixelData(), false);
+    if (texture->GetSourcePixelData() &&
+        CreateTextureFromPixelData(texture, texture->GetSourcePixelData(), false))
+    {
+        CacheSourceTexture(texture, false);
+        return true;
+    }
 
     // Also try the container path as a fallback. This covers external DDS
     // arrays even if callers did not explicitly set the direct-load hint.
     if (CreateTextureFromContainerFile(texture))
+    {
+        CacheSourceTexture(texture, false);
         return true;
+    }
 
     NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
         "Failed to load texture '%s' through both NiPixelData and bgfx's container loader.",
@@ -2847,12 +3073,16 @@ bool BgfxRenderer::CreateSourceCubeMapRendererData(NiSourceCubeMap* cubeMap)
     if (cubeMap->GetRendererData())
         return true;
 
+    if (TryReuseCachedSourceTexture(cubeMap, true))
+        return true;
+
     // Single-file DDS/KTX/PVR cubemaps can use the same direct container path.
     // Multi-file legacy cubemaps simply fall through to NiSourceCubeMap's
     // existing application-pixel-data loader.
     if (!cubeMap->GetSourcePixelData() && cubeMap->GetLoadDirectToRendererHint() &&
         CreateTextureFromContainerFile(cubeMap))
     {
+        CacheSourceTexture(cubeMap, true);
         return true;
     }
 
@@ -2865,7 +3095,12 @@ bool BgfxRenderer::CreateSourceCubeMapRendererData(NiSourceCubeMap* cubeMap)
             GetTextureDebugName(cubeMap));
         return false;
     }
-    return CreateTextureFromPixelData(cubeMap, cubeMap->GetSourcePixelData(), true);
+    if (CreateTextureFromPixelData(cubeMap, cubeMap->GetSourcePixelData(), true))
+    {
+        CacheSourceTexture(cubeMap, true);
+        return true;
+    }
+    return false;
 }
 
 bool BgfxRenderer::CreateRenderedTextureRendererData(NiRenderedTexture* texture,
