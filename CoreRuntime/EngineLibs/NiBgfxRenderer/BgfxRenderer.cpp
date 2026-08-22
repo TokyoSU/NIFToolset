@@ -1981,7 +1981,7 @@ bool BgfxRenderer::PrecacheShader(NiRenderObject* renderObject)
         mesh->ApplyAndSetActiveMaterial(defaultMaterial);
     }
 
-    NiMaterialInstance* materialInstance =
+    const NiMaterialInstance* materialInstance =
         mesh->GetActiveMaterialInstance();
     if (!materialInstance || !materialInstance->GetMaterial())
         return false;
