@@ -285,6 +285,8 @@ private:
     bool AllocateAuxiliaryView(bgfx::ViewId& viewId,
         const char* name = nullptr);
     bool IsMeshGpuCacheable(const NiMesh* mesh) const;
+    std::uint64_t BuildMeshCacheQuickStamp(const NiMesh* mesh,
+        unsigned int submesh) const;
     std::uint64_t BuildMeshCacheSignature(const NiMesh* mesh,
         unsigned int submesh) const;
     std::uint64_t BuildMeshDataRevision(const NiMesh* mesh,

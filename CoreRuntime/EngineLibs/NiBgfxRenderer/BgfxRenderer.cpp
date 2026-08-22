@@ -569,6 +569,8 @@ public:
     struct Submesh
     {
         std::uint64_t m_signature = 0;
+        std::uint64_t m_topologyQuickStamp = 0;
+        std::uint64_t m_topologySignature = 0;
         bgfx::VertexBufferHandle m_vertexBuffer = BGFX_INVALID_HANDLE;
         bgfx::IndexBufferHandle m_indexBuffer = BGFX_INVALID_HANDLE;
         bgfx::IndexBufferHandle m_wireIndexBuffer = BGFX_INVALID_HANDLE;
@@ -1979,16 +1981,21 @@ bool BgfxRenderer::PrecacheShader(NiRenderObject* renderObject)
         mesh->ApplyAndSetActiveMaterial(defaultMaterial);
     }
 
-    const NiMaterialInstance* materialInstance =
+    NiMaterialInstance* materialInstance =
         mesh->GetActiveMaterialInstance();
     if (!materialInstance || !materialInstance->GetMaterial())
         return false;
 
-    // GetShader() is the fast path when the cached descriptor is still valid.
-    // GetShaderFromMaterial() resolves/generates the BgfxMaterialShader cache
-    // entry when the material is dirty or has never been resolved.
-    NiShader* shader = mesh->GetShader();
-    if (!shader)
+    // NiRenderObject::GetShader() asks the material to validate the cached
+    // descriptor against the full property/effect state on every call. That
+    // is useful when callers do not know whether the instance is dirty, but
+    // PrecacheShader() runs for every visible mesh and became a significant
+    // hot path on large scenes. NiMaterialInstance already tracks exactly the
+    // dirty/default state needed for a cheap validity test.
+    NiShader* shader = nullptr;
+    if (materialInstance->HasUsableCachedShader(mesh))
+        shader = materialInstance->GetCachedShader();
+    else
         shader = mesh->GetShaderFromMaterial();
 
     if (!shader)
@@ -3498,7 +3505,7 @@ void BgfxRenderer::Do_SetCameraData(const NiPoint3& worldLoc,
     const bx::Vec3 up = { worldUp.x, worldUp.y, worldUp.z };
 
     float view[16];
-    bx::mtxLookAt(view, eye, at, up, bx::Handedness::Right);
+    bx::mtxLookAt(view, eye, at, up, bx::Handedness::Left);
 
     const bool homogeneousDepth = bgfx::getCaps()->homogeneousDepth;
     float proj[16];
@@ -3951,6 +3958,58 @@ bool BgfxRenderer::IsMeshGpuCacheable(const NiMesh* mesh) const
     }
 
     return true;
+}
+
+std::uint64_t BgfxRenderer::BuildMeshCacheQuickStamp(const NiMesh* mesh,
+    unsigned int submesh) const
+{
+    if (!mesh)
+        return 0;
+
+    // Cheap structural stamp used on every draw. The expensive full topology
+    // signature (semantic names/formats) is only rebuilt when this stamp
+    // changes. This catches the normal rebinding/region-change cases while
+    // avoiding thousands of FixedString/semantic queries for static scenery.
+    std::uint64_t hash = 0x9e3779b97f4a7c15ull;
+    const auto mix = [&hash](std::uint64_t value)
+    {
+        hash ^= value + 0x9e3779b97f4a7c15ull +
+            (hash << 6) + (hash >> 2);
+    };
+
+    mix(static_cast<std::uint64_t>(mesh->GetPrimitiveType()));
+    mix(static_cast<std::uint64_t>(submesh));
+    mix(static_cast<std::uint64_t>(mesh->GetSubmeshCount()));
+
+    const unsigned int streamCount = mesh->GetStreamRefCount();
+    mix(static_cast<std::uint64_t>(streamCount));
+
+    for (unsigned int i = 0; i < streamCount; ++i)
+    {
+        const NiDataStreamRef* ref = mesh->GetStreamRefAt(i);
+        mix(static_cast<std::uint64_t>(
+            reinterpret_cast<std::uintptr_t>(ref)));
+        if (!ref)
+            continue;
+
+        mix(ref->IsPerInstance() ? 1ull : 0ull);
+        mix(static_cast<std::uint64_t>(ref->GetElementDescCount()));
+        mix(static_cast<std::uint64_t>(ref->GetSubmeshRemapCount()));
+
+        const NiDataStream* stream = ref->GetDataStream();
+        mix(static_cast<std::uint64_t>(
+            reinterpret_cast<std::uintptr_t>(stream)));
+
+        if (submesh < ref->GetSubmeshRemapCount())
+        {
+            const NiDataStream::Region& region =
+                ref->GetRegionForSubmesh(submesh);
+            mix(static_cast<std::uint64_t>(region.GetStartIndex()));
+            mix(static_cast<std::uint64_t>(region.GetRange()));
+        }
+    }
+
+    return hash == 0 ? 1 : hash;
 }
 
 std::uint64_t BgfxRenderer::BuildMeshCacheSignature(const NiMesh* mesh,
@@ -6084,10 +6143,22 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
         MeshCache::Submesh* gpuSubmesh = meshCache ?
             &meshCache->m_submeshes[submesh] : nullptr;
-        std::uint64_t cacheSignature = gpuSubmesh ?
-            BuildMeshCacheSignature(mesh, submesh) : 0;
+
+        std::uint64_t cacheSignature = 0;
         if (gpuSubmesh)
         {
+            const std::uint64_t quickStamp =
+                BuildMeshCacheQuickStamp(mesh, submesh);
+            if (gpuSubmesh->m_topologySignature == 0 ||
+                gpuSubmesh->m_topologyQuickStamp != quickStamp)
+            {
+                gpuSubmesh->m_topologyQuickStamp = quickStamp;
+                gpuSubmesh->m_topologySignature =
+                    BuildMeshCacheSignature(mesh, submesh);
+            }
+
+            cacheSignature = gpuSubmesh->m_topologySignature;
+
             const NiVertexColorProperty* cacheVertexColor =
                 m_pkCurrProp ? m_pkCurrProp->GetVertexColor() : nullptr;
             if (!cacheVertexColor)
@@ -6119,7 +6190,9 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 bgfx::isValid(gpuSubmesh->m_dynamicVertexBuffer));
 
         bgfx::TransientVertexBuffer vertexBuffer = {};
-        std::vector<StandardVertex> packedVertices;
+        static thread_local std::vector<StandardVertex> s_packedVertices;
+        std::vector<StandardVertex>& packedVertices = s_packedVertices;
+        packedVertices.clear();
         StandardVertex* vertices = nullptr;
 
         if (!cachedVertex)
@@ -6734,8 +6807,12 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         // D3D wireframe exactly at the primitive level by expanding triangle
         // edges into a line-list index stream. Duplicate shared edges are
         // intentional; rasterized output matches fixed-function wireframe.
-        std::vector<std::uint32_t> sourceIndices;
-        std::vector<std::uint32_t> wireIndices;
+        static thread_local std::vector<std::uint32_t> s_sourceIndices;
+        static thread_local std::vector<std::uint32_t> s_wireIndices;
+        std::vector<std::uint32_t>& sourceIndices = s_sourceIndices;
+        std::vector<std::uint32_t>& wireIndices = s_wireIndices;
+        sourceIndices.clear();
+        wireIndices.clear();
         const auto appendWireTriangle = [&](std::uint32_t a, std::uint32_t b,
             std::uint32_t c)
         {
