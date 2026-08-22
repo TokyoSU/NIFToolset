@@ -3505,7 +3505,7 @@ void BgfxRenderer::Do_SetCameraData(const NiPoint3& worldLoc,
     const bx::Vec3 up = { worldUp.x, worldUp.y, worldUp.z };
 
     float view[16];
-    bx::mtxLookAt(view, eye, at, up, bx::Handedness::Left);
+    bx::mtxLookAt(view, eye, at, up, bx::Handedness::Right);
 
     const bool homogeneousDepth = bgfx::getCaps()->homogeneousDepth;
     float proj[16];
