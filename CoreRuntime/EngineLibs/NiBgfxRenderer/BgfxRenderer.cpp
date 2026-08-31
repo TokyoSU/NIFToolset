@@ -440,13 +440,20 @@ namespace
             if (!renderer)
                 return;
 
+            BgfxRenderer* bgfxRenderer =
+                renderer->GetRendererID() == NiSystemDesc::RENDERER_BGFX ?
+                    static_cast<BgfxRenderer*>(renderer) : nullptr;
+
             // NiShaderSortProcessor and NiShadowSortProcessor render cached
             // material buckets through NiShader::RenderMeshes rather than
-            // calling NiRenderObject::RenderImmediate directly. The bgfx
-            // shader object is only a material-cache descriptor, so replay
-            // the bucket through the renderer here. RenderImmediate also
-            // completes SYNC_RENDER modifiers and installs property/effect
-            // state exactly like the unsorted path.
+            // calling NiRenderObject::RenderImmediate directly. Tell the bgfx
+            // renderer that this is a coherent material batch. bgfx normally
+            // discards bindings after every submit; inside this scope the
+            // renderer keeps material uniforms/textures alive and only
+            // rebinds them when the actual Gamebryo property state changes.
+            if (bgfxRenderer)
+                bgfxRenderer->BeginMaterialBatch();
+
             const unsigned int count = visibleArray->GetCount();
             for (unsigned int i = 0; i < count; ++i)
             {
@@ -455,6 +462,9 @@ namespace
                 if (renderObject)
                     renderObject->RenderImmediate(renderer);
             }
+
+            if (bgfxRenderer)
+                bgfxRenderer->EndMaterialBatch();
         }
 
         const NiShaderInstanceDescriptor* GetShaderInstanceDesc() const override
@@ -3436,12 +3446,58 @@ void BgfxRenderer::EnforceModifierPoliciy(NiVisibleArray* array)
 }
 #endif
 
+void BgfxRenderer::ResetMaterialBindingCache()
+{
+    m_materialBindingCache = MaterialBindingCache{};
+}
+
+void BgfxRenderer::BeginMaterialBatch()
+{
+    if (m_materialBatchDepth++ == 0)
+    {
+        ResetMaterialBindingCache();
+        ++m_materialBindingStats.m_batches;
+    }
+}
+
+void BgfxRenderer::EndMaterialBatch()
+{
+    if (m_materialBatchDepth == 0)
+        return;
+
+    --m_materialBatchDepth;
+    if (m_materialBatchDepth == 0)
+    {
+        // Draws submitted while a material bucket is active preserve sampler
+        // and uniform state. Explicitly discard it at the bucket boundary so
+        // unsorted/transparent/UI rendering starts from a clean bgfx encoder.
+        bgfx::discard(BGFX_DISCARD_ALL);
+        ResetMaterialBindingCache();
+    }
+}
+
+std::uint8_t BgfxRenderer::GetMaterialSubmitDiscardFlags() const
+{
+    if (m_materialBatchDepth == 0)
+        return BGFX_DISCARD_ALL;
+
+    // Preserve texture/sampler bindings and uniform state only. Geometry,
+    // instance data and transforms are always rebound by the following mesh.
+    return static_cast<std::uint8_t>(
+        BGFX_DISCARD_INDEX_BUFFER |
+        BGFX_DISCARD_INSTANCE_DATA |
+        BGFX_DISCARD_TRANSFORM |
+        BGFX_DISCARD_VERTEX_STREAMS);
+}
+
 bool BgfxRenderer::Do_BeginFrame()
 {
     if (!m_context.IsInitialized())
         return false;
 
     ++m_frameSerial;
+    m_materialBatchDepth = 0;
+    ResetMaterialBindingCache();
     for (ParticleInstancePage& page : m_particleInstancePages)
         page.m_cursor = 0;
 
@@ -3464,6 +3520,27 @@ bool BgfxRenderer::Do_BeginFrame()
 
 bool BgfxRenderer::Do_EndFrame()
 {
+    // If a malformed/custom render path forgot to close a material bucket, do
+    // not leak preserved bgfx state into the next frame.
+    if (m_materialBatchDepth != 0)
+    {
+        m_materialBatchDepth = 0;
+        bgfx::discard(BGFX_DISCARD_ALL);
+        ResetMaterialBindingCache();
+    }
+
+    if ((m_frameSerial % 120u) == 0u && m_materialBindingStats.m_calls != 0)
+    {
+        NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+            "[MaterialCache] 120-frame window: binds=%llu fullHits=%llu "
+            "staticHits=%llu shaderBatches=%llu.",
+            static_cast<unsigned long long>(m_materialBindingStats.m_calls),
+            static_cast<unsigned long long>(m_materialBindingStats.m_fullHits),
+            static_cast<unsigned long long>(m_materialBindingStats.m_staticHits),
+            static_cast<unsigned long long>(m_materialBindingStats.m_batches));
+        m_materialBindingStats = MaterialBindingStats{};
+    }
+
     return m_context.IsInitialized();
 }
 
@@ -4502,6 +4579,25 @@ bool BgfxRenderer::EnsureTexture(NiTexture* texture)
 
 void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
 {
+    ++m_materialBindingStats.m_calls;
+
+    const NiPropertyState* propertyState = m_pkCurrProp;
+    const NiDynamicEffectState* effectState = m_pkCurrEffects;
+    const NiMaterial* activeMaterial = mesh ? mesh->GetActiveMaterial() : nullptr;
+
+    // A NiMesh invokes the renderer once per submesh. Property/effect state is
+    // mesh-wide, so when bgfx bindings are being preserved for a shader-sort
+    // batch there is nothing to rebuild for later submeshes of the same mesh.
+    if (m_materialBatchDepth != 0 && m_materialBindingCache.m_fullValid &&
+        m_materialBindingCache.m_fullMesh == mesh &&
+        m_materialBindingCache.m_fullPropertyState == propertyState &&
+        m_materialBindingCache.m_fullEffectState == effectState &&
+        m_materialBindingCache.m_fullActiveMaterial == activeMaterial)
+    {
+        ++m_materialBindingStats.m_fullHits;
+        return;
+    }
+
     m_currentPssmActive = false;
     m_currentPssmTexture = BGFX_INVALID_HANDLE;
     m_currentPssmSamplerFlags = BGFX_SAMPLER_NONE;
@@ -4525,7 +4621,6 @@ void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
         MAP_DECAL2
     };
 
-    const NiMaterial* activeMaterial = mesh ? mesh->GetActiveMaterial() : nullptr;
     const NiFixedString activeMaterialName = activeMaterial ?
         activeMaterial->GetName() : NiFixedString();
     const bool extendedMaterial = activeMaterialName == "NiExtendedMaterial";
@@ -4535,158 +4630,214 @@ void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
         activeMaterialName == "NiLPPDecorationDepthNormalMaterial";
 
     const NiTexturingProperty* texturing =
-        m_pkCurrProp ? m_pkCurrProp->GetTexturing() : nullptr;
-
-    std::array<const NiTexturingProperty::Map*, MAX_STANDARD_MAPS> maps{};
-    if (texturing)
-    {
-        maps[MAP_BASE] = texturing->GetBaseMap();
-        maps[MAP_DARK] = texturing->GetDarkMap();
-        maps[MAP_DETAIL] = texturing->GetDetailMap();
-        maps[MAP_GLOSS] = texturing->GetGlossMap();
-        maps[MAP_GLOW] = texturing->GetGlowMap();
-        maps[MAP_BUMP] = texturing->GetBumpMap();
-        maps[MAP_NORMAL] = texturing->GetNormalMap();
-        maps[MAP_PARALLAX] = texturing->GetParallaxMap();
-        for (unsigned int i = 0; i < 3 && i < texturing->GetDecalMapCount(); ++i)
-            maps[MAP_DECAL0 + i] = texturing->GetDecalMap(i);
-    }
-
-    std::array<NiBgfxMath::Vec4, MAX_STANDARD_MAPS> mapParams{};
-    std::array<NiBgfxMath::Vec4, MAX_STANDARD_MAPS> mapTransform0{};
-    std::array<NiBgfxMath::Vec4, MAX_STANDARD_MAPS> mapTransform1{};
-
-    for (unsigned int i = 0; i < MAX_STANDARD_MAPS; ++i)
-    {
-        mapTransform0[i] = { 1.0f, 0.0f, 0.0f, 0.0f };
-        mapTransform1[i] = { 0.0f, 1.0f, 0.0f, 0.0f };
-
-        const NiTexturingProperty::Map* map = maps[i];
-        bgfx::TextureHandle handle = m_whiteTexture;
-        if (i == MAP_GLOW || i == MAP_PARALLAX)
-            handle = m_blackTexture;
-        else if (i == MAP_BUMP || i == MAP_NORMAL)
-            handle = m_flatNormalTexture;
-
-        bool enabled = false;
-        if (map && map->GetTexture() && EnsureTexture(map->GetTexture()))
-        {
-            TextureData* data = GetTextureData(map->GetTexture());
-            if (data && bgfx::isValid(data->m_handle))
-            {
-                handle = data->m_handle;
-                enabled = true;
-            }
-        }
-
-        // bgfx exposes TEXCOORD0..7. Legacy assets using a higher set keep
-        // rendering deterministically by falling back to TEXCOORD0.
-        const unsigned int uvSet = map ? map->GetTextureIndex() : 0;
-        mapParams[i] = {
-            enabled ? 1.0f : 0.0f,
-            static_cast<float>(uvSet < 8 ? uvSet : 0),
-            0.0f,
-            0.0f
-        };
-
-        if (map && map->GetTextureTransform())
-        {
-            const NiMatrix3* transform = map->GetTextureTransform()->GetMatrix();
-            if (transform)
-            {
-                mapTransform0[i][0] = transform->GetEntry(0, 0);
-                mapTransform0[i][1] = transform->GetEntry(0, 1);
-                mapTransform0[i][2] = transform->GetEntry(0, 2);
-                mapTransform1[i][0] = transform->GetEntry(1, 0);
-                mapTransform1[i][1] = transform->GetEntry(1, 1);
-                mapTransform1[i][2] = transform->GetEntry(1, 2);
-            }
-        }
-
-        bgfx::setTexture(static_cast<std::uint8_t>(i),
-            m_textureUniforms[i], handle, SamplerFlags(map));
-    }
-
-    bgfx::setUniform(m_mapParamsUniform, mapParams.data(), MAX_STANDARD_MAPS);
-    bgfx::setUniform(m_mapTransform0Uniform, mapTransform0.data(), MAX_STANDARD_MAPS);
-    bgfx::setUniform(m_mapTransform1Uniform, mapTransform1.data(), MAX_STANDARD_MAPS);
-
-    float bumpParams[4] = { 1.0f, 0.0f, 0.05f, 0.0f };
-    if (texturing && texturing->GetBumpMap())
-    {
-        const NiTexturingProperty::BumpMap* bump = texturing->GetBumpMap();
-        bumpParams[0] = bump->GetLumaScale();
-        bumpParams[1] = bump->GetLumaOffset();
-    }
-    if (texturing && texturing->GetParallaxMap())
-        bumpParams[2] = texturing->GetParallaxMap()->GetOffset();
-    bgfx::setUniform(m_bumpParamsUniform, bumpParams);
+        propertyState ? propertyState->GetTexturing() : nullptr;
 
     const NiMaterialProperty* material =
-        m_pkCurrProp ? m_pkCurrProp->GetMaterial() : nullptr;
+        propertyState ? propertyState->GetMaterial() : nullptr;
     if (!material)
         material = NiMaterialProperty::GetDefault();
 
-    float matAmbient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    float matDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    float matSpecular[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    float matEmissive[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (material)
-    {
-        const NiColor& ambient = material->GetAmbientColor();
-        const NiColor& diffuse = material->GetDiffuseColor();
-        const NiColor& specular = material->GetSpecularColor();
-        const NiColor& emissive = material->GetEmittance();
-        const float alpha = material->GetAlpha();
-        matAmbient[0] = ambient.r; matAmbient[1] = ambient.g; matAmbient[2] = ambient.b; matAmbient[3] = alpha;
-        matDiffuse[0] = diffuse.r; matDiffuse[1] = diffuse.g; matDiffuse[2] = diffuse.b; matDiffuse[3] = alpha;
-        matSpecular[0] = specular.r; matSpecular[1] = specular.g; matSpecular[2] = specular.b;
-        matSpecular[3] = std::max(material->GetShineness(), 1.0f);
-        matEmissive[0] = emissive.r; matEmissive[1] = emissive.g; matEmissive[2] = emissive.b; matEmissive[3] = alpha;
-    }
-    bgfx::setUniform(m_materialAmbientUniform, matAmbient);
-    bgfx::setUniform(m_materialDiffuseUniform, matDiffuse);
-    bgfx::setUniform(m_materialSpecularUniform, matSpecular);
-    bgfx::setUniform(m_materialEmissiveUniform, matEmissive);
-
     const NiVertexColorProperty* vertexColor =
-        m_pkCurrProp ? m_pkCurrProp->GetVertexColor() : nullptr;
+        propertyState ? propertyState->GetVertexColor() : nullptr;
     if (!vertexColor)
         vertexColor = NiVertexColorProperty::GetDefault();
 
     const NiSpecularProperty* specular =
-        m_pkCurrProp ? m_pkCurrProp->GetSpecular() : nullptr;
+        propertyState ? propertyState->GetSpecular() : nullptr;
     if (!specular)
         specular = NiSpecularProperty::GetDefault();
 
-    float textureParams[4] = {
-        static_cast<float>(texturing ? texturing->GetApplyMode() :
-            NiTexturingProperty::APPLY_MODULATE),
-        static_cast<float>(vertexColor ? vertexColor->GetSourceMode() :
-            NiVertexColorProperty::SOURCE_IGNORE),
-        static_cast<float>(vertexColor ? vertexColor->GetLightingMode() :
-            NiVertexColorProperty::LIGHTING_E_A_D),
-        specular && specular->GetSpecular() ? 1.0f : 0.0f
-    };
-    bgfx::setUniform(m_textureParamsUniform, textureParams);
-
-    float alphaParams[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    const NiAlphaProperty* alpha = m_pkCurrProp ? m_pkCurrProp->GetAlpha() : nullptr;
+    const NiAlphaProperty* alpha =
+        propertyState ? propertyState->GetAlpha() : nullptr;
     if (!alpha)
         alpha = NiAlphaProperty::GetDefault();
-    if (alpha && alpha->GetAlphaTesting())
+
+    const std::uint32_t materialRevision = material ?
+        static_cast<std::uint32_t>(material->GetRevisionID()) : 0u;
+
+    const auto hasController = [](const NiProperty* property)
     {
-        alphaParams[0] = static_cast<float>(alpha->GetTestRef()) / 255.0f;
-        alphaParams[1] = 1.0f;
-        alphaParams[2] = static_cast<float>(alpha->GetTestMode());
+        return property && property->GetControllers() != nullptr;
+    };
+
+    // Property controllers can mutate a property without replacing the
+    // NiPropertyState pointer. Do not cross-mesh-cache those animated states.
+    // The same-mesh/submesh fast path above remains safe because controllers
+    // are evaluated once by NiMesh::RenderImmediate before RenderMesh().
+    const bool staticCacheable = m_materialBatchDepth != 0 &&
+        !hasController(texturing) && !hasController(material) &&
+        !hasController(vertexColor) && !hasController(specular) &&
+        !hasController(alpha);
+
+    const bool reuseStaticMaterial = staticCacheable &&
+        m_materialBindingCache.m_staticValid &&
+        m_materialBindingCache.m_activeMaterial == activeMaterial &&
+        m_materialBindingCache.m_texturing == texturing &&
+        m_materialBindingCache.m_material == material &&
+        m_materialBindingCache.m_vertexColor == vertexColor &&
+        m_materialBindingCache.m_specular == specular &&
+        m_materialBindingCache.m_alpha == alpha &&
+        m_materialBindingCache.m_materialRevision == materialRevision;
+
+    std::array<bool, MAX_STANDARD_MAPS> standardMapUsed{};
+
+    if (reuseStaticMaterial)
+    {
+        standardMapUsed = m_materialBindingCache.m_standardMapUsed;
+        ++m_materialBindingStats.m_staticHits;
     }
-    // Soft-particle variants need to know the actual source blend factor.
-    // Store srcMode+1 in w (0 means blending disabled). Fading only alpha is
-    // sufficient for SRC_ALPHA/SRC_ALPHA_SAT, but it is visually ineffective
-    // for ONE, SRC_COLOR and destination-driven source factors.
-    if (alpha && alpha->GetAlphaBlending())
-        alphaParams[3] = static_cast<float>(alpha->GetSrcBlendMode()) + 1.0f;
-    bgfx::setUniform(m_alphaParamsUniform, alphaParams);
+    else
+    {
+        std::array<const NiTexturingProperty::Map*, MAX_STANDARD_MAPS> maps{};
+        if (texturing)
+        {
+            maps[MAP_BASE] = texturing->GetBaseMap();
+            maps[MAP_DARK] = texturing->GetDarkMap();
+            maps[MAP_DETAIL] = texturing->GetDetailMap();
+            maps[MAP_GLOSS] = texturing->GetGlossMap();
+            maps[MAP_GLOW] = texturing->GetGlowMap();
+            maps[MAP_BUMP] = texturing->GetBumpMap();
+            maps[MAP_NORMAL] = texturing->GetNormalMap();
+            maps[MAP_PARALLAX] = texturing->GetParallaxMap();
+            for (unsigned int i = 0; i < 3 && i < texturing->GetDecalMapCount(); ++i)
+                maps[MAP_DECAL0 + i] = texturing->GetDecalMap(i);
+        }
+
+        std::array<NiBgfxMath::Vec4, MAX_STANDARD_MAPS> mapParams{};
+        std::array<NiBgfxMath::Vec4, MAX_STANDARD_MAPS> mapTransform0{};
+        std::array<NiBgfxMath::Vec4, MAX_STANDARD_MAPS> mapTransform1{};
+
+        for (unsigned int i = 0; i < MAX_STANDARD_MAPS; ++i)
+        {
+            mapTransform0[i] = { 1.0f, 0.0f, 0.0f, 0.0f };
+            mapTransform1[i] = { 0.0f, 1.0f, 0.0f, 0.0f };
+
+            const NiTexturingProperty::Map* map = maps[i];
+            bgfx::TextureHandle handle = m_whiteTexture;
+            if (i == MAP_GLOW || i == MAP_PARALLAX)
+                handle = m_blackTexture;
+            else if (i == MAP_BUMP || i == MAP_NORMAL)
+                handle = m_flatNormalTexture;
+
+            bool enabled = false;
+            if (map && map->GetTexture() && EnsureTexture(map->GetTexture()))
+            {
+                TextureData* data = GetTextureData(map->GetTexture());
+                if (data && bgfx::isValid(data->m_handle))
+                {
+                    handle = data->m_handle;
+                    enabled = true;
+                }
+            }
+
+            standardMapUsed[i] = enabled;
+
+            // bgfx exposes TEXCOORD0..7. Legacy assets using a higher set keep
+            // rendering deterministically by falling back to TEXCOORD0.
+            const unsigned int uvSet = map ? map->GetTextureIndex() : 0;
+            mapParams[i] = {
+                enabled ? 1.0f : 0.0f,
+                static_cast<float>(uvSet < 8 ? uvSet : 0),
+                0.0f,
+                0.0f
+            };
+
+            if (map && map->GetTextureTransform())
+            {
+                const NiMatrix3* transform = map->GetTextureTransform()->GetMatrix();
+                if (transform)
+                {
+                    mapTransform0[i][0] = transform->GetEntry(0, 0);
+                    mapTransform0[i][1] = transform->GetEntry(0, 1);
+                    mapTransform0[i][2] = transform->GetEntry(0, 2);
+                    mapTransform1[i][0] = transform->GetEntry(1, 0);
+                    mapTransform1[i][1] = transform->GetEntry(1, 1);
+                    mapTransform1[i][2] = transform->GetEntry(1, 2);
+                }
+            }
+
+            bgfx::setTexture(static_cast<std::uint8_t>(i),
+                m_textureUniforms[i], handle, SamplerFlags(map));
+        }
+
+        bgfx::setUniform(m_mapParamsUniform, mapParams.data(), MAX_STANDARD_MAPS);
+        bgfx::setUniform(m_mapTransform0Uniform, mapTransform0.data(), MAX_STANDARD_MAPS);
+        bgfx::setUniform(m_mapTransform1Uniform, mapTransform1.data(), MAX_STANDARD_MAPS);
+
+        float bumpParams[4] = { 1.0f, 0.0f, 0.05f, 0.0f };
+        if (texturing && texturing->GetBumpMap())
+        {
+            const NiTexturingProperty::BumpMap* bump = texturing->GetBumpMap();
+            bumpParams[0] = bump->GetLumaScale();
+            bumpParams[1] = bump->GetLumaOffset();
+        }
+        if (texturing && texturing->GetParallaxMap())
+            bumpParams[2] = texturing->GetParallaxMap()->GetOffset();
+        bgfx::setUniform(m_bumpParamsUniform, bumpParams);
+
+        float matAmbient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        float matDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        float matSpecular[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        float matEmissive[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        if (material)
+        {
+            const NiColor& ambient = material->GetAmbientColor();
+            const NiColor& diffuse = material->GetDiffuseColor();
+            const NiColor& materialSpecular = material->GetSpecularColor();
+            const NiColor& emissive = material->GetEmittance();
+            const float materialAlpha = material->GetAlpha();
+            matAmbient[0] = ambient.r; matAmbient[1] = ambient.g; matAmbient[2] = ambient.b; matAmbient[3] = materialAlpha;
+            matDiffuse[0] = diffuse.r; matDiffuse[1] = diffuse.g; matDiffuse[2] = diffuse.b; matDiffuse[3] = materialAlpha;
+            matSpecular[0] = materialSpecular.r; matSpecular[1] = materialSpecular.g; matSpecular[2] = materialSpecular.b;
+            matSpecular[3] = std::max(material->GetShineness(), 1.0f);
+            matEmissive[0] = emissive.r; matEmissive[1] = emissive.g; matEmissive[2] = emissive.b; matEmissive[3] = materialAlpha;
+        }
+        bgfx::setUniform(m_materialAmbientUniform, matAmbient);
+        bgfx::setUniform(m_materialDiffuseUniform, matDiffuse);
+        bgfx::setUniform(m_materialSpecularUniform, matSpecular);
+        bgfx::setUniform(m_materialEmissiveUniform, matEmissive);
+
+        float textureParams[4] = {
+            static_cast<float>(texturing ? texturing->GetApplyMode() :
+                NiTexturingProperty::APPLY_MODULATE),
+            static_cast<float>(vertexColor ? vertexColor->GetSourceMode() :
+                NiVertexColorProperty::SOURCE_IGNORE),
+            static_cast<float>(vertexColor ? vertexColor->GetLightingMode() :
+                NiVertexColorProperty::LIGHTING_E_A_D),
+            specular && specular->GetSpecular() ? 1.0f : 0.0f
+        };
+        bgfx::setUniform(m_textureParamsUniform, textureParams);
+
+        float alphaParams[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        if (alpha && alpha->GetAlphaTesting())
+        {
+            alphaParams[0] = static_cast<float>(alpha->GetTestRef()) / 255.0f;
+            alphaParams[1] = 1.0f;
+            alphaParams[2] = static_cast<float>(alpha->GetTestMode());
+        }
+        // Soft-particle variants need to know the actual source blend factor.
+        if (alpha && alpha->GetAlphaBlending())
+            alphaParams[3] = static_cast<float>(alpha->GetSrcBlendMode()) + 1.0f;
+        bgfx::setUniform(m_alphaParamsUniform, alphaParams);
+
+        if (staticCacheable)
+        {
+            m_materialBindingCache.m_propertyState = propertyState;
+            m_materialBindingCache.m_activeMaterial = activeMaterial;
+            m_materialBindingCache.m_texturing = texturing;
+            m_materialBindingCache.m_material = material;
+            m_materialBindingCache.m_vertexColor = vertexColor;
+            m_materialBindingCache.m_specular = specular;
+            m_materialBindingCache.m_alpha = alpha;
+            m_materialBindingCache.m_materialRevision = materialRevision;
+            m_materialBindingCache.m_standardMapUsed = standardMapUsed;
+            m_materialBindingCache.m_staticValid = true;
+        }
+        else
+        {
+            m_materialBindingCache.m_staticValid = false;
+        }
+    }
 
     const float cameraPosition[4] = { m_worldLoc.x, m_worldLoc.y, m_worldLoc.z, 1.0f };
     const float cameraDirection[4] = { m_worldDir.x, m_worldDir.y, m_worldDir.z, 0.0f };
@@ -4965,7 +5116,7 @@ void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
 
     std::array<bool, 16> samplerUsed{};
     for (unsigned int i = 0; i < MAX_STANDARD_MAPS; ++i)
-        samplerUsed[i] = mapParams[i][0] > 0.5f;
+        samplerUsed[i] = standardMapUsed[i];
     samplerUsed[11] = envUses2D;
     samplerUsed[12] = envUsesCube;
     for (unsigned int i = 0; i < projectedCount; ++i)
@@ -5269,6 +5420,19 @@ void BgfxRenderer::BindMaterialAndTexture(NiMesh* mesh)
     bgfx::setUniform(m_projectedTransform1Uniform, projectedTransform1.data(), MAX_PROJECTED_EFFECTS);
     bgfx::setUniform(m_projectedTransform2Uniform, projectedTransform2.data(), MAX_PROJECTED_EFFECTS);
     bgfx::setUniform(m_projectedClipPlaneUniform, projectedClipPlane.data(), MAX_PROJECTED_EFFECTS);
+
+    if (m_materialBatchDepth != 0)
+    {
+        m_materialBindingCache.m_fullMesh = mesh;
+        m_materialBindingCache.m_fullPropertyState = propertyState;
+        m_materialBindingCache.m_fullEffectState = effectState;
+        m_materialBindingCache.m_fullActiveMaterial = activeMaterial;
+        m_materialBindingCache.m_fullValid = true;
+    }
+    else
+    {
+        m_materialBindingCache.m_fullValid = false;
+    }
 }
 
 bool BgfxRenderer::BindTerrainMaterial(NiMesh* mesh)
@@ -7466,7 +7630,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                                 static_cast<size_t>(instanceCount) * INSTANCE_STRIDE);
                             bgfx::setInstanceDataBuffer(&instanceBuffer);
                             submitSoftDepth(m_softDepthInstancedProgram);
-                            bgfx::submit(m_viewId, instancedDrawProgram);
+                            bgfx::submit(m_viewId, instancedDrawProgram, 0,
+                                GetMaterialSubmitDiscardFlags());
                             submitted = true;
                         }
                         else
@@ -7497,7 +7662,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                                 submitSoftDepth(softDepthDrawProgram);
                                 const bool last = instance + 1u == instanceCount;
                                 bgfx::submit(m_viewId, drawProgram, 0,
-                                    last ? BGFX_DISCARD_ALL : BGFX_DISCARD_NONE);
+                                    last ? GetMaterialSubmitDiscardFlags() :
+                                        BGFX_DISCARD_NONE);
                             }
                             submitted = true;
                         }
@@ -7510,7 +7676,8 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
         if (!submitted)
         {
             submitSoftDepth(softDepthDrawProgram);
-            bgfx::submit(m_viewId, drawProgram);
+            bgfx::submit(m_viewId, drawProgram, 0,
+                GetMaterialSubmitDiscardFlags());
         }
     }
 }
@@ -7772,7 +7939,8 @@ bool BgfxRenderer::TryRenderFacingQuadParticles(NiMesh* mesh,
     bgfx::setState(BuildRenderState(shadowWrite));
     bgfx::setStencil(BuildStencilState());
     bgfx::submit(m_viewId, useSoftParticles ?
-        m_softParticleProgram : m_particleProgram);
+        m_softParticleProgram : m_particleProgram, 0,
+        GetMaterialSubmitDiscardFlags());
 
     ++m_particleInstancingDebugStats.m_instancedBatches;
     m_particleInstancingDebugStats.m_instancedParticles += count;
