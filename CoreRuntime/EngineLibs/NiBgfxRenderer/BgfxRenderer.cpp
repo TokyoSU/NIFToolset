@@ -7435,6 +7435,15 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
                 const NiDataStream::Region& region =
                     instanceRef->GetRegionForSubmesh(submesh);
                 const std::uint32_t instanceCount = region.GetRange();
+
+                // An instanced mesh with zero visible transforms is a valid
+                // result of NiInstancingMeshModifier per-instance culling.
+                // Treat the instanced path as handled even when it submits no
+                // draw. Falling through to the ordinary mesh path would render
+                // one stray copy of the master mesh whenever all instances are
+                // outside the frustum.
+                submitted = true;
+
                 if (instanceCount > 0)
                 {
                     const void* rawData = instanceStream->Lock(NiDataStream::LOCK_TOOL_READ);
