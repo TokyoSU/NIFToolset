@@ -66,6 +66,8 @@ void NiShadowSortProcessor::PreRenderProcessList(
 
         NiMaterialInstance* pkSrcMatInst =
             (NiMaterialInstance*)kMesh.GetActiveMaterialInstance();
+        if (!pkSrcMatInst || !pkSrcMatInst->GetCachedShader())
+            continue;
 
         NiUInt32 uiKeyID = 0;
         for (uiKeyID = 0; uiKeyID < m_kBatchKeys.GetSize(); uiKeyID++)
@@ -117,7 +119,9 @@ void NiShadowSortProcessor::PreRenderProcessList(
             }
 
             NiShader* pkShader = pkMatInst->GetCachedShader();
-            EE_ASSERT(pkShader);
+            if (!pkShader)
+                continue;
+
             pkShader->RenderMeshes(pkVisibleArray);
         }
     }

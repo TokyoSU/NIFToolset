@@ -17,7 +17,9 @@
 
 #include "NiSettingsDialogLibType.h"
 #include <NiRefObject.h>
+#include <NiSmartPointer.h>
 #include <NiTArray.h>
+#include <NiUniversalTypes.h>
 
 class NiBaseTabController;
 NiSmartPointer(NiRendererSettings);

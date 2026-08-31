@@ -1483,6 +1483,58 @@ const NiPixelFormat* NiDevImageConverter::FindClosestPixelFormat(
         pkDestFmt = FindClosestPixelFormatD3D11(kFmtPrefs,
             kSrcFmt, kDesiredFmt);
         break;
+    case efd::SystemDesc::RENDERER_BGFX:
+        // Keep persistent/tool texture conversion aligned with the formats
+        // that BgfxRenderer can upload directly. Unsupported legacy layouts
+        // are normalized to RGBA32 instead of returning NULL for the new
+        // renderer ID.
+        if (kFmtPrefs.m_ePixelLayout == NiTexture::FormatPrefs::COMPRESSED)
+        {
+            if (kDesiredFmt == NiPixelFormat::DXT1 ||
+                kDesiredFmt == NiPixelFormat::DXT3 ||
+                kDesiredFmt == NiPixelFormat::DXT5)
+            {
+                pkDestFmt = &kDesiredFmt;
+            }
+            else
+            {
+                pkDestFmt = kFmtPrefs.m_eAlphaFmt ==
+                    NiTexture::FormatPrefs::SMOOTH ?
+                    &NiPixelFormat::DXT5 : &NiPixelFormat::DXT1;
+            }
+        }
+        else if (kFmtPrefs.m_ePixelLayout ==
+            NiTexture::FormatPrefs::SINGLE_COLOR_8)
+        {
+            pkDestFmt = &NiPixelFormat::I8;
+        }
+        else if (kFmtPrefs.m_ePixelLayout ==
+            NiTexture::FormatPrefs::DEPTH_24_X8)
+        {
+            pkDestFmt = &NiPixelFormat::STENCILDEPTH824;
+        }
+        else if (kFmtPrefs.m_ePixelLayout ==
+            NiTexture::FormatPrefs::PIX_DEFAULT)
+        {
+            if (kDesiredFmt == NiPixelFormat::DXT1 ||
+                kDesiredFmt == NiPixelFormat::DXT3 ||
+                kDesiredFmt == NiPixelFormat::DXT5 ||
+                kDesiredFmt == NiPixelFormat::RGBA32 ||
+                kDesiredFmt == NiPixelFormat::BGRA8888 ||
+                kDesiredFmt == NiPixelFormat::A8)
+            {
+                pkDestFmt = &kDesiredFmt;
+            }
+            else
+            {
+                pkDestFmt = &NiPixelFormat::RGBA32;
+            }
+        }
+        else
+        {
+            pkDestFmt = &NiPixelFormat::RGBA32;
+        }
+        break;
     case efd::SystemDesc::RENDERER_XBOX360:
         pkDestFmt = FindClosestPixelFormatXenon(kFmtPrefs,
             kSrcFmt, kDesiredFmt);

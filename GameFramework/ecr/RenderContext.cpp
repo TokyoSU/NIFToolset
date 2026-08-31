@@ -16,7 +16,6 @@
 #include "RenderContext.h"
 #include "RenderService.h"
 #include <NiMeshCullingProcess.h>
-#include <NiAlphaSortProcessor.h>
 #include <NiShaderSortProcessor.h>
 #include <NiShadowManager.h>
 #include <efd/ServiceManager.h>
@@ -174,6 +173,10 @@ void RenderContext::AddRenderSurface(RenderSurfacePtr spSurface,
         // Has list processor been previous initialized?
         if (m_spRenderListProcessor == NULL)
         {
+            // BgfxRenderer now exposes lightweight NiShader cache objects for
+            // NiFragmentMaterial, so use the normal Gamebryo shader sorter.
+            // This preserves material/effect bucketing for opaque geometry while
+            // NiShaderSortProcessor still depth-sorts transparent objects.
             m_spRenderListProcessor = EE_NEW NiShaderSortProcessor();
         }
     }

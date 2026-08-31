@@ -30,6 +30,12 @@ template <class T>
 void BinaryStreamLoad (BinaryStream& is, T* pValue,
     unsigned int uiNumEls = 1)
 {
+    // Empty arrays are valid in streamed assets (for example an inactive
+    // NiPSysData can have HasVertices set while NumVertices is zero).
+    // Treat them as a no-op instead of tripping the debug assertion.
+    if (uiNumEls == 0)
+        return;
+
     EE_ASSERT(uiNumEls > 0);
     unsigned int uiSize = sizeof(T);
     unsigned int uiBytesToRead = sizeof(T) * uiNumEls;
@@ -43,6 +49,9 @@ inline void BinaryStreamLoad (BinaryStream& is, void* pvValue,
     unsigned int uiNumEls, unsigned int* puiComponentSizes,
     unsigned int uiNumComponents = 1)
 {
+    if (uiNumEls == 0)
+        return;
+
     EE_ASSERT(uiNumEls > 0);
     EE_ASSERT(puiComponentSizes != NULL);
     EE_ASSERT(uiNumComponents > 0);
@@ -84,6 +93,10 @@ template <class T>
 void BinaryStreamSave (BinaryStream& os, const T* pValue,
     unsigned int uiNumEls = 1)
 {
+    // Keep load/save behavior symmetric for zero-length streamed arrays.
+    if (uiNumEls == 0)
+        return;
+
     EE_ASSERT(uiNumEls > 0);
     unsigned int uiSize = sizeof(T);
     unsigned int uiBytesToWrite = uiSize * uiNumEls;
@@ -97,6 +110,9 @@ inline void BinaryStreamSave (BinaryStream& os, const void* pvValue,
     unsigned int uiNumEls, unsigned int* puiComponentSizes,
     unsigned int uiNumComponents)
 {
+    if (uiNumEls == 0)
+        return;
+
     EE_ASSERT(uiNumEls != 0);
     EE_ASSERT(puiComponentSizes != NULL);
     EE_ASSERT(uiNumComponents > 0);

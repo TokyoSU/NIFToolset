@@ -1,7 +1,0 @@
-if(NI_BUILD_D3DXEFFECT_SHADERLIB)
-    if(NOT NI_RENDERER STREQUAL "DX9")
-        message(WARNING "[NIFToolset] NiD3DXEffectShaderLib is DX9-only and will be skipped for renderer '${NI_RENDERER}'.")
-    else()
-        add_subdirectory("NiD3DXEffectShaderLib")
-    endif()
-endif()

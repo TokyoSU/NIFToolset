@@ -1327,15 +1327,6 @@ public:
     */
     NiNode* GetLowDetailScene();
 
-    /// Register for notification of a DX9 device reset
-    void SubscribeToDXDeviceResetNotification();
-
-    /// Unregister from DX9 device reset notifications
-    void UnsubscribeToDXDeviceResetNotification();
-
-    /// Handle a DX9 device reset by regenerating the blend mask textures
-    static bool HandleDXDeviceReset(bool bBeforeReset, void* pvVoid);
-
     /**
         Set the shader rendering mode to use on this terrain. This can be 
         used to display different properties of the terrain through special
@@ -1568,10 +1559,6 @@ protected:
     NiPropertyStatePtr m_spTerrainPropertyState;
     NiDynamicEffectStatePtr m_spTerrainEffectState;
     
-    /// The DX9 Renderer device reset callback index
-    bool m_bRegisteredDXDeviceResetCallback;
-    NiUInt32 m_uiDXDeviceResetCallbackIndex;
-
     /// Store a structure with all the information required for performing
     /// runtime painting on the terrain.
     RuntimePaintingData* m_pkPaintingData;

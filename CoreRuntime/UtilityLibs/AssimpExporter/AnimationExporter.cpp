@@ -37,6 +37,7 @@ namespace
 {
     constexpr float DEFAULT_SAMPLE_RATE = 30.0f;
     constexpr float MIN_POSITIVE = 0.000001f;
+    constexpr float NEGATIVE_SCALE_EPSILON = 0.000001f;
     constexpr unsigned int MAX_BAKED_SAMPLES = 1000000u;
 
     using NodeByNameMap = std::unordered_map<std::string, NiAVObject*>;
@@ -46,20 +47,52 @@ namespace
         float sampleRate = DEFAULT_SAMPLE_RATE;
         float durationSeconds = 0.0f;
         std::vector<float> localTimes;
-        std::vector<double> ticks;
+        std::vector<double> keyTimesSeconds;
     };
 
     struct BakedNodeTrack
     {
         std::string name;
         NiAVObject* restObject = nullptr;
+        aiVector3D sourceRestPosition = aiVector3D(0.0f, 0.0f, 0.0f);
+        aiQuaternion sourceRestRotation = aiQuaternion(1.0f, 0.0f, 0.0f, 0.0f);
+        aiVector3D sourceRestScale = aiVector3D(1.0f, 1.0f, 1.0f);
+        aiVector3D exportRestPosition = aiVector3D(0.0f, 0.0f, 0.0f);
+        aiQuaternion exportRestRotation = aiQuaternion(1.0f, 0.0f, 0.0f, 0.0f);
+        aiVector3D exportRestScale = aiVector3D(1.0f, 1.0f, 1.0f);
         std::vector<aiVectorKey> positions;
         std::vector<aiQuatKey> rotations;
         std::vector<aiVectorKey> scales;
+        std::vector<unsigned char> positionValid;
+        std::vector<unsigned char> rotationValid;
+        std::vector<unsigned char> scaleValid;
         bool hasAnimationData = false;
         bool hasPositionSource = false;
         bool hasRotationSource = false;
         bool hasScaleSource = false;
+        bool usesStaticNegativeScaleParent = false;
+        bool preparedForExport = false;
+        unsigned int componentsReducedToRest = 0;
+        unsigned int componentsCollapsedToConstant = 0;
+        unsigned int repairedPositionSamples = 0;
+        unsigned int repairedRotationSamples = 0;
+        unsigned int repairedScaleSamples = 0;
+    };
+
+    struct AnimationBuildStats
+    {
+        unsigned int channels = 0;
+        unsigned int negativeScaleCarriers = 0;
+        unsigned int componentsReducedToRest = 0;
+        unsigned int componentsCollapsedToConstant = 0;
+        unsigned int repairedPositionSamples = 0;
+        unsigned int repairedRotationSamples = 0;
+        unsigned int repairedScaleSamples = 0;
+        unsigned int scaleChannels = 0;
+        unsigned int scaleSamples = 0;
+        unsigned int nonPositiveScaleSamples = 0;
+        float minimumScale = std::numeric_limits<float>::infinity();
+        float maximumScale = -std::numeric_limits<float>::infinity();
     };
 
     struct TransformComponentMask
@@ -134,6 +167,322 @@ namespace
             }
             kKeys[i].mValue = kCurrent;
         }
+    }
+
+    //----------------------------------------------------------------------------------------------
+    aiQuaternion ConjugateUnitQuaternion(const aiQuaternion& kQuaternion)
+    {
+        const aiQuaternion kNormalized = NormalizeQuaternion(kQuaternion);
+        return aiQuaternion(kNormalized.w, -kNormalized.x,
+            -kNormalized.y, -kNormalized.z);
+    }
+
+    //----------------------------------------------------------------------------------------------
+    aiQuaternion MultiplyQuaternions(const aiQuaternion& kA,
+        const aiQuaternion& kB)
+    {
+        return NormalizeQuaternion(aiQuaternion(
+            kA.w * kB.w - kA.x * kB.x - kA.y * kB.y - kA.z * kB.z,
+            kA.w * kB.x + kA.x * kB.w + kA.y * kB.z - kA.z * kB.y,
+            kA.w * kB.y - kA.x * kB.z + kA.y * kB.w + kA.z * kB.x,
+            kA.w * kB.z + kA.x * kB.y - kA.y * kB.x + kA.z * kB.w));
+    }
+
+    //----------------------------------------------------------------------------------------------
+    aiVector3D RotateVector(const aiQuaternion& kQuaternion,
+        const aiVector3D& kVector)
+    {
+        const aiQuaternion kQ = NormalizeQuaternion(kQuaternion);
+        const aiVector3D kCross1(
+            kQ.y * kVector.z - kQ.z * kVector.y,
+            kQ.z * kVector.x - kQ.x * kVector.z,
+            kQ.x * kVector.y - kQ.y * kVector.x);
+        const aiVector3D kT(
+            2.0f * kCross1.x,
+            2.0f * kCross1.y,
+            2.0f * kCross1.z);
+        const aiVector3D kCross2(
+            kQ.y * kT.z - kQ.z * kT.y,
+            kQ.z * kT.x - kQ.x * kT.z,
+            kQ.x * kT.y - kQ.y * kT.x);
+        return aiVector3D(
+            kVector.x + kQ.w * kT.x + kCross2.x,
+            kVector.y + kQ.w * kT.y + kCross2.y,
+            kVector.z + kQ.w * kT.z + kCross2.z);
+    }
+
+    //----------------------------------------------------------------------------------------------
+    float GetUniformScale(const aiVector3D& kScale)
+    {
+        // NIF NiTransform scale is scalar. Averaging avoids privileging an
+        // axis if a previous conversion introduced tiny component drift.
+        return (kScale.x + kScale.y + kScale.z) / 3.0f;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    bool ConvertToStaticRestParentSpace(BakedNodeTrack& kTrack)
+    {
+        if (!kTrack.usesStaticNegativeScaleParent)
+            return true;
+
+        const float fRestScale = GetUniformScale(kTrack.sourceRestScale);
+        if (!std::isfinite(fRestScale) ||
+            std::abs(fRestScale) <= NEGATIVE_SCALE_EPSILON)
+        {
+            std::cerr << "  Warning: cannot isolate static negative rest transform for node '"
+                << kTrack.name << "' because its scalar rest scale is invalid; "
+                << "keeping the original animation space." << std::endl;
+            kTrack.usesStaticNegativeScaleParent = false;
+            kTrack.exportRestPosition = kTrack.sourceRestPosition;
+            kTrack.exportRestRotation = kTrack.sourceRestRotation;
+            kTrack.exportRestScale = kTrack.sourceRestScale;
+            return false;
+        }
+
+        // NiTransform contains a single uniform scalar scale. Factor the rest
+        // transform analytically instead of decomposing a reflected matrix.
+        // Matrix decomposition of a negative determinant may move the sign to
+        // a different axis (and compensate it with a 180-degree rotation) on
+        // different samples, which makes scale animation appear inconsistent
+        // in FBX/Unity. For P = rest and A = animated, C = inverse(P) * A:
+        //
+        //   C.t = inverse(restScale) * inverse(restRotation) * (A.t - P.t)
+        //   C.r = inverse(restRotation) * A.r
+        //   C.s = A.scale / restScale
+        //
+        // This preserves NIF's scalar scale exactly and cannot redistribute
+        // the sign between X/Y/Z.
+        const aiQuaternion kInverseRestRotation =
+            ConjugateUnitQuaternion(kTrack.sourceRestRotation);
+
+        for (size_t i = 0; i < kTrack.positions.size(); ++i)
+        {
+            const aiVector3D kDeltaPosition =
+                kTrack.positions[i].mValue - kTrack.sourceRestPosition;
+            const aiVector3D kRotatedDelta =
+                RotateVector(kInverseRestRotation, kDeltaPosition);
+            kTrack.positions[i].mValue = aiVector3D(
+                kRotatedDelta.x / fRestScale,
+                kRotatedDelta.y / fRestScale,
+                kRotatedDelta.z / fRestScale);
+
+            kTrack.rotations[i].mValue = MultiplyQuaternions(
+                kInverseRestRotation, kTrack.rotations[i].mValue);
+
+            const float fAnimatedScale = GetUniformScale(
+                kTrack.scales[i].mValue);
+            const float fRelativeScale = fAnimatedScale / fRestScale;
+            kTrack.scales[i].mValue = aiVector3D(
+                fRelativeScale, fRelativeScale, fRelativeScale);
+        }
+
+        // The complete original rest transform lives on the synthetic static
+        // parent. The named NIF node remains the skin/animation target and has
+        // identity rest transform. Component-source masks stay unchanged: a
+        // scale-only evaluator must remain scale-only.
+        kTrack.exportRestPosition = aiVector3D(0.0f, 0.0f, 0.0f);
+        kTrack.exportRestRotation = aiQuaternion(1.0f, 0.0f, 0.0f, 0.0f);
+        kTrack.exportRestScale = aiVector3D(1.0f, 1.0f, 1.0f);
+        return true;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    unsigned int RepairMissingVectorSamples(std::vector<aiVectorKey>& kKeys,
+        const std::vector<unsigned char>& kValid, bool bHasSource)
+    {
+        if (!bHasSource || kKeys.empty() || kValid.size() != kKeys.size())
+            return 0;
+
+        size_t stFirst = kKeys.size();
+        for (size_t i = 0; i < kValid.size(); ++i)
+        {
+            if (kValid[i])
+            {
+                stFirst = i;
+                break;
+            }
+        }
+        if (stFirst == kKeys.size())
+            return 0;
+
+        unsigned int uiRepaired = 0;
+        for (size_t i = 0; i < stFirst; ++i)
+        {
+            kKeys[i].mValue = kKeys[stFirst].mValue;
+            ++uiRepaired;
+        }
+
+        size_t stPrevious = stFirst;
+        size_t i = stFirst + 1;
+        while (i < kKeys.size())
+        {
+            if (kValid[i])
+            {
+                stPrevious = i++;
+                continue;
+            }
+
+            const size_t stGapBegin = i;
+            while (i < kKeys.size() && !kValid[i])
+                ++i;
+
+            if (i == kKeys.size())
+            {
+                for (size_t j = stGapBegin; j < kKeys.size(); ++j)
+                {
+                    kKeys[j].mValue = kKeys[stPrevious].mValue;
+                    ++uiRepaired;
+                }
+                break;
+            }
+
+            const size_t stNext = i;
+            const double dStartTime = kKeys[stPrevious].mTime;
+            const double dEndTime = kKeys[stNext].mTime;
+            const double dSpan = dEndTime - dStartTime;
+            for (size_t j = stGapBegin; j < stNext; ++j)
+            {
+                const float fAlpha = dSpan > 0.0
+                    ? static_cast<float>((kKeys[j].mTime - dStartTime) / dSpan)
+                    : 0.0f;
+                const aiVector3D& kA = kKeys[stPrevious].mValue;
+                const aiVector3D& kB = kKeys[stNext].mValue;
+                kKeys[j].mValue = aiVector3D(
+                    kA.x + (kB.x - kA.x) * fAlpha,
+                    kA.y + (kB.y - kA.y) * fAlpha,
+                    kA.z + (kB.z - kA.z) * fAlpha);
+                ++uiRepaired;
+            }
+            stPrevious = stNext;
+            ++i;
+        }
+        return uiRepaired;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    unsigned int RepairMissingQuaternionSamples(
+        std::vector<aiQuatKey>& kKeys,
+        const std::vector<unsigned char>& kValid, bool bHasSource)
+    {
+        if (!bHasSource || kKeys.empty() || kValid.size() != kKeys.size())
+            return 0;
+
+        size_t stFirst = kKeys.size();
+        for (size_t i = 0; i < kValid.size(); ++i)
+        {
+            if (kValid[i])
+            {
+                stFirst = i;
+                break;
+            }
+        }
+        if (stFirst == kKeys.size())
+            return 0;
+
+        unsigned int uiRepaired = 0;
+        for (size_t i = 0; i < stFirst; ++i)
+        {
+            kKeys[i].mValue = kKeys[stFirst].mValue;
+            ++uiRepaired;
+        }
+
+        size_t stPrevious = stFirst;
+        size_t i = stFirst + 1;
+        while (i < kKeys.size())
+        {
+            if (kValid[i])
+            {
+                stPrevious = i++;
+                continue;
+            }
+
+            const size_t stGapBegin = i;
+            while (i < kKeys.size() && !kValid[i])
+                ++i;
+
+            if (i == kKeys.size())
+            {
+                for (size_t j = stGapBegin; j < kKeys.size(); ++j)
+                {
+                    kKeys[j].mValue = kKeys[stPrevious].mValue;
+                    ++uiRepaired;
+                }
+                break;
+            }
+
+            const size_t stNext = i;
+            aiQuaternion kStart = NormalizeQuaternion(kKeys[stPrevious].mValue);
+            aiQuaternion kEnd = NormalizeQuaternion(kKeys[stNext].mValue);
+            if (kStart.w * kEnd.w + kStart.x * kEnd.x +
+                kStart.y * kEnd.y + kStart.z * kEnd.z < 0.0f)
+            {
+                kEnd.w = -kEnd.w;
+                kEnd.x = -kEnd.x;
+                kEnd.y = -kEnd.y;
+                kEnd.z = -kEnd.z;
+            }
+
+            const double dStartTime = kKeys[stPrevious].mTime;
+            const double dEndTime = kKeys[stNext].mTime;
+            const double dSpan = dEndTime - dStartTime;
+            for (size_t j = stGapBegin; j < stNext; ++j)
+            {
+                const float fAlpha = dSpan > 0.0
+                    ? static_cast<float>((kKeys[j].mTime - dStartTime) / dSpan)
+                    : 0.0f;
+                kKeys[j].mValue = NormalizeQuaternion(aiQuaternion(
+                    kStart.w * (1.0f - fAlpha) + kEnd.w * fAlpha,
+                    kStart.x * (1.0f - fAlpha) + kEnd.x * fAlpha,
+                    kStart.y * (1.0f - fAlpha) + kEnd.y * fAlpha,
+                    kStart.z * (1.0f - fAlpha) + kEnd.z * fAlpha));
+                ++uiRepaired;
+            }
+            stPrevious = stNext;
+            ++i;
+        }
+        return uiRepaired;
+    }
+
+    //----------------------------------------------------------------------------------------------
+    void PrepareTrackForExport(BakedNodeTrack& kTrack)
+    {
+        if (kTrack.preparedForExport)
+            return;
+        kTrack.preparedForExport = true;
+
+        kTrack.repairedPositionSamples += RepairMissingVectorSamples(
+            kTrack.positions, kTrack.positionValid,
+            kTrack.hasPositionSource);
+        kTrack.repairedRotationSamples += RepairMissingQuaternionSamples(
+            kTrack.rotations, kTrack.rotationValid,
+            kTrack.hasRotationSource);
+        kTrack.repairedScaleSamples += RepairMissingVectorSamples(
+            kTrack.scales, kTrack.scaleValid,
+            kTrack.hasScaleSource);
+
+        kTrack.exportRestPosition = kTrack.sourceRestPosition;
+        kTrack.exportRestRotation = kTrack.sourceRestRotation;
+        kTrack.exportRestScale = kTrack.sourceRestScale;
+        ConvertToStaticRestParentSpace(kTrack);
+
+        // Assimp 6.0.x writes one Translation/Rotation/Scaling curve node for
+        // every aiNodeAnim. Its fallback values for an omitted component can
+        // be derived from a world transform and then applied as a local value.
+        // Reducing a rest/constant component or omitting an otherwise posed
+        // evaluator therefore changes the animation after FBX round-tripping.
+        // Keep every sampled local TRS component explicit for every animated
+        // node. This also preserves sequence-specific posed channels which can
+        // differ from the model NIF rest transform.
+        MakeQuaternionTrackContinuous(kTrack.rotations);
+        for (aiVectorKey& kScaleKey : kTrack.scales)
+        {
+            const float fScale = GetUniformScale(kScaleKey.mValue);
+            kScaleKey.mValue = aiVector3D(fScale, fScale, fScale);
+        }
+
+        kTrack.hasAnimationData = kTrack.hasAnimationData ||
+            kTrack.hasPositionSource || kTrack.hasRotationSource ||
+            kTrack.hasScaleSource;
     }
 
     //----------------------------------------------------------------------------------------------
@@ -469,7 +818,7 @@ namespace
         }
 
         kGrid.localTimes.resize(uiSampleCount);
-        kGrid.ticks.resize(uiSampleCount);
+        kGrid.keyTimesSeconds.resize(uiSampleCount);
         for (unsigned int i = 0; i < uiSampleCount; ++i)
         {
             const float fPlaybackSeconds = (i + 1u == uiSampleCount)
@@ -479,7 +828,11 @@ namespace
 
             kGrid.localTimes[i] = std::min(
                 fPlaybackSeconds * fSafeFrequency, fSafeDuration);
-            kGrid.ticks[i] = static_cast<double>(fPlaybackSeconds) * kGrid.sampleRate;
+            // Store Assimp key times directly in seconds. FBX exporters in
+            // older Assimp releases did not consistently honor
+            // aiAnimation::mTicksPerSecond; a one-tick-per-second timeline is
+            // unambiguous in both older and current releases.
+            kGrid.keyTimesSeconds[i] = static_cast<double>(fPlaybackSeconds);
         }
 
         return kGrid;
@@ -487,7 +840,7 @@ namespace
 
     //----------------------------------------------------------------------------------------------
     void GetRestTransform(NiAVObject* pkObject, float fUnitScale,
-        bool bConvertToUnrealAxes, aiVector3D& kPosition,
+        ExportAxisPreset eAxisPreset, aiVector3D& kPosition,
         aiQuaternion& kRotation, aiVector3D& kScale)
     {
         if (!pkObject)
@@ -507,10 +860,10 @@ namespace
             kTranslate.x * fUnitScale,
             kTranslate.y * fUnitScale,
             kTranslate.z * fUnitScale);
-        kPosition = AxisConversion::ToUnrealVector(kSourcePosition,
-            bConvertToUnrealAxes);
-        kRotation = NormalizeQuaternion(AxisConversion::ToUnrealQuaternion(
-            ToAiQuat(kRotate), bConvertToUnrealAxes));
+        kPosition = AxisConversion::ToTargetVector(kSourcePosition,
+            eAxisPreset);
+        kRotation = NormalizeQuaternion(AxisConversion::ToTargetQuaternion(
+            ToAiQuat(kRotate), eAxisPreset));
         kScale = aiVector3D(fScale, fScale, fScale);
     }
 
@@ -520,7 +873,7 @@ namespace
         NiAVObject* pkRestObject,
         const SampleGrid& kGrid,
         float fUnitScale,
-        bool bConvertToUnrealAxes,
+        ExportAxisPreset eAxisPreset,
         std::vector<BakedNodeTrack>& kTracks,
         std::unordered_map<std::string, size_t>& kTrackByName)
     {
@@ -529,7 +882,36 @@ namespace
         {
             BakedNodeTrack& kTrack = kTracks[kFound->second];
             if (!kTrack.restObject && pkRestObject)
+            {
+                aiVector3D kRestPosition;
+                aiQuaternion kRestRotation;
+                aiVector3D kRestScale;
+                GetRestTransform(pkRestObject, fUnitScale, eAxisPreset,
+                    kRestPosition, kRestRotation, kRestScale);
+
                 kTrack.restObject = pkRestObject;
+                kTrack.sourceRestPosition = kRestPosition;
+                kTrack.sourceRestRotation = kRestRotation;
+                kTrack.sourceRestScale = kRestScale;
+                kTrack.exportRestPosition = kRestPosition;
+                kTrack.exportRestRotation = kRestRotation;
+                kTrack.exportRestScale = kRestScale;
+                kTrack.usesStaticNegativeScaleParent =
+                    pkRestObject->GetScale() < -NEGATIVE_SCALE_EPSILON;
+
+                // A track can be discovered first through an evaluator whose
+                // target could not be resolved. Backfill only components that
+                // have not already received authored samples.
+                for (size_t i = 0; i < kTrack.positions.size(); ++i)
+                {
+                    if (!kTrack.hasPositionSource)
+                        kTrack.positions[i].mValue = kRestPosition;
+                    if (!kTrack.hasRotationSource)
+                        kTrack.rotations[i].mValue = kRestRotation;
+                    if (!kTrack.hasScaleSource)
+                        kTrack.scales[i].mValue = kRestScale;
+                }
+            }
             return kTrack;
         }
 
@@ -537,20 +919,31 @@ namespace
         aiQuaternion kRestRotation;
         aiVector3D kRestScale;
         GetRestTransform(pkRestObject, fUnitScale,
-            bConvertToUnrealAxes, kRestPosition, kRestRotation, kRestScale);
+            eAxisPreset, kRestPosition, kRestRotation, kRestScale);
 
         BakedNodeTrack kTrack;
         kTrack.name = kNodeName;
         kTrack.restObject = pkRestObject;
-        kTrack.positions.resize(kGrid.ticks.size());
-        kTrack.rotations.resize(kGrid.ticks.size());
-        kTrack.scales.resize(kGrid.ticks.size());
+        kTrack.sourceRestPosition = kRestPosition;
+        kTrack.sourceRestRotation = kRestRotation;
+        kTrack.sourceRestScale = kRestScale;
+        kTrack.exportRestPosition = kRestPosition;
+        kTrack.exportRestRotation = kRestRotation;
+        kTrack.exportRestScale = kRestScale;
+        kTrack.usesStaticNegativeScaleParent = pkRestObject &&
+            pkRestObject->GetScale() < -NEGATIVE_SCALE_EPSILON;
+        kTrack.positions.resize(kGrid.keyTimesSeconds.size());
+        kTrack.rotations.resize(kGrid.keyTimesSeconds.size());
+        kTrack.scales.resize(kGrid.keyTimesSeconds.size());
+        kTrack.positionValid.assign(kGrid.keyTimesSeconds.size(), 0);
+        kTrack.rotationValid.assign(kGrid.keyTimesSeconds.size(), 0);
+        kTrack.scaleValid.assign(kGrid.keyTimesSeconds.size(), 0);
 
-        for (size_t i = 0; i < kGrid.ticks.size(); ++i)
+        for (size_t i = 0; i < kGrid.keyTimesSeconds.size(); ++i)
         {
-            kTrack.positions[i] = aiVectorKey(kGrid.ticks[i], kRestPosition);
-            kTrack.rotations[i] = aiQuatKey(kGrid.ticks[i], kRestRotation);
-            kTrack.scales[i] = aiVectorKey(kGrid.ticks[i], kRestScale);
+            kTrack.positions[i] = aiVectorKey(kGrid.keyTimesSeconds[i], kRestPosition);
+            kTrack.rotations[i] = aiQuatKey(kGrid.keyTimesSeconds[i], kRestRotation);
+            kTrack.scales[i] = aiVectorKey(kGrid.keyTimesSeconds[i], kRestScale);
         }
 
         const size_t stIndex = kTracks.size();
@@ -588,9 +981,9 @@ namespace
     //----------------------------------------------------------------------------------------------
     bool BakeEvaluatorIntoTrack(NiEvaluator* pkEvaluator,
         const SampleGrid& kGrid, float fUnitScale,
-        bool bConvertToUnrealAxes, BakedNodeTrack& kTrack)
+        ExportAxisPreset eAxisPreset, BakedNodeTrack& kTrack)
     {
-        if (!IsBakeableTransformEvaluator(pkEvaluator) || kGrid.ticks.empty())
+        if (!IsBakeableTransformEvaluator(pkEvaluator) || kGrid.keyTimesSeconds.empty())
             return false;
 
         // A transform evaluator can expose a channel in two different ways:
@@ -644,8 +1037,9 @@ namespace
                     kPosedPosition.x * fUnitScale,
                     kPosedPosition.y * fUnitScale,
                     kPosedPosition.z * fUnitScale);
-                kTrack.positions[i].mValue = AxisConversion::ToUnrealVector(
-                    kSourcePosition, bConvertToUnrealAxes);
+                kTrack.positions[i].mValue = AxisConversion::ToTargetVector(
+                    kSourcePosition, eAxisPreset);
+                kTrack.positionValid[i] = 1;
                 kTrack.hasPositionSource = true;
                 bAnySuccess = true;
             }
@@ -659,8 +1053,9 @@ namespace
                         kPosition.x * fUnitScale,
                         kPosition.y * fUnitScale,
                         kPosition.z * fUnitScale);
-                    kTrack.positions[i].mValue = AxisConversion::ToUnrealVector(
-                        kSourcePosition, bConvertToUnrealAxes);
+                    kTrack.positions[i].mValue = AxisConversion::ToTargetVector(
+                        kSourcePosition, eAxisPreset);
+                    kTrack.positionValid[i] = 1;
                     kTrack.hasPositionSource = true;
                     bAnySuccess = true;
                 }
@@ -669,8 +1064,9 @@ namespace
             if (bRotPosed)
             {
                 kTrack.rotations[i].mValue = NormalizeQuaternion(
-                    AxisConversion::ToUnrealQuaternion(ToAiQuat(kPosedRotation),
-                        bConvertToUnrealAxes));
+                    AxisConversion::ToTargetQuaternion(ToAiQuat(kPosedRotation),
+                        eAxisPreset));
+                kTrack.rotationValid[i] = 1;
                 kTrack.hasRotationSource = true;
                 bAnySuccess = true;
             }
@@ -681,8 +1077,9 @@ namespace
                     NiEvaluator::EVALROTINDEX, pkRotSP, &kRotation))
                 {
                     kTrack.rotations[i].mValue = NormalizeQuaternion(
-                        AxisConversion::ToUnrealQuaternion(ToAiQuat(kRotation),
-                            bConvertToUnrealAxes));
+                        AxisConversion::ToTargetQuaternion(ToAiQuat(kRotation),
+                            eAxisPreset));
+                    kTrack.rotationValid[i] = 1;
                     kTrack.hasRotationSource = true;
                     bAnySuccess = true;
                 }
@@ -692,6 +1089,7 @@ namespace
             {
                 kTrack.scales[i].mValue = aiVector3D(
                     fPosedScale, fPosedScale, fPosedScale);
+                kTrack.scaleValid[i] = 1;
                 kTrack.hasScaleSource = true;
                 bAnySuccess = true;
             }
@@ -702,6 +1100,7 @@ namespace
                     NiEvaluator::EVALSCALEINDEX, pkScaleSP, &fScale))
                 {
                     kTrack.scales[i].mValue = aiVector3D(fScale, fScale, fScale);
+                    kTrack.scaleValid[i] = 1;
                     kTrack.hasScaleSource = true;
                     bAnySuccess = true;
                 }
@@ -713,55 +1112,91 @@ namespace
     }
 
     //----------------------------------------------------------------------------------------------
+    template <class TKey>
+    void CopyAllKeys(const std::vector<TKey>& kKeys,
+        unsigned int& uiCount, TKey*& pkOut)
+    {
+        uiCount = static_cast<unsigned int>(kKeys.size());
+        pkOut = uiCount > 0 ? new TKey[uiCount] : nullptr;
+        if (uiCount > 0)
+            std::copy(kKeys.begin(), kKeys.end(), pkOut);
+    }
+
+    //----------------------------------------------------------------------------------------------
     aiNodeAnim* BuildAiNodeAnim(BakedNodeTrack& kTrack)
     {
-        if (!kTrack.hasAnimationData || kTrack.positions.empty())
+        PrepareTrackForExport(kTrack);
+        if (!kTrack.hasAnimationData)
             return nullptr;
-
-        MakeQuaternionTrackContinuous(kTrack.rotations);
 
         aiNodeAnim* pkChannel = new aiNodeAnim();
         pkChannel->mNodeName = kTrack.name.c_str();
 
-        pkChannel->mNumPositionKeys = static_cast<unsigned int>(kTrack.positions.size());
-        pkChannel->mPositionKeys = new aiVectorKey[pkChannel->mNumPositionKeys];
-        std::copy(kTrack.positions.begin(), kTrack.positions.end(),
-            pkChannel->mPositionKeys);
-
-        pkChannel->mNumRotationKeys = static_cast<unsigned int>(kTrack.rotations.size());
-        pkChannel->mRotationKeys = new aiQuatKey[pkChannel->mNumRotationKeys];
-        std::copy(kTrack.rotations.begin(), kTrack.rotations.end(),
-            pkChannel->mRotationKeys);
-
-        pkChannel->mNumScalingKeys = static_cast<unsigned int>(kTrack.scales.size());
-        pkChannel->mScalingKeys = new aiVectorKey[pkChannel->mNumScalingKeys];
-        std::copy(kTrack.scales.begin(), kTrack.scales.end(),
-            pkChannel->mScalingKeys);
+        // Always write complete sampled local TRS. In particular, do not use
+        // one-key rest fallbacks for non-authored components: Assimp 6.0.x can
+        // use world-space defaults for those FBX curve nodes, which corrupts
+        // child-bone animation in Unity.
+        CopyAllKeys(kTrack.positions,
+            pkChannel->mNumPositionKeys, pkChannel->mPositionKeys);
+        CopyAllKeys(kTrack.rotations,
+            pkChannel->mNumRotationKeys, pkChannel->mRotationKeys);
+        CopyAllKeys(kTrack.scales,
+            pkChannel->mNumScalingKeys, pkChannel->mScalingKeys);
 
         return pkChannel;
     }
 
     //----------------------------------------------------------------------------------------------
     aiAnimation* BuildAiAnimation(const std::string& kName,
-        const SampleGrid& kGrid, std::vector<BakedNodeTrack>& kTracks)
+        const SampleGrid& kGrid, std::vector<BakedNodeTrack>& kTracks,
+        AnimationBuildStats* pkStats = nullptr)
     {
+        AnimationBuildStats kStats;
         std::vector<aiNodeAnim*> kChannels;
         kChannels.reserve(kTracks.size());
         for (BakedNodeTrack& kTrack : kTracks)
         {
             aiNodeAnim* pkChannel = BuildAiNodeAnim(kTrack);
+            kStats.componentsReducedToRest += kTrack.componentsReducedToRest;
+            kStats.componentsCollapsedToConstant +=
+                kTrack.componentsCollapsedToConstant;
+            kStats.repairedPositionSamples += kTrack.repairedPositionSamples;
+            kStats.repairedRotationSamples += kTrack.repairedRotationSamples;
+            kStats.repairedScaleSamples += kTrack.repairedScaleSamples;
+            if (kTrack.hasScaleSource)
+            {
+                ++kStats.scaleChannels;
+                for (const aiVectorKey& kScaleKey : kTrack.scales)
+                {
+                    const float fScale = GetUniformScale(kScaleKey.mValue);
+                    ++kStats.scaleSamples;
+                    if (fScale <= 0.0f)
+                        ++kStats.nonPositiveScaleSamples;
+                    kStats.minimumScale = std::min(kStats.minimumScale, fScale);
+                    kStats.maximumScale = std::max(kStats.maximumScale, fScale);
+                }
+            }
             if (pkChannel)
+            {
+                if (kTrack.usesStaticNegativeScaleParent)
+                    ++kStats.negativeScaleCarriers;
                 kChannels.push_back(pkChannel);
+            }
         }
 
         if (kChannels.empty())
             return nullptr;
 
+        kStats.channels = static_cast<unsigned int>(kChannels.size());
+        if (pkStats)
+            *pkStats = kStats;
+
         aiAnimation* pkAnimation = new aiAnimation();
         pkAnimation->mName = kName.c_str();
-        pkAnimation->mTicksPerSecond = kGrid.sampleRate;
-        pkAnimation->mDuration =
-            static_cast<double>(kGrid.durationSeconds) * kGrid.sampleRate;
+        // FBX-facing timestamps are stored in seconds. Keep the bake sample
+        // rate only for sample density, not as an external time unit.
+        pkAnimation->mTicksPerSecond = 1.0;
+        pkAnimation->mDuration = static_cast<double>(kGrid.durationSeconds);
         pkAnimation->mNumChannels = static_cast<unsigned int>(kChannels.size());
         pkAnimation->mChannels = new aiNodeAnim*[kChannels.size()];
         for (size_t i = 0; i < kChannels.size(); ++i)
@@ -860,15 +1295,10 @@ namespace
     //----------------------------------------------------------------------------------------------
     float GetPlaybackSeconds(const SampleGrid& kGrid, size_t stSampleIndex)
     {
-        if (stSampleIndex >= kGrid.ticks.size() ||
-            !std::isfinite(kGrid.sampleRate) ||
-            kGrid.sampleRate <= MIN_POSITIVE)
-        {
+        if (stSampleIndex >= kGrid.keyTimesSeconds.size())
             return 0.0f;
-        }
 
-        return static_cast<float>(
-            kGrid.ticks[stSampleIndex] / kGrid.sampleRate);
+        return static_cast<float>(kGrid.keyTimesSeconds[stSampleIndex]);
     }
 
     //----------------------------------------------------------------------------------------------
@@ -967,7 +1397,7 @@ namespace
         const std::vector<NifControllerEntry>& kControllers,
         const SampleGrid& kGrid,
         float fUnitScale,
-        bool bConvertToUnrealAxes,
+        ExportAxisPreset eAxisPreset,
         const std::unordered_map<std::string, TransformComponentMask>&
             kProtectedComponents,
         std::vector<BakedNodeTrack>& kTracks,
@@ -996,7 +1426,7 @@ namespace
 
             BakedNodeTrack& kTrack = GetOrCreateTrack(kEntry.name,
                 kEntry.object, kGrid, fUnitScale,
-                bConvertToUnrealAxes, kTracks, kTrackByName);
+                eAxisPreset, kTracks, kTrackByName);
 
             bool bWroteController = false;
             bool bSawPosition = false;
@@ -1008,7 +1438,7 @@ namespace
             // clips, each of which starts again at time zero.
             kEntry.interpolator->ForceNextUpdate();
 
-            for (size_t i = 0; i < kGrid.ticks.size(); ++i)
+            for (size_t i = 0; i < kGrid.keyTimesSeconds.size(); ++i)
             {
                 const float fPlaybackSeconds = GetPlaybackSeconds(kGrid, i);
                 const float fControllerTime =
@@ -1033,8 +1463,9 @@ namespace
                             kPosition.y * fUnitScale,
                             kPosition.z * fUnitScale);
                         kTrack.positions[i].mValue =
-                            AxisConversion::ToUnrealVector(
-                                kSourcePosition, bConvertToUnrealAxes);
+                            AxisConversion::ToTargetVector(
+                                kSourcePosition, eAxisPreset);
+                        kTrack.positionValid[i] = 1;
                         kTrack.hasPositionSource = true;
                         kTrack.hasAnimationData = true;
                         bWroteController = true;
@@ -1047,9 +1478,10 @@ namespace
                     if (!kProtected.rotation)
                     {
                         kTrack.rotations[i].mValue = NormalizeQuaternion(
-                            AxisConversion::ToUnrealQuaternion(
+                            AxisConversion::ToTargetQuaternion(
                                 ToAiQuat(kValue.GetRotate()),
-                                bConvertToUnrealAxes));
+                                eAxisPreset));
+                        kTrack.rotationValid[i] = 1;
                         kTrack.hasRotationSource = true;
                         kTrack.hasAnimationData = true;
                         bWroteController = true;
@@ -1064,6 +1496,7 @@ namespace
                         const float fScale = kValue.GetScale();
                         kTrack.scales[i].mValue = aiVector3D(
                             fScale, fScale, fScale);
+                        kTrack.scaleValid[i] = 1;
                         kTrack.hasScaleSource = true;
                         kTrack.hasAnimationData = true;
                         bWroteController = true;
@@ -1190,7 +1623,7 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
     NiAVObject* pkNifRoot,
     float fUnitScale,
     float fSampleRate,
-    bool bConvertToUnrealAxes,
+    ExportAxisPreset eAxisPreset,
     const NiStream* pkNifStream)
 {
     std::vector<aiAnimation*> kResult;
@@ -1263,7 +1696,7 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
         const SampleGrid kGrid = BuildSequenceSampleGrid(
             pkSequence->GetDuration(), pkSequence->GetFrequency(),
             fSafeSampleRate);
-        if (kGrid.ticks.empty())
+        if (kGrid.keyTimesSeconds.empty())
             continue;
 
         std::vector<BakedNodeTrack> kTracks;
@@ -1394,14 +1827,14 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
 
             BakedNodeTrack& kTrack = GetOrCreateTrack(kNodeName,
                 pkRestObject, kGrid, fSafeUnitScale,
-                bConvertToUnrealAxes, kTracks, kTrackByName);
+                eAxisPreset, kTracks, kTrackByName);
 
             const bool bHadPosition = kTrack.hasPositionSource;
             const bool bHadRotation = kTrack.hasRotationSource;
             const bool bHadScale = kTrack.hasScaleSource;
 
             BakeEvaluatorIntoTrack(pkEvaluator, kGrid,
-                fSafeUnitScale, bConvertToUnrealAxes, kTrack);
+                fSafeUnitScale, eAxisPreset, kTrack);
 
             if ((bHadPosition && kTrack.hasPositionSource &&
                     !pkEvaluator->IsEvalChannelInvalid(NiEvaluator::EVALPOSINDEX)) ||
@@ -1432,7 +1865,7 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
 
         const ControllerBakeStats kControllerStats =
             BakeNifControllersIntoTracks(kNifControllers, kGrid,
-                fSafeUnitScale, bConvertToUnrealAxes,
+                fSafeUnitScale, eAxisPreset,
                 kSequenceProtectedComponents, kTracks, kTrackByName);
 
         const char* pcSequenceName = pkSequence->GetName().c_str();
@@ -1440,15 +1873,30 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromSequenceDatas(
             (pcSequenceName && pcSequenceName[0] != '\0')
             ? pcSequenceName : ("anim_" + std::to_string(s));
 
+        AnimationBuildStats kBuildStats;
         aiAnimation* pkAnimation = BuildAiAnimation(
-            kAnimationName, kGrid, kTracks);
+            kAnimationName, kGrid, kTracks, &kBuildStats);
         if (!pkAnimation)
             continue;
 
         std::cout << "  Baked animation '" << kAnimationName << "': "
             << pkAnimation->mNumChannels << " node channels, "
-            << kGrid.ticks.size() << " samples at "
-            << kGrid.sampleRate << " fps" << std::endl;
+            << kGrid.keyTimesSeconds.size() << " samples at "
+            << kGrid.sampleRate << " fps; full local TRS bake, negative-scale carriers="
+            << kBuildStats.negativeScaleCarriers
+            << ", repaired samples(T/R/S)="
+            << kBuildStats.repairedPositionSamples << "/"
+            << kBuildStats.repairedRotationSamples << "/"
+            << kBuildStats.repairedScaleSamples << std::endl;
+        if (kBuildStats.scaleChannels > 0)
+        {
+            std::cout << "    Animated scalar scale: channels="
+                << kBuildStats.scaleChannels << ", samples="
+                << kBuildStats.scaleSamples << ", range=["
+                << kBuildStats.minimumScale << ", "
+                << kBuildStats.maximumScale << "], non-positive="
+                << kBuildStats.nonPositiveScaleSamples << "." << std::endl;
+        }
 
 #ifndef EE_REMOVE_BACK_COMPAT_STREAMING
         if (kLegacySelection.controller)
@@ -1580,7 +2028,7 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(
     NiAVObject* pkRoot,
     float fUnitScale,
     float fSampleRate,
-    bool bConvertToUnrealAxes)
+    ExportAxisPreset eAxisPreset)
 {
     if (!pkRoot)
         return {};
@@ -1605,7 +2053,7 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(
     const unsigned int uiSampleCount = static_cast<unsigned int>(std::clamp(
         std::ceil(static_cast<double>(fMaxDurationSeconds) * fSafeSampleRate) + 1.0,
         2.0, static_cast<double>(MAX_BAKED_SAMPLES)));
-    kGrid.ticks.resize(uiSampleCount);
+    kGrid.keyTimesSeconds.resize(uiSampleCount);
     kGrid.localTimes.resize(uiSampleCount);
     for (unsigned int i = 0; i < uiSampleCount; ++i)
     {
@@ -1614,7 +2062,8 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(
             : std::min(static_cast<float>(i) / fSafeSampleRate,
                 fMaxDurationSeconds);
         kGrid.localTimes[i] = fSeconds;
-        kGrid.ticks[i] = static_cast<double>(fSeconds) * fSafeSampleRate;
+        // Assimp animation key times use seconds (mTicksPerSecond == 1).
+        kGrid.keyTimesSeconds[i] = static_cast<double>(fSeconds);
     }
 
     std::vector<BakedNodeTrack> kTracks;
@@ -1624,19 +2073,36 @@ std::vector<aiAnimation*> AnimationExporter::BuildFromNifControllers(
 
     const ControllerBakeStats kControllerStats =
         BakeNifControllersIntoTracks(kControllers, kGrid,
-            fSafeUnitScale, bConvertToUnrealAxes,
+            fSafeUnitScale, eAxisPreset,
             kNoProtectedComponents, kTracks, kTrackByName);
 
-    aiAnimation* pkAnimation = BuildAiAnimation("NifAnimation", kGrid, kTracks);
+    AnimationBuildStats kBuildStats;
+    aiAnimation* pkAnimation = BuildAiAnimation(
+        "NifAnimation", kGrid, kTracks, &kBuildStats);
     if (!pkAnimation)
         return {};
 
     std::cout << "  Baked NIF controller animation: "
         << pkAnimation->mNumChannels << " node channels, "
-        << kGrid.ticks.size() << " samples at "
+        << kGrid.keyTimesSeconds.size() << " samples at "
         << kGrid.sampleRate << " fps; controllers="
         << kControllerStats.controllersBaked << "/"
-        << kControllers.size() << std::endl;
+        << kControllers.size()
+        << "; full local TRS bake, negative-scale carriers="
+        << kBuildStats.negativeScaleCarriers
+        << ", repaired samples(T/R/S)="
+        << kBuildStats.repairedPositionSamples << "/"
+        << kBuildStats.repairedRotationSamples << "/"
+        << kBuildStats.repairedScaleSamples << std::endl;
+    if (kBuildStats.scaleChannels > 0)
+    {
+        std::cout << "    Animated scalar scale: channels="
+            << kBuildStats.scaleChannels << ", samples="
+            << kBuildStats.scaleSamples << ", range=["
+            << kBuildStats.minimumScale << ", "
+            << kBuildStats.maximumScale << "], non-positive="
+            << kBuildStats.nonPositiveScaleSamples << "." << std::endl;
+    }
 
     if (kControllerStats.skippedAccumulationRoots > 0)
     {

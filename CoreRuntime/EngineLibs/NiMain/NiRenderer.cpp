@@ -167,10 +167,6 @@ void NiRenderer::Message(const char* pcFormat, ...)
 {
     EE_UNUSED_ARG(pcFormat);
 
-    //Return immediately if there is no callback object
-    if (!ms_pkCallbackObject)
-        return;
-
     //Format the message string
     char acOutput[1024] = "NiRenderer MESSAGE: ";
     size_t stIndex = strlen(acOutput);
@@ -192,18 +188,17 @@ void NiRenderer::Message(const char* pcFormat, ...)
         acOutput[stIndex] = NULL;
     }
 
-    //Invoke the callback object
-    ms_pkCallbackObject->Message(acOutput);
+    NiLogWrite(NI_LOG_INFO, "NiRenderer", acOutput);
+
+    // Preserve the legacy callback object as an optional additional sink.
+    if (ms_pkCallbackObject)
+        ms_pkCallbackObject->Message(acOutput);
 }
 
 //------------------------------------------------------------------------------------------------
 void NiRenderer::Warning(const char* pcFormat, ...)
 {
     EE_UNUSED_ARG(pcFormat);
-
-    //Return immediately if there is no callback object
-    if (!ms_pkCallbackObject)
-        return;
 
     //Format the message string
     char acOutput[1024] = "NiRenderer WARNING: ";
@@ -226,18 +221,16 @@ void NiRenderer::Warning(const char* pcFormat, ...)
         acOutput[stIndex] = NULL;
     }
 
-    //Invoke the callback object
-    ms_pkCallbackObject->Warning(acOutput);
+    NiLogWrite(NI_LOG_WARNING, "NiRenderer", acOutput);
+
+    if (ms_pkCallbackObject)
+        ms_pkCallbackObject->Warning(acOutput);
 }
 
 //------------------------------------------------------------------------------------------------
 void NiRenderer::Error(const char* pcFormat, ...)
 {
     EE_UNUSED_ARG(pcFormat);
-
-    //Return immediately if there is no callback object
-    if (!ms_pkCallbackObject)
-        return;
 
     //Format the message string
     char acOutput[1024] = "NiRenderer ERROR: ";
@@ -260,8 +253,10 @@ void NiRenderer::Error(const char* pcFormat, ...)
         acOutput[stIndex] = NULL;
     }
 
-    //Invoke the callback object
-    ms_pkCallbackObject->Error(acOutput);
+    NiLogWrite(NI_LOG_ERROR, "NiRenderer", acOutput);
+
+    if (ms_pkCallbackObject)
+        ms_pkCallbackObject->Error(acOutput);
 }
 
 //------------------------------------------------------------------------------------------------

@@ -1330,8 +1330,8 @@ bool TerrainExporter::Build(const std::string& kFsmPath,
 
             // Reordering SceneTerrainBuilder's Y-up vertices into a Z-up
             // basis changes handedness, so reverse each triangle to preserve
-            // upward-facing winding. Assimp's ConvertToLeftHanded performs the
-            // final FBX handedness conversion later.
+            // upward-facing winding. Optional FBX handedness conversion is
+            // applied later to the completed Assimp scene.
             if (fD0 <= fD1)
             {
                 kMesh.indices.push_back(ui00);

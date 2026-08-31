@@ -29,13 +29,7 @@
 #if defined (EE_PLATFORM_XBOX360)
     #include <NiXenonRenderer.h>
 #elif defined (EE_PLATFORM_WIN32)
-    #if defined(NI_RENDERER_DX9)
-        #include <NiDX9Renderer.h>
-    #elif defined(NI_RENDERER_DX10)
-        #include <NiD3D10Renderer.h>
-    #elif defined(NI_RENDERER_DX11)
-        #include <ecrD3D11Renderer/D3D11Renderer.h>
-    #endif
+    #include <BgfxRenderer.h>
 #elif defined (EE_PLATFORM_PS3)
     #include <NiPS3Renderer.h>
 #elif defined (EE_PLATFORM_LINUX)

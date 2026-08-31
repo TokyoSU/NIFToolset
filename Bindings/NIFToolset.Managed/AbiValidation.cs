@@ -24,7 +24,7 @@ internal static class AbiValidation
         ValidateSize<NifCollisionTriangle>(36);
         ValidateSize<NifDataStreamRegion>(8);
         ValidateSize<NifDataStreamElementDesc>(32);
-        ValidateSize<NifDx11RendererDesc>(IntPtr.Size == 8 ? 96 : 88);
+        ValidateSize<NifBgfxRendererDesc>(IntPtr.Size == 8 ? 24 : 16);
     }
 
     private static void ValidateSize<T>(int expected) where T : struct

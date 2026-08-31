@@ -18,10 +18,10 @@
 #include <NiViewRenderClick.h>
 #include <Ni3DRenderView.h>
 #include <NiAlphaSortProcessor.h>
-#include <efd/SystemDesc.h>
-#include <NiDX9Renderer.h>
-#include <NiD3D10Renderer.h>
-#include <ecrD3D11Renderer/D3D11Renderer.h>
+
+#if WIN32
+#include <Windows.h>
+#endif
 
 class NIAPPLICATION_ENTRY NiApplication
 {
@@ -49,7 +49,7 @@ public:
 
         NiColorA m_kClearColor     = NiColorA(0.0f, 0.0f, 0.0f, 1.0f);
 
-        // Vertical field of view in radians, near and far clip planes.
+        // Vertical field of view in degrees, near and far clip planes.
         // The frustum half-extents are derived at initialisation from
         // these values and the window aspect ratio (m_uiWidth / m_uiHeight).
         float m_fFov  = 45.0f;
@@ -63,7 +63,12 @@ public:
         bool m_bObserveNoSortHint  = true;
         bool m_bSortByClosestPoint = false;
         bool m_bShadows            = false;
-        efd::SystemDesc::RendererID m_eRendererID = efd::SystemDesc::RENDERER_D3D11;
+        bool m_bVSync              = true;
+
+        // Optional override for precompiled bgfx shader binaries. The path
+        // points at the directory containing dx11/, glsl/, spirv/, ... .
+        // nullptr uses the build/install-time discovery paths.
+        const char* m_pszBgfxShaderRoot = nullptr;
 
         // ---------------------------------------------------------------
         // Shader / material cache
@@ -86,26 +91,6 @@ public:
         bool        m_bShaderCacheAutoCreate         = true;
         bool        m_bShaderCacheReplacementShaders = true;
 
-        // ---------------------------------------------------------------
-        // Renderer-specific
-        // ---------------------------------------------------------------
-        NiDX9Renderer::DeviceDesc           m_eDeviceDesc       = NiDX9Renderer::DEVDESC_PURE;
-        NiDX9Renderer::FrameBufferFormat    m_eFBFormat         = NiDX9Renderer::FBFMT_UNKNOWN;
-        NiDX9Renderer::DepthStencilFormat   m_eDSFormat         = NiDX9Renderer::DSFMT_D24S8;
-        NiDX9Renderer::PresentationInterval m_ePresentInterval  = NiDX9Renderer::PRESENT_INTERVAL_ONE;
-        NiDX9Renderer::SwapEffect           m_eSwapEffect       = NiDX9Renderer::SWAPEFFECT_DEFAULT;
-        unsigned int                        m_uiDX9Flags        = NiDX9Renderer::USE_NOFLAGS;
-        unsigned int                        m_uiAdapter         = D3DADAPTER_DEFAULT;
-        NiD3D10Renderer::DriverType     m_eDriverType10        = NiD3D10Renderer::DRIVER_HARDWARE;
-        unsigned int                    m_uiDX10CreateFlags    = 0;
-        bool                            m_bCreateDepthBuffer10 = true;
-        DXGI_FORMAT                     m_eDepthFormat10       = DXGI_FORMAT_D24_UNORM_S8_UINT;
-        DXGI_FORMAT                     m_eSwapChainBuffer10   = DXGI_FORMAT_R8G8B8A8_UNORM;
-        ecr::D3D11Renderer::DriverType  m_eDriverType11        = ecr::D3D11Renderer::DRIVER_TYPE_HARDWARE;
-        unsigned int                    m_uiDX11CreateFlags    = 0;
-        bool                            m_bCreateDepthBuffer11 = true;
-        DXGI_FORMAT                     m_eDepthFormat11       = DXGI_FORMAT_D24_UNORM_S8_UINT;
-        DXGI_FORMAT                     m_eSwapChainBuffer11   = DXGI_FORMAT_R8G8B8A8_UNORM;
     };
 
     NiApplication();
@@ -191,7 +176,7 @@ public:
 
 private:
     bool  CreateSDLWindow(const Settings& kSettings);
-    bool  CreateRenderer (const Settings& kSettings);
+    bool  CreateRenderer(const Settings& kSettings);
     void  ApplyShaderDefaults(const Settings& kSettings);
     void  CreateRenderPipeline();
     void  DestroyAll();
@@ -236,6 +221,7 @@ private:
     bool m_bInitialized  = false;
     bool m_bQuit         = false;
     bool m_bShadowsEnabled = false;
+    bool m_bVSync = true;
 
     Uint64 m_uiPerfFreq = 0;
     Uint64 m_uiLastTick = 0;

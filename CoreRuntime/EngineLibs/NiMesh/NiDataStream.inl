@@ -114,6 +114,7 @@ inline NiDataStream::NiDataStream(
     m_eUsage(eUsage),
     m_uiAccessMask(uiAccessMask),
     m_uiLockFlags(0),
+    m_uiRevisionID(1),
     m_bLocked(false),
     m_bStreamable(true),
     m_bGPUConstantSingleEntry(false)
@@ -129,6 +130,7 @@ inline NiDataStream::NiDataStream(
     m_eUsage(eUsage),
     m_uiAccessMask(uiAccessMask),
     m_uiLockFlags(0),
+    m_uiRevisionID(1),
     m_bLocked(false),
     m_bStreamable(true),
     m_bGPUConstantSingleEntry(false)
@@ -195,6 +197,12 @@ inline NiUInt8 NiDataStream::GetAccessMask() const
 }
 
 //--------------------------------------------------------------------------------------------------
+inline NiUInt32 NiDataStream::GetRevisionID() const
+{
+    return m_uiRevisionID;
+}
+
+//--------------------------------------------------------------------------------------------------
 inline bool NiDataStream::GetLocked() const
 {
     return m_bLocked;
@@ -219,7 +227,17 @@ inline const void* NiDataStream::LockRead() const
 inline void NiDataStream::Unlock(NiUInt8 uiLockMask)
 {
     if (GetLocked())
+    {
         UnlockImpl(uiLockMask);
+
+        if ((uiLockMask & (LOCK_WRITE | LOCK_TOOL_WRITE)) != 0)
+        {
+            ++m_uiRevisionID;
+            // Keep zero reserved as an invalid/uninitialized cache token.
+            if (m_uiRevisionID == 0)
+                m_uiRevisionID = 1;
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------

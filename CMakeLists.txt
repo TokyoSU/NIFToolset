@@ -1,4 +1,4 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
+# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
 cmake_minimum_required (VERSION 3.16)
@@ -24,6 +24,25 @@ endif()
 
 project ("NIFToolset")
 
+# Consistent, low-noise configure/build diagnostics used by all subdirectories.
+function(nif_status TEXT)
+    message(STATUS "[NIFToolset] ${TEXT}")
+endfunction()
+
+nif_status("============================================================")
+nif_status("Configuring NIFToolset")
+nif_status("Generator       : ${CMAKE_GENERATOR}")
+nif_status("C++ compiler    : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+if(CMAKE_CONFIGURATION_TYPES)
+    nif_status("Configurations  : ${CMAKE_CONFIGURATION_TYPES}")
+elseif(CMAKE_BUILD_TYPE)
+    nif_status("Build type      : ${CMAKE_BUILD_TYPE}")
+else()
+    nif_status("Build type      : <not specified>")
+endif()
+nif_status("Source directory : ${NIFToolset_SOURCE_DIR}")
+nif_status("Binary directory : ${NIFToolset_BINARY_DIR}")
+
 # Register custom Find modules (FindBASS.cmake, etc.)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -37,6 +56,9 @@ endif()
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(ENABLE_SDM_SHUTDOWN_ASSERT "Enable SDM shutdown assert" OFF)
 
+# bgfx is the only renderer backend supported by this tree.
+add_compile_definitions(NI_RENDERER_BGFX)
+
 # Use native MSVC STL instead of stlport
 add_compile_definitions(EE_USE_NATIVE_STL) # stlport is no longer supported, but this definition is still used in some places to conditionally compile code that depends on the STL.
 if(ENABLE_SDM_SHUTDOWN_ASSERT)
@@ -49,7 +71,12 @@ add_compile_definitions(EE_GAMEBRYO_VERSION="4.0.0.57") # Gamebryo version used 
 if(MSVC)
     # /MP: compile multiple source files in parallel within a single target.
     # Omit the number to let MSVC use all logical cores automatically.
-    add_compile_options(/MP)
+    # /Zc:__cplusplus: make __cplusplus report the selected C++ language
+    # standard. bx/bgfx requires this on MSVC and rejects the legacy 199711L
+    # value exposed without the switch.
+    # /Zc:preprocessor: enable the conforming MSVC preprocessor. bx also
+    # requires this mode and rejects the legacy preprocessor implementation.
+    add_compile_options(/MP /Zc:__cplusplus /Zc:preprocessor)
 endif()
 
 # Define global preprocessor definitions for all targets based on build configuration
@@ -83,8 +110,29 @@ endif()
 # Include install helper function (ni_install_target)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/NiInstall.cmake")
 
+# Configuration summary before descending into the library tree.
+if(BUILD_SHARED_LIBS)
+    set(_nif_library_mode "shared libraries (.dll)")
+else()
+    set(_nif_library_mode "static libraries (.lib)")
+endif()
+nif_status("Library mode     : ${_nif_library_mode}")
+nif_status("Renderer         : bgfx (NI_RENDERER_BGFX)")
+nif_status("Gamebryo version : 4.0.0.57")
+nif_status("Install prefix   : ${CMAKE_INSTALL_PREFIX}")
+if(ENABLE_SDM_SHUTDOWN_ASSERT)
+    nif_status("SDM shutdown assert: enabled")
+else()
+    nif_status("SDM shutdown assert: disabled")
+endif()
+nif_status("------------------------------------------------------------")
+
 # Include sub-projects
 add_subdirectory("Foundation")
 add_subdirectory("CoreRuntime")
 add_subdirectory("GameFramework")
 add_subdirectory("Bindings")
+
+# Keep the final configure result easy to spot in large FetchContent builds.
+nif_status("Configuration complete. Build files are ready in: ${NIFToolset_BINARY_DIR}")
+nif_status("============================================================")

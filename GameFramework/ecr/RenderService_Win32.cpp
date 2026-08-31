@@ -19,27 +19,12 @@
 #include <ecr/SDL3PlatformService.h>
 #endif
 
-#if defined(NI_RENDERER_DX9)
-#   include <NiDX9Renderer.h>
-#   if defined(NI_BUILD_RENDERER_SETUP)
-#   include <NiDX9RendererSetup.h>
-#   endif
-#elif defined(NI_RENDERER_DX10)
-#   if defined(NI_BUILD_RENDERER_SETUP)
-#   include <NiD3D10RendererSetup.h>
-#   endif
-#elif defined(NI_RENDERER_DX11)
-#   if defined(NI_BUILD_RENDERER_SETUP)
-#   include <D3D11RendererSetup.h>
-#   endif
-#endif
+#include <BgfxRenderer.h>
 
 #include <efd/IConfigManager.h>
 #include <efd/SystemDesc.h>
 
 #include <NiRendererSettings.h>
-#include <NiSettingsDialog.h>
-#include <NiBaseRendererSetup.h>
 
 using namespace egf;
 using namespace efd;
@@ -48,15 +33,7 @@ using namespace ecr;
 //------------------------------------------------------------------------------------------------
 void RenderService::InternalDestructor()
 {
-#if defined(NI_RENDERER_DX9)
-    NiDX9Renderer* pDX9Renderer = NiDynamicCast(NiDX9Renderer, m_spRenderer);
-
-    if (pDX9Renderer != NULL)
-    {
-        pDX9Renderer->RemoveLostDeviceNotificationFunc(&RenderService::OnDeviceLost);
-        pDX9Renderer->RemoveResetNotificationFunc(&RenderService::OnDeviceReset);
-    }
-#endif
+    // bgfx owns device-loss/reset handling internally.
 }
 
 //------------------------------------------------------------------------------------------------
@@ -98,30 +75,9 @@ bool RenderService::CreateRenderer()
     settings.m_bFullscreen     = m_bFullscreen;
     settings.m_bRendererDialog = m_bRendererDialog;
 
-    #if defined(EE_PLATFORM_SERVICE_SDL3)
-    if (settings.m_bRendererDialog && (pWin32 || pSDL3))
-    {
-        NiSettingsDialog dialog(&settings);
-        const HINSTANCE hInstance = pWin32 ? pWin32->GetInstanceRef() : pSDL3->GetInstanceRef();
-        if (dialog.InitDialog(hInstance) &&
-            dialog.ShowDialog(m_parentHandle, (NiAcceleratorRef)m_parentHandle))
-        {
-            if (settings.m_bSaveSettings && validFile)
-                settings.SaveSettings(settingsFile);
-        }
-    }
-#else
-    if (settings.m_bRendererDialog && pWin32)
-    {
-        NiSettingsDialog dialog(&settings);
-        if (dialog.InitDialog(pWin32->GetInstanceRef()) &&
-            dialog.ShowDialog(m_parentHandle, (NiAcceleratorRef)m_parentHandle))
-        {
-            if (settings.m_bSaveSettings && validFile)
-                settings.SaveSettings(settingsFile);
-        }
-    }
-#endif
+    // The legacy renderer selection dialog only contains Direct3D setup
+    // descriptors. bgfx selects the best supported backend automatically.
+    settings.m_bRendererDialog = false;
 
     if (m_parentHandle && settings.m_uiScreenHeight && settings.m_uiScreenWidth)
     {
@@ -152,24 +108,18 @@ bool RenderService::CreateRenderer()
             SWP_NOMOVE);
     }
 
-    m_spRenderer = NiBaseRendererSetup::CreateRenderer(
-        &settings,
-        m_parentHandle,
-        m_parentHandle);
+    RECT clientRect = {};
+    if (!m_parentHandle || !GetClientRect(m_parentHandle, &clientRect))
+        return false;
 
-    #if defined(NI_RENDERER_DX9)
-    if (settings.m_eRendererID == efd::SystemDesc::RENDERER_DX9)
-    {
-        NiRenderer* pkRenderer = m_spRenderer;
-        NiDX9Renderer* pDX9Renderer = NiVerifyStaticCast(NiDX9Renderer, pkRenderer);
+    // Use the actual post-resize client dimensions (DPI/window decorations may
+    // make them differ from the requested settings values).
+    const unsigned int width = static_cast<unsigned int>(
+        std::max<LONG>(1, clientRect.right - clientRect.left));
+    const unsigned int height = static_cast<unsigned int>(
+        std::max<LONG>(1, clientRect.bottom - clientRect.top));
 
-        if (pDX9Renderer != NULL)
-        {
-            pDX9Renderer->AddLostDeviceNotificationFunc(&RenderService::OnDeviceLost, this);
-            pDX9Renderer->AddResetNotificationFunc(&RenderService::OnDeviceReset, this);
-        }
-    }
-#endif
+    m_spRenderer = BgfxRenderer::Create(m_parentHandle, width, height, settings.m_bVSync);
 
     return (m_spRenderer != NULL);
 }
@@ -236,26 +186,18 @@ bool RenderService::RecreateRenderSurface(RenderSurface* pSurface)
 
     if (pSurface->GetRenderTargetGroup() == m_spRenderer->GetDefaultRenderTargetGroup())
     {
-        // Do nothing; the device has already recreated itself and its swap chain.
-    }
-    else
-    {
-        #if defined(NI_RENDERER_DX9)
-        if (m_spRenderer->GetRendererID() == efd::SystemDesc::RENDERER_DX9)
-        {
-            NiRenderer* pkRenderer = m_spRenderer;
-            NiDX9Renderer* pDX9Renderer = NiVerifyStaticCast(NiDX9Renderer, pkRenderer);
-            // If we don't have a valid device, don't try to recreate the render target group.
-            if (!pDX9Renderer->LostDeviceRestore())
-                return false;
-        }
-#endif
-
-        // Swap chain.
-        if (!m_spRenderer->RecreateWindowRenderTargetGroup(pSurface->GetWindowRef()))
-        {
+        RECT rect = {};
+        if (!GetClientRect(pSurface->GetWindowRef(), &rect))
             return false;
-        }
+        const unsigned int width = static_cast<unsigned int>(std::max<LONG>(1, rect.right - rect.left));
+        const unsigned int height = static_cast<unsigned int>(std::max<LONG>(1, rect.bottom - rect.top));
+        BgfxRenderer* renderer = static_cast<BgfxRenderer*>(m_spRenderer.data());
+        if (!renderer->Resize(width, height, renderer->GetVSync()))
+            return false;
+    }
+    else if (!m_spRenderer->RecreateWindowRenderTargetGroup(pSurface->GetWindowRef()))
+    {
+        return false;
     }
 
     // Make sure to fix the aspect ratio on the default camera if it's present.

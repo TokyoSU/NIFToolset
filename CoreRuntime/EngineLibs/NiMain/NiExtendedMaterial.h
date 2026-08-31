@@ -48,6 +48,9 @@ public:
     void SetTerrainLayerCount(NiUInt32 uiLayerCount);
     NiUInt32 GetTerrainLayerCount() const;
 
+    /// Renderer-facing access to the per-layer splat configuration.
+    const NiPoint4* GetTerrainLayerData() const { return m_akTerrainLayerData; }
+
     void SetTerrainLayer(
         NiUInt32 uiLayer,
         float fScaleU,

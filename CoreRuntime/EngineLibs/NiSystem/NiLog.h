@@ -49,6 +49,52 @@ class FileDestination;
 // user-defined types should start at NIMESSAGE_MAX_INTERNAL_INDEX+1
 // and be less than NIMESSAGE_MAX_TYPES.
 
+//--------------------------------------------------------------------------------------------------
+// Lightweight application logging bridge. This deliberately does not depend on
+// efd::Logger so applications can forward engine/renderer diagnostics to any
+// logging library (spdlog, loguru, custom telemetry, etc.). The callback can be
+// installed before NiSystem SDM initialization, which is useful for renderer
+// startup failures.
+enum NiLogLevel
+{
+    NI_LOG_TRACE = 0,
+    NI_LOG_DEBUG,
+    NI_LOG_INFO,
+    NI_LOG_WARNING,
+    NI_LOG_ERROR,
+    NI_LOG_FATAL
+};
+
+typedef void (*NiLogCallback)(NiLogLevel eLevel, const char* pcCategory,
+    const char* pcMessage, const char* pcFilePath, unsigned int uiLine,
+    void* pvUserData);
+
+// Passing nullptr restores the normal debugger/stderr fallback for messages
+// emitted through NiLogWrite. pvUserData is optional so the common use remains:
+//     NiSetLogCallback(MyLogCallback);
+NISYSTEM_ENTRY void NiSetLogCallback(NiLogCallback pfnCallback,
+    void* pvUserData = nullptr);
+NISYSTEM_ENTRY NiLogCallback NiGetLogCallback();
+NISYSTEM_ENTRY void* NiGetLogCallbackUserData();
+NISYSTEM_ENTRY const char* NiLogLevelToString(NiLogLevel eLevel);
+
+NISYSTEM_ENTRY void NiLogWrite(NiLogLevel eLevel, const char* pcCategory,
+    const char* pcMessage, const char* pcFilePath = nullptr,
+    unsigned int uiLine = 0);
+// Raw variant used by NiOutputDebugString. It preserves the exact text (including
+// fragment/no-newline semantics) for the debugger fallback while still routing
+// the fragment through the custom callback when one is installed.
+NISYSTEM_ENTRY void NiLogWriteRaw(NiLogLevel eLevel, const char* pcCategory,
+    const char* pcMessage, const char* pcFilePath = nullptr,
+    unsigned int uiLine = 0);
+NISYSTEM_ENTRY void NiLogWriteFormat(NiLogLevel eLevel, const char* pcCategory,
+    const char* pcFilePath, unsigned int uiLine, const char* pcFormat, ...);
+
+#define NI_LOG_WRITE(level, category, message) \
+    NiLogWrite(level, category, message, __FILE__, __LINE__)
+#define NI_LOG_PRINTF(level, category, format, ...) \
+    NiLogWriteFormat(level, category, __FILE__, __LINE__, format __VA_OPT__(,) __VA_ARGS__)
+
 // The following macros aren't pretty, but they make the syntax for using
 // the log system much easier.  The only ones that should be used directly
 // are NILOG and NILOGDIRECT.

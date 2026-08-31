@@ -144,6 +144,16 @@ void NiMesh::UpdateSelectedDownwardPass(NiUpdateProcess& kUpdate)
     UpdateObjectControllers(kUpdate.GetTime(),
         GetSelectiveUpdatePropertyControllers());
 
+    // Scene-level selective updates intentionally avoid a full
+    // UpdateProperties() traversal every frame. Preserve the legacy material
+    // invalidation behavior for meshes whose local properties are animated so
+    // shader/material caches still refresh when a property controller ticks.
+    if (GetSelectiveUpdatePropertyControllers())
+    {
+        SetMaterialNeedsUpdate(true);
+        InvalidateRenderBucketCache();
+    }
+
     // Submit any modifiers that should execute now.
     SubmitUpdateModifiers(kUpdate);
 
@@ -166,6 +176,16 @@ void NiMesh::UpdateRigidDownwardPass(NiUpdateProcess& kUpdate)
 
     UpdateObjectControllers(kUpdate.GetTime(),
         GetSelectiveUpdatePropertyControllers());
+
+    // Scene-level selective updates intentionally avoid a full
+    // UpdateProperties() traversal every frame. Preserve the legacy material
+    // invalidation behavior for meshes whose local properties are animated so
+    // shader/material caches still refresh when a property controller ticks.
+    if (GetSelectiveUpdatePropertyControllers())
+    {
+        SetMaterialNeedsUpdate(true);
+        InvalidateRenderBucketCache();
+    }
 
     // Submit any modifiers that should execute now.
     SubmitUpdateModifiers(kUpdate);

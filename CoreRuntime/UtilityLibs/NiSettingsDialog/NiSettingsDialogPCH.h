@@ -17,6 +17,10 @@
 
 #if defined(NI_USE_PCH)
 
+#include <NiMainPCH.h>
+#include <NiSystem.h>
+#include <NiRenderer.h>
+
 #include "NiSettingsDialogLibType.h"
 #include "NiBaseRendererDesc.h"
 #include "NiBaseRendererOptionsView.h"

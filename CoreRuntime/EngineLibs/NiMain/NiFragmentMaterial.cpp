@@ -680,6 +680,45 @@ void NiFragmentMaterial::SetFailedGPUProgram(
 NiShader* NiFragmentMaterial::GenerateShader(
     NiMaterialDescriptor* pkMaterialDescriptor)
 {
+#if defined(NI_RENDERER_BGFX)
+    // bgfx owns shader compilation and binding in BgfxRenderer.  Keep the
+    // Gamebryo material-descriptor/cache layer intact, but do not run the
+    // legacy NiGPUProgram generator (which only knows the D3D-era shader
+    // backends).  Derived materials still choose between the normal and
+    // shadow renderer entry points through CreateShader().
+    if (!pkMaterialDescriptor)
+        return NULL;
+
+    // Match the ownership rules of the legacy path below. CreateShader stores
+    // the descriptor in a smart pointer, while a cache hit must still release
+    // the temporary descriptor generated for this lookup.
+    pkMaterialDescriptor->IncRefCount();
+
+    NiShader* pkRetrievedShader = RetrieveFromHash(pkMaterialDescriptor);
+    if (pkRetrievedShader)
+    {
+        pkMaterialDescriptor->DecRefCount();
+        return pkRetrievedShader;
+    }
+
+    NiShader* pkBgfxShader = CreateShader(pkMaterialDescriptor);
+    if (!pkBgfxShader)
+    {
+        pkMaterialDescriptor->DecRefCount();
+        return NULL;
+    }
+
+    if (!pkBgfxShader->IsInitialized() && !pkBgfxShader->Initialize())
+    {
+        NiDelete pkBgfxShader;
+        pkMaterialDescriptor->DecRefCount();
+        return NULL;
+    }
+
+    InsertIntoHash(pkBgfxShader);
+    pkMaterialDescriptor->DecRefCount();
+    return pkBgfxShader;
+#else
     // In the following code, namely in the call to CreateShader(), the
     // pkMaterialDescriptor pointer will be treated as a smart pointer. If the NiShader
     // produced by CreateShader is deleted, then pkMaterialDescriptor would be smart pointer
@@ -890,6 +929,7 @@ NiShader* NiFragmentMaterial::GenerateShader(
     InsertIntoHash(pkCurrentBestShader);
     pkMaterialDescriptor->DecRefCount();
     return pkCurrentBestShader;
+#endif
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1183,9 +1223,11 @@ NiGPUProgram* NiFragmentMaterial::GenerateShaderProgram(
     {
         case NiGPUProgram::PROGRAM_VERTEX:
             {
+#if defined(NIDEBUG)
                 NiOutputDebugString("Generating vertex shader for object \"");
                 NiOutputDebugString((const char*)m_kDebugIdentifier);
                 NiOutputDebugString("\":\n");
+#endif
 
                 bShadeTreeGenerated = GenerateVertexShadeTree(kContext,
                     pkDesc);
@@ -1193,19 +1235,23 @@ NiGPUProgram* NiFragmentMaterial::GenerateShaderProgram(
             break;
         case NiGPUProgram::PROGRAM_PIXEL:
             {
+#if defined(NIDEBUG)
                 NiOutputDebugString("Generating pixel shader for object \"");
                 NiOutputDebugString((const char*)m_kDebugIdentifier);
                 NiOutputDebugString("\":\n");
+#endif
 
                 bShadeTreeGenerated = GeneratePixelShadeTree(kContext, pkDesc);
             }
             break;
         case NiGPUProgram::PROGRAM_GEOMETRY:
             {
+#if defined(NIDEBUG)
                 NiOutputDebugString("Generating geometry shader for object"
                     " \"");
                 NiOutputDebugString((const char*)m_kDebugIdentifier);
                 NiOutputDebugString("\":\n");
+#endif
 
                 bShadeTreeGenerated = GenerateGeometryShadeTree(kContext,
                     pkDesc);

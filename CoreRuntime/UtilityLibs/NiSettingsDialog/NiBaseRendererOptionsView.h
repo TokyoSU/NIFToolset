@@ -18,6 +18,7 @@
 #include "NiSettingsDialogLibType.h"
 #include "NiBaseRendererDesc.h"
 #include <NiMemObject.h>
+#include <NiUniversalTypes.h>
 
 class NiBaseRendererDesc;
 class NiRendererSettings;

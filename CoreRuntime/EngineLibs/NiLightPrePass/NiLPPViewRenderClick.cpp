@@ -200,6 +200,20 @@ efd::Float32 NiLPPViewRenderClick::GetRenderTime() const
 void NiLPPViewRenderClick::PerformRendering(unsigned int uiFrameID)
 {
     EE_PROFILER_ZONE(LightPrePass, 0, "LPP:PerformRendering");
+#if defined(NI_RENDERER_BGFX)
+    // The original LPP path relies on D3D-era generated G-buffer/final-light
+    // materials and light-volume shaders. bgfx already implements the same
+    // NiStandardMaterial/NiTerrainMaterial lighting inputs in the forward
+    // renderer, so preserve visual correctness by rendering the original
+    // materials directly instead of swapping to an unsupported deferred
+    // material graph. This also keeps transparent/special materials in their
+    // normal ordering and avoids allocating unused G/L buffers.
+    NiViewRenderClick::PerformRendering(uiFrameID);
+    m_iDraws = NiViewRenderClick::GetNumObjectsDrawn();
+    m_fCullTime = NiViewRenderClick::GetCullTime();
+    m_fRenderTime = NiViewRenderClick::GetRenderTime();
+    return;
+#endif
     if (m_bFirstRender)
     {
         CreateBuffers();

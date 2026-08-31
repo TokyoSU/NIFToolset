@@ -17,7 +17,7 @@
 #include "NIF.Native.Portal.h"
 #include "NIF.Native.RenderTarget.h"
 #include "NIF.Native.RenderPipeline.h"
-#include "NIF.Native.Renderer.DX11.h"
+#include "NIF.Native.Renderer.Bgfx.h"
 #include "NIF.Native.Renderer.Utility.h"
 
 #endif // NIFTOOLSET_NATIVE_H

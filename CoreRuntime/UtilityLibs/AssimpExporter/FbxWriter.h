@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshExtractor.h"
+#include "ExportAxes.h"
 #include "TextureExporter.h"
 #include "AnimationExporter.h"
 #include "AssetLoader.h"
@@ -13,7 +14,8 @@ class FbxWriter
 {
 public:
 	FbxWriter(const TextureExporter& kTexExporter, float fUnitScale,
-		bool bConvertToUnrealAxes = true);
+		ExportAxisPreset eAxisPreset = ExportAxisPreset::Unreal,
+		ExportHandedness eHandedness = ExportHandedness::Right);
 
 	// Write a complete FBX for one input asset.
 	// kOutputPath: path of the output .fbx file (directory must exist).
@@ -32,5 +34,6 @@ private:
 
 	const TextureExporter& m_kTexExporter;
 	float m_fUnitScale;
-	bool m_bConvertToUnrealAxes;
+	ExportAxisPreset m_eAxisPreset;
+	ExportHandedness m_eHandedness;
 };

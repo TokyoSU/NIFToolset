@@ -17,13 +17,7 @@
 #include "NiEntitySDM.h"
 #include "NiEntity.h"
 
-#if defined(NI_RENDERER_DX10)
-NiImplementSDMConstructor(NiEntity, "NiD3D10Renderer NiAnimation NiMesh NiFloodgate NiMain");
-#elif defined(NI_RENDERER_DX11)
-NiImplementSDMConstructor(NiEntity, "ecrD3D11Renderer NiAnimation NiMesh NiFloodgate NiMain");
-#else
-NiImplementSDMConstructor(NiEntity, "NiDX9Renderer NiAnimation NiMesh NiFloodgate NiMain");
-#endif
+NiImplementSDMConstructor(NiEntity, "NiAnimation NiMesh NiFloodgate NiMain");
 
 #ifdef NIENTITY_EXPORT
 NiImplementDllMain(NiEntity);

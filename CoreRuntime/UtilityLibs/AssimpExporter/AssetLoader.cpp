@@ -175,39 +175,40 @@ bool AssetLoader::LoadNifAsset(const std::string& kPath, LoadedNifAsset& kAsset,
 		return false;
 	}
 
-	std::vector<NiAVObjectPtr> kRoots;
+	kAsset.roots.clear();
 	for (unsigned int i = 0; i < kAsset.pStream->GetObjectCount(); ++i)
 	{
 		NiAVObject* pkObject = NiDynamicCast(NiAVObject,
 			kAsset.pStream->GetObjectAt(i));
 		if (pkObject)
-			kRoots.push_back(pkObject);
+			kAsset.roots.push_back(pkObject);
 	}
 
-	if (kRoots.empty())
+	if (kAsset.roots.empty())
 	{
 		kError = MakeError("No AVObject root found in NIF", kPath);
 		return false;
 	}
 
-	if (kRoots.size() == 1)
+	if (kAsset.roots.size() == 1)
 	{
-		kAsset.root = kRoots.front();
+		kAsset.root = kAsset.roots.front();
 	}
 	else
 	{
-		// NiStream can contain several top-level AVObjects. Exporting only
-		// object 0 silently drops the remaining static meshes or skeleton roots.
+		// Legacy/default behavior: combine all top-level stream objects into one
+		// identity root and write one FBX for the input NIF.
 		NiNodePtr spCombinedRoot = NiNew NiNode();
 		spCombinedRoot->SetName("NIFToolset_MultiRoot");
-		for (NiAVObject* pkRoot : kRoots)
+		for (NiAVObject* pkRoot : kAsset.roots)
 			spCombinedRoot->AttachChild(pkRoot);
 		kAsset.root = spCombinedRoot;
 	}
 
 	// Populate world transforms and inherited property/effect states before
 	// extraction. Local transforms remain unchanged and are what FBX stores.
-	kAsset.root->Update(0.0f, false);
+	if (kAsset.root)
+		kAsset.root->Update(0.0f, false);
 
 	return true;
 }

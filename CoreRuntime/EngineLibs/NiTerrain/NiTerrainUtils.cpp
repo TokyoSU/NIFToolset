@@ -19,11 +19,6 @@
 #include <NiFilename.h>
 #include <NiSourceTexture.h>
 
-#if defined(WIN32) && defined(NI_RENDERER_DX9)
-#include <NiDX9Renderer.h>
-#include <NiDX9Defines.h>
-#include <NiDX9SourceTextureData.h>
-#endif
 
 #include <efd/Logger.h>
 #include <efd/ecrLogIDs.h>
@@ -1034,118 +1029,18 @@ NiPixelData* ExtractPixelData(NiRenderClick* pkRenderClick)
 //------------------------------------------------------------------------------------------------
 void UpdateTextureRegion(NiSourceTexture* pkDstTexture, NiRect<efd::SInt32> kRegion)
 {
-    // If there is no renderer data on the texture then it hasn't been uploaded yet. 
-    // so there is nothing for us to update.
-    if (!pkDstTexture->GetRendererData())
+    EE_UNUSED_ARG(kRegion);
+
+    // bgfx texture uploads are revision driven. Marking the source pixel data
+    // changed lets BgfxRenderer refresh the texture without exposing a native
+    // API texture or renderer-specific lock path to NiTerrain.
+    if (!pkDstTexture || !pkDstTexture->GetRendererData())
         return;
 
     NiPixelData* pkSrcData = pkDstTexture->GetSourcePixelData();
     EE_ASSERT(pkSrcData);
-
-    // Facilitate updating of the texture according to different renderers
-    bool bUseFallback = false;
-    switch(NiRenderer::GetRenderer()->GetRendererID())
-    {
-    case efd::SystemDesc::RENDERER_DX9:
-        {
-#if defined(WIN32) && defined(NI_RENDERER_DX9)
-            NiDX9SourceTextureData* pkTextureData = 
-                (NiDX9SourceTextureData*)pkDstTexture->GetRendererData();
-            EE_ASSERT(pkTextureData);
-            const NiPixelFormat* pkDstFormat = pkTextureData->GetPixelFormat();
-            D3DTexturePtr pkD3DTexture = (D3DTexturePtr)pkTextureData->GetD3DTexture();
-            EE_ASSERT(pkD3DTexture);
-
-            // We only support one type of format at the moment
-            if (pkSrcData->GetPixelFormat() != NiPixelFormat::RGB24 ||
-                pkSrcData->GetPixelFormat().GetCompressed() || pkDstFormat->GetCompressed())
-            {            
-                bUseFallback = true;
-                break;
-            }
-            
-            // Lock the region we're interested in
-            RECT kRect = {};
-            kRect.top = kRegion.m_top;
-            kRect.bottom = kRegion.m_bottom + 1;
-            kRect.left = kRegion.m_left;
-            kRect.right = kRegion.m_right + 1;
-            D3DLOCKED_RECT kLockedRect;
-            EE_VERIFYEQUALS(pkD3DTexture->LockRect(0, &kLockedRect, &kRect, 0), D3D_OK);
-            
-            // Calculate some values to help us copy the data to the right location
-            const NiPixelFormat& kSrcFormat = pkSrcData->GetPixelFormat();
-            efd::UInt32 uiNumScanlines = kRegion.GetHeight() + 1;
-            efd::UInt32 uiScanlineWidth = kRegion.GetWidth() + 1;
-            efd::UInt32 uiSrcStride = pkSrcData->GetPixelStride();
-            efd::UInt32 uiDstStride = pkDstFormat->GetBitsPerPixel() / 8;
-            efd::UInt8* pucPixels = pkSrcData->GetPixels();
-            EE_ASSERT(pucPixels);
-
-            // Copy the data across
-            for (efd::UInt32 uiY = 0; uiY < uiNumScanlines; ++uiY)
-            {
-                // Calculate the source of the data
-                efd::UInt32 uiSourceY = uiY + kRegion.m_top;
-                efd::UInt32 uiSourceX = kRegion.m_left;
-                efd::UInt32 uiSourcePixel = uiSourceY * pkSrcData->GetWidth() + uiSourceX;
-                efd::UInt8* pucSrcLine = &pucPixels[uiSourcePixel * uiSrcStride];
-
-                // Calculate the destination of the data
-                efd::UInt8* pucDstLine = &((efd::UInt8*)kLockedRect.pBits)[uiY * kLockedRect.Pitch];
-
-                for (efd::UInt32 uiX = 0; uiX < uiScanlineWidth; ++uiX)
-                {
-                    // Loop through all the valid components
-                    for (efd::UInt32 uiC = 0; uiC < kSrcFormat.GetNumComponents(); ++uiC)
-                    {
-                        NiPixelFormat::Component kComponent;
-                        NiPixelFormat::Representation kRepresentation;
-                        efd::UInt8 ucBPC;
-                        bool bSigned;
-                        kSrcFormat.GetComponent(uiC, kComponent, kRepresentation, ucBPC, bSigned);
-                        
-                        EE_ASSERT(kSrcFormat.GetBits(kComponent) == 8);
-                        EE_ASSERT(pkDstFormat->GetBits(kComponent) == 8);
-                        efd::UInt32 uiSrcChannel = kSrcFormat.GetShift(kComponent) / 8;
-                        efd::UInt32 uiDstChannel = pkDstFormat->GetShift(kComponent) / 8;
-
-                        pucDstLine[uiX * uiDstStride + uiDstChannel] =
-                            pucSrcLine[uiX * uiSrcStride + uiSrcChannel];
-                    }
-
-                    // Loop through all the leftover components set them to max values
-                    for (efd::UInt32 uiC = kSrcFormat.GetNumComponents(); 
-                        uiC < pkDstFormat->GetNumComponents(); ++uiC)
-                    {
-                        NiPixelFormat::Component kComponent;
-                        NiPixelFormat::Representation kRepresentation;
-                        efd::UInt8 ucBPC;
-                        bool bSigned;
-                        pkDstFormat->GetComponent(uiC, kComponent, kRepresentation, ucBPC, bSigned);
-                        EE_ASSERT(pkDstFormat->GetBits(kComponent) == 8);
-                        efd::UInt32 uiDstChannel = pkDstFormat->GetShift(kComponent) / 8;
-                        pucDstLine[uiX * uiDstStride + uiDstChannel] = 255;
-                    }
-                }
-            }
-
-            // Unlock the surface
-            pkD3DTexture->UnlockRect(0);
-#endif // WIN32
-            break;
-        }
-    default:
-        // Renderer not recognized
-        bUseFallback = true;
-    }
-
-    if (bUseFallback)
-    {
-        // We do not have any renderer specific code available to increase performance
-        // use the standard gamebryo method
+    if (pkSrcData)
         pkSrcData->MarkAsChanged();
-    }
 }
 
 //------------------------------------------------------------------------------------------------

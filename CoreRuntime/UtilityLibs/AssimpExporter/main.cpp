@@ -15,6 +15,13 @@
 #include <NiParticleSDM.h>
 #include <NiPortalSDM.h>
 
+#include <efd/DefaultInitializeMemoryManager.h>
+
+// efd deliberately leaves these application-level memory factory functions
+// undefined in static builds. AssimpExporter is an executable, so opt into
+// the stock allocator and memory-log handler supplied by efd.
+EE_USE_DEFAULT_ALLOCATOR
+
 namespace
 {
     namespace fs = std::filesystem;

@@ -309,6 +309,15 @@ protected:
     virtual NiUInt32 PreSaveObjectSizeTable();
     virtual bool SaveObjectSizeTable(NiUInt32 uiStartOffset);
     virtual bool LoadObjectSizeTable();
+
+    // X-Legend's 20.3.2.3 stream variant (used by newer Grand Fantasia
+    // assets) keeps normal Gamebryo object payloads, but packs the header:
+    // fixed strings are stored before RTTI, RTTI names are DJB1 hashes,
+    // block type indices are bytes, and block sizes are 24-bit values.
+    bool LoadXLegend20323FixedStringTable();
+    bool LoadXLegend20323RTTI();
+    bool LoadXLegend20323ObjectSizeTable();
+
     void FreeLoadData();
     void DoThreadPause();
 

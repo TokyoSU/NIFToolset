@@ -53,7 +53,7 @@ public:
     // The fixtures for a room consist of the wall geometry and any objects
     // inside the room.
     inline const NiAVObjectList& GetFixtureList() const;
-    inline void AttachFixture(NiAVObject* pkFixture);
+    void AttachFixture(NiAVObject* pkFixture);
     NiAVObjectPtr DetachFixture(NiAVObject* pkFixture);
 
     // Test if the input point is in the room.  The point must be in world

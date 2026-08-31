@@ -550,14 +550,6 @@ public:
         const NiTPrimitiveArray<NiTerrainCell*>& kCells);
     //@}
 
-    /**
-        Handle a device reset. For a sector this involves forcing a regeneration
-        of all CPU generated textures so they may be uploaded again on the next
-        render frame. (At this point, distribution masks are the only 
-        resource that need regeneration). 
-    */
-    void HandleDXDeviceReset();
-
     //@{
     /**
         Use these values to adjust the level of detail viewable at different

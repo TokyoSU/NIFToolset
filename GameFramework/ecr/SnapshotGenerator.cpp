@@ -24,15 +24,7 @@
 #include <NiDrawSceneUtility.h>
 #include <NiMeshCullingProcess.h>
 
-#ifdef EE_PLATFORM_WIN32
-    #include <ecrD3D11Renderer/D3D11Renderer.h>
-    #include <ecrD3D11Renderer/D3D112DBufferData.h>
-    #include <ecrD3D11Renderer/D3D11RenderedTextureData.h>
-    #include <ecrD3D11Renderer/D3D11ResourceManager.h>
-    #include <NiD3D10RenderedTextureData.h>
-    #include <NiD3D10ResourceManager.h>
-    #include <NiDX9RenderedTextureData.h>
-#elif defined EE_PLATFORM_XBOX360
+#if defined EE_PLATFORM_XBOX360
     #include <NiD3DRendererHeaders.h>
     #include <NiXenonRenderedTextureData.h>
     #include <NiXenonRenderTargetGroupData.h>
@@ -57,8 +49,8 @@ EE_HANDLER_WRAP(
     efd::StreamMessage,
     efd::kMSGID_SimDebuggerCommand);
 
-#ifdef EE_PLATFORM_PS3
-// PS3 implementation uses the bmp format to deliver image data to Toolbench
+#if defined(EE_PLATFORM_PS3) || defined(NI_RENDERER_BGFX)
+// PS3 and bgfx use the bmp format to deliver image data to Toolbench.
 struct BmpHeader
 {
     // Leading UInt16 magic number is handled separately to avoid undesired padding
@@ -327,209 +319,63 @@ bool SnapshotGenerator::GenerateImage(
     efd::Archive& ar = spResultsMessage->GetArchive();
 
 #ifdef EE_PLATFORM_WIN32
-    #if defined(NI_RENDERER_DX9)
-    if (pRenderer->GetRendererID() == efd::SystemDesc::RENDERER_DX9)
+    if (pRenderer->GetRendererID() == efd::SystemDesc::RENDERER_BGFX)
     {
-        // Get pointer to D3D device
-        NiDX9Renderer* pDX9Renderer = NiDynamicCast(NiDX9Renderer, pRenderer);
-        if (!pDX9Renderer)
-            return false;
-        D3DDevicePtr pD3DDevice = pDX9Renderer->GetD3DDevice();
-
-        // Get D3D surface pointer to source pixel data in GPU memory
-        NiDX9RenderedTextureData* pRenderedTextureData =
-            NiDynamicCast(NiDX9RenderedTextureData,
-                spRenderedTexture->GetRendererData());
-        if (!pRenderedTextureData)
-            return false;
-        D3DSurfacePtr pSrc;
-        ((LPDIRECT3DTEXTURE9)pRenderedTextureData->GetD3DTexture())->GetSurfaceLevel(0, &pSrc);
-        if (!pSrc)
-            return false;
-
-        // Create a destination texture in system memory to copy source pixel data into
-        D3DSURFACE_DESC surfDesc;
-        pSrc->GetDesc(&surfDesc);
-        LPDIRECT3DTEXTURE9 pD3DReadTexture = NULL;
-        pD3DDevice->CreateTexture(surfDesc.Width, surfDesc.Height, 1, 0, surfDesc.Format,
-            D3DPOOL_SYSTEMMEM, &pD3DReadTexture, 0);
-        if (!pD3DReadTexture)
+        NiPixelDataPtr spPixelData = pRenderer->TakeScreenShot(NULL,
+            spRenderTargetGroup);
+        if (!spPixelData ||
+            spPixelData->GetPixelFormat() != NiPixelFormat::RGBA32)
         {
-            pSrc->Release();
             return false;
         }
 
-        // Copy pixel data to an accessible texture
-        D3DSurfacePtr pDst;
-        pD3DReadTexture->GetSurfaceLevel(0, &pDst);
-        pD3DDevice->GetRenderTargetData(pSrc, pDst);
-        pSrc->Release();
+        // BMP scanlines are padded to a 4-byte boundary and stored bottom-up.
+        // TakeScreenShot returns RGBA32, so emit the required BGR byte order.
+        const efd::UInt32 rowBytes = width * 3;
+        const efd::UInt32 rowPadding = (4 - (rowBytes & 3)) & 3;
+        const efd::UInt32 rowStride = rowBytes + rowPadding;
 
-        // Save the texture data to a buffer in PNG format
-        ID3DXBuffer* pBuffer = NULL;
-        D3DXSaveSurfaceToFileInMemory(&pBuffer, D3DXIFF_PNG, pDst, NULL, NULL);
-        pDst->Release();
-        D3D_POINTER_RELEASE(pD3DReadTexture);
-        if (!pBuffer)
-            return false;
+        efd::UInt16 magicNumber = 0x4d42;
+        BmpHeader bmpHeader;
+        bmpHeader.m_width = width;
+        bmpHeader.m_height = height;
+        bmpHeader.m_bmpByteSize = rowStride * height;
+        bmpHeader.m_fileSize = bmpHeader.m_bmpOffset +
+            bmpHeader.m_bmpByteSize;
 
-        // Write the image data to the Toolbench message
-        efd::Serializer::SerializeRawBytes(
-            (efd::UInt8*)pBuffer->GetBufferPointer(),
-            pBuffer->GetBufferSize(),
-            ar);
-        pBuffer->Release();
+        const efd::UInt32 streamSize = sizeof(efd::UInt16) +
+            sizeof(BmpHeader) + bmpHeader.m_bmpByteSize;
+        ar.CheckBytes(streamSize);
+        ar.SetEndianness(efd::Endian_Little);
+        efd::Serializer::SerializeObject(magicNumber, ar);
+        efd::Serializer::SerializeObject(bmpHeader, ar);
+
+        const efd::UInt8 zero = 0;
+        for (efd::SInt32 row = static_cast<efd::SInt32>(height) - 1;
+            row >= 0; --row)
+        {
+            const efd::UInt8* pixels = spPixelData->GetPixels() +
+                static_cast<size_t>(row) * width * 4;
+            for (efd::UInt32 col = 0; col < width; ++col)
+            {
+                // GetPixels() is const in this path, so the dereferenced bytes
+                // are const UInt8 values. SerializeObject<const UInt8> would
+                // select the generic object serializer and try to call
+                // UInt8::Serialize(). This path only packs the screenshot, so
+                // use the serializer's const-aware primitive entry point.
+                efd::Serializer::SerializeConstObject(*(pixels + col * 4 + 2), ar);
+                efd::Serializer::SerializeConstObject(*(pixels + col * 4 + 1), ar);
+                efd::Serializer::SerializeConstObject(*(pixels + col * 4 + 0), ar);
+            }
+            for (efd::UInt32 pad = 0; pad < rowPadding; ++pad)
+                efd::Serializer::SerializeConstObject(zero, ar);
+        }
+        ar.SetEndianness(efd::Endian_NetworkOrder);
     }
     else
     {
         return false;
     }
-#elif defined(NI_RENDERER_DX10)
-    if (pRenderer->GetRendererID() == efd::SystemDesc::RENDERER_D3D10)
-    {
-        // Get pointer to D3D resource manager
-        NiD3D10Renderer* pD3D10Renderer = NiDynamicCast(NiD3D10Renderer, pRenderer);
-        if (!pD3D10Renderer)
-            return false;
-        NiD3D10ResourceManager* pResourceManager = pD3D10Renderer->GetResourceManager();
-
-        // Get texture pointer to data in GPU memory
-        NiD3D10RenderTargetBufferData* pBuffData = NiVerifyStaticCast(NiD3D10RenderTargetBufferData,
-            (NiD3D102DBufferData*)spRenderTargetGroup->GetBufferRendererData(0));
-        EE_ASSERT(pBuffData);
-        ID3D10Resource* pRenderedTexture = pBuffData->GetRenderTargetBuffer();
-#ifdef EE_ASSERTS_ARE_ENABLED
-        D3D10_RESOURCE_DIMENSION resourceDim;
-        pRenderedTexture->GetType(&resourceDim);
-        EE_ASSERT(resourceDim == D3D10_RESOURCE_DIMENSION_TEXTURE2D);
-#endif
-        ID3D10Texture2D* pRenderedTexture2D = (ID3D10Texture2D*)pRenderedTexture;
-
-        // If multisampled, must resolve to a single-sampled resource
-        D3D10_TEXTURE2D_DESC textureDesc;
-        pRenderedTexture2D->GetDesc(&textureDesc);
-        ID3D10Texture2D* pSingleSampled = NULL;
-        if (textureDesc.SampleDesc.Count != 1 || textureDesc.SampleDesc.Quality != 0)
-        {
-            pSingleSampled = pResourceManager->CreateTexture2D(textureDesc.Width,
-                textureDesc.Height, textureDesc.MipLevels, textureDesc.ArraySize,
-                textureDesc.Format, 1, 0, D3D10_USAGE_DEFAULT, 0, 0, 0);
-            if (pSingleSampled == NULL)
-                return false;
-
-            pD3D10Renderer->GetD3D10Device()->ResolveSubresource(pSingleSampled, 0,
-                pRenderedTexture2D, 0, textureDesc.Format);
-        }
-        else
-        {
-            pSingleSampled = pRenderedTexture2D;
-            pSingleSampled->AddRef();
-        }
-
-        // Bring back to system RAM
-        ID3D10Texture2D* pStagingTexture = pResourceManager->CreateTexture2D(textureDesc.Width,
-            textureDesc.Height, 1, textureDesc.ArraySize, textureDesc.Format, 1, 0,
-            D3D10_USAGE_STAGING, 0, D3D10_CPU_ACCESS_READ, 0);
-        if (!pStagingTexture)
-        {
-            pSingleSampled->Release();
-            return false;
-        }
-        pD3D10Renderer->GetD3D10Device()->CopyResource(pStagingTexture, pSingleSampled);
-        pSingleSampled->Release();
-
-        // Save the texture data to a buffer in PNG format
-        ID3D10Blob* pBuffer = NULL;
-        D3DX10SaveTextureToMemory(pStagingTexture, D3DX10_IFF_PNG, &pBuffer, 0);
-        pStagingTexture->Release();
-
-        // Write the image data to the Toolbench message
-        efd::Serializer::SerializeRawBytes(
-            (efd::UInt8*)pBuffer->GetBufferPointer(),
-            pBuffer->GetBufferSize(),
-            ar);
-        pBuffer->Release();
-    }
-    else
-    {
-        return false;
-    }
-#elif defined(NI_RENDERER_DX11)
-    if (pRenderer->GetRendererID() == efd::SystemDesc::RENDERER_D3D11)
-    {
-        // Get pointer to D3D resource manager
-        ecr::D3D11Renderer* pD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, pRenderer);
-        if (!pD3D11Renderer)
-            return false;
-        ecr::D3D11ResourceManager* pResourceManager = pD3D11Renderer->GetResourceManager();
-
-        // Get texture pointer to data in GPU memory
-        D3D11RenderTargetBufferData* pBuffData = NiVerifyStaticCast(D3D11RenderTargetBufferData,
-            (D3D112DBufferData*)spRenderTargetGroup->GetBufferRendererData(0));
-        EE_ASSERT(pBuffData);
-        ID3D11Resource* pRenderedTexture = pBuffData->GetRenderTargetBuffer();
-#ifdef EE_ASSERTS_ARE_ENABLED
-        D3D11_RESOURCE_DIMENSION resourceDim;
-        pRenderedTexture->GetType(&resourceDim);
-        EE_ASSERT(resourceDim == D3D11_RESOURCE_DIMENSION_TEXTURE2D);
-#endif
-        ID3D11Texture2D* pRenderedTexture2D = (ID3D11Texture2D*)pRenderedTexture;
-
-        // If multisampled, must resolve to a single-sampled resource
-        D3D11_TEXTURE2D_DESC textureDesc;
-        pRenderedTexture2D->GetDesc(&textureDesc);
-        ID3D11Texture2D* pSingleSampled = NULL;
-        if (textureDesc.SampleDesc.Count != 1 || textureDesc.SampleDesc.Quality != 0)
-        {
-            pSingleSampled = pResourceManager->CreateTexture2D(textureDesc.Width,
-                textureDesc.Height, textureDesc.MipLevels, textureDesc.ArraySize,
-                textureDesc.Format, 1, 0, D3D11_USAGE_DEFAULT, 0, 0, 0);
-
-            if (pSingleSampled == NULL)
-                return false;
-
-            pD3D11Renderer->GetCurrentD3D11DeviceContext()->ResolveSubresource(pSingleSampled, 0,
-                pRenderedTexture2D, 0, textureDesc.Format);
-        }
-        else
-        {
-            pSingleSampled = pRenderedTexture2D;
-            pSingleSampled->AddRef();
-        };
-
-        // Bring back to system RAM
-        ID3D11Texture2D* pStagingTexture = pResourceManager->CreateTexture2D(textureDesc.Width,
-            textureDesc.Height, 1, textureDesc.ArraySize, textureDesc.Format, 1, 0,
-            D3D11_USAGE_STAGING, 0, D3D11_CPU_ACCESS_READ, 0);
-        if (pStagingTexture == NULL)
-        {
-            pSingleSampled->Release();
-            return false;
-        }
-        pD3D11Renderer->GetCurrentD3D11DeviceContext()->CopyResource(pStagingTexture,
-            pSingleSampled);
-        pSingleSampled->Release();
-
-        // Save the texture data to a buffer in PNG format
-        ID3D10Blob* pBuffer = NULL;
-        D3DX11SaveTextureToMemory(pD3D11Renderer->GetCurrentD3D11DeviceContext(), pStagingTexture,
-            D3DX11_IFF_PNG, &pBuffer, 0);
-        pStagingTexture->Release();
-
-        // Write the image data to the Toolbench message
-        efd::Serializer::SerializeRawBytes(
-            (efd::UInt8*)pBuffer->GetBufferPointer(),
-            pBuffer->GetBufferSize(),
-            ar);
-        pBuffer->Release();
-    }
-    else
-    {
-        return false;
-    }
-#else
-    return false;
-#endif
 #elif defined EE_PLATFORM_XBOX360
     // Get pointer to D3D device
     NiXenonRenderer* pXenonRenderer = NiDynamicCast(NiXenonRenderer, pRenderer);

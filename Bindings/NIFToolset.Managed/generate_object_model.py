@@ -54,7 +54,7 @@ CONFIGS = [
     Config("SafeTextKeyExtraDataHandle", "NiTextKeyExtraData", "TextKeyExtraDataHandle", ("NIF_Animation_TextKeys_",), "NiObject", "direct", "NIF_Animation_TextKeys_AsObject"),
     Config("SafeParticleEmitterHandle", "NiPSEmitter", "ParticleEmitterHandle", ("NIF_Particle_Emitter_",), "NiObject", "direct", "NIF_Particle_Emitter_AsObject"),
     Config("SafeCollisionDataHandle", "NiCollisionData", "CollisionDataHandle", ("NIF_Collision_Data_",), "NiObject", "direct", "NIF_Collision_Data_AsObject"),
-    Config("SafeRendererHandle", "NiRenderer", "RendererHandle", ("NIF_DX11Renderer_", "NIF_Renderer_"), "NiObject", "out", "NIF_Renderer_AsObject"),
+    Config("SafeRendererHandle", "NiRenderer", "RendererHandle", ("NIF_BgfxRenderer_", "NIF_Renderer_"), "NiObject", "out", "NIF_Renderer_AsObject"),
     Config("SafeDataStreamRefHandle", "NiDataStreamRef", "DataStreamRefHandle", ("NIF_DataStreamRef_",)),
     Config("SafeKfmToolHandle", "NiKFMTool", "KFMToolHandle", ("NIF_Animation_KFM_",)),
     Config("SafeActorManagerHandle", "NiActorManager", "ActorManagerHandle", ("NIF_Animation_ActorManager_",)),
@@ -222,8 +222,8 @@ def action_name(config: Config, method: Method) -> str | None:
     if prefix is None:
         return None
     action = method.name[len(prefix):]
-    if prefix == "NIF_DX11Renderer_":
-        action = "DX11" + action
+    if prefix == "NIF_BgfxRenderer_":
+        action = "Bgfx" + action
     return action
 
 

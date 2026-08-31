@@ -28,4 +28,4 @@ This revision hardens the C ABI and adds an ownership-aware managed layer.
 
 Run `python Bindings/verify_bindings.py` to check native declaration/definition coverage, managed imports, handle release coverage, whitespace, and public C/C++ header compatibility.
 
-A full native build still requires the repository's Windows Direct3D dependencies. Callback mutation/disposal must occur while the native render step is not concurrently executing.
+A full native build still requires the repository's Windows platform dependencies plus the vcpkg manifest dependencies (including bgfx and SDL3). Callback mutation/disposal must occur while the native render step is not concurrently executing.

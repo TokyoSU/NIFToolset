@@ -7,8 +7,6 @@
 #include <NiPortalSDM.h>
 #include <NiRenderer.h>
 #include <NiShadowManager.h>
-#include <Windows.h>
-#include <ecrD3D11Renderer/D3D11Renderer.h>
 
 namespace
 {
@@ -27,6 +25,114 @@ namespace
 
 extern "C"
 {
+
+void NIF_Renderer_Destroy(NIF_RendererHandle renderer)
+{
+    delete static_cast<NIF_RendererHandle_t*>(renderer);
+}
+
+int NIF_Renderer_AsObject(NIF_RendererHandle renderer, NIF_ObjectHandle* outObject)
+{
+    if (outObject)
+        *outObject = nullptr;
+
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    if (!pkRenderer || !outObject)
+        return 0;
+
+    *outObject = NIF_CreateObjectHandle(pkRenderer);
+    return *outObject ? 1 : 0;
+}
+
+const char* NIF_Renderer_GetDriverInfo(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return pkRenderer ? pkRenderer->GetDriverInfo() : nullptr;
+}
+
+unsigned int NIF_Renderer_GetRendererID(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return pkRenderer ? static_cast<unsigned int>(pkRenderer->GetRendererID()) : 0u;
+}
+
+int NIF_Renderer_BeginFrame(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return (pkRenderer && pkRenderer->BeginFrame()) ? 1 : 0;
+}
+
+int NIF_Renderer_EndFrame(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return (pkRenderer && pkRenderer->EndFrame()) ? 1 : 0;
+}
+
+int NIF_Renderer_DisplayFrame(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return (pkRenderer && pkRenderer->DisplayFrame()) ? 1 : 0;
+}
+
+unsigned int NIF_Renderer_GetFrameID(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return pkRenderer ? pkRenderer->GetFrameID() : 0u;
+}
+
+unsigned int NIF_Renderer_GetFrameState(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return pkRenderer ? static_cast<unsigned int>(pkRenderer->GetFrameState()) : 0u;
+}
+
+unsigned int NIF_Renderer_GetDefaultClearMode(void)
+{
+    return NiRenderer::CLEAR_ALL;
+}
+
+void NIF_Renderer_SetBackgroundColor(NIF_RendererHandle renderer, NIF_ColorA color)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    if (pkRenderer)
+        pkRenderer->SetBackgroundColor(NIF_MakeColorA(color));
+}
+
+NIF_ColorA NIF_Renderer_GetBackgroundColor(NIF_RendererHandle renderer)
+{
+    NiColorA color(0.0f, 0.0f, 0.0f, 1.0f);
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    if (pkRenderer)
+        pkRenderer->GetBackgroundColor(color);
+    return NIF_MakeColorA(color);
+}
+
+void NIF_Renderer_SetDepthClear(NIF_RendererHandle renderer, float depthClear)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    if (pkRenderer)
+        pkRenderer->SetDepthClear(depthClear);
+}
+
+float NIF_Renderer_GetDepthClear(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return pkRenderer ? pkRenderer->GetDepthClear() : 1.0f;
+}
+
+void NIF_Renderer_SetStencilClear(NIF_RendererHandle renderer,
+    unsigned int stencilClear)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    if (pkRenderer)
+        pkRenderer->SetStencilClear(stencilClear);
+}
+
+unsigned int NIF_Renderer_GetStencilClear(NIF_RendererHandle renderer)
+{
+    NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
+    return pkRenderer ? pkRenderer->GetStencilClear() : 0u;
+}
 
 int NIF_Renderer_BeginDefaultScene(NIF_RendererHandle renderer, unsigned int clearFlags)
 {
@@ -122,41 +228,6 @@ void NIF_Renderer_GetCameraData(NIF_RendererHandle renderer, NIF_Vec3* worldLoca
 	if (viewport)
 	{
 		*viewport = NIF_MakeRect(kViewport);
-	}
-}
-
-void NIF_DX11Renderer_SetDefaultViewport(NIF_RendererHandle renderer, unsigned int width, unsigned int height)
-{
-	NiRenderer* pkRenderer = NIF_GetRenderer(renderer);
-	if (!pkRenderer)
-	{
-		return;
-	}
-
-	ecr::D3D11Renderer* pkD3D11Renderer = NiDynamicCast(ecr::D3D11Renderer, pkRenderer);
-	if (!pkD3D11Renderer)
-	{
-		return;
-	}
-
-	UINT uiViewportCount = 0;
-	ID3D11DeviceContext* pDeviceContext = pkD3D11Renderer->GetImmediateD3D11DeviceContext();
-	if (!pDeviceContext)
-	{
-		return;
-	}
-
-	pDeviceContext->RSGetViewports(&uiViewportCount, nullptr);
-	if (uiViewportCount == 0)
-	{
-		D3D11_VIEWPORT kViewport = {};
-		kViewport.TopLeftX = 0.0f;
-		kViewport.TopLeftY = 0.0f;
-		kViewport.Width = static_cast<float>(width);
-		kViewport.Height = static_cast<float>(height);
-		kViewport.MinDepth = 0.0f;
-		kViewport.MaxDepth = 1.0f;
-		pDeviceContext->RSSetViewports(1, &kViewport);
 	}
 }
 
