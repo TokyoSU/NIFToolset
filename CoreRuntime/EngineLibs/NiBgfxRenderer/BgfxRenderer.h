@@ -43,6 +43,11 @@ public:
     float GetSoftParticleFadeDistance() const { return m_softParticleFadeDistance; }
     bool GetSoftParticlesSupported() const;
 
+    // Retained immutable geometry survives per-mesh cache eviction so static
+    // world assets can be revisited without rebuilding their bgfx VB/IB data.
+    // Call this at a scene/map boundary once the old scene is no longer used.
+    void ClearSceneGeometryCache();
+
     const char* GetDriverInfo() const override;
     unsigned int GetFlags() const override;
     NiSystemDesc::RendererID GetRendererID() const override;
@@ -544,8 +549,10 @@ private:
         SharedBufferKeyHasher> m_sharedIndexBuffers;
     std::uint64_t m_sharedVertexBufferHits = 0;
     std::uint64_t m_sharedVertexBufferMisses = 0;
+    std::uint64_t m_sharedVertexBufferRevives = 0;
     std::uint64_t m_sharedIndexBufferHits = 0;
     std::uint64_t m_sharedIndexBufferMisses = 0;
+    std::uint64_t m_sharedIndexBufferRevives = 0;
 
     // Persistent transform-instancing cache statistics. Static Gamebryo
     // instance streams are uploaded once; genuinely changing streams are

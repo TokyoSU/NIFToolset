@@ -1589,6 +1589,26 @@ bool BgfxRenderer::IsInitialized() const
     return m_context.IsInitialized();
 }
 
+void BgfxRenderer::ClearSceneGeometryCache()
+{
+    if (!m_context.IsInitialized())
+        return;
+
+    // Mesh caches own references to shared immutable geometry. Drop those
+    // references first, then destroy the scene-lifetime shared cache.
+    //
+    // Keeping this explicit rather than time/frame based is important for
+    // uncapped games: a "600 frame" retention window can be only a second or
+    // two at very high frame rates.
+    PurgeGpuMeshCache(true);
+    DestroySharedGeometryCache();
+
+    NiLogWrite(NI_LOG_INFO, "NiBgfxRenderer",
+        "Scene geometry caches cleared at scene boundary.",
+        __FILE__, __LINE__);
+}
+
+
 void BgfxRenderer::SetSoftParticlesEnabled(bool enabled)
 {
     m_softParticlesEnabled = enabled;
@@ -4248,14 +4268,21 @@ bool BgfxRenderer::AcquireSharedVertexBuffer(const SharedBufferKey& key,
         bgfx::isValid(found->second->m_handle) &&
         found->second->m_vertexCount == vertexCount)
     {
+        // A zero-ref hit means this immutable geometry survived the owning
+        // NiMesh cache being evicted and is now being revived instead of
+        // recreated/uploaded again.
+        if (found->second->m_refCount == 0)
+            ++m_sharedVertexBufferRevives;
+
         ++found->second->m_refCount;
         ++m_sharedVertexBufferHits;
         handle = found->second->m_handle;
         if ((m_sharedVertexBufferHits & 0x1ffull) == 0)
         {
             NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
-                "Shared geometry cache: VB hits=%llu misses=%llu liveUnique=%zu.",
+                "Shared geometry cache: VB hits=%llu revives=%llu misses=%llu cachedUnique=%zu.",
                 static_cast<unsigned long long>(m_sharedVertexBufferHits),
+                static_cast<unsigned long long>(m_sharedVertexBufferRevives),
                 static_cast<unsigned long long>(m_sharedVertexBufferMisses),
                 m_sharedVertexBuffers.size());
         }
@@ -4268,7 +4295,7 @@ bool BgfxRenderer::AcquireSharedVertexBuffer(const SharedBufferKey& key,
     {
         NiLogWriteFormat(NI_LOG_ERROR, "NiBgfxRenderer", __FILE__, __LINE__,
             "Shared geometry vertex-buffer allocation failed (%u vertices, "
-            "%u bytes; cache hits=%llu misses=%llu liveUnique=%zu).",
+            "%u bytes; cache hits=%llu misses=%llu cachedUnique=%zu).",
             vertexCount, size,
             static_cast<unsigned long long>(m_sharedVertexBufferHits),
             static_cast<unsigned long long>(m_sharedVertexBufferMisses),
@@ -4300,6 +4327,9 @@ bool BgfxRenderer::AcquireSharedIndexBuffer(const SharedBufferKey& key,
         found->second->m_indexCount == indexCount &&
         found->second->m_index32 == index32)
     {
+        if (found->second->m_refCount == 0)
+            ++m_sharedIndexBufferRevives;
+
         ++found->second->m_refCount;
         ++m_sharedIndexBufferHits;
         handle = found->second->m_handle;
@@ -4335,13 +4365,12 @@ void BgfxRenderer::ReleaseSharedVertexBuffer(const SharedBufferKey& key)
     SharedVertexBuffer* entry = found->second;
     if (entry->m_refCount > 0)
         --entry->m_refCount;
-    if (entry->m_refCount != 0)
-        return;
 
-    if (bgfx::isValid(entry->m_handle))
-        bgfx::destroy(entry->m_handle);
-    NiDelete entry;
-    m_sharedVertexBuffers.erase(found);
+    // Do not destroy immutable shared geometry when its last NiMesh cache is
+    // evicted. The content-addressed handle is intentionally retained for the
+    // lifetime of the current scene and can be revived by a later mesh with
+    // identical packed geometry. SceneManager clears the cache explicitly at
+    // map teardown through ClearSceneGeometryCache().
 }
 
 void BgfxRenderer::ReleaseSharedIndexBuffer(const SharedBufferKey& key)
@@ -4356,13 +4385,9 @@ void BgfxRenderer::ReleaseSharedIndexBuffer(const SharedBufferKey& key)
     SharedIndexBuffer* entry = found->second;
     if (entry->m_refCount > 0)
         --entry->m_refCount;
-    if (entry->m_refCount != 0)
-        return;
 
-    if (bgfx::isValid(entry->m_handle))
-        bgfx::destroy(entry->m_handle);
-    NiDelete entry;
-    m_sharedIndexBuffers.erase(found);
+    // Retain zero-ref immutable index buffers for the current scene. They are
+    // content-addressed and safe to reuse if equivalent geometry reappears.
 }
 
 void BgfxRenderer::DestroySharedGeometryCache()
@@ -4393,11 +4418,13 @@ void BgfxRenderer::DestroySharedGeometryCache()
     m_sharedIndexBuffers.clear();
 
     NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
-        "Shared geometry cache shutdown: VB hits=%llu misses=%llu, "
-        "IB hits=%llu misses=%llu, forced remaining VB=%zu IB=%zu.",
+        "Shared geometry cache cleared: VB hits=%llu revives=%llu misses=%llu, "
+        "IB hits=%llu revives=%llu misses=%llu, cached VB=%zu IB=%zu.",
         static_cast<unsigned long long>(m_sharedVertexBufferHits),
+        static_cast<unsigned long long>(m_sharedVertexBufferRevives),
         static_cast<unsigned long long>(m_sharedVertexBufferMisses),
         static_cast<unsigned long long>(m_sharedIndexBufferHits),
+        static_cast<unsigned long long>(m_sharedIndexBufferRevives),
         static_cast<unsigned long long>(m_sharedIndexBufferMisses),
         remainingVertices, remainingIndices);
 }
@@ -4678,8 +4705,11 @@ bool BgfxRenderer::BindCachedInstanceStream(NiMesh* mesh,
 
 void BgfxRenderer::PurgeGpuMeshCache(bool forceAll)
 {
-    // Static buffers are cheap to retain because revisiting them avoids CPU
-    // repacking. Dynamic-buffer handles are a fixed bgfx resource pool
+    // Per-NiMesh static caches may still age out, but their content-addressed
+    // shared immutable VB/IB handles are retained independently for the whole
+    // scene. Recreating a mesh later therefore becomes a shared-cache hit
+    // instead of another GPU upload. Dynamic-buffer handles are a fixed bgfx
+    // resource pool
     // (4096 by default), so keeping off-screen mutable meshes alive for the
     // same 600-frame lifetime eventually exhausts the pool while moving
     // through a large scene. Keep only a short grace period for dynamic
