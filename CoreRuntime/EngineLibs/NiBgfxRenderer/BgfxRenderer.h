@@ -20,15 +20,6 @@
 #include <vector>
 
 class BgfxDataStreamFactory;
-class NiMesh;
-class NiMaterial;
-class NiPropertyState;
-class NiDynamicEffectState;
-class NiTexturingProperty;
-class NiMaterialProperty;
-class NiVertexColorProperty;
-class NiSpecularProperty;
-class NiAlphaProperty;
 
 class NIBGFXRENDERER_ENTRY BgfxRenderer final : public NiRenderer
 {
@@ -50,13 +41,6 @@ public:
     void SetSoftParticleFadeDistance(float distance);
     float GetSoftParticleFadeDistance() const { return m_softParticleFadeDistance; }
     bool GetSoftParticlesSupported() const;
-
-    // NiShaderSortProcessor groups compatible opaque meshes into material
-    // buckets. Keep bgfx material/uniform bindings alive while one of those
-    // buckets is replayed so identical property states do not have to bind
-    // eleven textures and the same material constants for every mesh.
-    void BeginMaterialBatch();
-    void EndMaterialBatch();
 
     const char* GetDriverInfo() const override;
     unsigned int GetFlags() const override;
@@ -258,37 +242,6 @@ private:
         std::uint64_t m_uploadFallbacks = 0;
     };
 
-    struct MaterialBindingCache
-    {
-        const NiPropertyState* m_propertyState = nullptr;
-        const NiMaterial* m_activeMaterial = nullptr;
-        const NiTexturingProperty* m_texturing = nullptr;
-        const NiMaterialProperty* m_material = nullptr;
-        const NiVertexColorProperty* m_vertexColor = nullptr;
-        const NiSpecularProperty* m_specular = nullptr;
-        const NiAlphaProperty* m_alpha = nullptr;
-        std::uint32_t m_materialRevision = 0;
-        std::array<bool, 11> m_standardMapUsed{};
-        bool m_staticValid = false;
-
-        // A mesh can contain several submeshes. The entire standard/effect
-        // binding is identical for those submeshes, so remember the last full
-        // binding as well as the cross-mesh static material portion.
-        const NiMesh* m_fullMesh = nullptr;
-        const NiPropertyState* m_fullPropertyState = nullptr;
-        const NiDynamicEffectState* m_fullEffectState = nullptr;
-        const NiMaterial* m_fullActiveMaterial = nullptr;
-        bool m_fullValid = false;
-    };
-
-    struct MaterialBindingStats
-    {
-        std::uint64_t m_calls = 0;
-        std::uint64_t m_fullHits = 0;
-        std::uint64_t m_staticHits = 0;
-        std::uint64_t m_batches = 0;
-    };
-
     bool Initialize(void* nativeWindowHandle, unsigned int width,
         unsigned int height, bool vsync, const char* shaderRoot);
     void ShutdownBgfxResources();
@@ -357,8 +310,6 @@ private:
         const NiRect<unsigned int>& dstRect,
         Ni2DBuffer::CopyFilterPreference pref);
     void BindMaterialAndTexture(NiMesh* mesh);
-    void ResetMaterialBindingCache();
-    std::uint8_t GetMaterialSubmitDiscardFlags() const;
     bool BindTerrainMaterial(NiMesh* mesh);
     bool BindExtendedMaterial(NiMesh* mesh, const NiMaterial* material);
     bool BindDecorationMaterial(NiMesh* mesh);
@@ -596,11 +547,6 @@ private:
     std::uint64_t m_sourceTextureCacheHits = 0;
     std::uint64_t m_sourceTextureCacheMisses = 0;
     std::uint64_t m_frameSerial = 0;
-
-    MaterialBindingCache m_materialBindingCache;
-    MaterialBindingStats m_materialBindingStats;
-    std::uint32_t m_materialBatchDepth = 0;
-
     std::string m_shaderRoot;
 };
 
