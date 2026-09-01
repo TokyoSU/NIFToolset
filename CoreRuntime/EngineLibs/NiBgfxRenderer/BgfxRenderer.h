@@ -20,6 +20,7 @@
 #include <vector>
 
 class BgfxDataStreamFactory;
+class NiDataStreamRef;
 
 class NIBGFXRENDERER_ENTRY BgfxRenderer final : public NiRenderer
 {
@@ -304,6 +305,9 @@ private:
     void DestroySharedGeometryCache();
     MeshCache* GetOrCreateMeshCache(NiMesh* mesh);
     void PurgeGpuMeshCache(bool forceAll = false);
+    bool BindCachedInstanceStream(NiMesh* mesh,
+        NiDataStreamRef* instanceRef, unsigned int submesh,
+        std::uint32_t instanceCount);
 
     bool DrawScaledCopy(const Ni2DBuffer* src, Ni2DBuffer* dst,
         const NiRect<unsigned int>& srcRect,
@@ -542,6 +546,18 @@ private:
     std::uint64_t m_sharedVertexBufferMisses = 0;
     std::uint64_t m_sharedIndexBufferHits = 0;
     std::uint64_t m_sharedIndexBufferMisses = 0;
+
+    // Persistent transform-instancing cache statistics. Static Gamebryo
+    // instance streams are uploaded once; genuinely changing streams are
+    // promoted to persistent dynamic bgfx buffers.
+    std::uint64_t m_instanceStaticUploads = 0;
+    std::uint64_t m_instanceStaticHits = 0;
+    std::uint64_t m_instanceDynamicCreates = 0;
+    std::uint64_t m_instanceDynamicUploads = 0;
+    std::uint64_t m_instanceDynamicHits = 0;
+    std::uint64_t m_instanceTransientFallbacks = 0;
+    bool m_instancePersistentFirstSuccessLogged = false;
+
     std::unordered_map<std::string, SourceTextureCacheEntry> m_sourceTextureCache;
     std::mutex m_sourceTextureCacheMutex;
     std::uint64_t m_sourceTextureCacheHits = 0;

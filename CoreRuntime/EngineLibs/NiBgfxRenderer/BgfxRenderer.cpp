@@ -48,6 +48,7 @@
 #include <NiPSSMShadowClickGenerator.h>
 #include <NiPSSMConfiguration.h>
 #include <NiSkinningMeshModifier.h>
+#include <NiInstancingMeshModifier.h>
 #if defined(NIBGFX_ENABLE_PARTICLE_INSTANCING)
 #include <NiPSParticleSystem.h>
 #include <NiPSFacingQuadGenerator.h>
@@ -155,6 +156,24 @@ namespace
     {
         // bgfx maps i_data0..i_data4 onto TEXCOORD7 downwards when a
         // vertex/dynamic vertex buffer is used as the instance source.
+        static const bgfx::VertexLayout layout = []
+        {
+            bgfx::VertexLayout value;
+            value.begin()
+                .add(bgfx::Attrib::TexCoord7, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord6, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord5, 4, bgfx::AttribType::Float)
+                .end();
+            return value;
+        }();
+        return layout;
+    }
+
+    const bgfx::VertexLayout& GetTransformInstanceLayout()
+    {
+        // Gamebryo INSTANCETRANSFORMS is exactly three float4 values per
+        // instance. When a regular bgfx vertex buffer is used as an instance
+        // source, i_data0..2 are mapped to TEXCOORD7..5.
         static const bgfx::VertexLayout layout = []
         {
             bgfx::VertexLayout value;
@@ -566,6 +585,35 @@ public:
 class BgfxRenderer::MeshCache final : public NiMemObject
 {
 public:
+    struct InstanceBuffer
+    {
+        const NiDataStream* m_stream = nullptr;
+        bgfx::VertexBufferHandle m_staticBuffer = BGFX_INVALID_HANDLE;
+        bgfx::DynamicVertexBufferHandle m_dynamicBuffer = BGFX_INVALID_HANDLE;
+        std::uint32_t m_revision = 0;
+        std::uint32_t m_capacity = 0;
+        std::uint32_t m_uploadedCount = 0;
+        std::uint64_t m_uploadedFrame = 0;
+        bool m_dynamic = false;
+
+        void Reset()
+        {
+            if (bgfx::isValid(m_staticBuffer))
+                bgfx::destroy(m_staticBuffer);
+            if (bgfx::isValid(m_dynamicBuffer))
+                bgfx::destroy(m_dynamicBuffer);
+
+            m_stream = nullptr;
+            m_staticBuffer = BGFX_INVALID_HANDLE;
+            m_dynamicBuffer = BGFX_INVALID_HANDLE;
+            m_revision = 0;
+            m_capacity = 0;
+            m_uploadedCount = 0;
+            m_uploadedFrame = 0;
+            m_dynamic = false;
+        }
+    };
+
     struct Submesh
     {
         std::uint64_t m_signature = 0;
@@ -664,11 +712,12 @@ public:
 
     ~MeshCache()
     {
+        m_instanceBuffer.Reset();
         for (Submesh& submesh : m_submeshes)
             submesh.Reset(m_owner);
     }
 
-    bool HasDynamicBuffers() const
+    bool HasDynamicGeometryBuffers() const
     {
         for (const Submesh& submesh : m_submeshes)
         {
@@ -683,6 +732,7 @@ public:
     }
 
     BgfxRenderer* m_owner = nullptr;
+    InstanceBuffer m_instanceBuffer;
     std::vector<Submesh> m_submeshes;
     std::uint64_t m_lastUsedFrame = 0;
     bool m_shortLived = false;
@@ -3452,6 +3502,23 @@ bool BgfxRenderer::Do_BeginFrame()
     if ((m_frameSerial % 8u) == 0u)
         PurgeGpuMeshCache(false);
 
+    if ((m_frameSerial % 240u) == 0u &&
+        (m_instanceStaticUploads != 0 ||
+         m_instanceDynamicCreates != 0 ||
+         m_instanceTransientFallbacks != 0))
+    {
+        NiLogWriteFormat(NI_LOG_TRACE, "NiBgfxRenderer", __FILE__, __LINE__,
+            "[InstanceBufferCache] staticUploads=%llu staticHits=%llu "
+            "dynamicCreates=%llu dynamicUploads=%llu dynamicHits=%llu "
+            "transientFallbacks=%llu.",
+            static_cast<unsigned long long>(m_instanceStaticUploads),
+            static_cast<unsigned long long>(m_instanceStaticHits),
+            static_cast<unsigned long long>(m_instanceDynamicCreates),
+            static_cast<unsigned long long>(m_instanceDynamicUploads),
+            static_cast<unsigned long long>(m_instanceDynamicHits),
+            static_cast<unsigned long long>(m_instanceTransientFallbacks));
+    }
+
     // A bgfx View is a render pass. Reuse IDs from zero each Gamebryo frame,
     // but allocate a different View for every render-target pass so framebuffer
     // and camera state from one click cannot overwrite another.
@@ -4399,6 +4466,216 @@ BgfxRenderer::MeshCache* BgfxRenderer::GetOrCreateMeshCache(NiMesh* mesh)
     return cache;
 }
 
+bool BgfxRenderer::BindCachedInstanceStream(NiMesh* mesh,
+    NiDataStreamRef* instanceRef, unsigned int submesh,
+    std::uint32_t instanceCount)
+{
+    constexpr std::uint32_t kInstanceStride = sizeof(float) * 12u;
+
+    if (!mesh || !instanceRef || instanceCount == 0)
+        return false;
+
+    NiDataStream* stream = instanceRef->GetDataStream();
+    if (!stream || stream->GetStride() != kInstanceStride)
+        return false;
+
+    if (submesh >= mesh->GetSubmeshCount())
+        return false;
+
+    const NiDataStream::Region& region =
+        instanceRef->GetRegionForSubmesh(submesh);
+    const std::uint32_t instanceStart = region.GetStartIndex();
+    const std::uint32_t totalCount = stream->GetTotalCount();
+    if (region.GetRange() < instanceCount || instanceStart > totalCount ||
+        instanceCount > totalCount - instanceStart)
+    {
+        return false;
+    }
+
+    MeshCache* cache = GetOrCreateMeshCache(mesh);
+    if (!cache)
+        return false;
+
+    MeshCache::InstanceBuffer& gpu = cache->m_instanceBuffer;
+    if (gpu.m_stream != stream)
+    {
+        gpu.Reset();
+        gpu.m_stream = stream;
+    }
+
+    const std::uint32_t revision = stream->GetRevisionID();
+    const NiUInt8 access = stream->GetAccessMask();
+    const bool volatileSource =
+        (access & NiDataStream::ACCESS_CPU_WRITE_VOLATILE) != 0;
+
+    // StaticBounds is the Gamebryo-side promise used by Grand Fantasia's
+    // map instancer: the placement transforms and merged world bound no
+    // longer change after finalization. The transform stream itself is
+    // historically marked MUTABLE, so use the modifier hint rather than the
+    // legacy access mask to keep it in a true immutable bgfx buffer.
+    bool staticInstanceHint = false;
+    if (NiMeshModifier* modifier =
+            mesh->GetModifierByType(&NiInstancingMeshModifier::ms_RTTI))
+    {
+        NiInstancingMeshModifier* instancing =
+            static_cast<NiInstancingMeshModifier*>(modifier);
+        staticInstanceHint = instancing->GetStaticBounds() && !volatileSource;
+    }
+
+    // A non-static mutable stream starts life in a cheap static GPU buffer.
+    // If its NiDataStream revision changes later (animated rigid instances),
+    // promote it once to a persistent dynamic buffer. This mirrors the
+    // renderer's ordinary mesh-cache strategy and avoids recreating a GPU
+    // buffer every frame.
+    const bool staticRevisionChanged =
+        bgfx::isValid(gpu.m_staticBuffer) &&
+        gpu.m_revision != 0 &&
+        gpu.m_revision != revision;
+
+    if (volatileSource ||
+        gpu.m_dynamic ||
+        (!staticInstanceHint && staticRevisionChanged))
+    {
+        if (!gpu.m_dynamic)
+        {
+            if (bgfx::isValid(gpu.m_staticBuffer))
+                bgfx::destroy(gpu.m_staticBuffer);
+            gpu.m_staticBuffer = BGFX_INVALID_HANDLE;
+            gpu.m_dynamic = true;
+            gpu.m_revision = 0;
+            gpu.m_capacity = 0;
+            gpu.m_uploadedCount = 0;
+            gpu.m_uploadedFrame = 0;
+        }
+
+        if (!bgfx::isValid(gpu.m_dynamicBuffer) ||
+            gpu.m_capacity < totalCount)
+        {
+            if (bgfx::isValid(gpu.m_dynamicBuffer))
+                bgfx::destroy(gpu.m_dynamicBuffer);
+
+            gpu.m_dynamicBuffer = bgfx::createDynamicVertexBuffer(
+                totalCount, GetTransformInstanceLayout());
+            if (!bgfx::isValid(gpu.m_dynamicBuffer))
+            {
+                gpu.m_dynamicBuffer = BGFX_INVALID_HANDLE;
+                gpu.m_capacity = 0;
+                return false;
+            }
+
+            gpu.m_capacity = totalCount;
+            gpu.m_revision = 0;
+            gpu.m_uploadedCount = 0;
+            gpu.m_uploadedFrame = 0;
+            ++m_instanceDynamicCreates;
+        }
+
+        const std::uint32_t requiredCount = instanceStart + instanceCount;
+        // Floodgate writes per-instance-culling output directly into the
+        // VOLATILE collector stream, bypassing NiDataStream::Unlock(), so its
+        // revision ID is not a reliable change detector. Upload volatile
+        // streams once per renderer frame; ordinary mutable streams still use
+        // their revision ID and therefore only upload when they really change.
+        const bool sourceChanged = volatileSource ?
+            gpu.m_uploadedFrame != m_frameSerial :
+            gpu.m_revision != revision;
+
+        if (sourceChanged || gpu.m_uploadedCount < requiredCount)
+        {
+            // Upload only the active prefix needed by the currently rendered
+            // region. Per-instance culling streams are often much smaller than
+            // their capacity, so copying the whole stream would throw away a
+            // large part of the win from persistent instance buffers.
+            const void* rawData =
+                stream->Lock(NiDataStream::LOCK_TOOL_READ);
+            if (!rawData)
+                return false;
+
+            if (sourceChanged)
+                gpu.m_uploadedCount = 0;
+
+            const std::uint32_t uploadCount =
+                NiMax(gpu.m_uploadedCount, requiredCount);
+            const std::uint32_t byteCount = uploadCount * kInstanceStride;
+            const bgfx::Memory* memory = bgfx::copy(rawData, byteCount);
+            stream->Unlock(NiDataStream::LOCK_TOOL_READ);
+
+            bgfx::update(gpu.m_dynamicBuffer, 0, memory);
+            gpu.m_revision = revision;
+            gpu.m_uploadedCount = uploadCount;
+            gpu.m_uploadedFrame = m_frameSerial;
+            ++m_instanceDynamicUploads;
+        }
+        else
+        {
+            ++m_instanceDynamicHits;
+        }
+
+        bgfx::setInstanceDataBuffer(
+            gpu.m_dynamicBuffer, instanceStart, instanceCount);
+    }
+    else
+    {
+        if (!bgfx::isValid(gpu.m_staticBuffer) ||
+            gpu.m_revision != revision)
+        {
+            if (bgfx::isValid(gpu.m_staticBuffer))
+                bgfx::destroy(gpu.m_staticBuffer);
+
+            const void* rawData =
+                stream->Lock(NiDataStream::LOCK_TOOL_READ);
+            if (!rawData)
+            {
+                gpu.m_staticBuffer = BGFX_INVALID_HANDLE;
+                return false;
+            }
+
+            const std::uint32_t byteCount = stream->GetSize();
+            const bgfx::Memory* memory = bgfx::copy(rawData, byteCount);
+            stream->Unlock(NiDataStream::LOCK_TOOL_READ);
+
+            gpu.m_staticBuffer = bgfx::createVertexBuffer(
+                memory, GetTransformInstanceLayout());
+            if (!bgfx::isValid(gpu.m_staticBuffer))
+            {
+                gpu.m_staticBuffer = BGFX_INVALID_HANDLE;
+                return false;
+            }
+
+            gpu.m_revision = revision;
+            gpu.m_capacity = totalCount;
+            gpu.m_uploadedCount = totalCount;
+            gpu.m_uploadedFrame = m_frameSerial;
+            ++m_instanceStaticUploads;
+        }
+        else
+        {
+            ++m_instanceStaticHits;
+        }
+
+        bgfx::setInstanceDataBuffer(
+            gpu.m_staticBuffer, instanceStart, instanceCount);
+    }
+
+    cache->m_lastUsedFrame = m_frameSerial;
+
+    if (!m_instancePersistentFirstSuccessLogged)
+    {
+        const char* meshName = static_cast<const char*>(mesh->GetName());
+        if (!meshName || !meshName[0])
+            meshName = "<unnamed>";
+
+        NiLogWriteFormat(NI_LOG_INFO, "NiBgfxRenderer", __FILE__, __LINE__,
+            "[InstanceBufferCache] ACTIVE: first persistent instance stream "
+            "mesh='%s' instances=%u mode=%s.",
+            meshName, instanceCount,
+            gpu.m_dynamic ? "dynamic" : "static");
+        m_instancePersistentFirstSuccessLogged = true;
+    }
+
+    return true;
+}
+
 void BgfxRenderer::PurgeGpuMeshCache(bool forceAll)
 {
     // Static buffers are cheap to retain because revisiting them avoids CPU
@@ -4414,8 +4691,22 @@ void BgfxRenderer::PurgeGpuMeshCache(bool forceAll)
     for (auto it = m_meshCache.begin(); it != m_meshCache.end(); )
     {
         MeshCache* cache = it->second;
+
+        // Per-instance culling needs a dynamic instance buffer even when the
+        // mesh geometry itself is perfectly static. Release only that scarce
+        // dynamic handle after a short off-screen grace period instead of
+        // throwing away the mesh's immutable VB/IB cache with it.
+        if (cache &&
+            bgfx::isValid(cache->m_instanceBuffer.m_dynamicBuffer) &&
+            m_frameSerial > cache->m_lastUsedFrame &&
+            m_frameSerial - cache->m_lastUsedFrame >
+                kDynamicUnusedFrameLifetime)
+        {
+            cache->m_instanceBuffer.Reset();
+        }
+
         const std::uint64_t lifetime = cache &&
-            (cache->m_shortLived || cache->HasDynamicBuffers()) ?
+            (cache->m_shortLived || cache->HasDynamicGeometryBuffers()) ?
             kDynamicUnusedFrameLifetime : kStaticUnusedFrameLifetime;
         const bool expired = !cache ||
             (m_frameSerial > cache->m_lastUsedFrame &&
@@ -7446,62 +7737,90 @@ void BgfxRenderer::Do_RenderMesh(NiMesh* mesh)
 
                 if (instanceCount > 0)
                 {
-                    const void* rawData = instanceStream->Lock(NiDataStream::LOCK_TOOL_READ);
-                    if (rawData)
+                    // Preferred path: cache Gamebryo's transform stream in a
+                    // persistent bgfx vertex buffer. Static map placements are
+                    // uploaded once; animated/culling streams are promoted to
+                    // persistent dynamic buffers and updated only when their
+                    // NiDataStream revision changes.
+                    if (BindCachedInstanceStream(
+                            mesh, instanceRef, submesh, instanceCount))
                     {
-                        const std::uint8_t* instanceSource =
-                            static_cast<const std::uint8_t*>(rawData) +
-                            static_cast<size_t>(region.GetStartIndex()) *
-                            instanceStream->GetStride();
+                        submitSoftDepth(m_softDepthInstancedProgram);
+                        bgfx::submit(m_viewId, instancedDrawProgram);
+                    }
+                    else
+                    {
+                        ++m_instanceTransientFallbacks;
 
-                        constexpr std::uint16_t INSTANCE_STRIDE = sizeof(float) * 12u;
-                        const std::uint32_t available = bgfx::getAvailInstanceDataBuffer(
-                            instanceCount, INSTANCE_STRIDE);
-                        if (available == instanceCount)
+                        // Conservative compatibility fallback: retain the old
+                        // transient-instance path for unusual stream layouts or
+                        // when a persistent GPU allocation cannot be made.
+                        const void* rawData =
+                            instanceStream->Lock(NiDataStream::LOCK_TOOL_READ);
+                        if (rawData)
                         {
-                            bgfx::InstanceDataBuffer instanceBuffer;
-                            bgfx::allocInstanceDataBuffer(&instanceBuffer,
-                                instanceCount, INSTANCE_STRIDE);
-                            std::memcpy(instanceBuffer.data, instanceSource,
-                                static_cast<size_t>(instanceCount) * INSTANCE_STRIDE);
-                            bgfx::setInstanceDataBuffer(&instanceBuffer);
-                            submitSoftDepth(m_softDepthInstancedProgram);
-                            bgfx::submit(m_viewId, instancedDrawProgram);
-                            submitted = true;
-                        }
-                        else
-                        {
-                            // Transient instance space can be exhausted late in a
-                            // frame. Preserve correctness by issuing ordinary draws
-                            // from the same packed 3x4 transforms instead of dropping
-                            // visible instances.
-                            for (std::uint32_t instance = 0;
-                                instance < instanceCount; ++instance)
+                            const std::uint8_t* instanceSource =
+                                static_cast<const std::uint8_t*>(rawData) +
+                                static_cast<size_t>(region.GetStartIndex()) *
+                                instanceStream->GetStride();
+
+                            constexpr std::uint16_t INSTANCE_STRIDE =
+                                sizeof(float) * 12u;
+                            const std::uint32_t available =
+                                bgfx::getAvailInstanceDataBuffer(
+                                    instanceCount, INSTANCE_STRIDE);
+                            if (available == instanceCount)
                             {
-                                const float* rows = reinterpret_cast<const float*>(
-                                    instanceSource +
-                                    static_cast<size_t>(instance) * INSTANCE_STRIDE);
-                                // NiInstancingUtilities::PackTransform stores
-                                // three matrix columns: (R00,R10,R20,Tx),
-                                // (R01,R11,R21,Ty), (R02,R12,R22,Tz).
-                                // bgfx::setTransform consumes the equivalent
-                                // column-major 4x4 matrix directly.
-                                float matrix[16] =
-                                {
-                                    rows[0], rows[1], rows[2],  0.0f,
-                                    rows[4], rows[5], rows[6],  0.0f,
-                                    rows[8], rows[9], rows[10], 0.0f,
-                                    rows[3], rows[7], rows[11], 1.0f
-                                };
-                                bgfx::setTransform(matrix);
-                                submitSoftDepth(softDepthDrawProgram);
-                                const bool last = instance + 1u == instanceCount;
-                                bgfx::submit(m_viewId, drawProgram, 0,
-                                    last ? BGFX_DISCARD_ALL : BGFX_DISCARD_NONE);
+                                bgfx::InstanceDataBuffer instanceBuffer;
+                                bgfx::allocInstanceDataBuffer(
+                                    &instanceBuffer,
+                                    instanceCount,
+                                    INSTANCE_STRIDE);
+                                std::memcpy(
+                                    instanceBuffer.data,
+                                    instanceSource,
+                                    static_cast<size_t>(instanceCount) *
+                                        INSTANCE_STRIDE);
+                                bgfx::setInstanceDataBuffer(&instanceBuffer);
+                                submitSoftDepth(m_softDepthInstancedProgram);
+                                bgfx::submit(m_viewId, instancedDrawProgram);
                             }
-                            submitted = true;
+                            else
+                            {
+                                // If the transient arena is exhausted, keep
+                                // correctness by replaying ordinary draws from
+                                // the packed 3x4 transforms.
+                                for (std::uint32_t instance = 0;
+                                    instance < instanceCount; ++instance)
+                                {
+                                    const float* rows =
+                                        reinterpret_cast<const float*>(
+                                            instanceSource +
+                                            static_cast<size_t>(instance) *
+                                                INSTANCE_STRIDE);
+                                    float matrix[16] =
+                                    {
+                                        rows[0], rows[1], rows[2],  0.0f,
+                                        rows[4], rows[5], rows[6],  0.0f,
+                                        rows[8], rows[9], rows[10], 0.0f,
+                                        rows[3], rows[7], rows[11], 1.0f
+                                    };
+                                    bgfx::setTransform(matrix);
+                                    submitSoftDepth(softDepthDrawProgram);
+                                    const bool last =
+                                        instance + 1u == instanceCount;
+                                    bgfx::submit(
+                                        m_viewId,
+                                        drawProgram,
+                                        0,
+                                        last ? BGFX_DISCARD_ALL :
+                                            BGFX_DISCARD_NONE);
+                                }
+                            }
+
+                            instanceStream->Unlock(
+                                NiDataStream::LOCK_TOOL_READ);
                         }
-                        instanceStream->Unlock(NiDataStream::LOCK_TOOL_READ);
                     }
                 }
             }
